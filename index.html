@@ -164,8 +164,12 @@ header { padding: 8px 12px; }
 .cell-title { font-size: 9px; letter-spacing: 0.5px; }
 .machine { padding: 5px 6px; }
 .machine-name { font-size: 9px; }
-.area-label { font-size: 10px; letter-spacing: 1px; }
-.hill-logo-text { font-size: 22px; }
+.area-orange { min-height: 70px; padding: 6px 4px; }
+.area-label { font-size: 9px !important; letter-spacing: 0.5px; color: #0f2338 !important; display: block !important; }
+.hill-logo-text { font-size: 18px; }
+.hill-center { min-height: 70px; }
+.welcome-chip { display: none !important; }
+.admin-btn { font-size: 10px; padding: 5px 8px; }
 }
 </style>
 
@@ -296,7 +300,7 @@ header { padding: 8px 12px; }
           <div class="machine" onclick="openModal('PUMA-2','MPPI Cell')"><div class="machine-name">PUMA-2</div><div class="machine-notes" id="notes-PUMA-2"></div></div>
         </div>
       </div>
-      <div class="area-orange" style="grid-column:1;grid-row:2;"><div class="area-label">Inspection</div></div>
+      <div class="area-orange" style="grid-column:1;grid-row:2;"><div class="area-label" style="color:#0f2338;">Inspection</div></div>
       <div class="cell" style="grid-column:2;grid-row:2;display:flex;flex-direction:column;gap:6px;">
         <div class="machine" onclick="openModal('SAW-1','Saws')"><div class="machine-name">SAW 1</div><div class="machine-notes" id="notes-SAW-1"></div></div>
         <div class="machine" onclick="openModal('SAW-2','Saws')"><div class="machine-name">SAW 2</div><div class="machine-notes" id="notes-SAW-2"></div></div>
@@ -327,7 +331,7 @@ header { padding: 8px 12px; }
           <div class="machine" onclick="openModal('3000-A','3000 Cell')"><div class="machine-name">3000-A</div><div class="machine-notes" id="notes-3000-A"></div></div>
         </div>
       </div>
-      <div class="area-orange" style="grid-column:4;grid-row:3;"><div class="area-label">Ship & Recv</div></div>
+      <div class="area-orange" style="grid-column:4;grid-row:3;"><div class="area-label" style="color:#0f2338;">Ship &amp; Recv</div></div>
       <div class="cell" style="grid-column:1;grid-row:4;">
         <div class="cell-title">Horizontal</div>
         <div class="machines">
