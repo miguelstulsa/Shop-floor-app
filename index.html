@@ -1,3 +1,4 @@
+
 <!DOCTYPE html><html lang="en">
 
 <head>
@@ -62,8 +63,8 @@
 /* MAIN APP */
 header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-bottom: 3px solid var(–accent); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
 .logo { display: flex; align-items: center; gap: 12px; }
-.logo-badge { width: 48px; height: 48px; background: var(–accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: ‘Bebas Neue’, sans-serif; font-size: 22px; color: #0f2338 !important; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.4); flex-shrink: 0; }
-.logo h1 { font-family: ‘Bebas Neue’, sans-serif; font-size: 28px; letter-spacing: 3px; color: var(–accent); line-height: 1; }
+.logo-badge { width: 48px; height: 48px; background: var(–accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: Arial Black, Arial, sans-serif; font-size: 22px; color: #0f2338 !important; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.4); flex-shrink: 0; }
+.logo h1 { font-family: Arial Black, ‘Bebas Neue’, sans-serif; font-size: 28px; letter-spacing: 3px; color: var(–accent); line-height: 1; }
 .logo p { font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; }
 .header-right { display: flex; align-items: center; gap: 12px; }
 .notif-bell { cursor: pointer; background: rgba(255,255,255,0.08); border: 1px solid var(–border); border-radius: 10px; padding: 8px 12px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; font-size: 13px; font-weight: 600; color: var(–text); }
@@ -80,7 +81,7 @@ main { display: grid; grid-template-columns: 1fr 340px; gap: 0; min-height: calc
 .floor-title { font-size: 13px; letter-spacing: 3px; color: #64748b; text-transform: uppercase; margin-bottom: 16px; }
 .floor-grid { background: var(–shop-bg); border-radius: 16px; padding: 20px; border: 1px solid var(–border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .hill-center { grid-column: 3; grid-row: 2; background: linear-gradient(135deg, #1e3a5f, #2a5080); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid var(–accent); min-height: 80px; }
-.hill-logo-text { font-family: ‘Bebas Neue’, sans-serif; font-size: 36px; color: var(–accent); letter-spacing: 4px; }
+.hill-logo-text { font-family: Arial Black, ‘Bebas Neue’, sans-serif; font-size: 32px; color: var(–accent); letter-spacing: 4px; }
 .cell { background: var(–cell-bg); border-radius: 10px; padding: 10px; border: 1px solid var(–border); }
 .cell-title { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e2e8f0; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
 .machines { display: flex; flex-direction: column; gap: 5px; }
@@ -301,7 +302,7 @@ header { padding: 8px 12px; }
           <div class="machine" onclick="openModal('PUMA-2','MPPI Cell')"><div class="machine-name">PUMA-2</div><div class="machine-notes" id="notes-PUMA-2"></div></div>
         </div>
       </div>
-      <div style="grid-column:1;grid-row:2;background:#d97706;border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;min-height:70px;"><div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;color:#0f2338;font-weight:900;text-align:center;">Inspection</div></div>
+      <div style="grid-column:1;grid-row:2;background:#d97706;border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;min-height:70px;"><div style="font-family:Arial Black,Arial,sans-serif;font-size:13px;letter-spacing:1px;color:#0f2338;font-weight:900;text-align:center;">INSPECTION</div></div>
       <div class="cell" style="grid-column:2;grid-row:2;display:flex;flex-direction:column;gap:6px;">
         <div class="machine" onclick="openModal('SAW-1','Saws')"><div class="machine-name">SAW 1</div><div class="machine-notes" id="notes-SAW-1"></div></div>
         <div class="machine" onclick="openModal('SAW-2','Saws')"><div class="machine-name">SAW 2</div><div class="machine-notes" id="notes-SAW-2"></div></div>
@@ -332,7 +333,7 @@ header { padding: 8px 12px; }
           <div class="machine" onclick="openModal('3000-A','3000 Cell')"><div class="machine-name">3000-A</div><div class="machine-notes" id="notes-3000-A"></div></div>
         </div>
       </div>
-      <div class="area-orange" style="grid-column:4;grid-row:3;"><div class="area-label" style="color:#0f2338;">Ship &amp; Recv</div></div>
+      <div style="grid-column:4;grid-row:3;background:#d97706;border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;min-height:70px;"><div style="font-family:Arial Black,Arial,sans-serif;font-size:12px;letter-spacing:1px;color:#0f2338;font-weight:900;text-align:center;">SHIP &amp; RECV</div></div>
       <div class="cell" style="grid-column:1;grid-row:4;">
         <div class="cell-title">Horizontal</div>
         <div class="machines">
@@ -349,7 +350,7 @@ header { padding: 8px 12px; }
           <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('2500-Y','Automation Cell')"><div class="machine-name">2500-Y</div><div class="machine-notes" id="notes-2500-Y"></div></div>
         </div>
       </div>
-      <div style="grid-column:4;grid-row:4;background:#d97706;border-radius:10px;padding:10px;border:3px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70px;"><div style="font-size:20px;">🔧</div><div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;color:#0f2338;font-weight:900;text-align:center;">TOOL CRIB</div></div>
+      <div style="grid-column:4;grid-row:4;background:#d97706;border-radius:10px;padding:10px;border:3px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70px;"><div style="font-size:20px;">🔧</div><div style="font-family:Arial Black,Arial,sans-serif;font-size:13px;letter-spacing:1px;color:#0f2338;font-weight:900;text-align:center;">TOOL CRIB</div></div>
     </div>
   </div>
   <div class="sidebar" id="sidebar">
