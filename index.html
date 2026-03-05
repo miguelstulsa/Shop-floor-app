@@ -264,6 +264,7 @@ header { padding: 8px 12px; }
     </div>
     <span class="welcome-chip" id="welcomeChip" style="display:none;"></span>
     <button class="admin-btn" id="adminPanelBtn" onclick="openAdminPanel()">⚙️ Admin</button>
+    <button class="admin-btn" id="signOutBtn" onclick="signOut()" style="display:none;background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.4);color:#f87171;">🚪 Sign Out</button>
     <div class="notif-bell" onclick="scrollToSidebar()">
       <span>🔔</span><span>Alerts</span>
       <span class="notif-count" id="notifCount">0</span>
@@ -300,7 +301,7 @@ header { padding: 8px 12px; }
           <div class="machine" onclick="openModal('PUMA-2','MPPI Cell')"><div class="machine-name">PUMA-2</div><div class="machine-notes" id="notes-PUMA-2"></div></div>
         </div>
       </div>
-      <div class="area-orange" style="grid-column:1;grid-row:2;"><div class="area-label" style="color:#0f2338;">Inspection</div></div>
+      <div style="grid-column:1;grid-row:2;background:#d97706;border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;min-height:70px;"><div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;color:#0f2338;font-weight:900;text-align:center;">Inspection</div></div>
       <div class="cell" style="grid-column:2;grid-row:2;display:flex;flex-direction:column;gap:6px;">
         <div class="machine" onclick="openModal('SAW-1','Saws')"><div class="machine-name">SAW 1</div><div class="machine-notes" id="notes-SAW-1"></div></div>
         <div class="machine" onclick="openModal('SAW-2','Saws')"><div class="machine-name">SAW 2</div><div class="machine-notes" id="notes-SAW-2"></div></div>
@@ -348,9 +349,7 @@ header { padding: 8px 12px; }
           <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('2500-Y','Automation Cell')"><div class="machine-name">2500-Y</div><div class="machine-notes" id="notes-2500-Y"></div></div>
         </div>
       </div>
-      <div class="area-orange" style="grid-column:4;grid-row:4;border:3px solid var(--accent);flex-direction:column;">
-        <div style="font-size:22px;text-align:center;">🔧</div><div class="area-label" style="color:#0f2338 !important;font-size:14px;">TOOL CRIB</div>
-      </div>
+      <div style="grid-column:4;grid-row:4;background:#d97706;border-radius:10px;padding:10px;border:3px solid #f59e0b;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70px;"><div style="font-size:20px;">🔧</div><div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;color:#0f2338;font-weight:900;text-align:center;">TOOL CRIB</div></div>
     </div>
   </div>
   <div class="sidebar" id="sidebar">
@@ -617,6 +616,7 @@ header { padding: 8px 12px; }
     document.getElementById('operatorName').value = name;
     document.getElementById('welcomeChip').textContent = '👤 ' + name;
     document.getElementById('welcomeChip').style.display = 'block';
+    document.getElementById('signOutBtn').style.display = 'block';
     showToast('green', '✅ Welcome, ' + name + '!', 'You have access to the shop floor.');
   }
 
@@ -650,10 +650,17 @@ header { padding: 8px 12px; }
     document.getElementById('welcomeChip').textContent = '🔐 Admin: Miguel Sanchez';
     document.getElementById('welcomeChip').style.display = 'block';
     document.getElementById('adminPanelBtn').style.display = 'block';
+    document.getElementById('signOutBtn').style.display = 'block';
     window.startAdminWatcher();
     showToast('green', '🔐 Admin Access Granted', 'Welcome, Miguel Sanchez');
   }
 
+  function signOut() {
+    if (confirm('Are you sure you want to sign out?')) {
+      localStorage.clear();
+      location.reload();
+    }
+  }
   function openAdminPanel() { document.getElementById('adminOverlay').classList.add('active'); }
   function closeAdminPanel() { document.getElementById('adminOverlay').classList.remove('active'); }
 
