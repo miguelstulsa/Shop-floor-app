@@ -62,7 +62,7 @@
 /* MAIN APP */
 header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-bottom: 3px solid var(–accent); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
 .logo { display: flex; align-items: center; gap: 12px; }
-.logo-badge { width: 48px; height: 48px; background: var(–accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: ‘Bebas Neue’, sans-serif; font-size: 22px; color: #0f2338; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.4); }
+.logo-badge { width: 48px; height: 48px; background: var(–accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: ‘Bebas Neue’, sans-serif; font-size: 22px; color: #0f2338 !important; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.4); flex-shrink: 0; }
 .logo h1 { font-family: ‘Bebas Neue’, sans-serif; font-size: 28px; letter-spacing: 3px; color: var(–accent); line-height: 1; }
 .logo p { font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; }
 .header-right { display: flex; align-items: center; gap: 12px; }
@@ -94,8 +94,8 @@ main { display: grid; grid-template-columns: 1fr 340px; gap: 0; min-height: calc
 .note-dot.yellow { background: var(–yellow); }
 .note-dot.green { background: var(–green); }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-.area-orange { background: var(–orange-area); border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; min-height: 60px; }
-.area-label { font-family: ‘Bebas Neue’, sans-serif; font-size: 16px; letter-spacing: 2px; color: #0f2338; text-align: center; }
+.area-orange { background: var(–orange-area); border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; min-height: 60px; flex-direction: column; }
+.area-label { font-family: ‘Bebas Neue’, sans-serif; font-size: 16px; letter-spacing: 2px; color: #0f2338 !important; text-align: center; font-weight: 900; }
 .sidebar { background: #0d1f33; border-left: 1px solid var(–border); display: flex; flex-direction: column; }
 .sidebar-header { padding: 16px 20px; border-bottom: 1px solid var(–border); font-size: 14px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; }
 .notif-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -348,8 +348,8 @@ header { padding: 8px 12px; }
           <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('2500-Y','Automation Cell')"><div class="machine-name">2500-Y</div><div class="machine-notes" id="notes-2500-Y"></div></div>
         </div>
       </div>
-      <div class="area-orange" style="grid-column:4;grid-row:4;border:3px solid var(--accent);">
-        <div style="text-align:center;"><div style="font-size:22px;">🔧</div><div class="area-label" style="color:#0f2338;">TOOL CRIB</div></div>
+      <div class="area-orange" style="grid-column:4;grid-row:4;border:3px solid var(--accent);flex-direction:column;">
+        <div style="font-size:22px;text-align:center;">🔧</div><div class="area-label" style="color:#0f2338 !important;font-size:14px;">TOOL CRIB</div>
       </div>
     </div>
   </div>
@@ -555,11 +555,11 @@ header { padding: 8px 12px; }
   window.machineNotes = {}; window.currentMachine = '';
   const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO' };
 
-  // Check if already logged in via sessionStorage
+  // Check if already logged in via localStorage
   window.addEventListener('load', () => {
-    const savedName = sessionStorage.getItem('hm_name');
-    const savedId = sessionStorage.getItem('hm_id');
-    const savedAdmin = sessionStorage.getItem('hm_admin');
+    const savedName = localStorage.getItem('hm_name');
+    const savedId = localStorage.getItem('hm_id');
+    const savedAdmin = localStorage.getItem('hm_admin');
     if (savedAdmin === 'true') {
       loginAsAdmin();
     } else if (savedName && savedId) {
@@ -571,7 +571,7 @@ header { padding: 8px 12px; }
           showPendingStep();
           currentUserId = savedId;
         } else {
-          sessionStorage.clear();
+          localStorage.clear();
         }
       });
     }
@@ -584,8 +584,8 @@ header { padding: 8px 12px; }
     // Check if this name already exists
     window.requestAccess(name).then(userId => {
       currentUserId = userId;
-      sessionStorage.setItem('hm_id', userId);
-      sessionStorage.setItem('hm_name', name);
+      localStorage.setItem('hm_id', userId);
+      localStorage.setItem('hm_name', name);
       showPendingStep();
     });
   }
@@ -600,7 +600,7 @@ header { padding: 8px 12px; }
     setMsg('pendingMsg', 'Checking...', '');
     window.checkUserStatus(currentUserId).then(status => {
       if (status === 'approved') {
-        const name = sessionStorage.getItem('hm_name');
+        const name = localStorage.getItem('hm_name');
         grantAccess(name, currentUserId);
       } else if (status === 'denied') {
         setMsg('pendingMsg', 'Access was denied. Contact your Tool Manager.', 'error');
@@ -643,7 +643,7 @@ header { padding: 8px 12px; }
 
   function loginAsAdmin() {
     isAdmin = true;
-    sessionStorage.setItem('hm_admin', 'true');
+    localStorage.setItem('hm_admin', 'true');
     currentUserName = 'Miguel Sanchez';
     document.getElementById('accessScreen').style.display = 'none';
     document.getElementById('operatorName').value = 'Miguel Sanchez';
