@@ -18,6 +18,7 @@
   header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-bottom: 3px solid var(--accent); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
   .logo { display: flex; align-items: center; gap: 12px; }
   .logo-badge { width: 48px; height: 48px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #0f2338; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.4); }
+  .header-logo-img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
   .logo h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: var(--accent); line-height: 1; }
   .logo p { font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; }
   .header-right { display: flex; align-items: center; gap: 16px; }
@@ -48,17 +49,181 @@
   .floor-grid { background: var(--shop-bg); border-radius: 16px; padding: 20px; border: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .hill-center { grid-column: 3; grid-row: 2; background: linear-gradient(135deg, #1e3a5f, #2a5080); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--accent); min-height: 80px; }
   .hill-logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--accent); letter-spacing: 4px; }
-  .cell { background: var(--cell-bg); border-radius: 10px; padding: 10px; border: 1px solid var(--border); }
-  .cell-title { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e2e8f0; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+  /* ═══════════════════════════════════════════
+     CELL PANELS
+  ═══════════════════════════════════════════ */
+  .cell {
+    background: linear-gradient(175deg, #0f2236 0%, #152c45 100%);
+    border-radius: 12px;
+    padding: 10px 8px;
+    border: 1px solid rgba(59,130,246,0.18);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .cell-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #7fb3e0;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(59,130,246,0.15);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .cell-title::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #3b82f6;
+    box-shadow: 0 0 8px #3b82f6;
+    display: inline-block;
+    flex-shrink: 0;
+  }
   .machines { display: flex; flex-direction: column; gap: 5px; }
-  .machine { background: var(--machine-bg); border-radius: 6px; padding: 7px 9px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
-  .machine:active { background: #8d5522; border-color: var(--accent); }
-  .machine-name { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #fcd34d; text-transform: uppercase; }
-  .machine-notes { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
-  .note-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-  .note-dot.blue { background: var(--blue); } .note-dot.red { background: var(--red); animation: blink 1s infinite; }
-  .note-dot.yellow { background: var(--yellow); } .note-dot.green { background: var(--green); }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* ═══════════════════════════════════════════
+     MACHINE BUTTON — CNC CONTROL PANEL STYLE
+  ═══════════════════════════════════════════ */
+  .machine {
+    position: relative;
+    background: linear-gradient(160deg, #1c3550 0%, #142840 50%, #0f1f30 100%);
+    border-radius: 8px;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: 1px solid rgba(59,130,246,0.25);
+    box-shadow:
+      0 3px 8px rgba(0,0,0,0.5),
+      0 1px 0 rgba(255,255,255,0.06) inset,
+      0 -2px 0 rgba(0,0,0,0.4) inset;
+    overflow: hidden;
+  }
+  /* top sheen */
+  .machine::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%);
+    pointer-events: none;
+    border-radius: 8px 8px 0 0;
+  }
+  /* left accent bar */
+  .machine::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: #3b82f6;
+    border-radius: 8px 0 0 8px;
+    opacity: 0.6;
+    transition: opacity 0.18s, background 0.18s;
+  }
+  .machine:hover {
+    background: linear-gradient(160deg, #254870 0%, #1a3858 50%, #122844 100%);
+    border-color: rgba(245,158,11,0.5);
+    transform: translateY(-1px);
+    box-shadow:
+      0 6px 16px rgba(0,0,0,0.5),
+      0 0 12px rgba(245,158,11,0.12),
+      0 1px 0 rgba(255,255,255,0.08) inset;
+  }
+  .machine:hover::after { background: var(--accent); opacity: 1; }
+  .machine:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.6), inset 0 2px 6px rgba(0,0,0,0.4);
+  }
+  /* alert states — colour the left bar */
+  .machine.has-red::after    { background: var(--red);    opacity:1; box-shadow: 0 0 8px var(--red); }
+  .machine.has-yellow::after { background: var(--yellow); opacity:1; box-shadow: 0 0 8px var(--yellow); }
+  .machine.has-green::after  { background: var(--green);  opacity:1; box-shadow: 0 0 8px var(--green); }
+  .machine.has-blue::after   { background: var(--blue);   opacity:1; box-shadow: 0 0 8px var(--blue); }
+
+  /* inner layout */
+  .machine-body {
+    padding: 6px 8px 5px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .machine-left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+  .machine-label { display: none; }
+  .machine-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(12px, 1.5vw, 17px);
+    letter-spacing: 1.5px;
+    color: #f5d050;
+    text-shadow: 0 0 10px rgba(245,208,80,0.5), 0 1px 3px rgba(0,0,0,0.7);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    display: block;
+    transform-origin: left center;
+  }
+  .machine-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 14px;
+  }
+  /* LED status light */
+  .machine-led {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #1a3a3a, #0a1a1a);
+    border: 1px solid rgba(0,0,0,0.6);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.5);
+    transition: all 0.3s ease;
+  }
+  .machine-led.led-green {
+    background: radial-gradient(circle at 35% 30%, #90ffb0, #22c55e);
+    border-color: #16a34a;
+    box-shadow: 0 0 8px rgba(34,197,94,0.9), 0 0 16px rgba(34,197,94,0.4), inset 0 1px 2px rgba(255,255,255,0.4);
+    animation: led-pulse-green 2.5s ease-in-out infinite;
+  }
+  .machine-led.led-red {
+    background: radial-gradient(circle at 35% 30%, #ffaaaa, #ef4444);
+    border-color: #dc2626;
+    box-shadow: 0 0 8px rgba(239,68,68,0.9), 0 0 16px rgba(239,68,68,0.5), inset 0 1px 2px rgba(255,255,255,0.4);
+    animation: led-pulse-red 0.7s ease-in-out infinite;
+  }
+  .machine-led.led-yellow {
+    background: radial-gradient(circle at 35% 30%, #fff5a0, #eab308);
+    border-color: #ca8a04;
+    box-shadow: 0 0 8px rgba(234,179,8,0.9), 0 0 16px rgba(234,179,8,0.4), inset 0 1px 2px rgba(255,255,255,0.4);
+    animation: led-pulse-yellow 1.8s ease-in-out infinite;
+  }
+  .machine-led.led-blue {
+    background: radial-gradient(circle at 35% 30%, #a0d4ff, #3b82f6);
+    border-color: #2563eb;
+    box-shadow: 0 0 8px rgba(59,130,246,0.9), 0 0 16px rgba(59,130,246,0.4), inset 0 1px 2px rgba(255,255,255,0.4);
+    animation: led-pulse-blue 2s ease-in-out infinite;
+  }
+  @keyframes led-pulse-green  { 0%,100%{box-shadow:0 0 6px rgba(34,197,94,.7),inset 0 1px 2px rgba(255,255,255,.4)} 50%{box-shadow:0 0 14px rgba(34,197,94,1),0 0 22px rgba(34,197,94,.4),inset 0 1px 2px rgba(255,255,255,.4)} }
+  @keyframes led-pulse-red    { 0%,100%{box-shadow:0 0 6px rgba(239,68,68,.8),inset 0 1px 2px rgba(255,255,255,.4);opacity:1} 50%{box-shadow:0 0 16px rgba(239,68,68,1),0 0 24px rgba(239,68,68,.5),inset 0 1px 2px rgba(255,255,255,.4);opacity:.7} }
+  @keyframes led-pulse-yellow { 0%,100%{box-shadow:0 0 6px rgba(234,179,8,.7),inset 0 1px 2px rgba(255,255,255,.4)} 50%{box-shadow:0 0 14px rgba(234,179,8,1),0 0 22px rgba(234,179,8,.4),inset 0 1px 2px rgba(255,255,255,.4)} }
+  @keyframes led-pulse-blue   { 0%,100%{box-shadow:0 0 6px rgba(59,130,246,.7),inset 0 1px 2px rgba(255,255,255,.4)} 50%{box-shadow:0 0 14px rgba(59,130,246,1),0 0 22px rgba(59,130,246,.4),inset 0 1px 2px rgba(255,255,255,.4)} }
+
+  .machine-tap { display: none; }
+
+  /* alert dots row */
+  .machine-notes { display: flex; gap: 3px; padding: 0 8px 5px 10px; flex-wrap: wrap; min-height: 0; }
+  .machine-notes:empty { padding-bottom: 0; }
+  .note-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .note-dot.blue   { background: var(--blue);   box-shadow: 0 0 5px rgba(59,130,246,.7); }
+  .note-dot.red    { background: var(--red);    box-shadow: 0 0 5px rgba(239,68,68,.8);   animation: blink 1s infinite; }
+  .note-dot.yellow { background: var(--yellow); box-shadow: 0 0 5px rgba(234,179,8,.7); }
+  .note-dot.green  { background: var(--green);  box-shadow: 0 0 5px rgba(34,197,94,.7); }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
   .area-orange { background: var(--orange-area); border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; min-height: 60px; }
   .area-label { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: #0f2338; text-align: center; }
   .sidebar { background: #0d1f33; border-left: 1px solid var(--border); display: flex; flex-direction: column; }
@@ -216,8 +381,8 @@
     .logo h1 { font-size: 20px; }
     .floor-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px; gap: 6px; }
     .cell-title { font-size: 9px; letter-spacing: 0.5px; }
-    .machine { padding: 5px 6px; }
-    .machine-name { font-size: 9px; }
+    .machine { padding: 5px 7px; }
+    .machine-name { font-size: 12px; letter-spacing: 1px; }
     .area-label { font-size: 10px; letter-spacing: 1px; }
     .hill-logo-text { font-size: 22px; }
     .board-hero { flex-wrap: wrap; }
@@ -294,13 +459,27 @@
     .video-grid { grid-template-columns: 1fr; }
     .video-hero-banner { flex-direction: column; align-items: flex-start; }
   }
+
+  /* MOTTO BANNER */
+  .motto-banner { background: linear-gradient(135deg, #0d1f33, #1a3a5c); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 14px; padding: 16px 24px; margin-bottom: 18px; display: flex; align-items: center; gap: 24px; position: relative; overflow: hidden; }
+  .motto-banner::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 90% 50%, rgba(245,158,11,0.06) 0%, transparent 60%); pointer-events: none; }
+  .motto-logo { height: 70px; width: auto; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 12px rgba(245,158,11,0.2)); }
+  .motto-text { display: flex; flex-direction: column; gap: 0; }
+  .motto-line { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: var(--accent); line-height: 1.25; }
+  @media (max-width: 900px) {
+    .motto-banner { padding: 12px 16px; gap: 14px; }
+    .motto-logo { height: 50px; }
+    .motto-line { font-size: 16px; letter-spacing: 2px; }
+    .header-logo-img { height: 34px; }
+  }
+
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">
-    <div class="logo-badge">H</div>
+    <img src="data:image/png;base64,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" alt="Hill Logo" style="height:52px;width:52px;object-fit:contain;border-radius:50%;">
     <div><h1>Hill Manufacturing</h1><p>Shop Floor Manager</p></div>
   </div>
   <div class="header-right">
@@ -333,78 +512,395 @@
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
+
+    <div class="motto-banner">
+      <div class="motto-text">
+        <span class="motto-line">Deliver Quality Parts.</span>
+        <span class="motto-line">On Time.</span>
+        <span class="motto-line">Every Time.</span>
+      </div>
+    </div>
+
     <div class="floor-grid">
       <div class="cell" style="grid-column:1;grid-row:1;">
         <div class="cell-title">Big Mill</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('1050-B','Big Mill Cell')"><div class="machine-name">1050-B</div><div class="machine-notes" id="notes-1050-B"></div></div>
-          <div class="machine" onclick="openModal('7000','Big Mill Cell')"><div class="machine-name">7000</div><div class="machine-notes" id="notes-7000"></div></div>
-          <div class="machine" onclick="openModal('VF-6','Big Mill Cell')"><div class="machine-name">VF-6</div><div class="machine-notes" id="notes-VF-6"></div></div>
+          <div class="machine" onclick="openModal('1050-B','Big Mill Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">1050-B</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-1050-B"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-1050-B"></div>
+          </div>
+          <div class="machine" onclick="openModal('7000','Big Mill Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">7000</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-7000"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-7000"></div>
+          </div>
+          <div class="machine" onclick="openModal('VF-6','Big Mill Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">VF-6</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-VF-6"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-VF-6"></div>
+          </div>
         </div>
       </div>
       <div class="cell" style="grid-column:2/4;grid-row:1;">
         <div class="cell-title">5100 · 2500 · PUMA-3</div>
         <div class="machines" style="flex-direction:row;flex-wrap:wrap;gap:6px;">
-          <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('5100-B','5100 Cell')"><div class="machine-name">5100-B</div><div class="machine-notes" id="notes-5100-B"></div></div>
-          <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('2500','5100 Cell')"><div class="machine-name">2500</div><div class="machine-notes" id="notes-2500"></div></div>
-          <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('PUMA-3','5100 Cell')"><div class="machine-name">PUMA-3</div><div class="machine-notes" id="notes-PUMA-3"></div></div>
+          <div class="machine" style="flex:1; min-width:60px" onclick="openModal('5100-B','5100 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">5100-B</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-5100-B"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-5100-B"></div>
+          </div>
+          <div class="machine" style="flex:1; min-width:60px" onclick="openModal('2500','5100 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">2500</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-2500"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-2500"></div>
+          </div>
+          <div class="machine" style="flex:1; min-width:60px" onclick="openModal('PUMA-3','5100 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">PUMA-3</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-PUMA-3"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-PUMA-3"></div>
+          </div>
         </div>
       </div>
       <div class="cell" style="grid-column:4;grid-row:1/3;">
         <div class="cell-title">MPPI</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('ST35','MPPI Cell')"><div class="machine-name">ST35</div><div class="machine-notes" id="notes-ST35"></div></div>
-          <div class="machine" onclick="openModal('VF-3','MPPI Cell')"><div class="machine-name">VF-3</div><div class="machine-notes" id="notes-VF-3"></div></div>
-          <div class="machine" onclick="openModal('VF-2','MPPI Cell')"><div class="machine-name">VF-2</div><div class="machine-notes" id="notes-VF-2"></div></div>
-          <div class="machine" onclick="openModal('PUMA-2','MPPI Cell')"><div class="machine-name">PUMA-2</div><div class="machine-notes" id="notes-PUMA-2"></div></div>
+          <div class="machine" onclick="openModal('ST35','MPPI Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">ST35</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-ST35"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-ST35"></div>
+          </div>
+          <div class="machine" onclick="openModal('VF-3','MPPI Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">VF-3</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-VF-3"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-VF-3"></div>
+          </div>
+          <div class="machine" onclick="openModal('VF-2','MPPI Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">VF-2</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-VF-2"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-VF-2"></div>
+          </div>
+          <div class="machine" onclick="openModal('PUMA-2','MPPI Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">PUMA-2</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-PUMA-2"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-PUMA-2"></div>
+          </div>
         </div>
       </div>
       <div class="area-orange" style="grid-column:1;grid-row:2;"><div class="area-label">Inspection</div></div>
       <div class="cell" style="grid-column:2;grid-row:2;display:flex;flex-direction:column;gap:6px;">
-        <div class="machine" onclick="openModal('SAW-1','Saws')"><div class="machine-name">SAW 1</div><div class="machine-notes" id="notes-SAW-1"></div></div>
-        <div class="machine" onclick="openModal('SAW-2','Saws')"><div class="machine-name">SAW 2</div><div class="machine-notes" id="notes-SAW-2"></div></div>
+        <div class="machine" onclick="openModal('SAW-1','Saws')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">SAW-1</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-SAW-1"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-SAW-1"></div>
+          </div>
+        <div class="machine" onclick="openModal('SAW-2','Saws')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">SAW-2</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-SAW-2"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-SAW-2"></div>
+          </div>
       </div>
       <div class="hill-center"><div class="hill-logo-text">HILL</div></div>
       <div class="cell" style="grid-column:1;grid-row:3;">
         <div class="cell-title">403 Cell</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('403-A','403 Cell')"><div class="machine-name">403-A</div><div class="machine-notes" id="notes-403-A"></div></div>
-          <div class="machine" onclick="openModal('403-B','403 Cell')"><div class="machine-name">403-B</div><div class="machine-notes" id="notes-403-B"></div></div>
-          <div class="machine" onclick="openModal('403-C','403 Cell')"><div class="machine-name">403-C</div><div class="machine-notes" id="notes-403-C"></div></div>
+          <div class="machine" onclick="openModal('403-A','403 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">403-A</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-403-A"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-403-A"></div>
+          </div>
+          <div class="machine" onclick="openModal('403-B','403 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">403-B</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-403-B"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-403-B"></div>
+          </div>
+          <div class="machine" onclick="openModal('403-C','403 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">403-C</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-403-C"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-403-C"></div>
+          </div>
         </div>
       </div>
       <div class="cell" style="grid-column:2;grid-row:3;">
         <div class="cell-title">Mill/Lathe</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('SHARP','Mill/Lathe')"><div class="machine-name">SHARP</div><div class="machine-notes" id="notes-SHARP"></div></div>
-          <div class="machine" onclick="openModal('5100-A','Mill/Lathe')"><div class="machine-name">5100-A</div><div class="machine-notes" id="notes-5100-A"></div></div>
-          <div class="machine" onclick="openModal('SH403','Mill/Lathe')"><div class="machine-name">SH403</div><div class="machine-notes" id="notes-SH403"></div></div>
-          <div class="machine" onclick="openModal('5000','Mill/Lathe')"><div class="machine-name">5000</div><div class="machine-notes" id="notes-5000"></div></div>
+          <div class="machine" onclick="openModal('SHARP','Mill/Lathe')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">SHARP</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-SHARP"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-SHARP"></div>
+          </div>
+          <div class="machine" onclick="openModal('5100-A','Mill/Lathe')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">5100-A</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-5100-A"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-5100-A"></div>
+          </div>
+          <div class="machine" onclick="openModal('SH403','Mill/Lathe')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">SH403</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-SH403"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-SH403"></div>
+          </div>
+          <div class="machine" onclick="openModal('5000','Mill/Lathe')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">5000</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-5000"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-5000"></div>
+          </div>
         </div>
       </div>
       <div class="cell" style="grid-column:3;grid-row:3;">
         <div class="cell-title">3000 Cell</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('3000-C','3000 Cell')"><div class="machine-name">3000-C</div><div class="machine-notes" id="notes-3000-C"></div></div>
-          <div class="machine" onclick="openModal('SYIL','3000 Cell')"><div class="machine-name">SYIL</div><div class="machine-notes" id="notes-SYIL"></div></div>
-          <div class="machine" onclick="openModal('3000-A','3000 Cell')"><div class="machine-name">3000-A</div><div class="machine-notes" id="notes-3000-A"></div></div>
+          <div class="machine" onclick="openModal('3000-C','3000 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">3000-C</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-3000-C"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-3000-C"></div>
+          </div>
+          <div class="machine" onclick="openModal('SYIL','3000 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">SYIL</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-SYIL"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-SYIL"></div>
+          </div>
+          <div class="machine" onclick="openModal('3000-A','3000 Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">3000-A</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-3000-A"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-3000-A"></div>
+          </div>
         </div>
       </div>
       <div class="area-orange" style="grid-column:4;grid-row:3;"><div class="area-label">Ship & Recv</div></div>
       <div class="cell" style="grid-column:1;grid-row:4;">
         <div class="cell-title">Horizontal</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('EMCO','Horizontal Cell')"><div class="machine-name">EMCO</div><div class="machine-notes" id="notes-EMCO"></div></div>
-          <div class="machine" onclick="openModal('2G','Horizontal Cell')"><div class="machine-name">2G</div><div class="machine-notes" id="notes-2G"></div></div>
+          <div class="machine" onclick="openModal('EMCO','Horizontal Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">EMCO</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-EMCO"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-EMCO"></div>
+          </div>
+          <div class="machine" onclick="openModal('2G','Horizontal Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">2G</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-2G"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-2G"></div>
+          </div>
         </div>
       </div>
       <div class="cell" style="grid-column:2/4;grid-row:4;">
         <div class="cell-title">Automation Cell</div>
         <div class="machines" style="flex-direction:row;flex-wrap:wrap;gap:6px;">
-          <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('PUMA-1','Automation Cell')"><div class="machine-name">PUMA-1</div><div class="machine-notes" id="notes-PUMA-1"></div></div>
-          <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('302-B','Automation Cell')"><div class="machine-name">302-B</div><div class="machine-notes" id="notes-302-B"></div></div>
-          <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('TWIN','Automation Cell')"><div class="machine-name">TWIN</div><div class="machine-notes" id="notes-TWIN"></div></div>
-          <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('2500-Y','Automation Cell')"><div class="machine-name">2500-Y</div><div class="machine-notes" id="notes-2500-Y"></div></div>
+          <div class="machine" style="flex:1; min-width:60px" onclick="openModal('PUMA-1','Automation Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">PUMA-1</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-PUMA-1"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-PUMA-1"></div>
+          </div>
+          <div class="machine" style="flex:1; min-width:60px" onclick="openModal('302-B','Automation Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">302-B</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-302-B"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-302-B"></div>
+          </div>
+          <div class="machine" style="flex:1; min-width:60px" onclick="openModal('TWIN','Automation Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">TWIN</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-TWIN"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-TWIN"></div>
+          </div>
+          <div class="machine" style="flex:1; min-width:60px" onclick="openModal('2500-Y','Automation Cell')">
+            <div class="machine-body">
+              <div class="machine-left">
+                <div class="machine-name">2500-Y</div>
+              </div>
+              <div class="machine-right">
+                <div class="machine-led" id="light-2500-Y"></div>
+                
+              </div>
+            </div>
+            <div class="machine-notes" id="notes-2500-Y"></div>
+          </div>
         </div>
       </div>
       <div class="area-orange" style="grid-column:4;grid-row:4;border:3px solid var(--accent);">
@@ -574,12 +1070,34 @@
       window.machineNotes[n.machine].push(n);
     });
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
+    // Reset LEDs and machine state classes
+    document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
+    document.querySelectorAll('.machine').forEach(el => {
+      el.classList.remove('has-red','has-yellow','has-blue','has-green');
+    });
+    const priority = { red:4, yellow:3, blue:2, green:1 };
+    const machinePriority = {};
     notes.forEach(n => {
+      // dots
       const container = document.getElementById('notes-' + n.machine);
       if (container) {
         const dot = document.createElement('span');
         dot.className = 'note-dot ' + n.type;
         container.appendChild(dot);
+      }
+      // LED priority
+      if (!machinePriority[n.machine] || priority[n.type] > priority[machinePriority[n.machine]]) {
+        machinePriority[n.machine] = n.type;
+      }
+    });
+    // Apply LEDs + left-bar colour class
+    Object.entries(machinePriority).forEach(([mid, type]) => {
+      const led = document.getElementById('light-' + mid);
+      if (led) led.className = 'machine-led led-' + type;
+      const notesEl = document.getElementById('notes-' + mid);
+      if (notesEl) {
+        const btn = notesEl.closest('.machine');
+        if (btn) btn.classList.add('has-' + type);
       }
     });
     const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue');
@@ -1115,5 +1633,23 @@
   </div>
 </div>
 
+
+<script>
+// Auto-scale machine names that overflow their button
+function scaleMachineNames() {
+  document.querySelectorAll('.machine-name').forEach(el => {
+    el.style.transform = 'scaleX(1)';
+    const parent = el.parentElement;
+    if (!parent) return;
+    const available = parent.offsetWidth;
+    const nameWidth = el.scrollWidth;
+    if (nameWidth > available && available > 0) {
+      el.style.transform = 'scaleX(' + (available / nameWidth) + ')';
+    }
+  });
+}
+window.addEventListener('load', scaleMachineNames);
+window.addEventListener('resize', scaleMachineNames);
+</script>
 </body>
 </html>
