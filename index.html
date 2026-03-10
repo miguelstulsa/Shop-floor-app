@@ -133,6 +133,17 @@ box-shadow: 0 1px 4px rgba(0,0,0,0.6), inset 0 2px 6px rgba(0,0,0,0.4);
 .machine.has-green::after  { background: var(–green);  opacity:1; box-shadow: 0 0 8px var(–green); }
 .machine.has-blue::after   { background: var(–blue);   opacity:1; box-shadow: 0 0 8px var(–blue); }
 
+/* Full card blink animations */
+@keyframes machine-blink-red    { 0%,49%{background:var(–machine-bg);border-color:rgba(255,255,255,0.06);box-shadow:none} 50%,100%{background:rgba(239,68,68,0.22);border-color:rgba(239,68,68,0.9);box-shadow:0 0 18px rgba(239,68,68,0.55),inset 0 0 10px rgba(239,68,68,0.12)} }
+@keyframes machine-blink-yellow { 0%,49%{background:var(–machine-bg);border-color:rgba(255,255,255,0.06);box-shadow:none} 50%,100%{background:rgba(234,179,8,0.2);border-color:rgba(234,179,8,0.9);box-shadow:0 0 16px rgba(234,179,8,0.5),inset 0 0 10px rgba(234,179,8,0.1)} }
+@keyframes machine-blink-blue   { 0%,49%{background:var(–machine-bg);border-color:rgba(255,255,255,0.06);box-shadow:none} 50%,100%{background:rgba(59,130,246,0.2);border-color:rgba(59,130,246,0.9);box-shadow:0 0 16px rgba(59,130,246,0.5),inset 0 0 10px rgba(59,130,246,0.1)} }
+@keyframes machine-blink-green  { 0%,49%{background:var(–machine-bg);border-color:rgba(255,255,255,0.06);box-shadow:none} 50%,100%{background:rgba(34,197,94,0.18);border-color:rgba(34,197,94,0.9);box-shadow:0 0 16px rgba(34,197,94,0.45),inset 0 0 8px rgba(34,197,94,0.1)} }
+
+.machine.has-red    { animation: machine-blink-red    0.7s step-end infinite; }
+.machine.has-yellow { animation: machine-blink-yellow 1.2s step-end infinite; }
+.machine.has-blue   { animation: machine-blink-blue   1.6s step-end infinite; }
+.machine.has-green  { animation: machine-blink-green  2.4s step-end infinite; }
+
 .machine-body {
 padding: 6px 8px 5px 10px;
 display: flex;
