@@ -133,17 +133,6 @@ box-shadow: 0 1px 4px rgba(0,0,0,0.6), inset 0 2px 6px rgba(0,0,0,0.4);
 .machine.has-green::after  { background: var(–green);  opacity:1; box-shadow: 0 0 8px var(–green); }
 .machine.has-blue::after   { background: var(–blue);   opacity:1; box-shadow: 0 0 8px var(–blue); }
 
-/* Full card blink animations */
-@keyframes machine-blink-red    { 0%,49%{background:var(–machine-bg);border-color:rgba(255,255,255,0.06);box-shadow:none} 50%,100%{background:rgba(239,68,68,0.22);border-color:rgba(239,68,68,0.9);box-shadow:0 0 18px rgba(239,68,68,0.55),inset 0 0 10px rgba(239,68,68,0.12)} }
-@keyframes machine-blink-yellow { 0%,49%{background:var(–machine-bg);border-color:rgba(255,255,255,0.06);box-shadow:none} 50%,100%{background:rgba(234,179,8,0.2);border-color:rgba(234,179,8,0.9);box-shadow:0 0 16px rgba(234,179,8,0.5),inset 0 0 10px rgba(234,179,8,0.1)} }
-@keyframes machine-blink-blue   { 0%,49%{background:var(–machine-bg);border-color:rgba(255,255,255,0.06);box-shadow:none} 50%,100%{background:rgba(59,130,246,0.2);border-color:rgba(59,130,246,0.9);box-shadow:0 0 16px rgba(59,130,246,0.5),inset 0 0 10px rgba(59,130,246,0.1)} }
-@keyframes machine-blink-green  { 0%,49%{background:var(–machine-bg);border-color:rgba(255,255,255,0.06);box-shadow:none} 50%,100%{background:rgba(34,197,94,0.18);border-color:rgba(34,197,94,0.9);box-shadow:0 0 16px rgba(34,197,94,0.45),inset 0 0 8px rgba(34,197,94,0.1)} }
-
-.machine.has-red    { animation: machine-blink-red    0.7s step-end infinite; }
-.machine.has-yellow { animation: machine-blink-yellow 1.2s step-end infinite; }
-.machine.has-blue   { animation: machine-blink-blue   1.6s step-end infinite; }
-.machine.has-green  { animation: machine-blink-green  2.4s step-end infinite; }
-
 .machine-body {
 padding: 6px 8px 5px 10px;
 display: flex;
@@ -214,15 +203,21 @@ animation: led-pulse-blue 2s ease-in-out infinite;
 .machine-notes { display: flex; gap: 3px; padding: 0 8px 5px 10px; flex-wrap: wrap; min-height: 0; }
 .machine-notes:empty { padding-bottom: 0; }
 .note-dot {
-width: 8px; height: 8px;
-border-radius: 2px;
+width: 10px; height: 10px;
+border-radius: 50%;
 display: inline-block;
+flex-shrink: 0;
 }
-.note-dot.blue   { background: var(–blue);   box-shadow: 0 0 5px rgba(59,130,246,.7); }
-.note-dot.red    { background: var(–red);    box-shadow: 0 0 5px rgba(239,68,68,.8);   animation: blink 1s infinite; }
-.note-dot.yellow { background: var(–yellow); box-shadow: 0 0 5px rgba(234,179,8,.7); }
+.note-dot.blue   { background: var(–blue);   box-shadow: 0 0 6px rgba(59,130,246,.9);  animation: blink-blue   1.6s step-end infinite; }
+.note-dot.red    { background: var(–red);    box-shadow: 0 0 6px rgba(239,68,68,.9);   animation: blink-red    0.7s step-end infinite; }
+.note-dot.yellow { background: var(–yellow); box-shadow: 0 0 6px rgba(234,179,8,.9);   animation: blink-yellow 1.2s step-end infinite; }
+.note-dot.green  { background: var(–green);  box-shadow: 0 0 6px rgba(34,197,94,.9);   animation: blink-green  2.0s step-end infinite; }
 .note-dot.green  { background: var(–green);  box-shadow: 0 0 5px rgba(34,197,94,.7); }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+@keyframes blink        { 0%,100%{opacity:1} 50%{opacity:.2} }
+@keyframes blink-red    { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
+@keyframes blink-yellow { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
+@keyframes blink-blue   { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
+@keyframes blink-green  { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
 .area-orange { background: var(–orange-area); border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; min-height: 60px; }
 .area-label { font-family: ‘Bebas Neue’, sans-serif; font-size: 16px; letter-spacing: 2px; color: #0f2338; text-align: center; }
 .sidebar { background: #0d1f33; border-left: 1px solid var(–border); display: flex; flex-direction: column; }
