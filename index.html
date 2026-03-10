@@ -52,15 +52,70 @@ header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-b
 .hill-logo-text { font-family: ‘Bebas Neue’, sans-serif; font-size: 36px; color: var(–accent); letter-spacing: 4px; }
 .cell { background: var(–cell-bg); border-radius: 10px; padding: 10px; border: 1px solid var(–border); }
 .cell-title { font-size: 12px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #e2e8f0; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-.machines { display: flex; flex-direction: column; gap: 5px; }
-.machine { background: var(–machine-bg); border-radius: 6px; padding: 7px 9px; cursor: pointer; transition: all 0.2s; border: 1px solid transparent; }
-.machine:active { background: #8d5522; border-color: var(–accent); }
-.machine-name { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #fcd34d; text-transform: uppercase; }
-.machine-notes { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
-.note-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-.note-dot.blue { background: var(–blue); } .note-dot.red { background: var(–red); animation: blink 1s infinite; }
-.note-dot.yellow { background: var(–yellow); } .note-dot.green { background: var(–green); }
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+/* ── MACHINE BUTTONS – CNC PANEL STYLE ── */
+.machines { display: flex; flex-direction: column; gap: 6px; }
+
+.machine {
+position: relative;
+background: linear-gradient(180deg, #1a2e45 0%, #0f1e30 60%, #0a1520 100%);
+border: 1px solid #2a4060;
+border-top: 1px solid #3a5878;
+border-radius: 8px;
+padding: 8px 10px 7px 10px;
+cursor: pointer;
+transition: border-color 0.2s, box-shadow 0.2s;
+min-height: 52px;
+box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 4px rgba(0,0,0,0.4);
+}
+.machine:active { border-color: var(–accent); box-shadow: 0 0 10px rgba(245,158,11,0.3); }
+
+/* LED dot – top right */
+.machine::before {
+content: ‘’;
+position: absolute;
+top: 7px; right: 8px;
+width: 9px; height: 9px;
+border-radius: 50%;
+background: #1a2e3a;
+border: 1px solid #2a4050;
+box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+transition: background 0.2s, box-shadow 0.2s;
+}
+
+/* LED active states – color from data-led attribute */
+.machine[data-led=“blue”]::before   { background: var(–blue);   box-shadow: 0 0 6px 2px rgba(59,130,246,0.7); animation: blinkBlue 1s infinite; }
+.machine[data-led=“red”]::before    { background: var(–red);    box-shadow: 0 0 6px 2px rgba(239,68,68,0.7);  animation: blinkRed 1s infinite; }
+.machine[data-led=“yellow”]::before { background: var(–yellow); box-shadow: 0 0 6px 2px rgba(234,179,8,0.7);  animation: blinkYellow 1s infinite; }
+.machine[data-led=“green”]::before  { background: var(–green);  box-shadow: 0 0 6px 2px rgba(34,197,94,0.7);  animation: blinkGreen 1s infinite; }
+
+@keyframes blinkBlue   { 0%,100%{opacity:1;box-shadow:0 0 6px 2px rgba(59,130,246,0.8)}  50%{opacity:.4;box-shadow:0 0 2px 1px rgba(59,130,246,0.3)} }
+@keyframes blinkRed    { 0%,100%{opacity:1;box-shadow:0 0 6px 2px rgba(239,68,68,0.8)}   50%{opacity:.4;box-shadow:0 0 2px 1px rgba(239,68,68,0.3)} }
+@keyframes blinkYellow { 0%,100%{opacity:1;box-shadow:0 0 6px 2px rgba(234,179,8,0.8)}   50%{opacity:.4;box-shadow:0 0 2px 1px rgba(234,179,8,0.3)} }
+@keyframes blinkGreen  { 0%,100%{opacity:1;box-shadow:0 0 6px 2px rgba(34,197,94,0.8)}   50%{opacity:.4;box-shadow:0 0 2px 1px rgba(34,197,94,0.3)} }
+
+.machine-name {
+font-family: ‘Bebas Neue’, sans-serif;
+font-size: 13px;
+letter-spacing: 1.5px;
+color: #f5d050;
+text-shadow: 0 0 8px rgba(245,208,80,0.4);
+display: block;
+padding-right: 14px; /* room for LED */
+line-height: 1.2;
+}
+
+/* Small square indicator row at bottom of machine card */
+.machine-notes { display: flex; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
+.note-dot {
+width: 10px; height: 10px;
+border-radius: 2px;
+display: inline-block;
+box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+.note-dot.blue   { background: var(–blue); }
+.note-dot.red    { background: var(–red); }
+.note-dot.yellow { background: var(–yellow); }
+.note-dot.green  { background: var(–green); }
 .area-orange { background: var(–orange-area); border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; min-height: 60px; }
 .area-label { font-family: ‘Bebas Neue’, sans-serif; font-size: 16px; letter-spacing: 2px; color: #0f2338; text-align: center; }
 .sidebar { background: #0d1f33; border-left: 1px solid var(–border); display: flex; flex-direction: column; }
@@ -218,8 +273,9 @@ header { padding: 8px 12px; }
 .logo h1 { font-size: 20px; }
 .floor-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px; gap: 6px; }
 .cell-title { font-size: 9px; letter-spacing: 0.5px; }
-.machine { padding: 5px 6px; }
-.machine-name { font-size: 9px; }
+.machine { padding: 6px 7px; min-height: 44px; }
+.machine-name { font-size: 11px; letter-spacing: 1px; }
+.machine::before { width: 7px; height: 7px; top: 5px; right: 6px; }
 .area-label { font-size: 10px; letter-spacing: 1px; }
 .hill-logo-text { font-size: 22px; }
 .board-hero { flex-wrap: wrap; }
@@ -454,7 +510,7 @@ header { padding: 8px 12px; }
     <div class="cell-title">Automation Cell</div>
     <div class="machines" style="flex-direction:row;flex-wrap:wrap;gap:6px;">
       <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('PUMA-1','Automation Cell')"><div class="machine-name">PUMA-1</div><div class="machine-notes" id="notes-PUMA-1"></div></div>
-      <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('302-B','Automation Cell')"><div class="machine-name">302-B</div><div class="machine-notes" id="notes-302-B"></div></div>
+      <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('303-B','Automation Cell')"><div class="machine-name">303-B</div><div class="machine-notes" id="notes-303-B"></div></div>
       <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('TWIN','Automation Cell')"><div class="machine-name">TWIN</div><div class="machine-notes" id="notes-TWIN"></div></div>
       <div class="machine" style="flex:1;min-width:60px;" onclick="openModal('2500-Y','Automation Cell')"><div class="machine-name">2500-Y</div><div class="machine-notes" id="notes-2500-Y"></div></div>
     </div>
@@ -657,12 +713,32 @@ header { padding: 8px 12px; }
       window.machineNotes[n.machine].push(n);
     });
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
+    // Clear all LED states first
+    document.querySelectorAll('.machine[data-led]').forEach(el => el.removeAttribute('data-led'));
+
+    // Priority: red=4, yellow=3, blue=2, green=1
+    const ledPriority = { red: 4, yellow: 3, blue: 2, green: 1 };
+    const machineLed = {};
+
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
       if (container) {
         const dot = document.createElement('span');
         dot.className = 'note-dot ' + n.type;
         container.appendChild(dot);
+        // Track highest priority color per machine
+        if (!machineLed[n.machine] || (ledPriority[n.type] || 0) > (ledPriority[machineLed[n.machine]] || 0)) {
+          machineLed[n.machine] = n.type;
+        }
+      }
+    });
+
+    // Set data-led on machine parent buttons
+    Object.keys(machineLed).forEach(machine => {
+      const container = document.getElementById('notes-' + machine);
+      if (container) {
+        const machineEl = container.closest('.machine');
+        if (machineEl) machineEl.setAttribute('data-led', machineLed[machine]);
       }
     });
     const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue');
