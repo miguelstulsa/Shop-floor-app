@@ -50,7 +50,7 @@
 
   /* SHOP FLOOR */
   .shop-page { display: none; }
-  .shop-page.active { display: grid; grid-template-columns: 1fr 340px; min-height: calc(100vh - 121px); }
+  .shop-page.active { display: grid; grid-template-columns: 1fr 360px; min-height: calc(100vh - 121px); }
   .floor-section { padding: 20px; overflow-y: auto; }
   .floor-title { font-size: 13px; letter-spacing: 3px; color: #64748b; text-transform: uppercase; margin-bottom: 16px; }
   .floor-grid { background: #1a3a5c; border-radius: 16px; padding: 20px; border: 1px solid #2a5a8c; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
@@ -198,14 +198,14 @@
   @keyframes blink-green  { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
   .area-orange { background: #d97706; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; min-height: 60px; }
   .area-label { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: #0f2338; text-align: center; }
-  .sidebar { background: #0d1f33; border-left: 1px solid #2a5a8c; display: flex; flex-direction: column; }
+  .sidebar { background: #080f1d; border-left: 2px solid #1e3a5f; display: flex; flex-direction: column; min-width: 320px; }
   .sidebar-header { padding: 16px 20px; border-bottom: 1px solid #2a5a8c; font-size: 14px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; }
   .notif-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .notif-item { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 14px 14px 14px 50px; border-left: 5px solid transparent; position: relative; margin-bottom: 6px; }
-  .notif-item.red    { border-left-color: #ef4444; background: rgba(239,68,68,0.12); box-shadow: inset 0 0 20px rgba(239,68,68,0.05); }
-  .notif-item.yellow { border-left-color: #eab308; background: rgba(234,179,8,0.12); box-shadow: inset 0 0 20px rgba(234,179,8,0.05); }
-  .notif-item.blue   { border-left-color: #3b82f6; background: rgba(59,130,246,0.12); box-shadow: inset 0 0 20px rgba(59,130,246,0.05); }
-  .notif-item.green  { border-left-color: #22c55e; background: rgba(34,197,94,0.12); box-shadow: inset 0 0 20px rgba(34,197,94,0.05); }
+  .notif-item { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 16px 16px 16px 54px; border-left: 6px solid transparent; position: relative; margin-bottom: 10px; transition: transform 0.15s; }
+  .notif-item.red    { border-left-color: #ef4444; background: rgba(239,68,68,0.15); box-shadow: inset 0 0 30px rgba(239,68,68,0.08), 0 0 0 1px rgba(239,68,68,0.2); }
+  .notif-item.yellow { border-left-color: #eab308; background: rgba(234,179,8,0.15); box-shadow: inset 0 0 30px rgba(234,179,8,0.08), 0 0 0 1px rgba(234,179,8,0.2); }
+  .notif-item.blue   { border-left-color: #3b82f6; background: rgba(59,130,246,0.15); box-shadow: inset 0 0 30px rgba(59,130,246,0.08), 0 0 0 1px rgba(59,130,246,0.2); }
+  .notif-item.green  { border-left-color: #22c55e; background: rgba(34,197,94,0.15); box-shadow: inset 0 0 30px rgba(34,197,94,0.08), 0 0 0 1px rgba(34,197,94,0.2); }
   .notif-blink-dot { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; }
   .notif-item.red    .notif-blink-dot { background: #ef4444; box-shadow: 0 0 12px 4px #ef4444; animation: blink-red    0.7s step-end infinite; }
   .notif-item.yellow .notif-blink-dot { background: #eab308; box-shadow: 0 0 12px 4px #eab308; animation: blink-yellow 1.2s step-end infinite; }
@@ -920,6 +920,165 @@
   .dnx-machine-row:hover { border-color:#f59e0b; background:#0f2845; box-shadow:0 0 16px rgba(245,158,11,0.15); }
   .dnx-machine-name { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:#f0f4f8; }
   .dnx-machine-open { font-family:'Barlow Condensed',sans-serif; font-size:13px; letter-spacing:1.5px; color:#f59e0b; }
+
+  /* ── PERFORMANCE LIGHT SYSTEM ── */
+  .perf-light {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px 5px 8px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 2px;
+  }
+  .perf-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: all 0.5s ease;
+  }
+  .perf-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.5s ease;
+  }
+
+  /* PENDING - waiting for API */
+  .perf-dot.pending  { background: #334155; box-shadow: none; }
+  .perf-light .perf-label { color: #475569; }
+
+  /* GREEN - on target */
+  .perf-dot.green  {
+    background: #22c55e;
+    box-shadow: 0 0 8px 2px rgba(34,197,94,0.8);
+    animation: perf-pulse-green 2.5s ease-in-out infinite;
+  }
+  .perf-light.green .perf-label { color: #22c55e; }
+
+  /* YELLOW - trending off */
+  .perf-dot.yellow {
+    background: #eab308;
+    box-shadow: 0 0 8px 2px rgba(234,179,8,0.8);
+    animation: perf-pulse-yellow 1.5s ease-in-out infinite;
+  }
+  .perf-light.yellow .perf-label { color: #eab308; }
+
+  /* RED - underperforming */
+  .perf-dot.red {
+    background: #ef4444;
+    box-shadow: 0 0 10px 3px rgba(239,68,68,0.9);
+    animation: perf-pulse-red 0.8s ease-in-out infinite;
+  }
+  .perf-light.red .perf-label { color: #ef4444; }
+
+  /* OFFLINE - machine stopped */
+  .perf-dot.offline {
+    background: #475569;
+    box-shadow: none;
+  }
+  .perf-light.offline .perf-label { color: #475569; }
+
+  @keyframes perf-pulse-green {
+    0%, 100% { box-shadow: 0 0 6px 1px rgba(34,197,94,0.6); }
+    50%       { box-shadow: 0 0 14px 4px rgba(34,197,94,1); }
+  }
+  @keyframes perf-pulse-yellow {
+    0%, 100% { box-shadow: 0 0 6px 1px rgba(234,179,8,0.6); }
+    50%       { box-shadow: 0 0 14px 4px rgba(234,179,8,1); }
+  }
+  @keyframes perf-pulse-red {
+    0%, 100% { box-shadow: 0 0 8px 2px rgba(239,68,68,0.7); }
+    50%       { box-shadow: 0 0 16px 5px rgba(239,68,68,1); }
+  }
+
+  /* SIDEBAR ALWAYS-VISIBLE UPGRADE */
+  .sidebar-header {
+    padding: 18px 20px;
+    border-bottom: 2px solid #1e3a5f;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: #f0f4f8;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #0a1525;
+    flex-shrink: 0;
+  }
+  .notif-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 12px;
+  }
+  .notif-machine {
+    font-family: 'Bebas Neue', sans-serif !important;
+    font-size: 18px !important;
+    letter-spacing: 1.5px !important;
+    color: #f0f4f8 !important;
+    line-height: 1.1;
+  }
+  .notif-type {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .notif-detail {
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .notif-time {
+    font-family: 'Barlow', sans-serif;
+    font-size: 11px;
+    color: #475569;
+    margin-top: 6px;
+  }
+  .notif-dismiss {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255,255,255,0.07);
+    border: none;
+    color: #64748b;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .notif-dismiss:hover { background: rgba(239,68,68,0.3); color: #ef4444; }
+  .empty-notif {
+    text-align: center;
+    padding: 60px 20px;
+    color: #334155;
+  }
+  .empty-notif .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-notif p { font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.6; }
+  .notif-blink-dot {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .notif-item.red    .notif-blink-dot { background: #ef4444; box-shadow: 0 0 10px 3px rgba(239,68,68,0.9); animation: blink-red 0.7s step-end infinite; }
+  .notif-item.yellow .notif-blink-dot { background: #eab308; box-shadow: 0 0 10px 3px rgba(234,179,8,0.9); animation: blink-yellow 1.2s step-end infinite; }
+  .notif-item.blue   .notif-blink-dot { background: #3b82f6; box-shadow: 0 0 10px 3px rgba(59,130,246,0.9); animation: blink-blue 1.6s step-end infinite; }
+  .notif-item.green  .notif-blink-dot { background: #22c55e; box-shadow: 0 0 10px 3px rgba(34,197,94,0.9); animation: blink-green 2.0s step-end infinite; }
 </style>
 </head>
 <body>
@@ -1056,61 +1215,61 @@
       <div class="cell" style="grid-column:1;grid-row:1;">
         <div class="cell-title">Big Mill</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('1050-B','Big Mill Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">1050-B</div></div><div class="machine-right"><div class="machine-led" id="light-1050-B"></div></div></div><div class="machine-notes" id="notes-1050-B"></div></div>
-          <div class="machine" onclick="openModal('7000','Big Mill Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">7000</div></div><div class="machine-right"><div class="machine-led" id="light-7000"></div></div></div><div class="machine-notes" id="notes-7000"></div></div>
-          <div class="machine" onclick="openModal('VF-6','Big Mill Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-6</div></div><div class="machine-right"><div class="machine-led" id="light-VF-6"></div></div></div><div class="machine-notes" id="notes-VF-6"></div></div>
+          <div class="machine" onclick="openModal('1050-B','Big Mill Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">1050-B</div><div class="perf-light" id="perf-1050-B" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-1050-B">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-1050-B"></div></div></div><div class="machine-notes" id="notes-1050-B"></div></div>
+          <div class="machine" onclick="openModal('7000','Big Mill Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">7000</div><div class="perf-light" id="perf-7000" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-7000">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-7000"></div></div></div><div class="machine-notes" id="notes-7000"></div></div>
+          <div class="machine" onclick="openModal('VF-6','Big Mill Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-6</div><div class="perf-light" id="perf-VF-6" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-VF-6">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-VF-6"></div></div></div><div class="machine-notes" id="notes-VF-6"></div></div>
         </div>
       </div>
       <!-- 5100 · 2500 · PUMA-3 -->
       <div class="cell" style="grid-column:2/4;grid-row:1;">
         <div class="cell-title">5100 · 2500 · PUMA-3</div>
         <div class="machines" style="flex-direction:row;flex-wrap:wrap;gap:6px;">
-          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('5100-B','5100 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">5100-B</div></div><div class="machine-right"><div class="machine-led" id="light-5100-B"></div></div></div><div class="machine-notes" id="notes-5100-B"></div></div>
-          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('2500','5100 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">2500</div></div><div class="machine-right"><div class="machine-led" id="light-2500"></div></div></div><div class="machine-notes" id="notes-2500"></div></div>
-          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('PUMA-3','5100 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-3</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-3"></div></div></div><div class="machine-notes" id="notes-PUMA-3"></div></div>
+          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('5100-B','5100 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">5100-B</div><div class="perf-light" id="perf-5100-B" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-5100-B">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-5100-B"></div></div></div><div class="machine-notes" id="notes-5100-B"></div></div>
+          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('2500','5100 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">2500</div><div class="perf-light" id="perf-2500" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-2500">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-2500"></div></div></div><div class="machine-notes" id="notes-2500"></div></div>
+          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('PUMA-3','5100 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-3</div><div class="perf-light" id="perf-PUMA-3" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-PUMA-3">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-3"></div></div></div><div class="machine-notes" id="notes-PUMA-3"></div></div>
         </div>
       </div>
       <!-- MPPI Cell -->
       <div class="cell" style="grid-column:4;grid-row:1/3;">
         <div class="cell-title">MPPI</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('ST35','MPPI Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">ST35</div></div><div class="machine-right"><div class="machine-led" id="light-ST35"></div></div></div><div class="machine-notes" id="notes-ST35"></div></div>
-          <div class="machine" onclick="openModal('VF-3','MPPI Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-3</div></div><div class="machine-right"><div class="machine-led" id="light-VF-3"></div></div></div><div class="machine-notes" id="notes-VF-3"></div></div>
-          <div class="machine" onclick="openModal('VF-2','MPPI Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-2</div></div><div class="machine-right"><div class="machine-led" id="light-VF-2"></div></div></div><div class="machine-notes" id="notes-VF-2"></div></div>
-          <div class="machine" onclick="openModal('PUMA-2','MPPI Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-2</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-2"></div></div></div><div class="machine-notes" id="notes-PUMA-2"></div></div>
+          <div class="machine" onclick="openModal('ST35','MPPI Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">ST35</div><div class="perf-light" id="perf-ST35" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-ST35">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-ST35"></div></div></div><div class="machine-notes" id="notes-ST35"></div></div>
+          <div class="machine" onclick="openModal('VF-3','MPPI Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-3</div><div class="perf-light" id="perf-VF-3" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-VF-3">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-VF-3"></div></div></div><div class="machine-notes" id="notes-VF-3"></div></div>
+          <div class="machine" onclick="openModal('VF-2','MPPI Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-2</div><div class="perf-light" id="perf-VF-2" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-VF-2">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-VF-2"></div></div></div><div class="machine-notes" id="notes-VF-2"></div></div>
+          <div class="machine" onclick="openModal('PUMA-2','MPPI Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-2</div><div class="perf-light" id="perf-PUMA-2" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-PUMA-2">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-2"></div></div></div><div class="machine-notes" id="notes-PUMA-2"></div></div>
         </div>
       </div>
       <!-- Row 2 -->
       <div class="area-orange" style="grid-column:1;grid-row:2;"><div class="area-label">Inspection</div></div>
       <div class="cell" style="grid-column:2;grid-row:2;display:flex;flex-direction:column;gap:6px;">
-        <div class="machine" onclick="openModal('SAW-1','Saws')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW-1</div></div><div class="machine-right"><div class="machine-led" id="light-SAW-1"></div></div></div><div class="machine-notes" id="notes-SAW-1"></div></div>
-        <div class="machine" onclick="openModal('SAW-2','Saws')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW-2</div></div><div class="machine-right"><div class="machine-led" id="light-SAW-2"></div></div></div><div class="machine-notes" id="notes-SAW-2"></div></div>
+        <div class="machine" onclick="openModal('SAW-1','Saws')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW-1</div><div class="perf-light" id="perf-SAW-1" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-SAW-1">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-SAW-1"></div></div></div><div class="machine-notes" id="notes-SAW-1"></div></div>
+        <div class="machine" onclick="openModal('SAW-2','Saws')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW-2</div><div class="perf-light" id="perf-SAW-2" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-SAW-2">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-SAW-2"></div></div></div><div class="machine-notes" id="notes-SAW-2"></div></div>
       </div>
       <div class="hill-center"><div class="hill-logo-text">HILL</div></div>
       <!-- Row 3 -->
       <div class="cell" style="grid-column:1;grid-row:3;">
         <div class="cell-title">403 Cell</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('403-A','403 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">403-A</div></div><div class="machine-right"><div class="machine-led" id="light-403-A"></div></div></div><div class="machine-notes" id="notes-403-A"></div></div>
-          <div class="machine" onclick="openModal('403-B','403 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">403-B</div></div><div class="machine-right"><div class="machine-led" id="light-403-B"></div></div></div><div class="machine-notes" id="notes-403-B"></div></div>
-          <div class="machine" onclick="openModal('403-C','403 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">403-C</div></div><div class="machine-right"><div class="machine-led" id="light-403-C"></div></div></div><div class="machine-notes" id="notes-403-C"></div></div>
+          <div class="machine" onclick="openModal('403-A','403 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">403-A</div><div class="perf-light" id="perf-403-A" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-403-A">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-403-A"></div></div></div><div class="machine-notes" id="notes-403-A"></div></div>
+          <div class="machine" onclick="openModal('403-B','403 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">403-B</div><div class="perf-light" id="perf-403-B" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-403-B">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-403-B"></div></div></div><div class="machine-notes" id="notes-403-B"></div></div>
+          <div class="machine" onclick="openModal('403-C','403 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">403-C</div><div class="perf-light" id="perf-403-C" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-403-C">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-403-C"></div></div></div><div class="machine-notes" id="notes-403-C"></div></div>
         </div>
       </div>
       <div class="cell" style="grid-column:2;grid-row:3;">
         <div class="cell-title">Mill/Lathe</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('SHARP','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SHARP</div></div><div class="machine-right"><div class="machine-led" id="light-SHARP"></div></div></div><div class="machine-notes" id="notes-SHARP"></div></div>
-          <div class="machine" onclick="openModal('5100-A','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">5100-A</div></div><div class="machine-right"><div class="machine-led" id="light-5100-A"></div></div></div><div class="machine-notes" id="notes-5100-A"></div></div>
-          <div class="machine" onclick="openModal('SH403','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SH403</div></div><div class="machine-right"><div class="machine-led" id="light-SH403"></div></div></div><div class="machine-notes" id="notes-SH403"></div></div>
-          <div class="machine" onclick="openModal('5000','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">5000</div></div><div class="machine-right"><div class="machine-led" id="light-5000"></div></div></div><div class="machine-notes" id="notes-5000"></div></div>
+          <div class="machine" onclick="openModal('SHARP','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SHARP</div><div class="perf-light" id="perf-SHARP" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-SHARP">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-SHARP"></div></div></div><div class="machine-notes" id="notes-SHARP"></div></div>
+          <div class="machine" onclick="openModal('5100-A','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">5100-A</div><div class="perf-light" id="perf-5100-A" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-5100-A">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-5100-A"></div></div></div><div class="machine-notes" id="notes-5100-A"></div></div>
+          <div class="machine" onclick="openModal('SH403','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SH403</div><div class="perf-light" id="perf-SH403" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-SH403">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-SH403"></div></div></div><div class="machine-notes" id="notes-SH403"></div></div>
+          <div class="machine" onclick="openModal('5000','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">5000</div><div class="perf-light" id="perf-5000" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-5000">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-5000"></div></div></div><div class="machine-notes" id="notes-5000"></div></div>
         </div>
       </div>
       <div class="cell" style="grid-column:3;grid-row:3;">
         <div class="cell-title">3000 Cell</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('3000-C','3000 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">3000-C</div></div><div class="machine-right"><div class="machine-led" id="light-3000-C"></div></div></div><div class="machine-notes" id="notes-3000-C"></div></div>
-          <div class="machine" onclick="openModal('SYIL','3000 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SYIL</div></div><div class="machine-right"><div class="machine-led" id="light-SYIL"></div></div></div><div class="machine-notes" id="notes-SYIL"></div></div>
-          <div class="machine" onclick="openModal('3000-A','3000 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">3000-A</div></div><div class="machine-right"><div class="machine-led" id="light-3000-A"></div></div></div><div class="machine-notes" id="notes-3000-A"></div></div>
+          <div class="machine" onclick="openModal('3000-C','3000 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">3000-C</div><div class="perf-light" id="perf-3000-C" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-3000-C">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-3000-C"></div></div></div><div class="machine-notes" id="notes-3000-C"></div></div>
+          <div class="machine" onclick="openModal('SYIL','3000 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SYIL</div><div class="perf-light" id="perf-SYIL" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-SYIL">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-SYIL"></div></div></div><div class="machine-notes" id="notes-SYIL"></div></div>
+          <div class="machine" onclick="openModal('3000-A','3000 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">3000-A</div><div class="perf-light" id="perf-3000-A" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-3000-A">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-3000-A"></div></div></div><div class="machine-notes" id="notes-3000-A"></div></div>
         </div>
       </div>
       <div class="area-orange" style="grid-column:4;grid-row:3;"><div class="area-label">Ship &amp; Recv</div></div>
@@ -1118,17 +1277,17 @@
       <div class="cell" style="grid-column:1;grid-row:4;">
         <div class="cell-title">Horizontal</div>
         <div class="machines">
-          <div class="machine" onclick="openModal('EMCO','Horizontal Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">EMCO</div></div><div class="machine-right"><div class="machine-led" id="light-EMCO"></div></div></div><div class="machine-notes" id="notes-EMCO"></div></div>
-          <div class="machine" onclick="openModal('2G','Horizontal Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">2G</div></div><div class="machine-right"><div class="machine-led" id="light-2G"></div></div></div><div class="machine-notes" id="notes-2G"></div></div>
+          <div class="machine" onclick="openModal('EMCO','Horizontal Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">EMCO</div><div class="perf-light" id="perf-EMCO" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-EMCO">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-EMCO"></div></div></div><div class="machine-notes" id="notes-EMCO"></div></div>
+          <div class="machine" onclick="openModal('2G','Horizontal Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">2G</div><div class="perf-light" id="perf-2G" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-2G">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-2G"></div></div></div><div class="machine-notes" id="notes-2G"></div></div>
         </div>
       </div>
       <div class="cell" style="grid-column:2/4;grid-row:4;">
         <div class="cell-title">Automation Cell</div>
         <div class="machines" style="flex-direction:row;flex-wrap:wrap;gap:6px;">
-          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('PUMA-1','Automation Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-1</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-1"></div></div></div><div class="machine-notes" id="notes-PUMA-1"></div></div>
-          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('303-B','Automation Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">303-B</div></div><div class="machine-right"><div class="machine-led" id="light-303-B"></div></div></div><div class="machine-notes" id="notes-303-B"></div></div>
-          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('TWIN','Automation Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">TWIN</div></div><div class="machine-right"><div class="machine-led" id="light-TWIN"></div></div></div><div class="machine-notes" id="notes-TWIN"></div></div>
-          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('2500-Y','Automation Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">2500-Y</div></div><div class="machine-right"><div class="machine-led" id="light-2500-Y"></div></div></div><div class="machine-notes" id="notes-2500-Y"></div></div>
+          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('PUMA-1','Automation Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-1</div><div class="perf-light" id="perf-PUMA-1" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-PUMA-1">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-1"></div></div></div><div class="machine-notes" id="notes-PUMA-1"></div></div>
+          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('303-B','Automation Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">303-B</div><div class="perf-light" id="perf-303-B" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-303-B">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-303-B"></div></div></div><div class="machine-notes" id="notes-303-B"></div></div>
+          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('TWIN','Automation Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">TWIN</div><div class="perf-light" id="perf-TWIN" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-TWIN">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-TWIN"></div></div></div><div class="machine-notes" id="notes-TWIN"></div></div>
+          <div class="machine" style="flex:1;min-width:60px" onclick="openModal('2500-Y','Automation Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">2500-Y</div><div class="perf-light" id="perf-2500-Y" title="Performance: Awaiting Data"><span class="perf-dot pending"></span><span class="perf-label" id="perf-label-2500-Y">—</span></div></div><div class="machine-right"><div class="machine-led" id="light-2500-Y"></div></div></div><div class="machine-notes" id="notes-2500-Y"></div></div>
         </div>
       </div>
       <div class="area-orange" style="grid-column:4;grid-row:4;border:3px solid #f59e0b;">
@@ -1137,7 +1296,7 @@
     </div>
   </div>
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-header" onclick="toggleSidebar()"><span class="sidebar-live-dot"></span> LIVE REQUEST FEED <span id="sidebarCount" class="sidebar-count-badge" style="display:none">0</span></div>
+    <div class="sidebar-header"><span class="sidebar-live-dot"></span> LIVE REQUEST FEED <span id="sidebarCount" class="sidebar-count-badge" style="display:none">0</span></div>
     <div id="notifBanner" class="notif-banner" onclick="enableNotifications()" style="display:none;">
       <p>📱 Enable phone notifications</p>
       <button>Enable</button>
@@ -2253,6 +2412,87 @@
       }
     }
   });
+
+
+  // ═══════════════════════════════════════════════════
+  // PERFORMANCE LIGHT ENGINE
+  // Green  = cycle time within 5% of target
+  // Yellow = 5–15% over target
+  // Red    = 15%+ over target OR machine stopped
+  // ═══════════════════════════════════════════════════
+
+  const PERF_THRESHOLDS = { green: 0.05, yellow: 0.15 }; // % over target
+
+  function setPerfLight(machineId, status, labelText) {
+    const light = document.getElementById('perf-' + machineId);
+    const dot   = light ? light.querySelector('.perf-dot') : null;
+    const label = document.getElementById('perf-label-' + machineId);
+    if (!light || !dot || !label) return;
+    dot.className   = 'perf-dot ' + status;
+    light.className = 'perf-light ' + status;
+    label.textContent = labelText;
+  }
+
+  function applyPerfData(machineId, actualCycleTime, targetCycleTime) {
+    if (!actualCycleTime || !targetCycleTime || targetCycleTime === 0) {
+      setPerfLight(machineId, 'offline', 'OFFLINE');
+      return;
+    }
+    const diff = (actualCycleTime - targetCycleTime) / targetCycleTime;
+    if (diff <= PERF_THRESHOLDS.green) {
+      setPerfLight(machineId, 'green', 'ON TARGET');
+    } else if (diff <= PERF_THRESHOLDS.yellow) {
+      const pct = Math.round(diff * 100);
+      setPerfLight(machineId, 'yellow', '+' + pct + '% SLOW');
+    } else {
+      const pct = Math.round(diff * 100);
+      setPerfLight(machineId, 'red', '+' + pct + '% SLOW');
+    }
+  }
+
+  // ── DATANOMIX API HOOK (ready for your API key) ──
+  // When Datanomix gives you an API key, replace the demo below with:
+  //
+  //   const DATANOMIX_API_KEY = 'your-key-here';
+  //   async function fetchPerfData() {
+  //     const res = await fetch('https://api.datanomix.com/v1/machines', {
+  //       headers: { 'Authorization': 'Bearer ' + DATANOMIX_API_KEY }
+  //     });
+  //     const data = await res.json();
+  //     data.machines.forEach(m => {
+  //       applyPerfData(m.name, m.actualCycleTime, m.targetCycleTime);
+  //     });
+  //   }
+  //   setInterval(fetchPerfData, 30000);
+  //   fetchPerfData();
+
+  // ── DEMO MODE — shows what it will look like ──
+  // Remove this block once real API is connected
+  function runPerfDemo() {
+    const machines = [
+      'VF-6','7000','1050-B','5100-B','2500','PUMA-3',
+      'ST35','VF-3','VF-2','PUMA-2','SAW-1','SAW-2',
+      '403-A','403-B','403-C','SHARP','5100-A','SH403','5000',
+      '3000-C','SYIL','3000-A','EMCO','2G','PUMA-1','303-B','TWIN','2500-Y'
+    ];
+    const statuses = [
+      { status: 'green',   label: 'ON TARGET' },
+      { status: 'green',   label: 'ON TARGET' },
+      { status: 'green',   label: 'ON TARGET' },
+      { status: 'yellow',  label: '+8% SLOW'  },
+      { status: 'yellow',  label: '+12% SLOW' },
+      { status: 'red',     label: '+22% SLOW' },
+      { status: 'offline', label: 'OFFLINE'   },
+    ];
+    machines.forEach(m => {
+      const s = statuses[Math.floor(Math.random() * statuses.length)];
+      setPerfLight(m, s.status, s.label);
+    });
+  }
+
+  // Run demo after page loads, refresh every 45s to show it's live
+  setTimeout(runPerfDemo, 1200);
+  setInterval(runPerfDemo, 45000);
 
 </script>
 </body>
