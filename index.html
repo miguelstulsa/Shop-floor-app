@@ -12,12 +12,12 @@
     --dark: #0f2338; --border: #2a5a8c;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0f2338; color: #f0f4f8; font-family: 'Barlow', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body { background: #0f2338; color: #f0f4f8; font-family: 'Barlow', sans-serif; height: 100vh; overflow: hidden; }
 
   /* HEADER */
-  header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-bottom: 3px solid #f59e0b; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+  header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-bottom: 3px solid #f59e0b; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
   .logo { display: flex; align-items: center; gap: 12px; }
-  .logo-badge { width: 48px; height: 48px; background: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #0f2338; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.4); }
+  .logo-badge { width: 36px; height: 36px; background: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #0f2338; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.4); }
   .header-logo-img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
   .logo h1 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #f59e0b; line-height: 1; }
   .logo p { font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; }
@@ -33,7 +33,7 @@
 
   /* NAV TABS */
   .nav-tabs { background: #0b1c2e; border-bottom: 2px solid #2a5a8c; display: flex; padding: 0 20px; gap: 2px; }
-  .nav-tab { padding: 11px 22px; font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 2.5px; color: #475569; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.25s ease; display: flex; align-items: center; gap: 8px; border-radius: 8px 8px 0 0; }
+  .nav-tab { padding: 7px 16px; font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 2.5px; color: #475569; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.25s ease; display: flex; align-items: center; gap: 8px; border-radius: 8px 8px 0 0; }
   .nav-tab:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
   .nav-tab.active {
     color: #f59e0b;
@@ -50,28 +50,31 @@
 
   /* SHOP FLOOR */
   .shop-page { display: none; }
-  .shop-page.active { display: grid; grid-template-columns: 1fr 360px; min-height: calc(100vh - 121px); }
-  .floor-section { padding: 20px; overflow-y: auto; }
-  .floor-title { font-size: 13px; letter-spacing: 3px; color: #64748b; text-transform: uppercase; margin-bottom: 16px; }
-  .floor-grid { background: #1a3a5c; border-radius: 16px; padding: 20px; border: 1px solid #2a5a8c; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .shop-page.active { display: grid; grid-template-columns: 1fr 320px; height: calc(100vh - 88px); overflow: hidden; }
+  .floor-section { padding: 10px 12px; overflow-y: auto; height: 100%; box-sizing: border-box; }
+  .floor-title { font-size: 11px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+  .floor-grid { background: #1a3a5c; border-radius: 10px; padding: 8px; border: 1px solid #2a5a8c; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 6px; }
   .hill-center { grid-column: 3; grid-row: 2; background: linear-gradient(135deg, #1e3a5f, #2a5080); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid #f59e0b; min-height: 80px; }
   .hill-logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #f59e0b; letter-spacing: 4px; }
   .cell {
     background: linear-gradient(175deg, #0f2236 0%, #152c45 100%);
-    border-radius: 12px;
-    padding: 10px 8px;
+    border-radius: 8px;
+    padding: 6px 5px;
+    display: flex;
+    flex-direction: column;
     border: 1px solid rgba(59,130,246,0.18);
     box-shadow: 0 6px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
   }
   .cell-title {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 13px;
+    font-size: 18px;
     letter-spacing: 3px;
     text-transform: uppercase;
-    color: #7fb3e0;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(59,130,246,0.15);
+    color: #7dd3fc;
+    text-shadow: 0 0 10px rgba(125,211,252,0.9), 0 0 20px rgba(125,211,252,0.5), 0 0 40px rgba(56,189,248,0.3);
+    margin-bottom: 6px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(125,211,252,0.25);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -85,13 +88,14 @@
     display: inline-block;
     flex-shrink: 0;
   }
-  .machines { display: flex; flex-direction: column; gap: 5px; }
+  .machines { display: flex; flex-direction: column; gap: 5px; flex: 1; justify-content: space-evenly; }
 
   .machine {
     position: relative;
     background: linear-gradient(160deg, #1c3550 0%, #142840 50%, #0f1f30 100%);
     border-radius: 8px;
     padding: 0;
+    flex: 1;
     cursor: pointer;
     transition: all 0.18s ease;
     border: 1px solid rgba(59,130,246,0.25);
@@ -140,7 +144,7 @@
   .machine.has-blue::after   { background: #3b82f6;   opacity:1; box-shadow: 0 0 8px #3b82f6; }
 
   .machine-body {
-    padding: 6px 8px 5px 10px;
+    padding: 8px 10px 6px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -150,7 +154,7 @@
   .machine-label { display: none; }
   .machine-name {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(12px, 1.5vw, 17px);
+    font-size: clamp(15px, 1.8vw, 22px);
     letter-spacing: 1.5px;
     color: #f5d050;
     text-shadow: 0 0 10px rgba(245,208,80,0.5), 0 1px 3px rgba(0,0,0,0.7);
@@ -182,7 +186,7 @@
   .machine-notes { display: flex; gap: 6px; padding: 6px 10px 8px 10px; flex-wrap: wrap; min-height: 0; align-items: center; }
   .machine-notes:empty { padding-bottom: 0; }
   .note-dot {
-    width: 20px; height: 20px;
+    width: 14px; height: 14px;
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
@@ -196,9 +200,9 @@
   @keyframes blink-yellow { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
   @keyframes blink-blue   { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
   @keyframes blink-green  { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
-  .area-orange { background: #d97706; border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; min-height: 60px; }
-  .area-label { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 2px; color: #0f2338; text-align: center; }
-  .sidebar { background: #080f1d; border-left: 2px solid #1e3a5f; display: flex; flex-direction: column; min-width: 320px; }
+  .area-orange { background: #d97706; border-radius: 8px; padding: 4px 6px; border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; min-height: 28px; }
+  .area-label { font-family: 'Bebas Neue', sans-serif; font-size: 11px; letter-spacing: 1.5px; color: #0f2338; text-align: center; }
+  .sidebar { display: none !important; }
   .sidebar-header { padding: 16px 20px; border-bottom: 1px solid #2a5a8c; font-size: 14px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; }
   .notif-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
   .notif-item { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 16px 16px 16px 54px; border-left: 6px solid transparent; position: relative; margin-bottom: 10px; transition: transform 0.15s; }
@@ -652,7 +656,7 @@
   }
 
   /* MOTTO BANNER */
-  .motto-banner { background: linear-gradient(135deg, #0d1f33, #1a3a5c); border: 1px solid #2a5a8c; border-left: 4px solid #f59e0b; border-radius: 14px; padding: 16px 24px; margin-bottom: 18px; display: flex; align-items: center; gap: 24px; position: relative; overflow: hidden; }
+  .motto-banner { background: linear-gradient(135deg, #0d1f33, #1a3a5c); border: 1px solid #2a5a8c; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 6px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 24px; position: relative; overflow: hidden; }
   .motto-banner::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 90% 50%, rgba(245,158,11,0.06) 0%, transparent 60%); pointer-events: none; }
   .motto-logo { height: 70px; width: auto; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 12px rgba(245,158,11,0.2)); }
   .motto-text { display: flex; flex-direction: column; gap: 0; }
@@ -925,14 +929,14 @@
   .perf-light {
     display: flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 8px 5px 8px;
+    gap: 4px;
+    padding: 2px 6px 3px 6px;
     border-top: 1px solid rgba(255,255,255,0.06);
-    margin-top: 2px;
+    margin-top: 1px;
   }
   .perf-dot {
-    width: 12px;
-    height: 12px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     flex-shrink: 0;
     transition: all 0.5s ease;
@@ -1079,6 +1083,395 @@
   .notif-item.yellow .notif-blink-dot { background: #eab308; box-shadow: 0 0 10px 3px rgba(234,179,8,0.9); animation: blink-yellow 1.2s step-end infinite; }
   .notif-item.blue   .notif-blink-dot { background: #3b82f6; box-shadow: 0 0 10px 3px rgba(59,130,246,0.9); animation: blink-blue 1.6s step-end infinite; }
   .notif-item.green  .notif-blink-dot { background: #22c55e; box-shadow: 0 0 10px 3px rgba(34,197,94,0.9); animation: blink-green 2.0s step-end infinite; }
+
+  /* ═══════════════════════════════════════
+     FULL-SCREEN NO-SCROLL LAYOUT
+     Works on PC (landscape) and Phone
+  ═══════════════════════════════════════ */
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* Lock the shop page to exact screen */
+  .shop-page.active {
+    display: block !important;
+    height: calc(100vh - 82px) !important;
+    max-height: calc(100vh - 82px) !important;
+    overflow: hidden !important;
+  }
+
+  .floor-section {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: 100% !important;
+    padding: 8px 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Auto-scale floor grid to fit screen */
+  .floor-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 5px !important;
+    padding: 6px !important;
+    height: auto !important;
+  }
+
+  /* Cells shrink to fit */
+  .cell {
+    padding: 4px !important;
+    border-radius: 7px !important;
+  }
+
+  .cell-title {
+    font-size: 18px !important;
+    letter-spacing: 3px !important;
+    margin-bottom: 6px !important;
+    padding-bottom: 3px !important;
+  }
+
+  /* Machine cards very compact */
+  .machine {
+    margin-bottom: 3px !important;
+    border-radius: 6px !important;
+  }
+
+  .machine-body {
+    padding: 4px 6px !important;
+  }
+
+  .machine-name {
+    font-size: clamp(16px, 2vw, 26px) !important;
+    letter-spacing: 1px !important;
+  }
+
+  .perf-light {
+    padding: 1px 6px 2px 6px !important;
+  }
+
+  .perf-dot {
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  .perf-label {
+    font-size: 11px !important;
+    letter-spacing: 1px !important;
+  }
+
+  .note-dot {
+    width: 10px !important;
+    height: 10px !important;
+  }
+
+  .machine-notes {
+    padding: 2px 6px 3px 6px !important;
+    gap: 3px !important;
+  }
+
+  .machine-led {
+    width: 8px !important;
+    height: 8px !important;
+  }
+
+  /* Sidebar scrolls internally */
+  .sidebar {
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+  }
+
+  .notif-list {
+    overflow-y: auto !important;
+    flex: 1 !important;
+    padding: 8px !important;
+  }
+
+  /* Hide motto on small screens */
+  @media (max-height: 700px) {
+    .motto-banner { display: none !important; }
+    .floor-title  { display: none !important; }
+  }
+
+  /* PHONE layout — stack vertically */
+  @media (max-width: 768px) {
+    .shop-page.active {
+      grid-template-columns: 1fr !important;
+      grid-template-rows: 1fr auto !important;
+      height: calc(100vh - 82px) !important;
+    }
+
+    .sidebar {
+      max-height: 220px !important;
+      border-left: none !important;
+      border-top: 2px solid #1e3a5f !important;
+    }
+
+    .floor-grid {
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 3px !important;
+    }
+
+    .machine-name {
+      font-size: 9px !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    .cell-title {
+      font-size: 8px !important;
+    }
+
+    .motto-banner { display: none !important; }
+    .floor-title  { display: none !important; }
+  }
+
+
+  /* ── REQUESTS PAGE ── */
+  .requests-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 82px);
+    background: #080f1d;
+    overflow: hidden;
+  }
+  .requests-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: #f0f4f8;
+    background: #0a1525;
+    border-bottom: 2px solid #1e3a5f;
+    flex-shrink: 0;
+  }
+  .requests-filters {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #0a1525;
+    border-bottom: 1px solid #1e3a5f;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+  .req-filter {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid #2a5a8c;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .req-filter.active, .req-filter:hover { background: #f59e0b; color: #0f2338; border-color: #f59e0b; }
+  .req-filter.red.active   { background: #ef4444; border-color: #ef4444; color: white; }
+  .req-filter.yellow.active{ background: #eab308; border-color: #eab308; color: #0f2338; }
+  .req-filter.blue.active  { background: #3b82f6; border-color: #3b82f6; color: white; }
+  .req-filter.green.active { background: #22c55e; border-color: #22c55e; color: #0f2338; }
+  .requests-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    align-content: start;
+  }
+  .req-card {
+    display: flex;
+    gap: 12px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 14px 14px 14px 14px;
+    border-left: 5px solid transparent;
+    position: relative;
+    transition: transform 0.15s;
+  }
+  .req-card:hover { transform: translateY(-2px); }
+  .req-card.red    { border-left-color: #ef4444; background: rgba(239,68,68,0.1); box-shadow: 0 0 0 1px rgba(239,68,68,0.2); }
+  .req-card.yellow { border-left-color: #eab308; background: rgba(234,179,8,0.1); box-shadow: 0 0 0 1px rgba(234,179,8,0.2); }
+  .req-card.blue   { border-left-color: #3b82f6; background: rgba(59,130,246,0.1); box-shadow: 0 0 0 1px rgba(59,130,246,0.2); }
+  .req-card.green  { border-left-color: #22c55e; background: rgba(34,197,94,0.1); box-shadow: 0 0 0 1px rgba(34,197,94,0.2); }
+  .req-dot-col { display: flex; align-items: flex-start; padding-top: 4px; }
+  .req-blink-dot {
+    width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; display: block;
+  }
+  .req-blink-dot.red    { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.9); animation: blink-red    0.7s step-end infinite; }
+  .req-blink-dot.yellow { background: #eab308; box-shadow: 0 0 8px rgba(234,179,8,0.9);  animation: blink-yellow 1.2s step-end infinite; }
+  .req-blink-dot.blue   { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.9); animation: blink-blue   1.6s step-end infinite; }
+  .req-blink-dot.green  { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.9);  animation: blink-green  2.0s step-end infinite; }
+  .req-body { flex: 1; }
+  .req-machine { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: #f0f4f8; line-height: 1; }
+  .req-cell    { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1.5px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+  .req-type-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 4px; }
+  .req-wo, .req-detail { font-family: 'Barlow', sans-serif; font-size: 13px; color: #94a3b8; }
+  .req-operator { font-family: 'Barlow', sans-serif; font-size: 12px; color: #64748b; margin-top: 4px; }
+  .req-time { font-family: 'Barlow', sans-serif; font-size: 11px; color: #475569; margin-top: 6px; }
+  .req-dismiss {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(255,255,255,0.07); border: none; color: #64748b;
+    border-radius: 50%; width: 22px; height: 22px; font-size: 11px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .req-dismiss:hover { background: rgba(239,68,68,0.3); color: #ef4444; }
+
+
+  /* ═══════════════ GAMES PAGE ═══════════════ */
+  .games-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 82px);
+    background: #060f1c;
+    overflow: hidden;
+    position: relative;
+  }
+  .games-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 24px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: #f0f4f8;
+    background: #0a1525;
+    border-bottom: 2px solid #1e3a5f;
+    flex-shrink: 0;
+  }
+  .games-grid {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    align-content: start;
+  }
+  .game-card {
+    background: linear-gradient(135deg, #0d2137, #152c45);
+    border: 1px solid #2a5a8c;
+    border-radius: 16px;
+    padding: 28px 16px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .game-card:hover {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, #0f2845, #1a3a5c);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(245,158,11,0.2);
+  }
+  .game-card-emoji { font-size: 48px; margin-bottom: 12px; }
+  .game-card-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: #f0f4f8;
+    margin-bottom: 10px;
+  }
+  .game-card-play {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #f59e0b;
+    background: rgba(245,158,11,0.12);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 20px;
+    padding: 4px 16px;
+    display: inline-block;
+  }
+  .game-delete-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(239,68,68,0.15);
+    border: none; border-radius: 50%;
+    width: 26px; height: 26px;
+    font-size: 13px; cursor: pointer;
+    color: #ef4444;
+    transition: all 0.15s;
+  }
+  .game-delete-btn:hover { background: rgba(239,68,68,0.4); }
+  .games-empty { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: #334155; }
+  .games-empty-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: #475569; margin: 12px 0 6px; }
+  .games-empty-sub { font-family: 'Barlow', sans-serif; font-size: 14px; color: #334155; }
+  #addGameBtn { padding: 0 24px 16px; flex-shrink: 0; }
+  .game-add-fab {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 2px;
+    background: #f59e0b;
+    color: #0f2338;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+  }
+  .game-add-fab:hover { background: #fbbf24; }
+  .add-game-panel { padding: 16px 24px; background: #0a1525; border-top: 2px solid #1e3a5f; flex-shrink: 0; }
+  .add-game-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: #f59e0b; margin-bottom: 12px; }
+  .add-game-form { display: flex; flex-direction: column; gap: 10px; }
+  .game-input {
+    background: #0d2137; border: 1px solid #2a5a8c; border-radius: 8px;
+    padding: 10px 14px; color: #f0f4f8; font-family: 'Barlow', sans-serif; font-size: 14px;
+  }
+  .game-code-input {
+    background: #060f1c; border: 1px solid #2a5a8c; border-radius: 8px;
+    padding: 10px 14px; color: #94a3b8; font-family: monospace; font-size: 12px;
+    height: 100px; resize: vertical;
+  }
+  .game-save-btn {
+    font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px;
+    background: #22c55e; color: #0f2338; border: none; border-radius: 8px;
+    padding: 10px 24px; cursor: pointer; transition: all 0.2s;
+  }
+  .game-save-btn:hover { background: #16a34a; }
+  .game-cancel-btn {
+    font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px;
+    background: transparent; color: #64748b; border: 1px solid #334155;
+    border-radius: 8px; padding: 10px 24px; cursor: pointer;
+  }
+
+  /* GAME LIGHTBOX */
+  .game-lightbox {
+    position: fixed; inset: 0; z-index: 5000;
+    background: #000;
+    display: flex; flex-direction: column;
+  }
+  .game-lb-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px;
+    background: #0a1525;
+    border-bottom: 2px solid #f59e0b;
+    flex-shrink: 0;
+  }
+  #gameLbTitle {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: 2px; color: #f0f4f8;
+  }
+  .game-lb-close {
+    font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px;
+    background: #ef4444; color: white; border: none; border-radius: 8px;
+    padding: 8px 20px; cursor: pointer; transition: all 0.2s;
+  }
+  .game-lb-close:hover { background: #dc2626; }
+  .game-lb-body { flex: 1; overflow: hidden; }
+
 </style>
 </head>
 <body>
@@ -1192,9 +1585,10 @@
 <!-- NAV TABS -->
 <nav class="nav-tabs">
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
+  <div class="nav-tab" onclick="switchTab('requests')" id="tab-requests">🔔 Requests <span class="tab-badge" id="reqBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
-  <div class="nav-tab" onclick="switchTab('dnx')" id="tab-dnx">📊 Datanomix</div>
+  <div class="nav-tab" onclick="switchTab('games')" id="tab-games">🎮 Games</div>
 </nav>
 
 <!-- SHOP FLOOR PAGE -->
@@ -1291,7 +1685,7 @@
         </div>
       </div>
       <div class="area-orange" style="grid-column:4;grid-row:4;border:3px solid #f59e0b;">
-        <div style="text-align:center;"><div style="font-size:22px;">🔧</div><div class="area-label" style="color:#0f2338;">TOOL CRIB</div></div>
+        <div style="text-align:center;"><div style="font-size:14px;">🔧</div><div class="area-label" style="color:#0f2338;">TOOL CRIB</div></div>
       </div>
     </div>
   </div>
@@ -1302,6 +1696,69 @@
       <button>Enable</button>
     </div>
     <div class="notif-list" id="notifList">
+      <div class="empty-notif"><div class="icon">📋</div><p>No active requests.<br>Tap a machine to add one.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- GAMES PAGE -->
+<div class="shop-page" id="page-games" style="display:none;">
+  <div class="games-page">
+    <div class="games-header">
+      <span>🎮</span> BREAK ROOM GAMES
+    </div>
+    <div class="games-grid" id="gamesGrid">
+      <div class="games-empty">
+        <div style="font-size:48px">🕹️</div>
+        <div class="games-empty-title">No Games Yet</div>
+        <div class="games-empty-sub">Admin can add game codes below</div>
+      </div>
+    </div>
+    <!-- Admin: Add Game Panel -->
+    <div class="add-game-panel" id="addGamePanel" style="display:none;">
+      <div class="add-game-form">
+        <div class="add-game-title">➕ ADD GAME</div>
+        <input id="gameTitle" placeholder="Game Name (e.g. Snake)" class="game-input" />
+        <input id="gameEmoji" placeholder="Emoji (e.g. 🐍)" class="game-input" style="max-width:120px;" />
+        <textarea id="gameCode" placeholder="Paste your game code here (HTML/JS)" class="game-code-input"></textarea>
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <button class="game-save-btn" onclick="saveGame()">💾 SAVE GAME</button>
+          <button class="game-cancel-btn" onclick="closeAddGame()">CANCEL</button>
+        </div>
+      </div>
+    </div>
+    <!-- Admin add button -->
+    <div id="addGameBtn" style="display:none;">
+      <button class="game-add-fab" onclick="openAddGame()">➕ Add Game</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME LIGHTBOX -->
+<div id="gameLightbox" class="game-lightbox" style="display:none;">
+  <div class="game-lb-header">
+    <span id="gameLbTitle">Game</span>
+    <button class="game-lb-close" onclick="closeGameLightbox()">✕ EXIT GAME</button>
+  </div>
+  <div class="game-lb-body" id="gameLbBody"></div>
+</div>
+
+<!-- REQUESTS PAGE -->
+<div class="shop-page" id="page-requests" style="display:none;">
+  <div class="requests-page">
+    <div class="requests-header">
+      <span class="sidebar-live-dot"></span>
+      LIVE REQUEST FEED
+      <span id="reqCount" class="sidebar-count-badge" style="display:none">0</span>
+    </div>
+    <div class="requests-filters">
+      <button class="req-filter active" onclick="filterRequests('all')">ALL</button>
+      <button class="req-filter red"    onclick="filterRequests('red')">🔴 INSPECTION</button>
+      <button class="req-filter yellow" onclick="filterRequests('yellow')">🟡 MACHINIST</button>
+      <button class="req-filter blue"   onclick="filterRequests('blue')">🔵 PENDING WO</button>
+      <button class="req-filter green"  onclick="filterRequests('green')">🟢 RUNNING WO</button>
+    </div>
+    <div class="requests-list" id="requestsList">
       <div class="empty-notif"><div class="icon">📋</div><p>No active requests.<br>Tap a machine to add one.</p></div>
     </div>
   </div>
@@ -1369,7 +1826,6 @@
 
 
 <!-- DATANOMIX PAGE -->
-<div id="page-dnx" style="display:none; flex-direction:column; align-items:center; background:#060f1c; overflow-y:auto; padding-bottom:40px;">
 
   <!-- Fixed top header -->
   <div style="width:100%; background:#060f1c; border-bottom:1px solid #1e3a5f; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10;">
@@ -1639,8 +2095,16 @@
 
   function updateNotifFeed(actionable) {
     const list = document.getElementById('notifList');
-    document.getElementById('notifCount').textContent = actionable.length;
+    // Update requests tab badge
+    const reqBadge = document.getElementById('reqBadge');
+    const reqCount = document.getElementById('reqCount');
+    if (reqBadge) { reqBadge.textContent = actionable.length; reqBadge.style.display = actionable.length > 0 ? 'inline' : 'none'; }
+    if (reqCount) { reqCount.textContent = actionable.length; reqCount.style.display = actionable.length > 0 ? 'inline' : 'none'; }
+    document.getElementById('notifCount') && (document.getElementById('notifCount').textContent = actionable.length);
     updateSidebarBadge(actionable.length);
+    // Also render into requests page
+    window._lastActionable = actionable;
+    renderRequestsList(actionable, window._reqFilter || 'all');
     if (actionable.length === 0) { list.innerHTML = '<div class="empty-notif"><div class="icon">📋</div><p>No active requests.<br>Tap a machine to add one.</p></div>'; return; }
     list.innerHTML = '';
     actionable.forEach(n => {
@@ -1793,16 +2257,18 @@
 <script>
 
   function switchTab(tab) {
-    ['shop','board','video','dnx'].forEach(t => {
+    ['shop','requests','board','video','games'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
-    document.getElementById('page-shop').style.display = tab === 'shop' ? 'grid' : 'none';
+    document.getElementById('page-shop').style.display = tab === 'shop' ? 'block' : 'none';
+    document.getElementById('page-requests').style.display = tab === 'requests' ? 'block' : 'none';
     document.getElementById('page-board').style.display = tab === 'board' ? 'block' : 'none';
     document.getElementById('page-video').style.display = tab === 'video' ? 'block' : 'none';
-    document.getElementById('page-dnx').style.display = tab === 'dnx' ? 'flex' : 'none';
+    document.getElementById('page-games').style.display = tab === 'games' ? 'block' : 'none';
     if (tab === 'shop') document.getElementById('page-shop').classList.add('active');
     else document.getElementById('page-shop').classList.remove('active');
+    if (tab === 'games') initGamesPage();
   }
 
   // ---- MACHINE NOTES ----
@@ -2493,6 +2959,154 @@
   // Run demo after page loads, refresh every 45s to show it's live
   setTimeout(runPerfDemo, 1200);
   setInterval(runPerfDemo, 45000);
+
+
+  // ── REQUESTS PAGE ──
+  window._reqFilter = 'all';
+
+  function filterRequests(type) {
+    window._reqFilter = type;
+    document.querySelectorAll('.req-filter').forEach(b => b.classList.remove('active'));
+    const btn = document.querySelector('.req-filter.' + (type === 'all' ? 'active' : type));
+    // Re-find by onclick
+    document.querySelectorAll('.req-filter').forEach(b => {
+      if (b.getAttribute('onclick').includes("'" + type + "'")) b.classList.add('active');
+    });
+    renderRequestsList(window._lastActionable || [], type);
+  }
+
+  function renderRequestsList(actionable, filter) {
+    const list = document.getElementById('requestsList');
+    if (!list) return;
+    const filtered = filter === 'all' ? actionable : actionable.filter(n => n.type === filter);
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="empty-notif"><div class="icon">📋</div><p>' + (filter === 'all' ? 'No active requests.<br>Tap a machine to add one.' : 'No ' + filter + ' requests.') + '</p></div>';
+      return;
+    }
+    list.innerHTML = '';
+    filtered.forEach(n => {
+      const item = document.createElement('div');
+      item.className = 'req-card ' + n.type;
+      const timeStr = n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'just now';
+      item.innerHTML = `
+        <div class="req-dot-col"><span class="req-blink-dot ${n.type}"></span></div>
+        <div class="req-body">
+          <div class="req-machine">${n.machine}</div>
+          <div class="req-cell">${n.cell}</div>
+          <div class="req-type-label">${typeIcons[n.type]} ${typeLabels[n.type]}</div>
+          ${n.wo ? '<div class="req-wo">WO: ' + n.wo + '</div>' : ''}
+          ${n.detail ? '<div class="req-detail">' + n.detail + '</div>' : ''}
+          ${n.operator ? '<div class="req-operator">👤 ' + n.operator + '</div>' : ''}
+          <div class="req-time">⏱ Today at ${timeStr}</div>
+        </div>
+        <button class="req-dismiss" onclick="window.removeNoteById('${n.id}')">✕</button>
+      `;
+      list.appendChild(item);
+    });
+  }
+
+
+  // ═══════════════════════════════════
+  // GAMES TAB
+  // ═══════════════════════════════════
+  let gamesData = [];
+
+  async function initGamesPage() {
+    // Show admin add button if admin
+    const addBtn = document.getElementById('addGameBtn');
+    if (addBtn && currentUser && currentUser.role === 'admin') {
+      addBtn.style.display = 'block';
+    }
+    await loadGames();
+  }
+
+  async function loadGames() {
+    try {
+      const { db, collection, getDocs, query, orderBy } = await getDB();
+      const q = query(collection(db, 'hillGames'), orderBy('createdAt', 'asc'));
+      const snap = await getDocs(q);
+      gamesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderGames();
+    } catch(e) {
+      console.error('loadGames error:', e);
+    }
+  }
+
+  function renderGames() {
+    const grid = document.getElementById('gamesGrid');
+    if (!grid) return;
+    if (gamesData.length === 0) {
+      grid.innerHTML = '<div class="games-empty"><div style="font-size:48px">🕹️</div><div class="games-empty-title">No Games Yet</div><div class="games-empty-sub">Admin can add game codes below</div></div>';
+      return;
+    }
+    grid.innerHTML = '';
+    gamesData.forEach(game => {
+      const card = document.createElement('div');
+      card.className = 'game-card';
+      card.onclick = () => openGame(game);
+      card.innerHTML = `
+        <div class="game-card-emoji">${game.emoji || '🎮'}</div>
+        <div class="game-card-title">${escHtml(game.title)}</div>
+        <div class="game-card-play">▶ PLAY</div>
+        ${currentUser && currentUser.role === 'admin' ? `<button class="game-delete-btn" onclick="event.stopPropagation();deleteGame('${game.id}')">🗑</button>` : ''}
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function openGame(game) {
+    document.getElementById('gameLbTitle').textContent = (game.emoji || '🎮') + ' ' + game.title;
+    const body = document.getElementById('gameLbBody');
+    body.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;height:100%;border:none;background:#000;';
+    iframe.srcdoc = game.code;
+    body.appendChild(iframe);
+    document.getElementById('gameLightbox').style.display = 'flex';
+  }
+
+  function closeGameLightbox() {
+    document.getElementById('gameLightbox').style.display = 'none';
+    document.getElementById('gameLbBody').innerHTML = '';
+  }
+
+  function openAddGame() {
+    document.getElementById('addGamePanel').style.display = 'block';
+    document.getElementById('addGameBtn').style.display = 'none';
+  }
+
+  function closeAddGame() {
+    document.getElementById('addGamePanel').style.display = 'none';
+    document.getElementById('addGameBtn').style.display = 'block';
+    document.getElementById('gameTitle').value = '';
+    document.getElementById('gameEmoji').value = '';
+    document.getElementById('gameCode').value = '';
+  }
+
+  async function saveGame() {
+    const title = document.getElementById('gameTitle').value.trim();
+    const emoji = document.getElementById('gameEmoji').value.trim() || '🎮';
+    const code  = document.getElementById('gameCode').value.trim();
+    if (!title || !code) { alert('Please enter a game name and code.'); return; }
+    try {
+      const { db, collection, addDoc, serverTimestamp } = await getDB();
+      await addDoc(collection(db, 'hillGames'), { title, emoji, code, createdAt: serverTimestamp() });
+      closeAddGame();
+      await loadGames();
+    } catch(e) {
+      alert('Error saving game. Try again.');
+      console.error(e);
+    }
+  }
+
+  async function deleteGame(id) {
+    if (!confirm('Remove this game?')) return;
+    try {
+      const { db, doc, deleteDoc } = await getDB();
+      await deleteDoc(doc(db, 'hillGames', id));
+      await loadGames();
+    } catch(e) { console.error(e); }
+  }
 
 </script>
 </body>
