@@ -868,27 +868,27 @@
 
   /* LIVE MACHINES PAGE */
   .dnx-split { display: flex; height: calc(100vh - 108px); overflow: hidden; }
-  .dnx-list-panel { width: 130px; min-width: 130px; background: #081624; border-right: 1px solid #1e3a5f; overflow-y: auto; display: flex; flex-direction: column; }
-  .dnx-list-header { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 2px; color: #475569; padding: 12px 10px 8px; border-bottom: 1px solid #1e3a5f; display: flex; align-items: center; gap: 6px; }
-  .dnx-live-pulse { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; animation: blink-green 1s step-end infinite; display: inline-block; flex-shrink: 0; }
-  .dnx-list-item { display: flex; align-items: center; gap: 6px; padding: 10px 8px; cursor: pointer; border-bottom: 1px solid rgba(30,58,95,0.4); transition: all 0.15s; }
-  .dnx-list-item:hover { background: rgba(245,158,11,0.08); }
-  .dnx-list-item.active { background: rgba(245,158,11,0.12); border-left: 3px solid #f59e0b; }
+  
+  
+  
+  
+  
+  
   .dnx-list-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 5px #22c55e; animation: blink-green 1.5s step-end infinite; flex-shrink: 0; }
   .dnx-list-name { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: #cbd5e1; flex: 1; }
-  .dnx-list-item.active .dnx-list-name { color: #f59e0b; }
+  
   .dnx-list-arrow { color: #334155; font-size: 14px; }
-  .dnx-list-item.active .dnx-list-arrow { color: #f59e0b; }
-  .dnx-view-panel { flex: 1; display: flex; flex-direction: column; position: relative; background: #060f1c; }
-  .dnx-view-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; background: #0a1a2e; border-bottom: 1px solid #1e3a5f; flex-shrink: 0; }
-  .dnx-view-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: #f0f4f8; }
+  
+  
+  
+  
   .dnx-view-fullscreen { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 1px; color: #f59e0b; text-decoration: none; border: 1px solid rgba(245,158,11,0.4); border-radius: 6px; padding: 4px 12px; transition: all 0.15s; }
   .dnx-view-fullscreen:hover { background: rgba(245,158,11,0.15); }
   .dnx-iframe { width: 100%; flex: 1; border: none; display: block; }
-  .dnx-blocked-msg { display: none; position: absolute; inset: 50px 0 0 0; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: #060f1c; font-size: 32px; text-align: center; padding: 30px; }
+  
   .dnx-blocked-msg.show { display: flex; }
-  .dnx-blocked-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: #f0f4f8; }
-  .dnx-blocked-sub { font-family: 'Barlow', sans-serif; font-size: 14px; color: #64748b; line-height: 1.6; }
+  
+  
   .dnx-blocked-btn { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; background: #f59e0b; color: #0f2338; border-radius: 8px; padding: 12px 28px; text-decoration: none; margin-top: 8px; }
 
   /* DNX SETUP BANNER */
@@ -1204,36 +1204,30 @@
 
 <!-- DATANOMIX LIVE MACHINES PAGE -->
   <div class="dnx-split">
-    <div class="dnx-list-panel">
-      <div class="dnx-list-header"><span class="dnx-live-pulse"></span> MACHINES</div>
-
-    </div>
-    <div class="dnx-view-panel">
-      <!-- One-time setup banner -->
-      
-      <div class="dnx-view-bar">
-        <span class="dnx-view-title" id="dnxViewTitle">403-B</span>
-      </div>
-      <div class="dnx-blocked-msg" id="dnxBlockedMsg">
-        <div>🔒</div>
-        <div class="dnx-blocked-title">Datanomix won't allow embedding</div>
-        <div class="dnx-blocked-sub">Their security policy blocks all iframes.<br>Use Full Screen to open directly.</div>
-      </div>
-    </div>
+    
   </div>
 </div>
 
 
 <!-- DATANOMIX PAGE -->
-<div id="page-dnx" style="display:none; flex-direction:column; align-items:center; min-height:calc(100vh - 110px); padding:24px 16px 40px; background:#060f1c; overflow-y:auto;">
-  <div class="dnx-page-header">
-    <div class="dnx-page-title">
-      <span class="dnx-page-dot"></span>
-      DATANOMIX
+<div id="page-dnx" style="display:none; flex-direction:column; align-items:center; background:#060f1c; overflow-y:auto; padding-bottom:40px;">
+
+  <!-- Fixed top header -->
+  <div style="width:100%; background:#060f1c; border-bottom:1px solid #1e3a5f; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <img src="data:image/jpeg;base64,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" style="height:36px; width:36px; border-radius:6px; object-fit:cover;">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; color:#f0f4f8; line-height:1;">DATANOMIX</div>
+        <div style="font-family:'Barlow',sans-serif; font-size:10px; letter-spacing:2px; color:#64748b; text-transform:uppercase;">Machine Intelligence</div>
+      </div>
+      <span style="width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;animation:blink-green 2s step-end infinite;display:inline-block;margin-left:4px;"></span>
     </div>
     <a href="https://hillmanufacturing.datanomix.app/spotlight-dashboard" target="_blank" class="dnx-spotlight-btn">🔦 Spotlight ↗</a>
   </div>
-  <div class="dnx-machine-list">
+
+  <!-- Machine list starts immediately -->
+  <div class="dnx-machine-list" style="width:100%; max-width:500px; padding:16px 16px 0;">
+    
     <div class="dnx-cell-label">Big Mill</div><a href="https://hillmanufacturing.datanomix.app/machine-hud?machineId=253" target="_blank" class="dnx-machine-row">
       <span class="dnx-machine-name">1050-B</span>
       <span class="dnx-machine-open">View HUD ↗</span>
@@ -1298,6 +1292,7 @@
       <span class="dnx-machine-name">2G</span>
       <span class="dnx-machine-open">View HUD ↗</span>
     </a>
+  
   </div>
 </div>
 
