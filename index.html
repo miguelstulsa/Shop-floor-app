@@ -2085,7 +2085,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     if (!isFirstLoad) {
       notes.forEach(n => {
         if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue')) {
-          sendBrowserNotif(n);
+          if (typeof sendBrowserNotif === "function") sendBrowserNotif(n);
           showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.cell + ' — ' + n.machine + ': ' + n.wo);
         }
       });
@@ -2119,7 +2119,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
   }
 
   function sendBrowserNotif(n) {
-    if (Notification.permission === 'granted') {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
       new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: n.cell + ' — ' + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + n.wo, tag: n.id, requireInteraction: true });
     }
   }
@@ -2253,7 +2253,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
 
   // Validate stored employee session against DB
   document.getElementById('statusLabel').textContent = 'LIVE';
-  if (Notification.permission !== 'granted') document.getElementById('notifBanner').style.display = 'flex';
+  if (typeof Notification === 'undefined' || Notification.permission !== 'granted') { var nb = document.getElementById('notifBanner'); if(nb) nb.style.display = 'flex'; }
 </script>
 
 <script>
@@ -2317,7 +2317,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     }
   }
   function enableNotifications() {
-    Notification.requestPermission().then(permission => {
+    if (typeof Notification !== 'undefined') Notification.requestPermission().then(permission => {
       if (permission === 'granted') { document.getElementById('notifBanner').style.display = 'none'; showToast('green', '✅ Notifications enabled!', ''); }
     });
   }
