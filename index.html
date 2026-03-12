@@ -1494,11 +1494,11 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
 <div class="auth-panel active" id="panelLogin">
   <div class="auth-field">
     <label>Username</label>
-    <input type="text" id="loginUser" placeholder="your username" autocomplete="username">
+    <input type="text" id="loginUser" placeholder="your username" autocomplete="username" autocapitalize="none" autocorrect="off" autocomplete="username" spellcheck="false">
   </div>
   <div class="auth-field">
     <label>Password</label>
-    <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+    <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false">
   </div>
   <label class="auth-remember">
     <input type="checkbox" id="rememberMe" checked>
@@ -1512,15 +1512,15 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
 <div class="auth-panel" id="panelSignup">
   <div class="auth-field">
     <label>Full Name</label>
-    <input type="text" id="signupName" placeholder="e.g. Miguel Sanchez" maxlength="40">
+    <input type="text" id="signupName" autocorrect="off" spellcheck="false" placeholder="e.g. Miguel Sanchez" maxlength="40">
   </div>
   <div class="auth-field">
     <label>Username</label>
-    <input type="text" id="signupUser" placeholder="choose a username" maxlength="20">
+    <input type="text" id="signupUser" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="choose a username" maxlength="20">
   </div>
   <div class="auth-field">
     <label>Password</label>
-    <input type="password" id="signupPass" placeholder="choose a password" maxlength="40">
+    <input type="password" id="signupPass" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="choose a password" maxlength="40">
   </div>
   <div class="auth-msg" id="signupMsg"></div>
   <button class="auth-btn" onclick="doSignup()">REQUEST ACCESS</button>
