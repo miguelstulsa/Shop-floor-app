@@ -2065,6 +2065,16 @@ window.onerror = function(msg, src, line, col, err) {
 
   // --- MACHINE NOTES ---
   const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
+
+  function showToast(type, title, body) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.innerHTML = '<div class="toast-title">' + title + '</div>' + (body ? '<div class="toast-body">' + body + '</div>' : '');
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4200);
+  }
+
   onSnapshot(q, (snapshot) => {
     const notes = [];
     snapshot.forEach(d => notes.push({ id: d.id, ...d.data() }));
@@ -2118,10 +2128,10 @@ window.onerror = function(msg, src, line, col, err) {
     if (reqBadge) { reqBadge.textContent = actionable.length; reqBadge.style.display = actionable.length > 0 ? 'inline' : 'none'; }
     if (reqCount) { reqCount.textContent = actionable.length; reqCount.style.display = actionable.length > 0 ? 'inline' : 'none'; }
     document.getElementById('notifCount') && (document.getElementById('notifCount').textContent = actionable.length);
-    updateSidebarBadge(actionable.length);
+    if (typeof updateSidebarBadge === "function") updateSidebarBadge(actionable.length);
     // Also render into requests page
     window._lastActionable = actionable;
-    renderRequestsList(actionable, window._reqFilter || 'all');
+    if (typeof renderRequestsList === "function") renderRequestsList(actionable, window._reqFilter || 'all');
     if (actionable.length === 0) { list.innerHTML = '<div class="empty-notif"><div class="icon">📋</div><p>No active requests.<br>Tap a machine to add one.</p></div>'; return; }
     list.innerHTML = '';
     actionable.forEach(n => {
@@ -2577,16 +2587,7 @@ window.onerror = function(msg, src, line, col, err) {
     document.body.style.overflow = '';
   }
 
-  // ---- TOASTS ----
-  function showToast(type, title, body) {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = 'toast ' + type;
-    toast.innerHTML = '<div class="toast-title">' + title + '</div>' + (body ? '<div class="toast-body">' + body + '</div>' : '');
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 4200);
-  }
-  window.showToast = showToast;
+  // ---- TOASTS ----  window.showToast = showToast;
 
   // ---- HILL TV ----
   function extractYouTubeId(url) {
@@ -2783,15 +2784,6 @@ window.onerror = function(msg, src, line, col, err) {
     }
   }
 
-  function loginSuccess(user, remember) {
-    currentUser = user;
-    if (remember) {
-      localStorage.setItem('hillUser', JSON.stringify(user));
-    } else {
-      sessionStorage.setItem('hillUser', JSON.stringify(user));
-    }
-    applyLogin(user);
-  }
 
   function applyLogin(user) {
     document.getElementById('authOverlay').classList.add('hidden');
@@ -2801,6 +2793,16 @@ window.onerror = function(msg, src, line, col, err) {
       document.getElementById('adminBtn').classList.add('visible');
       listenToUsers();
     }
+  }
+
+    function loginSuccess(user, remember) {
+    currentUser = user;
+    if (remember) {
+      localStorage.setItem('hillUser', JSON.stringify(user));
+    } else {
+      sessionStorage.setItem('hillUser', JSON.stringify(user));
+    }
+    applyLogin(user);
   }
 
   window.doLogout = function doLogout() {
