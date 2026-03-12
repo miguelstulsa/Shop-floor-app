@@ -3139,6 +3139,11 @@ grid-template-rows: 42px 42px 42px !important;
       document.getElementById('adminBtn').classList.add('visible');
       listenToUsers();
     }
+    // Build mobile summary after login (page is now visible)
+    setTimeout(function() {
+      buildMobileSummary();
+      syncMobileDots();
+    }, 50);
   }
 
   function doLogout() {
