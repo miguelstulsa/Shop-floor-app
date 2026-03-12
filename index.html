@@ -13,7 +13,7 @@
     --dark: #0f2338; --border: #2a5a8c;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #0f2338; color: #f0f4f8; font-family: 'Barlow', sans-serif; height: 100vh; overflow: hidden; }
+  body { background: #0f2338; color: #f0f4f8; font-family: 'Barlow', sans-serif; height: 100vh; height: 100dvh; overflow: hidden; }
 
 /* HEADER */
 header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-bottom: 3px solid #f59e0b; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
@@ -51,10 +51,10 @@ text-shadow: 0 0 12px rgba(245,158,11,0.8);
 
 /* SHOP FLOOR */
 .shop-page { display: none; }
-.shop-page.active { display: grid; grid-template-columns: 1fr 320px; height: calc(100vh - 88px); overflow: hidden; }
-.floor-section { padding: 10px 12px; overflow-y: auto; height: 100%; box-sizing: border-box; }
-.floor-title { font-size: 11px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-.floor-grid { background: #1a3a5c; border-radius: 10px; padding: 8px; border: 1px solid #2a5a8c; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.shop-page.active { display: grid; grid-template-columns: 1fr 320px; height: calc(100dvh - 88px); overflow: hidden; }
+.floor-section { padding: 10px 12px; overflow: hidden; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+.floor-title { font-size: 11px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; margin-bottom: 4px; flex-shrink: 0; }
+.floor-grid { background: #1a3a5c; border-radius: 10px; padding: 8px; border: 1px solid #2a5a8c; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 6px; flex: 1; min-height: 0; }
 .hill-center { grid-column: 3; grid-row: 2; background: linear-gradient(135deg, #1e3a5f, #2a5080); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid #f59e0b; min-height: 80px; }
 .hill-logo-text { font-family: ‘Bebas Neue’, sans-serif; font-size: 36px; color: #f59e0b; letter-spacing: 4px; }
 .cell {
@@ -547,39 +547,38 @@ transition: all 0.2s;
 .cat-btn.active { transform: scale(1.04); }
 
 @media (max-width: 900px) {
-.shop-page.active { grid-template-columns: 1fr; }
-.sidebar {
-border-left: none;
-border-top: 2px solid #2a5a8c;
-position: fixed;
-bottom: 0; left: 0; right: 0;
-height: 44px;
-overflow: hidden;
-transition: height 0.3s ease;
-z-index: 500;
-background: #0a1829;
-}
-.sidebar.open { height: 55vh; }
-.sidebar-header {
-cursor: pointer;
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 12px 20px;
-}
-.sidebar-header::after { content: ‘▲’; font-size: 11px; color: #f59e0b; transition: transform 0.3s; }
-.sidebar.open .sidebar-header::after { transform: rotate(180deg); }
-.floor-section { padding-bottom: 60px; }
+/* Shop page: single col, full height, sidebar hidden on mobile */
+.shop-page.active { grid-template-columns: 1fr; height: calc(100dvh - 88px); }
+.sidebar { display: none !important; }
+.floor-section { padding: 6px 8px; padding-bottom: 6px; }
+.floor-title { display: none; }
 .legend { display: none; }
-header { padding: 8px 12px; }
-.logo-badge { width: 38px; height: 38px; font-size: 18px; flex-shrink: 0; }
-.logo h1 { font-size: 20px; }
-.floor-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px; gap: 6px; }
-.cell-title { font-size: 9px; letter-spacing: 0.5px; }
-.machine { padding: 5px 7px; }
-.machine-name { font-size: 12px; letter-spacing: 1px; }
-.area-label { font-size: 10px; letter-spacing: 1px; }
-.hill-logo-text { font-size: 22px; }
+/* Compact header on mobile */
+header { padding: 4px 10px; }
+.header-logo-img { height: 32px; }
+.logo h1 { font-size: 16px; letter-spacing: 1px; }
+.logo p { display: none; }
+.header-right { gap: 4px; }
+.legend { display: none; }
+.logo-badge { width: 30px; height: 30px; font-size: 16px; flex-shrink: 0; }
+/* Compact nav tabs */
+.nav-tabs { padding: 0 6px; }
+.nav-tab { padding: 5px 8px; font-size: 13px; letter-spacing: 1px; }
+/* Floor grid - tight gaps, smaller cells */
+.floor-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 5px; gap: 4px; }
+.cell { padding: 4px 3px; }
+.cell-title { font-size: 8px; letter-spacing: 0px; margin-bottom: 3px; padding-bottom: 3px; gap: 3px; }
+.cell-title::before { width: 4px; height: 4px; }
+.machines { gap: 3px; }
+.machine-body { padding: 4px 6px 3px 8px; }
+.machine-name { font-size: clamp(10px, 2.5vw, 14px); letter-spacing: 0.5px; }
+.machine-notes { padding: 2px 6px 4px 6px; gap: 4px; }
+.note-dot { width: 10px; height: 10px; }
+.area-orange { padding: 3px 4px; min-height: 22px; }
+.area-label { font-size: 9px; letter-spacing: 0.5px; }
+.hill-logo-text { font-size: 18px; }
+.hill-center { min-height: 50px; }
+/* Other pages */
 .board-hero { flex-wrap: wrap; }
 .board-hero-mascot { width: 80px; height: 80px; }
 .board-hero-text h2 { font-size: 26px; }
@@ -1471,7 +1470,13 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
 .game-lb-close:hover { background: #dc2626; }
 .game-lb-body { flex: 1; overflow: hidden; }
 
+@media (max-width: 900px) {
+.notif-bell { display: none !important; }
+.header-right { flex-direction: row; align-items: center; gap: 8px; }
+.shop-page.active { height: calc(100dvh - 56px - 38px); }
+}
 </style>
+
 </head>
 <body>
 <!-- AUTH OVERLAY -->
@@ -3211,6 +3216,19 @@ body.appendChild(iframe);
 document.getElementById(‘gameLightbox’).style.display = ‘flex’;
 };
 
+// Mobile: fit shop floor grid to exact available height
+function fitShopFloor() {
+if (window.innerWidth > 900) return;
+const header = document.querySelector(‘header’);
+const nav = document.querySelector(’.nav-tabs’);
+const shopPage = document.getElementById(‘page-shop’);
+if (!header || !nav || !shopPage) return;
+const used = header.offsetHeight + nav.offsetHeight;
+shopPage.style.height = (window.innerHeight - used) + ‘px’;
+}
+window.addEventListener(‘load’, fitShopFloor);
+window.addEventListener(‘resize’, fitShopFloor);
 </script>
+
 </body>
 </html>
