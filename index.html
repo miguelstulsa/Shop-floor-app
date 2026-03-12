@@ -2700,7 +2700,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     return hash.toString(36);
   }
 
-  function showAuthTab(tab) {
+  window.showAuthTab = function showAuthTab(tab) {
     document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
     document.getElementById('tabSignup').classList.toggle('active', tab === 'signup');
     document.getElementById('panelLogin').classList.toggle('active', tab === 'login');
@@ -2715,7 +2715,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     el.className = 'auth-msg ' + type;
   }
 
-  async function doLogin() {
+  window.doLogin = async function doLogin() {
     const username = document.getElementById('loginUser').value.trim().toLowerCase();
     const password = document.getElementById('loginPass').value;
     const remember = document.getElementById('rememberMe').checked;
@@ -2750,7 +2750,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     }
   }
 
-  async function doSignup() {
+  window.doSignup = async function doSignup() {
     const name = document.getElementById('signupName').value.trim();
     const username = document.getElementById('signupUser').value.trim().toLowerCase();
     const password = document.getElementById('signupPass').value;
@@ -2795,7 +2795,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     }
   }
 
-  function doLogout() {
+  window.doLogout = function doLogout() {
     currentUser = null;
     localStorage.removeItem('hillUser');
     sessionStorage.removeItem('hillUser');
@@ -2808,7 +2808,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     showAuthTab('login');
   }
 
-  function openAdminPanel() {
+  window.openAdminPanel = function openAdminPanel() {
     document.getElementById('adminPanel').classList.add('open');
   }
   function closeAdminPanel() {
