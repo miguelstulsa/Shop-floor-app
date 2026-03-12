@@ -1510,7 +1510,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     <span>Remember me on this device</span>
   </label>
   <div class="auth-msg" id="loginMsg"></div>
-  <button class="auth-btn" onclick="doLogin()">SIGN IN</button>
+  <button class="auth-btn" id="signInBtn">SIGN IN</button>
 </div>
 
 <!-- SIGNUP PANEL -->
@@ -3215,6 +3215,14 @@ iframe.srcdoc = ENDMILL_GAME_HTML;
 body.appendChild(iframe);
 document.getElementById(‘gameLightbox’).style.display = ‘flex’;
 };
+
+// Wire up auth buttons directly to avoid onclick scope issues on iOS Safari
+document.addEventListener(‘DOMContentLoaded’, function() {
+var btn = document.getElementById(‘signInBtn’);
+if (btn) btn.addEventListener(‘click’, function() { window.doLogin(); });
+var signupBtn = document.querySelector(’#panelSignup .auth-btn’);
+if (signupBtn) signupBtn.addEventListener(‘click’, function() { window.doSignup(); });
+});
 
 // Mobile: fit shop floor grid to exact available height
 function fitShopFloor() {
