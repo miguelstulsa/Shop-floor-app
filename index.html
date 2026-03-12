@@ -2267,7 +2267,6 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
 
   // ---- getDB helper — bridges module-scoped Firebase to non-module scripts ----
   async function getDB() {
-    // Wait up to 3s for Firebase module to expose db and modules
     for (let i = 0; i < 30; i++) {
       if (window._db && window._fbModules) break;
       await new Promise(r => setTimeout(r, 100));
@@ -3015,23 +3014,12 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
   // GAMES TAB — Endmill Specialist
   // ═══════════════════════════════════
 
-  function initGamesPage() { /* static cards, nothing to load */ }
+  function initGamesPage() { /* static card, nothing to load */ }
 
   function closeGameLightbox() {
     document.getElementById('gameLightbox').style.display = 'none';
     document.getElementById('gameLbBody').innerHTML = '';
   }
-
-  window.openEndmillGame = function() {
-    document.getElementById('gameLbTitle').textContent = '🔩 Endmill Specialist';
-    const body = document.getElementById('gameLbBody');
-    body.innerHTML = '';
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'width:100%;height:100%;border:none;background:#0f2338;';
-    iframe.srcdoc = ENDMILL_GAME_HTML;
-    body.appendChild(iframe);
-    document.getElementById('gameLightbox').style.display = 'flex';
-  };
 
   const ENDMILL_GAME_HTML = `<!DOCTYPE html>
 
@@ -3193,6 +3181,17 @@ initGame();renderLB('lb1');renderLB('lb2');loop();
 </body>
 </html>
 `;
+
+window.openEndmillGame = function() {
+document.getElementById(‘gameLbTitle’).textContent = ‘🔩 Endmill Specialist’;
+const body = document.getElementById(‘gameLbBody’);
+body.innerHTML = ‘’;
+const iframe = document.createElement(‘iframe’);
+iframe.style.cssText = ‘width:100%;height:100%;border:none;background:#0f2338;’;
+iframe.srcdoc = ENDMILL_GAME_HTML;
+body.appendChild(iframe);
+document.getElementById(‘gameLightbox’).style.display = ‘flex’;
+};
 
 </script>
 </body>
