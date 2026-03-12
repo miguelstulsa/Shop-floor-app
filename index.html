@@ -1535,7 +1535,7 @@ header .logo     { gap: 6px !important; }
 .floor-section {
   flex: 1 !important;
   height: auto !important;
-  overflow-x: auto !important;
+  overflow-x: hidden !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
   padding: 6px !important;
@@ -1544,21 +1544,60 @@ header .logo     { gap: 6px !important; }
 .motto-banner { display: none !important; }
 .floor-title  { display: none !important; }
 
-/* FLOOR GRID — fixed column widths, parent section scrolls */
+/* FLOOR GRID — 2 column reflow, no scrolling */
 .floor-grid {
-  grid-template-columns: repeat(4, 150px) !important;
-  grid-template-rows: repeat(4, auto) !important;
-  gap: 5px !important;
-  padding: 5px !important;
-  width: max-content !important;
-  min-width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: none !important;
+  grid-auto-rows: auto !important;
+  gap: 6px !important;
+  padding: 6px !important;
+  width: 100% !important;
+  overflow: visible !important;
 }
-.cell          { padding: 5px 4px !important; }
-.cell-title    { font-size: 10px !important; margin-bottom: 3px !important; }
-.machine-name  { font-size: 12px !important; letter-spacing: 0.5px !important; }
-.machine-body  { padding: 5px 7px 4px 9px !important; }
-.perf-label    { font-size: 9px !important; }
+/* Override ALL individual cell positions — reflow naturally */
+.floor-grid .cell,
+.floor-grid .hill-center {
+  grid-column: auto !important;
+  grid-row: auto !important;
+}
+/* Wide cells (5100/Automation) span both columns */
+.floor-grid .cell[style*="2/4"],
+.floor-grid .cell[style*="2 / 4"] {
+  grid-column: 1 / -1 !important;
+}
+/* Row-spanning cells - just auto height on mobile */
+.floor-grid .cell[style*="1/3"],
+.floor-grid .cell[style*="1 / 3"],
+.floor-grid .cell[style*="row:1/3"],
+.floor-grid .cell[style*="row:1/4"] {
+  grid-row: auto !important;
+  grid-column: auto !important;
+}
+/* Hill center: full width on mobile */
+.floor-grid .hill-center {
+  grid-column: 1 / -1 !important;
+}
+/* Machines inside wide cells: row layout */
+.floor-grid .cell[style*="2/4"] .machines,
+.floor-grid .cell[style*="2 / 4"] .machines {
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+}
+.floor-grid .cell[style*="2/4"] .machine,
+.floor-grid .cell[style*="2 / 4"] .machine {
+  flex: 1 !important;
+  min-width: 80px !important;
+}
+.cell          { padding: 5px 4px !important; min-height: 0 !important; }
+.cell-title    { font-size: 11px !important; margin-bottom: 4px !important; padding-bottom: 4px !important; }
+.machine-name  { font-size: 13px !important; letter-spacing: 0.5px !important; }
+.machine-body  { padding: 6px 8px 5px 10px !important; }
+.machine       { min-height: 0 !important; }
+.perf-label    { font-size: 10px !important; }
+.machine-led   { width: 10px !important; height: 10px !important; }
 .hill-logo-text { font-size: 16px !important; }
+.machines      { gap: 5px !important; }
 
 /* Wrap the grid in a scrollable container */
 .floor-section > .floor-grid {
@@ -1818,7 +1857,6 @@ grid-template-rows: 42px 42px 42px !important;
   </div>
 </div>
 
-<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;">
 <div class="floor-grid">
   <!-- Big Mill Cell -->
   <div class="cell" style="grid-column:1;grid-row:1;">
@@ -1902,7 +1940,6 @@ grid-template-rows: 42px 42px 42px !important;
   <div class="area-orange" style="grid-column:4;grid-row:4;border:3px solid #f59e0b;">
     <div style="text-align:center;"><div style="font-size:14px;">🔧</div><div class="area-label" style="color:#0f2338;">TOOL CRIB</div></div>
   </div>
-</div>
 </div>
 ```
 
