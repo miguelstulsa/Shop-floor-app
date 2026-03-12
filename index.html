@@ -2159,8 +2159,8 @@ window.onerror = function(msg, src, line, col, err) {
   onSnapshot(bq, (snapshot) => {
     window.boardPosts = [];
     snapshot.forEach(d => window.boardPosts.push({ id: d.id, ...d.data() }));
-    renderBoard();
-    updateBoardStats();
+    if (typeof renderBoard === 'function') renderBoard();
+    if (typeof updateBoardStats === 'function') updateBoardStats();
   });
 
   window.submitPostToFirebase = async function(post) {
