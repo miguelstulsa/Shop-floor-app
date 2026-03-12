@@ -732,17 +732,22 @@ transition: all 0.2s;
 #authOverlay {
 position: fixed; inset: 0; z-index: 9999;
 background: #0a1628;
-display: flex; align-items: center; justify-content: center;
-padding: 20px;
+display: flex; align-items: flex-start; justify-content: center;
+padding: 16px;
+padding-top: max(16px, env(safe-area-inset-top, 16px));
+padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+overflow-y: auto;
+-webkit-overflow-scrolling: touch;
 }
 #authOverlay.hidden { display: none; }
 .auth-box {
 background: linear-gradient(175deg, #0f2236 0%, #152c45 100%);
 border: 1px solid #2a5a8c;
 border-radius: 20px;
-padding: 36px 32px;
+padding: 28px 24px;
 width: 100%; max-width: 400px;
 box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+margin: auto 0;
 }
 .auth-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
 .auth-logo img { height: 52px; width: auto; }
@@ -759,9 +764,11 @@ box-shadow: 0 24px 80px rgba(0,0,0,0.8);
 width: 100%; padding: 11px 14px;
 background: rgba(255,255,255,0.06); border: 1px solid #2a5a8c;
 border-radius: 10px; color: #f0f4f8;
-font-family: ‘Barlow’, sans-serif; font-size: 14px;
+font-family: ‘Barlow’, sans-serif; font-size: 16px;
 -webkit-text-fill-color: #f0f4f8; caret-color: #f0f4f8;
 transition: border-color 0.2s;
+-webkit-appearance: none;
+touch-action: manipulation;
 }
 .auth-field input:focus { outline: none; border-color: #f59e0b; }
 .auth-field input:-webkit-autofill,
@@ -773,12 +780,15 @@ transition: border-color 0.2s;
 .auth-remember input[type=checkbox] { width: 16px; height: 16px; accent-color: #f59e0b; cursor: pointer; }
 .auth-remember span { font-size: 13px; color: #94a3b8; }
 .auth-btn {
-width: 100%; padding: 13px;
+width: 100%; padding: 15px;
 background: linear-gradient(135deg, #f59e0b, #d97706);
 border: none; border-radius: 10px;
 font-family: ‘Bebas Neue’, sans-serif; font-size: 18px; letter-spacing: 2px;
 color: #0f2338; cursor: pointer;
 transition: opacity 0.2s; margin-bottom: 12px;
+-webkit-tap-highlight-color: transparent;
+touch-action: manipulation;
+min-height: 52px;
 }
 .auth-btn:hover { opacity: 0.9; }
 .auth-btn.secondary {
@@ -2715,7 +2725,15 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
 
     setMsg('loginMsg', 'Signing in...', '');
     try {
-      if (!window.fbLogin) { setMsg('loginMsg', 'App still loading, please try again.', 'error'); return; }
+      if (!window.fbLogin) {
+        setMsg('loginMsg', 'Connecting...', '');
+        let waited = 0;
+        while (!window.fbLogin && waited < 5000) {
+          await new Promise(r => setTimeout(r, 200));
+          waited += 200;
+        }
+        if (!window.fbLogin) { setMsg('loginMsg', 'Could not connect. Check your connection and try again.', 'error'); return; }
+      }
       const result = await window.fbLogin(username, password);
       if (result.error) { setMsg('loginMsg', result.error, 'error'); return; }
       if (result.pending) { setMsg('loginMsg', 'Your account is awaiting admin approval.', 'pending'); return; }
