@@ -2381,7 +2381,9 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
     updateSidebarBadge(actionable.length);
     // Also render into requests page
     window._lastActionable = actionable;
-    renderRequestsList(actionable, window._reqFilter || 'all');
+    if (typeof window.renderRequestsList === 'function') {
+      window.renderRequestsList(actionable, window._reqFilter || 'all');
+    }
     if (actionable.length === 0) { list.innerHTML = '<div class="empty-notif"><div class="icon">📋</div><p>No active requests.<br>Tap a machine to add one.</p></div>'; return; }
     list.innerHTML = '';
     actionable.forEach(n => {
@@ -2560,7 +2562,7 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
       shopEl.classList.add('active');
     } else if (tab === 'requests') {
       reqEl.style.cssText = 'display:flex;flex-direction:column;position:fixed;top:88px;left:0;right:0;bottom:0;z-index:100;background:#080f1d;';
-      setTimeout(function(){ renderRequestsList(window._lastActionable || [], window._reqFilter || 'all'); }, 30);
+      setTimeout(function(){ if(typeof window.renderRequestsList==='function') window.renderRequestsList(window._lastActionable || [], window._reqFilter || 'all'); }, 30);
     } else if (tab === 'board') {
       boardEl.style.display = 'block';
     } else if (tab === 'video') {
@@ -3270,10 +3272,10 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
     document.querySelectorAll('.req-filter').forEach(b => {
       if (b.getAttribute('onclick').includes("'" + type + "'")) b.classList.add('active');
     });
-    renderRequestsList(window._lastActionable || [], type);
+    if(typeof window.renderRequestsList==='function') window.renderRequestsList(window._lastActionable || [], type);
   }
 
-  function renderRequestsList(actionable, filter) {
+  window.renderRequestsList = function renderRequestsList(actionable, filter) {
     var list = document.getElementById('requestsList');
     if (!list) return;
     var filtered = filter === 'all' ? actionable : actionable.filter(function(n){ return n.type === filter; });
