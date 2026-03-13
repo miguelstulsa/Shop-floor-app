@@ -52,6 +52,7 @@ text-shadow: 0 0 12px rgba(245,158,11,0.8);
 /* SHOP FLOOR */
 .shop-page { display: none; }
 .shop-page.active { display: grid; grid-template-columns: 1fr 320px; height: calc(100dvh - 88px); overflow: hidden; }
+.shop-page.page-visible { display: flex !important; flex-direction: column !important; height: calc(100dvh - 88px) !important; overflow: hidden !important; }
 .floor-section { padding: 10px 12px; overflow: hidden; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
 .floor-title { font-size: 11px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
 .floor-grid { background: #1a3a5c; border-radius: 10px; padding: 8px; border: 1px solid #2a5a8c; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 6px; flex: 1; min-height: 0; }
@@ -559,6 +560,7 @@ header { padding: 3px 8px; min-height: 0; }
 .nav-tab { padding: 4px 5px; font-size: 11px; letter-spacing: 0; }
 /* SHOP PAGE */
 .shop-page.active { grid-template-columns: 1fr; height: calc(100dvh - 74px); overflow: hidden; }
+.shop-page.page-visible { height: calc(100dvh - 74px) !important; }
 .sidebar { display: none !important; }
 /* FLOOR */
 .floor-section { padding: 2px 3px; overflow: hidden; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
@@ -1093,8 +1095,9 @@ flex-shrink: 0;
 .requests-page {
 display: flex;
 flex-direction: column;
-height: 100%;
+flex: 1;
 min-height: 0;
+height: 100%;
 background: #080f1d;
 overflow: hidden;
 }
@@ -2009,7 +2012,7 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
 
 <!-- REQUESTS PAGE -->
 
-<div class="shop-page" id="page-requests" style="display:none;flex-direction:column;height:calc(100dvh - 88px);overflow:hidden;">
+<div class="shop-page" id="page-requests" style="display:none;">
   <div class="requests-page">
     <div class="requests-header">
       <span class="sidebar-live-dot"></span>
@@ -2538,8 +2541,15 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
       if (el) el.classList.toggle('active', tab === t);
     });
     document.getElementById('page-shop').style.display = tab === 'shop' ? 'block' : 'none';
-    document.getElementById('page-requests').style.display = tab === 'requests' ? 'flex' : 'none';
-    if (tab === 'requests') { setTimeout(function(){ renderRequestsList(window._lastActionable || [], window._reqFilter || 'all'); }, 50); }
+    var reqPage = document.getElementById('page-requests');
+    if (tab === 'requests') {
+      reqPage.style.display = '';
+      reqPage.classList.add('page-visible');
+      setTimeout(function(){ renderRequestsList(window._lastActionable || [], window._reqFilter || 'all'); }, 50);
+    } else {
+      reqPage.style.display = 'none';
+      reqPage.classList.remove('page-visible');
+    }
     document.getElementById('page-board').style.display = tab === 'board' ? 'block' : 'none';
     document.getElementById('page-video').style.display = tab === 'video' ? 'block' : 'none';
     document.getElementById('page-games').style.display = tab === 'games' ? 'block' : 'none';
