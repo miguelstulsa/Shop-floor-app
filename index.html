@@ -2536,26 +2536,40 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
 <script>
 
   function switchTab(tab) {
+    // Update nav tab highlights
     ['shop','requests','board','video','games'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
-    document.getElementById('page-shop').style.display = tab === 'shop' ? 'block' : 'none';
-    var reqPage = document.getElementById('page-requests');
-    if (tab === 'requests') {
-      reqPage.style.display = '';
-      reqPage.classList.add('page-visible');
-      setTimeout(function(){ renderRequestsList(window._lastActionable || [], window._reqFilter || 'all'); }, 50);
-    } else {
-      reqPage.style.display = 'none';
-      reqPage.classList.remove('page-visible');
+
+    // Hide all pages first
+    var shopEl = document.getElementById('page-shop');
+    var reqEl  = document.getElementById('page-requests');
+    var boardEl= document.getElementById('page-board');
+    var videoEl= document.getElementById('page-video');
+    var gamesEl= document.getElementById('page-games');
+
+    shopEl.classList.remove('active');
+    shopEl.style.display  = 'none';
+    reqEl.style.display   = 'none';
+    boardEl.style.display = 'none';
+    videoEl.style.display = 'none';
+    gamesEl.style.display = 'none';
+
+    // Show the selected page
+    if (tab === 'shop') {
+      shopEl.style.display = '';
+      shopEl.classList.add('active');
+    } else if (tab === 'requests') {
+      reqEl.style.cssText = 'display:flex !important; flex-direction:column !important; height:calc(100dvh - 88px) !important; overflow:hidden !important;';
+      setTimeout(function(){ renderRequestsList(window._lastActionable || [], window._reqFilter || 'all'); }, 30);
+    } else if (tab === 'board') {
+      boardEl.style.display = 'block';
+    } else if (tab === 'video') {
+      videoEl.style.display = 'block';
+    } else if (tab === 'games') {
+      gamesEl.style.cssText = 'display:block !important; height:calc(100dvh - 88px) !important; overflow:hidden !important;';
     }
-    document.getElementById('page-board').style.display = tab === 'board' ? 'block' : 'none';
-    document.getElementById('page-video').style.display = tab === 'video' ? 'block' : 'none';
-    document.getElementById('page-games').style.display = tab === 'games' ? 'block' : 'none';
-    if (tab === 'shop') document.getElementById('page-shop').classList.add('active');
-    else document.getElementById('page-shop').classList.remove('active');
-    // games tab: iframe handles everything
   }
 
   // ---- MACHINE NOTES ----
