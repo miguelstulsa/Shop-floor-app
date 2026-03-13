@@ -33,7 +33,7 @@ header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-b
 .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 
 /* NAV TABS */
-.nav-tabs { background: #0b1c2e; border-bottom: 2px solid #2a5a8c; display: flex; padding: 0 20px; gap: 2px; }
+.nav-tabs { background: #0b1c2e; border-bottom: 2px solid #2a5a8c; display: flex; padding: 0 20px; gap: 2px; position: sticky; top: 0; z-index: 99; }
 .nav-tab { padding: 7px 16px; font-family: ‘Bebas Neue’, sans-serif; font-size: 17px; letter-spacing: 2.5px; color: #475569; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.25s ease; display: flex; align-items: center; gap: 8px; border-radius: 8px 8px 0 0; }
 .nav-tab:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
 .nav-tab.active {
@@ -2012,25 +2012,25 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
 
 <!-- REQUESTS PAGE -->
 
-<div id="page-requests" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:200;background:#080f1d;overflow:hidden;">
-  <div id="req-inner" style="position:absolute;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-    <div style="position:sticky;top:0;z-index:10;background:#080f1d;padding:14px 16px 10px;border-bottom:1px solid #1e3a5f;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;flex-shrink:0;display:inline-block;"></span>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f0f4f8;">LIVE REQUEST FEED</span>
-        <span id="reqCount" style="background:#ef4444;color:#fff;border-radius:50%;min-width:22px;height:22px;font-size:12px;font-weight:700;text-align:center;line-height:22px;padding:0 4px;"></span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        <button id="rfAll"    onclick="filterRequests('all')"    style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #f59e0b;background:#f59e0b;color:#0f2338;cursor:pointer;">ALL</button>
-        <button id="rfRed"    onclick="filterRequests('red')"    style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;">🔴 INSPECTION</button>
-        <button id="rfYellow" onclick="filterRequests('yellow')" style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;">🟡 MACHINIST</button>
-        <button id="rfBlue"   onclick="filterRequests('blue')"   style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;">🔵 PENDING WO</button>
-        <button id="rfGreen"  onclick="filterRequests('green')"  style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;">🟢 RUNNING WO</button>
-      </div>
+<div id="page-requests" style="display:none;height:calc(100dvh - 108px);overflow-y:auto;-webkit-overflow-scrolling:touch;background:#080f1d;position:relative;">
+  <!-- Sticky filter header -->
+  <div style="position:sticky;top:0;z-index:10;background:#080f1d;padding:14px 16px 10px;border-bottom:1px solid #1e3a5f;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px #22c55e;flex-shrink:0;display:inline-block;"></span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f0f4f8;">LIVE REQUEST FEED</span>
+      <span id="reqCount" style="background:#ef4444;color:#fff;border-radius:50%;min-width:22px;height:22px;font-size:12px;font-weight:700;text-align:center;line-height:22px;padding:0 4px;display:none;"></span>
     </div>
-    <div id="requestsList" style="padding:12px 16px 24px;">
-      <p style="color:#475569;text-align:center;margin-top:40px;font-family:Barlow,sans-serif;">No active requests.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      <button id="rfAll"    onclick="filterRequests('all')"    style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #f59e0b;background:#f59e0b;color:#0f2338;cursor:pointer;">ALL</button>
+      <button id="rfRed"    onclick="filterRequests('red')"    style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;">🔴 INSPECTION</button>
+      <button id="rfYellow" onclick="filterRequests('yellow')" style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;">🟡 MACHINIST</button>
+      <button id="rfBlue"   onclick="filterRequests('blue')"   style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;">🔵 PENDING WO</button>
+      <button id="rfGreen"  onclick="filterRequests('green')"  style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;padding:7px 16px;border-radius:20px;border:2px solid #334155;background:transparent;color:#94a3b8;cursor:pointer;">🟢 RUNNING WO</button>
     </div>
+  </div>
+  <!-- Cards -->
+  <div id="requestsList" style="padding:12px 16px 40px;">
+    <p style="color:#475569;text-align:center;margin-top:40px;font-family:Barlow,sans-serif;">No active requests.</p>
   </div>
 </div>
 
@@ -2321,6 +2321,47 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
   const db = getFirestore(app);
   window._db = db;
   window._fbModules = { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, getDoc, where, getDocs };
+  window._firebaseReady = true;
+
+  // Expose render function - uses machineNotes (same data that drives LEDs)
+  // machineNotes is always current since onSnapshot keeps it updated
+  window._loadAndRenderRequests = function() {
+    var activeTypes = ['red','yellow','blue','green'];
+    var actionable = [];
+    // Build from machineNotes which is always populated (drives the LEDs)
+    if (window.machineNotes && Object.keys(window.machineNotes).length > 0) {
+      Object.values(window.machineNotes).forEach(function(arr) {
+        arr.forEach(function(n) {
+          if (activeTypes.indexOf(n.type) !== -1) actionable.push(n);
+        });
+      });
+      actionable.sort(function(a,b) {
+        var at = a.createdAt ? a.createdAt.seconds : 0;
+        var bt = b.createdAt ? b.createdAt.seconds : 0;
+        return bt - at;
+      });
+      window._lastActionable = actionable;
+      if (typeof window.renderRequestsList === 'function') {
+        window.renderRequestsList(actionable, window._reqFilter || 'all');
+      }
+    } else {
+      // machineNotes not ready yet - fall back to getDocs
+      getDocs(collection(db, 'notes')).then(function(snap) {
+        var notes = [];
+        snap.forEach(function(d) { notes.push(Object.assign({ id: d.id }, d.data())); });
+        var actionable = notes.filter(function(n) { return activeTypes.indexOf(n.type) !== -1; });
+        actionable.sort(function(a,b) {
+          var at = a.createdAt ? a.createdAt.seconds : 0;
+          var bt = b.createdAt ? b.createdAt.seconds : 0;
+          return bt - at;
+        });
+        window._lastActionable = actionable;
+        if (typeof window.renderRequestsList === 'function') {
+          window.renderRequestsList(actionable, window._reqFilter || 'all');
+        }
+      }).catch(function() {});
+    }
+  };
 
   let knownIds = new Set();
   let isFirstLoad = true;
@@ -2383,10 +2424,14 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
     if (reqCount) { reqCount.textContent = actionable.length; reqCount.style.display = actionable.length > 0 ? 'inline' : 'none'; }
     document.getElementById('notifCount') && (document.getElementById('notifCount').textContent = actionable.length);
     updateSidebarBadge(actionable.length);
-    // Also render into requests page
+    // Always store latest actionable data
     window._lastActionable = actionable;
-    if (typeof window.renderRequestsList === 'function') {
-      window.renderRequestsList(actionable, window._reqFilter || 'all');
+    // Render into requests tab if it's currently visible
+    const reqPage = document.getElementById('page-requests');
+    if (reqPage && reqPage.style.display !== 'none') {
+      if (typeof window.renderRequestsList === 'function') {
+        window.renderRequestsList(actionable, window._reqFilter || 'all');
+      }
     }
     if (actionable.length === 0) { list.innerHTML = '<div class="empty-notif"><div class="icon">📋</div><p>No active requests.<br>Tap a machine to add one.</p></div>'; return; }
     list.innerHTML = '';
@@ -2556,6 +2601,7 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
     shopEl.classList.remove('active');
     shopEl.style.display  = 'none';
     reqEl.style.display   = 'none';
+    if (window._reqRefreshInterval) { clearInterval(window._reqRefreshInterval); window._reqRefreshInterval = null; }
     boardEl.style.display = 'none';
     videoEl.style.display = 'none';
     gamesEl.style.display = 'none';
@@ -2566,24 +2612,31 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
       shopEl.classList.add('active');
     } else if (tab === 'requests') {
       reqEl.style.display = 'block';
-      // Set top immediately then re-check after paint
-      (function positionAndRender() {
-        var navEl = document.querySelector('.nav-tabs');
-        var headerEl = document.querySelector('header');
-        var navH = navEl ? navEl.offsetHeight : 44;
-        var headerH = headerEl ? headerEl.offsetHeight : 60;
-        var inner = document.getElementById('req-inner');
-        if (inner) inner.style.top = (headerH + navH) + 'px';
-        if(typeof window.renderRequestsList==='function') {
-          window.renderRequestsList(window._lastActionable || [], window._reqFilter || 'all');
+      // Size the page to fit below header+nav
+      var headerEl = document.querySelector('header');
+      var navEl    = document.querySelector('nav.nav-tabs');
+      var hh = headerEl ? headerEl.offsetHeight : 64;
+      var nh = navEl    ? navEl.offsetHeight    : 44;
+      reqEl.style.height = (window.innerHeight - hh - nh) + 'px';
+      // Call the module-scoped function, retry if not ready yet
+      function tryRender(attempts) {
+        if (typeof window._loadAndRenderRequests === 'function') {
+          window._loadAndRenderRequests();
+        } else if (attempts > 0) {
+          setTimeout(function() { tryRender(attempts - 1); }, 200);
         }
-      })();
-      setTimeout(function(){
-        var navEl = document.querySelector('.nav-tabs');
-        var headerEl = document.querySelector('header');
-        var inner = document.getElementById('req-inner');
-        if (inner) inner.style.top = ((headerEl ? headerEl.offsetHeight : 60) + (navEl ? navEl.offsetHeight : 44)) + 'px';
-      }, 100);
+      }
+      tryRender(20);
+      // Auto-refresh every 30 seconds while tab is open
+      if (window._reqRefreshInterval) clearInterval(window._reqRefreshInterval);
+      window._reqRefreshInterval = setInterval(function() {
+        var reqPage = document.getElementById('page-requests');
+        if (reqPage && reqPage.style.display !== 'none') {
+          if (typeof window._loadAndRenderRequests === 'function') window._loadAndRenderRequests();
+        } else {
+          clearInterval(window._reqRefreshInterval);
+        }
+      }, 30000);
     } else if (tab === 'board') {
       boardEl.style.display = 'block';
     } else if (tab === 'video') {
@@ -3284,6 +3337,7 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
 
   // ── REQUESTS PAGE ──
   window._reqFilter = 'all';
+  window._lastActionable = [];
 
   function filterRequests(type) {
     window._reqFilter = type;
@@ -3309,6 +3363,19 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
   window.renderRequestsList = function renderRequestsList(actionable, filter) {
     var list = document.getElementById('requestsList');
     if (!list) return;
+    // Fallback: if no data passed but machineNotes exist, rebuild from live data
+    if ((!actionable || actionable.length === 0) && window._lastActionable && window._lastActionable.length > 0) {
+      actionable = window._lastActionable;
+    }
+    if ((!actionable || actionable.length === 0) && window.machineNotes) {
+      var rebuilt = [];
+      Object.values(window.machineNotes).forEach(function(arr) {
+        arr.forEach(function(n) {
+          if (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green') rebuilt.push(n);
+        });
+      });
+      if (rebuilt.length > 0) actionable = rebuilt;
+    }
     var filtered = filter === 'all' ? actionable : actionable.filter(function(n){ return n.type === filter; });
     var colorMap = { red:'#ef4444', yellow:'#eab308', blue:'#3b82f6', green:'#22c55e' };
     var bgMap    = { red:'rgba(239,68,68,0.12)', yellow:'rgba(234,179,8,0.12)', blue:'rgba(59,130,246,0.12)', green:'rgba(34,197,94,0.12)' };
