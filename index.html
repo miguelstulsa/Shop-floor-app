@@ -1093,7 +1093,8 @@ flex-shrink: 0;
 .requests-page {
 display: flex;
 flex-direction: column;
-height: calc(100vh - 82px);
+height: 100%;
+min-height: 0;
 background: #080f1d;
 overflow: hidden;
 }
@@ -2008,7 +2009,7 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
 
 <!-- REQUESTS PAGE -->
 
-<div class="shop-page" id="page-requests" style="display:none;">
+<div class="shop-page" id="page-requests" style="display:none;flex-direction:column;height:calc(100dvh - 88px);overflow:hidden;">
   <div class="requests-page">
     <div class="requests-header">
       <span class="sidebar-live-dot"></span>
@@ -2537,8 +2538,8 @@ initGame(); renderLB('lb1'); renderLB('lb2'); loop();
       if (el) el.classList.toggle('active', tab === t);
     });
     document.getElementById('page-shop').style.display = tab === 'shop' ? 'block' : 'none';
-    document.getElementById('page-requests').style.display = tab === 'requests' ? 'block' : 'none';
-    if (tab === 'requests') { renderRequestsList(window._lastActionable || [], window._reqFilter || 'all'); }
+    document.getElementById('page-requests').style.display = tab === 'requests' ? 'flex' : 'none';
+    if (tab === 'requests') { setTimeout(function(){ renderRequestsList(window._lastActionable || [], window._reqFilter || 'all'); }, 50); }
     document.getElementById('page-board').style.display = tab === 'board' ? 'block' : 'none';
     document.getElementById('page-video').style.display = tab === 'video' ? 'block' : 'none';
     document.getElementById('page-games').style.display = tab === 'games' ? 'block' : 'none';
