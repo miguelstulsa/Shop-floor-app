@@ -33,7 +33,7 @@ header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-b
 .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 
 /* NAV TABS */
-.nav-tabs { background: #0b1c2e; border-bottom: 2px solid #2a5a8c; display: flex; padding: 0 20px; gap: 2px; }
+.nav-tabs { background: #0b1c2e; border-bottom: 2px solid #2a5a8c; display: flex; padding: 0 20px; gap: 2px; position: sticky; top: 0; z-index: 200; }
 .nav-tab { padding: 7px 16px; font-family: ‘Bebas Neue’, sans-serif; font-size: 17px; letter-spacing: 2.5px; color: #475569; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.25s ease; display: flex; align-items: center; gap: 8px; border-radius: 8px 8px 0 0; }
 .nav-tab:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
 .nav-tab.active {
@@ -3367,7 +3367,8 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
 
   function mgmtView(tab) {
     ['group','dms','video'].forEach(t => {
-      document.getElementById('mgmt-'+t).style.display = 'none';
+      var panel = document.getElementById('mgmt-'+t);
+      if (panel) panel.style.display = 'none';
       var btn = document.getElementById('mgmt-tab-'+t);
       if (btn) { btn.style.background = 'transparent'; btn.style.color = '#94a3b8'; }
     });
@@ -3377,6 +3378,19 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
     if (btn) { btn.style.background = '#f59e0b'; btn.style.color = '#0f2338'; }
     if (tab === 'dms') window.loadMgmtManagers && window.loadMgmtManagers();
     if (tab === 'group') window.startMgmtChatListener && window.startMgmtChatListener();
+    // Adjust top position based on actual header+nav height
+    var header = document.querySelector('header');
+    var nav = document.querySelector('nav.nav-tabs');
+    var tabBar = document.getElementById('mgmt-tabs');
+    var hh = header ? header.offsetHeight : 60;
+    var nh = nav ? nav.offsetHeight : 44;
+    var th = tabBar ? tabBar.offsetHeight : 44;
+    if (tabBar) tabBar.style.paddingTop = hh + 'px';
+    var top = hh + nh + th;
+    ['group','dms','video'].forEach(t => {
+      var panel = document.getElementById('mgmt-'+t);
+      if (panel) panel.style.top = top + 'px';
+    });
   }
 
   function openDmThread(username, displayName) {
@@ -3490,7 +3504,7 @@ padding: 8px 20px; cursor: pointer; transition: all 0.2s;
 
 <!-- MANAGEMENT PAGE -->
 
-<div id="page-mgmt" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:150;background:#080f1d;flex-direction:column;">
+<div id="page-mgmt" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:50;background:#080f1d;flex-direction:column;">
 
   <!-- Sub-tab bar -->
 
