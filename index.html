@@ -2,23 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CNC Shop Command Center V2</title>
+<title>CNC Shop Command Center</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
 
 body{
 font-family:Arial;
-margin:0;
 background:#0f172a;
 color:white;
+margin:0;
 }
 
 header{
 background:#111827;
 padding:15px;
 font-size:22px;
-font-weight:bold;
 border-bottom:2px solid orange;
 }
 
@@ -31,16 +30,12 @@ flex-wrap:wrap;
 }
 
 nav button{
+padding:8px 12px;
 background:#374151;
 border:none;
 color:white;
-padding:8px 12px;
 cursor:pointer;
 border-radius:5px;
-}
-
-nav button:hover{
-background:#4b5563;
 }
 
 .panel{
@@ -48,23 +43,23 @@ display:none;
 padding:20px;
 }
 
-.active{
+.panel.active{
 display:block;
 }
 
 .card{
 background:#1f2937;
 padding:15px;
-margin-bottom:12px;
+margin-bottom:10px;
 border-radius:8px;
 }
 
-input,select,textarea{
+input,textarea,select{
 width:100%;
 padding:6px;
 margin-bottom:6px;
-border-radius:4px;
 border:none;
+border-radius:4px;
 }
 
 button.action{
@@ -78,34 +73,34 @@ border-radius:4px;
 
 .machine{
 display:inline-block;
-padding:12px;
+width:160px;
+padding:10px;
 margin:5px;
 border-radius:6px;
-width:150px;
 text-align:center;
 font-weight:bold;
 }
 
 .green{background:#16a34a}
-.red{background:#dc2626}
 .yellow{background:#eab308;color:black}
+.red{background:#dc2626}
 .blue{background:#2563eb}
 
 #chatBox{
-height:300px;
+height:250px;
 overflow-y:auto;
 background:#020617;
 padding:10px;
 }
 
 </style>
-</head>
 
+</head>
 <body>
 
-<header>
-CNC SHOP COMMAND CENTER V2
-</header>
+<header>CNC SHOP COMMAND CENTER</header>
+
+<!-- LOGIN -->
 
 <div id="loginPanel">
 
@@ -114,41 +109,49 @@ CNC SHOP COMMAND CENTER V2
 <h2>Login</h2>
 
 <input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
 
 <button class="action" onclick="login()">Login</button>
 
-<p>Admin username: <b>admin</b></p>
+<p>Admin Login</p>
+<p>hilladmin / Hill2024!</p>
 
 </div>
 
 </div>
+
+<!-- APP -->
 
 <div id="app" style="display:none">
 
 <nav>
 
 <button onclick="showPanel('dashboard')">Dashboard</button>
-<button onclick="showPanel('operations')">Requests</button>
+<button onclick="showPanel('requests')">Requests</button>
 <button onclick="showPanel('tools')">Tools</button>
 <button onclick="showPanel('maintenance')">Maintenance</button>
-<button onclick="showPanel('chat')">Shop Chat</button>
-<button onclick="showPanel('adminPanel')" id="adminTab">Admin</button>
+<button onclick="showPanel('chat')">Chat</button>
+<button onclick="showPanel('admin')" id="adminTab">Admin</button>
 
 </nav>
+
+<!-- DASHBOARD -->
 
 <div id="dashboard" class="panel active">
 
 <div class="card">
 
-<h2>Machine Status</h2>
+<h2>Machine Dashboard</h2>
 
-<div id="machines"></div>
-
-</div>
+<div id="machineBoard"></div>
 
 </div>
 
-<div id="operations" class="panel">
+</div>
+
+<!-- REQUESTS -->
+
+<div id="requests" class="panel">
 
 <div class="card">
 
@@ -169,11 +172,13 @@ CNC SHOP COMMAND CENTER V2
 
 <button class="action" onclick="addRequest()">Submit</button>
 
+</div>
+
 <div id="requestList"></div>
 
 </div>
 
-</div>
+<!-- TOOLS -->
 
 <div id="tools" class="panel">
 
@@ -181,17 +186,19 @@ CNC SHOP COMMAND CENTER V2
 
 <h2>Tool Life Tracker</h2>
 
-<input id="toolName" placeholder="Tool name">
-<input id="toolLife" placeholder="Max life">
-<input id="toolCurrent" placeholder="Current count">
+<input id="toolName" placeholder="Tool Name">
+<input id="toolLife" placeholder="Max Life">
+<input id="toolCurrent" placeholder="Current Count">
 
 <button class="action" onclick="addTool()">Add Tool</button>
+
+</div>
 
 <div id="toolList"></div>
 
 </div>
 
-</div>
+<!-- MAINTENANCE -->
 
 <div id="maintenance" class="panel">
 
@@ -202,13 +209,15 @@ CNC SHOP COMMAND CENTER V2
 <input id="maintMachine" placeholder="Machine">
 <textarea id="maintIssue"></textarea>
 
-<button class="action" onclick="addTicket()">Submit</button>
+<button class="action" onclick="addTicket()">Submit Ticket</button>
+
+</div>
 
 <div id="ticketList"></div>
 
 </div>
 
-</div>
+<!-- CHAT -->
 
 <div id="chat" class="panel">
 
@@ -226,24 +235,27 @@ CNC SHOP COMMAND CENTER V2
 
 </div>
 
-<div id="adminPanel" class="panel">
+<!-- ADMIN -->
+
+<div id="admin" class="panel">
 
 <div class="card">
 
-<h2>Admin Control</h2>
+<h2>User Management</h2>
 
-<input id="newUser" placeholder="Create User">
+<input id="newUser" placeholder="Username">
+<input id="newPass" placeholder="Password">
 
 <select id="role">
 <option>operator</option>
 <option>manager</option>
 </select>
 
-<button class="action" onclick="createUser()">Add User</button>
-
-<div id="userList"></div>
+<button class="action" onclick="createUser()">Create User</button>
 
 </div>
+
+<div id="userList"></div>
 
 </div>
 
@@ -254,7 +266,7 @@ CNC SHOP COMMAND CENTER V2
 let currentUser=null
 
 let users=JSON.parse(localStorage.getItem("users"))||[
-{username:"admin",role:"admin"}
+{username:"hilladmin",password:"Hill2024!",role:"admin"}
 ]
 
 let requests=JSON.parse(localStorage.getItem("requests"))||[]
@@ -274,24 +286,21 @@ localStorage.setItem("chat",JSON.stringify(chat))
 
 function login(){
 
-let name=document.getElementById("username").value
-
-let user=users.find(u=>u.username===name)
+let user=users.find(u=>
+u.username===username.value && u.password===password.value)
 
 if(!user){
-
-alert("User not found")
+alert("Invalid login")
 return
-
 }
 
 currentUser=user
 
-document.getElementById("loginPanel").style.display="none"
-document.getElementById("app").style.display="block"
+loginPanel.style.display="none"
+app.style.display="block"
 
 if(user.role!=="admin")
-document.getElementById("adminTab").style.display="none"
+adminTab.style.display="none"
 
 renderAll()
 
@@ -300,7 +309,6 @@ renderAll()
 function showPanel(id){
 
 document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"))
-
 document.getElementById(id).classList.add("active")
 
 }
@@ -318,17 +326,17 @@ renderUsers()
 
 function renderMachines(){
 
-let html=""
-
 let machines=["CNC1","CNC2","CNC3","CNC4"]
+
+let html=""
 
 machines.forEach(m=>{
 
-html+=`<div class="machine green">${m}<br>Running</div>`
+html+=`<div class="machine green">${m}<br>RUNNING</div>`
 
 })
 
-document.getElementById("machines").innerHTML=html
+machineBoard.innerHTML=html
 
 }
 
@@ -350,9 +358,12 @@ let html=""
 
 requests.forEach((r,i)=>{
 
-html+=`<div class="card">${r.machine} - ${r.type}
+html+=`
+<div class="card">
+${r.machine} - ${r.type}
 <button onclick="requests.splice(${i},1);save();renderRequests()">Complete</button>
-</div>`
+</div>
+`
 
 })
 
@@ -362,13 +373,10 @@ requestList.innerHTML=html
 
 function addTool(){
 
-let life=parseInt(toolLife.value)
-let current=parseInt(toolCurrent.value)
-
 tools.push({
 name:toolName.value,
-life,
-current
+life:parseInt(toolLife.value),
+current:parseInt(toolCurrent.value)
 })
 
 save()
@@ -382,13 +390,15 @@ let html=""
 
 tools.forEach(t=>{
 
-let warn=(t.current/t.life>0.9)?"⚠ Replace soon":""
+let warn=(t.current/t.life>0.9)?"⚠ Replace Soon":""
 
-html+=`<div class="card">
+html+=`
+<div class="card">
 <b>${t.name}</b><br>
 ${t.current}/${t.life}<br>
 ${warn}
-</div>`
+</div>
+`
 
 })
 
@@ -414,7 +424,12 @@ let html=""
 
 tickets.forEach(t=>{
 
-html+=`<div class="card"><b>${t.machine}</b><br>${t.issue}</div>`
+html+=`
+<div class="card">
+<b>${t.machine}</b><br>
+${t.issue}
+</div>
+`
 
 })
 
@@ -443,7 +458,13 @@ let html=""
 
 chat.forEach(m=>{
 
-html+=`<div><b>${m.user}</b> ${m.time}<br>${m.text}</div><hr>`
+html+=`
+<div>
+<b>${m.user}</b> ${m.time}<br>
+${m.text}
+<hr>
+</div>
+`
 
 })
 
@@ -457,6 +478,7 @@ if(currentUser.role!=="admin") return
 
 users.push({
 username:newUser.value,
+password:newPass.value,
 role:role.value
 })
 
@@ -471,7 +493,11 @@ let html=""
 
 users.forEach(u=>{
 
-html+=`<div class="card">${u.username} - ${u.role}</div>`
+html+=`
+<div class="card">
+${u.username} - ${u.role}
+</div>
+`
 
 })
 
