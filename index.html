@@ -678,7 +678,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
-  <div class="nav-tab" onclick="switchTab('games')" id="tab-games">🎮 Games</div>
+  
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
 </nav>
 
@@ -732,26 +732,6 @@
   </div>
 </div>
 
-<!-- GAMES PAGE -->
-<div class="shop-page" id="page-games" style="display:none;">
-  <div class="games-page">
-    <div class="games-header"><span>🎮</span> BREAK ROOM GAMES</div>
-    <div class="games-grid" id="gamesGrid"><div class="games-empty"><div style="font-size:48px">🕹️</div><div class="games-empty-title">No Games Yet</div><div class="games-empty-sub">Admin can add game codes below</div></div></div>
-    <div class="add-game-panel" id="addGamePanel" style="display:none;">
-      <div class="add-game-form">
-        <div class="add-game-title">➕ ADD GAME</div>
-        <input id="gameTitle" placeholder="Game Name (e.g. Snake)" class="game-input" />
-        <input id="gameEmoji" placeholder="Emoji (e.g. 🐍)" class="game-input" style="max-width:120px;" />
-        <textarea id="gameCode" placeholder="Paste your game code here (HTML/JS)" class="game-code-input"></textarea>
-        <div style="display:flex;gap:10px;margin-top:10px;">
-          <button class="game-save-btn" onclick="saveGame()">💾 SAVE GAME</button>
-          <button class="game-cancel-btn" onclick="closeAddGame()">CANCEL</button>
-        </div>
-      </div>
-    </div>
-    <div id="addGameBtn" style="display:none;"><button class="game-add-fab" onclick="openAddGame()">➕ Add Game</button></div>
-  </div>
-</div>
 
 <!-- GAME LIGHTBOX -->
 <div id="gameLightbox" class="game-lightbox" style="display:none;">
@@ -1412,7 +1392,7 @@
 <script>
   // ── TAB SWITCHING ──
   function switchTab(tab) {
-    ['shop','requests','board','video','games','mgmt'].forEach(t => {
+    ['shop','requests','board','video','mgmt'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -1420,7 +1400,7 @@
     document.getElementById('page-requests').style.display = tab === 'requests' ? 'block' : 'none';
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
-    document.getElementById('page-games').style.display    = tab === 'games'    ? 'block' : 'none';
+    
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
     if (tab === 'shop') {
@@ -1430,7 +1410,7 @@
       document.getElementById('page-shop').classList.remove('active');
       document.body.classList.add('scrollable');
     }
-    if (tab === 'games') initGamesPage();
+
     if (tab === 'mgmt') { mgmtView('group'); if (window.loadManagerList) window.loadManagerList(); }
   }
 
@@ -1996,74 +1976,6 @@
     document.querySelectorAll('.req-filter').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.req-filter').forEach(b => { if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + type + "'")) b.classList.add('active'); });
     if (window.renderRequestsList) window.renderRequestsList(window._lastActionable || [], type);
-  }
-
-  // ── GAMES TAB ──
-  let gamesData = [];
-  async function initGamesPage() {
-    const addBtn = document.getElementById('addGameBtn');
-    if (addBtn && window._isAdmin) addBtn.style.display = 'block';
-    await loadGames();
-  }
-  async function loadGames() {
-    try {
-      const db = window._db; const mods = window._fbModules;
-      if (!db || !mods) { setTimeout(loadGames, 500); return; }
-      const { collection, getDocs, query, orderBy } = mods;
-      const snap = await getDocs(query(collection(db,'hillGames'), orderBy('createdAt','asc')));
-      gamesData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderGames();
-    } catch(e) { console.error('loadGames error:', e); }
-  }
-  function renderGames() {
-    const grid = document.getElementById('gamesGrid');
-    if (!grid) return;
-    if (gamesData.length === 0) { grid.innerHTML = '<div class="games-empty"><div style="font-size:48px">🕹️</div><div class="games-empty-title">No Games Yet</div><div class="games-empty-sub">Admin can add game codes below</div></div>'; return; }
-    grid.innerHTML = '';
-    gamesData.forEach(game => {
-      const card = document.createElement('div');
-      card.className = 'game-card';
-      card.onclick = () => openGame(game);
-      card.innerHTML = '<div class="game-card-emoji">' + (game.emoji||'🎮') + '</div><div class="game-card-title">' + escHtml(game.title) + '</div><div class="game-card-play">▶ PLAY</div>' + (window._isAdmin ? '<button class="game-delete-btn" onclick="event.stopPropagation();deleteGame(\'' + game.id + '\')">🗑</button>' : '');
-      grid.appendChild(card);
-    });
-  }
-  function openGame(game) {
-    document.getElementById('gameLbTitle').textContent = (game.emoji||'🎮') + ' ' + game.title;
-    const body = document.getElementById('gameLbBody');
-    body.innerHTML = '';
-    const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'width:100%;height:100%;border:none;background:#000;color-scheme:dark;';
-    // Inject black bg into the game HTML before it renders
-    const blackBg = game.code.replace('<html', '<html style="background:#000"').replace('<body', '<body style="background:#000"');
-    iframe.srcdoc = blackBg;
-    body.appendChild(iframe);
-    document.getElementById('gameLightbox').style.display = 'flex';
-  }
-  function closeGameLightbox() { document.getElementById('gameLightbox').style.display = 'none'; document.getElementById('gameLbBody').innerHTML = ''; }
-  function openAddGame()  { document.getElementById('addGamePanel').style.display = 'block'; document.getElementById('addGameBtn').style.display = 'none'; }
-  function closeAddGame() {
-    document.getElementById('addGamePanel').style.display = 'none';
-    document.getElementById('addGameBtn').style.display = 'block';
-    document.getElementById('gameTitle').value = '';
-    document.getElementById('gameEmoji').value = '';
-    document.getElementById('gameCode').value = '';
-  }
-  async function saveGame() {
-    const title = document.getElementById('gameTitle').value.trim();
-    const emoji = document.getElementById('gameEmoji').value.trim() || '🎮';
-    const code  = document.getElementById('gameCode').value.trim();
-    if (!title || !code) { alert('Please enter a game name and code.'); return; }
-    try {
-      const db = window._db; const { collection, addDoc, serverTimestamp } = window._fbModules;
-      await addDoc(collection(db,'hillGames'), { title, emoji, code, createdAt: serverTimestamp() });
-      closeAddGame(); await loadGames();
-    } catch(e) { alert('Error saving game. Try again.'); console.error(e); }
-  }
-  async function deleteGame(id) {
-    if (!confirm('Remove this game?')) return;
-    try { const db = window._db; const { doc, deleteDoc } = window._fbModules; await deleteDoc(doc(db,'hillGames',id)); await loadGames(); }
-    catch(e) { console.error(e); }
   }
 
   // ── MANAGEMENT UI ──
