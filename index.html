@@ -13,6 +13,7 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #0f2338; color: #f0f4f8; font-family: 'Barlow', sans-serif; height: 100vh; overflow: hidden; }
+  body.scrollable { overflow-y: auto; overflow-x: hidden; }
 
   /* HEADER */
   header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-bottom: 3px solid #f59e0b; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
@@ -1480,8 +1481,13 @@ gameArea.addEventListener('mousemove',function(e){if(!running)return;var rect=ga
     document.getElementById('page-games').style.display    = tab === 'games'    ? 'block' : 'none';
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
-    if (tab === 'shop') document.getElementById('page-shop').classList.add('active');
-    else document.getElementById('page-shop').classList.remove('active');
+    if (tab === 'shop') {
+      document.getElementById('page-shop').classList.add('active');
+      document.body.classList.remove('scrollable');
+    } else {
+      document.getElementById('page-shop').classList.remove('active');
+      document.body.classList.add('scrollable');
+    }
     if (tab === 'games') initGamesPage();
     if (tab === 'mgmt') { mgmtView('group'); if (window.loadManagerList) window.loadManagerList(); }
   }
@@ -1873,6 +1879,7 @@ gameArea.addEventListener('mousemove',function(e){if(!running)return;var rect=ga
 
     if (user.role === 'admin') {
       document.getElementById('adminBtn').classList.add('visible');
+      window._isAdmin = true;
       listenToUsers();
       var mgmtTab = document.getElementById('tab-mgmt');
       if (mgmtTab) mgmtTab.style.display = '';
@@ -2053,7 +2060,7 @@ gameArea.addEventListener('mousemove',function(e){if(!running)return;var rect=ga
   let gamesData = [];
   async function initGamesPage() {
     const addBtn = document.getElementById('addGameBtn');
-    if (addBtn && currentUser && currentUser.role === 'admin') addBtn.style.display = 'block';
+    if (addBtn && window._isAdmin) addBtn.style.display = 'block';
     await loadGames();
   }
   async function loadGames() {
@@ -2075,7 +2082,7 @@ gameArea.addEventListener('mousemove',function(e){if(!running)return;var rect=ga
       const card = document.createElement('div');
       card.className = 'game-card';
       card.onclick = () => openGame(game);
-      card.innerHTML = '<div class="game-card-emoji">' + (game.emoji||'🎮') + '</div><div class="game-card-title">' + escHtml(game.title) + '</div><div class="game-card-play">▶ PLAY</div>' + (currentUser && currentUser.role === 'admin' ? '<button class="game-delete-btn" onclick="event.stopPropagation();deleteGame(\'' + game.id + '\')">🗑</button>' : '');
+      card.innerHTML = '<div class="game-card-emoji">' + (game.emoji||'🎮') + '</div><div class="game-card-title">' + escHtml(game.title) + '</div><div class="game-card-play">▶ PLAY</div>' + (window._isAdmin ? '<button class="game-delete-btn" onclick="event.stopPropagation();deleteGame(\'' + game.id + '\')">🗑</button>' : '');
       grid.appendChild(card);
     });
   }
