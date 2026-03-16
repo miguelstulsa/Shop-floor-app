@@ -2202,31 +2202,37 @@ gameArea.addEventListener('mousemove',function(e){if(!running)return;var rect=ga
   function endMgmtCall() { if (mgmtLocalStream) { mgmtLocalStream.getTracks().forEach(t => t.stop()); mgmtLocalStream = null; } document.getElementById('mgmt-call-area').style.display = 'none'; document.querySelector('#mgmt-video > div:first-child').style.display = 'block'; }
 
   // ══════════════════════════════════════════════════
-  // ── ROLE SETTER — simple and bulletproof ──
+  // ── ROLE SETTER ──
   function setUserRole(userId, role, btnEl) {
     if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳'; }
-    function trySet(attempts) {
-      if (attempts > 10) {
-        showToast('red', 'Could not update role', 'Check your connection.');
-        if (btnEl) { btnEl.disabled = false; btnEl.textContent = role === 'manager' ? '💼 Manager' : '🔧 Machinist'; }
-        return;
-      }
-      if (!window.fbSetRole) {
-        setTimeout(function() { trySet(attempts + 1); }, 500);
+
+    function doSet() {
+      if (!window.fbSetRole || !window._db || !window._fbModules) {
+        setTimeout(doSet, 400);
         return;
       }
       window.fbSetRole(userId, role).then(function() {
-        showToast(role === 'manager' ? 'blue' : 'green',
-          role === 'manager' ? '💼 Manager role assigned!' : '🔧 Set to Machinist', 'Refresh to see updated roles.');
-        // Re-render the roles list
-        if (window._fbListenUsersCache) renderAdminUsers(window._fbListenUsersCache);
+        // Force a fresh read of ALL users from Firestore
+        var db = window._db;
+        var mods = window._fbModules;
+        mods.getDocs(mods.query(
+          mods.collection(db, 'hillUsers'),
+          mods.orderBy('createdAt', 'asc')
+        )).then(function(snap) {
+          var users = [];
+          snap.forEach(function(d) { users.push({ id: d.id, ...d.data() }); });
+          window._fbListenUsersCache = users;
+          renderAdminUsers(users);
+          showToast(role === 'manager' ? 'blue' : 'green',
+            role === 'manager' ? '💼 Manager assigned!' : '🔧 Set to Machinist', '');
+        });
       }).catch(function(err) {
         console.error('fbSetRole error:', err);
         showToast('red', 'Role update failed', err.message || 'Try again.');
         if (btnEl) { btnEl.disabled = false; btnEl.textContent = role === 'manager' ? '💼 Manager' : '🔧 Machinist'; }
       });
     }
-    trySet(0);
+    doSet();
   }
   window.setUserRole = setUserRole;
 
