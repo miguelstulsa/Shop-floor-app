@@ -1033,6 +1033,36 @@
     if (window.currentMachine && document.getElementById('modalOverlay').classList.contains('active')) window.renderExistingNotes();
   });
 
+  // Allow re-render of dots from outside the module
+  window.refreshMachineDots = function() {
+    const notes = [];
+    Object.entries(window.machineNotes || {}).forEach(([machine, arr]) => {
+      arr.forEach(n => notes.push(n));
+    });
+    document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
+    document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
+    document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green'); });
+    const priority = { red:4, yellow:3, blue:2, green:1 };
+    const machinePriority = {};
+    notes.forEach(n => {
+      const container = document.getElementById('notes-' + n.machine);
+      if (container) {
+        const dot = document.createElement('span');
+        dot.className = 'note-dot ' + n.type;
+        container.appendChild(dot);
+      }
+      if (!machinePriority[n.machine] || priority[n.type] > priority[machinePriority[n.machine]]) {
+        machinePriority[n.machine] = n.type;
+      }
+    });
+    Object.entries(machinePriority).forEach(([mid, type]) => {
+      const led = document.getElementById('light-' + mid);
+      if (led) led.className = 'machine-led led-' + type;
+      const notesEl = document.getElementById('notes-' + mid);
+      if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
+    });
+  };
+
   function updateNotifFeed(actionable) {
     const list = document.getElementById('notifList');
     const reqBadge = document.getElementById('reqBadge');
@@ -1208,8 +1238,6 @@
         createdAt: serverTimestamp()
       });
     }
-  })();
-
   })();
 
   // AUTH
@@ -1400,9 +1428,10 @@
     document.getElementById('page-requests').style.display = tab === 'requests' ? 'block' : 'none';
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
-    
+
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
+
     if (tab === 'shop') {
       document.getElementById('page-shop').classList.add('active');
       document.body.classList.remove('scrollable');
@@ -1411,7 +1440,17 @@
       document.body.classList.add('scrollable');
     }
 
-    if (tab === 'mgmt') { mgmtView('group'); if (window.loadManagerList) window.loadManagerList(); }
+    // Trigger video render when switching to Hill TV
+    if (tab === 'video' && window.renderVideos) window.renderVideos();
+
+    // Re-render request dots when switching to shop floor
+    if (tab === 'shop') window.refreshMachineDots && window.refreshMachineDots();
+
+    if (tab === 'mgmt') {
+      mgmtView('group');
+      if (window.loadManagerList) window.loadManagerList();
+      loadCallPicker();
+    }
   }
 
   // ── MACHINE NOTES ──
@@ -1785,6 +1824,7 @@
     if (remember) localStorage.setItem('hillUser', JSON.stringify(user));
     else sessionStorage.setItem('hillUser', JSON.stringify(user));
     applyLogin(user);
+    setTimeout(function() { if (window.refreshMachineDots) window.refreshMachineDots(); }, 800);
   }
 
   function applyLogin(user) {
@@ -1806,6 +1846,7 @@
       var mgmtTab = document.getElementById('tab-mgmt');
       if (mgmtTab) mgmtTab.style.display = '';
     } else if (user.role === 'manager') {
+      listenToUsers(); // managers need user list for DMs and call picker
       var mgmtTab = document.getElementById('tab-mgmt');
       if (mgmtTab) mgmtTab.style.display = '';
     } else {
@@ -1832,7 +1873,32 @@
     showAuthTab('login');
   }
 
-  function openAdminPanel()  { document.getElementById('adminPanel').classList.add('open'); if (window.loadManagerList) window.loadManagerList(); }
+  function openAdminPanel() {
+    document.getElementById('adminPanel').classList.add('open');
+    // Always force a fresh user load when opening panel
+    if (window._db && window._fbModules) {
+      var db = window._db;
+      var mods = window._fbModules;
+      mods.getDocs(mods.collection(db, 'hillUsers')).then(function(snap) {
+        var users = [];
+        snap.forEach(function(d) { var obj = d.data(); obj.id = d.id; users.push(obj); });
+        window._fbListenUsersCache = users;
+        renderAdminUsers(users);
+      }).catch(function(e) {
+        console.error('openAdminPanel load error:', e);
+        // fallback to listener
+        if (window.fbListenUsers) window.fbListenUsers(function(u) {
+          window._fbListenUsersCache = u;
+          renderAdminUsers(u);
+        });
+      });
+    } else {
+      // Firebase not ready yet — retry
+      setTimeout(openAdminPanel, 600);
+      return;
+    }
+    if (window.loadManagerList) window.loadManagerList();
+  }
   function closeAdminPanel() { document.getElementById('adminPanel').classList.remove('open'); }
 
   function listenToUsers() {
@@ -1981,6 +2047,41 @@
   // ── MANAGEMENT UI ──
   var mgmtCurrentDmUser = null, mgmtCurrentDmThread = null, mgmtPhotoFile = null, mgmtLocalStream = null;
 
+  // Load managers into the video call picker
+  function loadCallPicker() {
+    var picker = document.getElementById('mgmt-call-picker');
+    if (!picker) return;
+    var users = window._fbListenUsersCache || [];
+    var managers = users.filter(function(u) {
+      return (u.role === 'manager' || u.isManager === true || u.role === 'admin') && u.status === 'approved';
+    });
+    if (managers.length === 0) {
+      picker.innerHTML = '<div style="color:#475569;font-size:13px;font-family:Barlow,sans-serif;">No managers available to call.</div>';
+      return;
+    }
+    picker.innerHTML = '';
+    managers.forEach(function(u) {
+      var btn = document.createElement('button');
+      btn.style.cssText = 'display:flex;align-items:center;gap:14px;width:100%;background:rgba(255,255,255,0.04);border:1px solid #1e3a5f;border-radius:14px;padding:14px 16px;cursor:pointer;text-align:left;touch-action:manipulation;';
+      btn.innerHTML =
+        '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e4976,#2a5a8c);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">' +
+        (u.role === 'admin' ? '👑' : '💼') + '</div>' +
+        '<div style="flex:1;">' +
+          '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;letter-spacing:1px;color:#f0f4f8;">' + escHtml(u.name) + '</div>' +
+          '<div style="font-size:11px;color:#64748b;font-family:Barlow,sans-serif;">@' + escHtml(u.username) + ' · ' + (u.role === 'admin' ? 'Admin' : 'Manager') + '</div>' +
+        '</div>' +
+        '<div style="background:#22c55e;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📹</div>';
+      btn.onclick = function() { callManager(u); };
+      picker.appendChild(btn);
+    });
+  }
+
+  function callManager(u) {
+    var label = document.getElementById('mgmt-calling-label');
+    if (label) label.textContent = '📹 Calling ' + u.name + '...';
+    startMgmtVideo();
+  }
+
   function mgmtView(tab) {
     ['group','dms','video'].forEach(t => {
       var panel = document.getElementById('mgmt-'+t);
@@ -2070,9 +2171,6 @@
     if (!userId) { showToast('red', 'Error: no user ID', ''); return; }
     if (btnEl) { btnEl.disabled = true; btnEl.textContent = '⏳'; }
 
-    showToast('blue', 'Saving role...', userId.slice(0,8) + ' → ' + role);
-
-    // Check Firebase is ready
     if (!window._db || !window._fbModules) {
       showToast('red', 'Firebase not ready', 'Wait 2 seconds and try again.');
       if (btnEl) { btnEl.disabled = false; btnEl.textContent = role === 'manager' ? '💼 Manager' : '🔧 Machinist'; }
@@ -2082,28 +2180,27 @@
     var db   = window._db;
     var mods = window._fbModules;
 
-    // Write directly using modules — no wrapper function needed
     mods.updateDoc(mods.doc(db, 'hillUsers', userId), {
       role: role,
       isManager: role === 'manager'
     }).then(function() {
       showToast(role === 'manager' ? 'blue' : 'green',
-        role === 'manager' ? '💼 Manager assigned!' : '🔧 Set to Machinist',
-        'Saved to Firebase ✓');
-
-      // Re-read users and refresh panel
+        role === 'manager' ? '💼 Manager assigned!' : '🔧 Set to Machinist', 'Saved ✓');
       mods.getDocs(mods.collection(db, 'hillUsers')).then(function(snap) {
         var users = [];
-        snap.forEach(function(d) { users.push({ id: d.id, ...d.data() }); });
+        snap.forEach(function(d) { var obj = d.data(); obj.id = d.id; users.push(obj); });
         window._fbListenUsersCache = users;
         renderAdminUsers(users);
-      }).catch(function(e) {
-        showToast('yellow', 'Saved but panel needs refresh', e.message || '');
+        if (typeof loadCallPicker === 'function') loadCallPicker();
       });
-
     }).catch(function(err) {
-      showToast('red', 'SAVE FAILED', err.message || 'Check Firebase rules');
-      console.error('setUserRole failed:', err);
+      var msg = err.message || String(err);
+      if (msg.indexOf('permission') > -1 || msg.indexOf('PERMISSION') > -1) {
+        showToast('red', 'Firebase rules blocking write', 'Fix Firestore rules in Firebase Console');
+      } else {
+        showToast('red', 'Save failed', msg.slice(0,80));
+      }
+      console.error('setUserRole error:', err);
       if (btnEl) { btnEl.disabled = false; btnEl.textContent = role === 'manager' ? '💼 Manager' : '🔧 Machinist'; }
     });
   }
@@ -2135,14 +2232,14 @@
 
 <!-- MANAGEMENT PAGE -->
 <div id="page-mgmt" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:50;background:#080f1d;flex-direction:column;">
-  <div id="mgmt-tabs" style="display:flex;border-bottom:2px solid #1e3a5f;background:#0a1525;flex-shrink:0;padding-top:108px;">
-    <button onclick="mgmtView('group')" id="mgmt-tab-group" style="flex:1;padding:10px 4px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;border:none;background:#f59e0b;color:#0f2338;cursor:pointer;">💬 GROUP</button>
-    <button onclick="mgmtView('dms')"   id="mgmt-tab-dms"   style="flex:1;padding:10px 4px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">✉️ DMs</button>
-    <button onclick="mgmtView('video')" id="mgmt-tab-video" style="flex:1;padding:10px 4px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;border:none;background:transparent;color:#94a3b8;cursor:pointer;">📹 VIDEO</button>
+  <div id="mgmt-tabs" style="display:flex;border-bottom:2px solid #1e3a5f;background:#0a1525;flex-shrink:0;padding-top:env(safe-area-inset-top,0px);">
+    <button onclick="mgmtView('group')" id="mgmt-tab-group" style="flex:1;padding:14px 4px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;border:none;background:#f59e0b;color:#0f2338;cursor:pointer;touch-action:manipulation;">💬 GROUP</button>
+    <button onclick="mgmtView('dms')"   id="mgmt-tab-dms"   style="flex:1;padding:14px 4px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;border:none;background:transparent;color:#94a3b8;cursor:pointer;touch-action:manipulation;">✉️ DMs</button>
+    <button onclick="mgmtView('video')" id="mgmt-tab-video" style="flex:1;padding:14px 4px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;border:none;background:transparent;color:#94a3b8;cursor:pointer;touch-action:manipulation;">📹 VIDEO</button>
   </div>
 
   <!-- GROUP CHAT -->
-  <div id="mgmt-group" style="display:flex;flex-direction:column;position:absolute;top:158px;left:0;right:0;bottom:0;">
+  <div id="mgmt-group" style="display:flex;flex-direction:column;position:absolute;top:52px;left:0;right:0;bottom:0;">
     <div id="mgmt-messages" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
       <div style="text-align:center;color:#475569;font-size:12px;margin-top:20px;font-family:Barlow,sans-serif;">Management chat — private to managers only</div>
     </div>
@@ -2160,7 +2257,7 @@
   </div>
 
   <!-- DMs VIEW -->
-  <div id="mgmt-dms" style="display:none;flex-direction:column;position:absolute;top:158px;left:0;right:0;bottom:0;">
+  <div id="mgmt-dms" style="display:none;flex-direction:column;position:absolute;top:52px;left:0;right:0;bottom:0;">
     <div id="mgmt-dm-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;">
       <div style="color:#64748b;font-size:12px;letter-spacing:2px;font-family:'Bebas Neue',sans-serif;margin-bottom:12px;">SELECT A MANAGER</div>
       <div id="mgmt-managers-list" style="display:flex;flex-direction:column;gap:8px;"></div>
@@ -2179,14 +2276,20 @@
   </div>
 
   <!-- VIDEO VIEW -->
-  <div id="mgmt-video" style="display:none;flex-direction:column;position:absolute;top:158px;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-    <div id="mgmt-video-start" style="text-align:center;padding:40px 20px;">
-      <div style="font-size:56px;margin-bottom:16px;">📹</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:#f0f4f8;margin-bottom:8px;">VIDEO CALL</div>
-      <div style="color:#64748b;font-size:13px;font-family:Barlow,sans-serif;margin-bottom:28px;">Start a live video call with the management team</div>
-      <button onclick="startMgmtVideo()" style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;padding:16px 28px;background:#22c55e;border:none;color:#fff;border-radius:14px;cursor:pointer;width:100%;max-width:300px;">📹 START VIDEO CALL</button>
+  <div id="mgmt-video" style="display:none;flex-direction:column;position:absolute;top:52px;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <!-- Manager picker -->
+    <div id="mgmt-video-start" style="padding:24px 20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#f59e0b;margin-bottom:16px;">📹 SELECT WHO TO CALL</div>
+      <div id="mgmt-call-picker" style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+        <div style="color:#475569;font-size:13px;font-family:Barlow,sans-serif;">Loading managers...</div>
+      </div>
+      <div style="border-top:1px solid #1e3a5f;padding-top:20px;text-align:center;">
+        <div style="color:#64748b;font-size:12px;font-family:Barlow,sans-serif;margin-bottom:16px;">Or start an open call for anyone to join</div>
+        <button onclick="startMgmtVideo()" style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;padding:16px 28px;background:#22c55e;border:none;color:#fff;border-radius:14px;cursor:pointer;width:100%;max-width:320px;touch-action:manipulation;">📹 OPEN GROUP CALL</button>
+      </div>
     </div>
     <div id="mgmt-call-area" style="display:none;padding:16px;">
+      <div id="mgmt-calling-label" style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:#f59e0b;margin-bottom:12px;"></div>
       <div style="position:relative;background:#000;border-radius:14px;overflow:hidden;aspect-ratio:4/3;">
         <video id="mgmt-remote-video" autoplay playsinline style="width:100%;height:100%;object-fit:cover;"></video>
         <video id="mgmt-local-video"  autoplay playsinline muted style="position:absolute;bottom:10px;right:10px;width:30%;border-radius:8px;border:2px solid #f59e0b;"></video>
