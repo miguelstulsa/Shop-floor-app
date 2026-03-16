@@ -2,108 +2,88 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Hill Shop Command Center</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hill Manufacturing Command Center</title>
 
 <style>
 
 body{
 margin:0;
-font-family:Arial,Helvetica,sans-serif;
-background:#0f2338;
-color:#f0f4f8;
+font-family:Arial;
+background:#0b1f33;
+color:white;
 }
 
 header{
-background:#111827;
-padding:14px 18px;
-border-bottom:3px solid #f59e0b;
+background:#0e2a47;
+padding:18px;
 font-size:22px;
 font-weight:bold;
 display:flex;
 justify-content:space-between;
 align-items:center;
+border-bottom:3px solid orange;
 }
 
 nav{
 display:flex;
 gap:10px;
 padding:10px;
-background:#0b1c2e;
-border-bottom:2px solid #2a5a8c;
+background:#091827;
 }
 
 nav button{
-background:#1f2937;
+background:#1f2e40;
 color:white;
 border:none;
-padding:8px 14px;
+padding:10px 16px;
 border-radius:6px;
 cursor:pointer;
 }
 
-nav button:hover{
-background:#374151;
-}
-
-.page{
-display:none;
+.section{
 padding:20px;
 }
 
-.page.active{
-display:block;
+.grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:18px;
 }
 
-/* MACHINE GRID */
+.cell{
+background:#0e2a47;
+padding:14px;
+border-radius:10px;
+border:1px solid #2f4c6d;
+}
 
-.floor-grid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:10px;
+.cell h3{
+margin-top:0;
+color:#ffb347;
 }
 
 .machine{
-background:#152c45;
-border:1px solid #2a5a8c;
-border-radius:10px;
-padding:16px;
-font-size:20px;
-font-weight:bold;
-text-align:center;
+background:#132f4d;
+padding:10px;
+margin:8px 0;
+border-radius:8px;
+border:1px solid #355c84;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
-.has-green{border-color:#22c55e}
-.has-red{border-color:#ef4444}
-.has-yellow{border-color:#eab308}
-.has-blue{border-color:#3b82f6}
-
-/* WALLBOARD */
-
-body.wallboard header,
-body.wallboard nav{
-display:none;
+.status{
+width:10px;
+height:10px;
+border-radius:50%;
 }
 
-.wallboard-grid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:20px;
-padding:40px;
-}
-
-.wall-machine{
-background:#020617;
-border:2px solid #2a5a8c;
-border-radius:14px;
-padding:20px;
-text-align:center;
-font-size:34px;
-}
-
-.running{color:#22c55e}
-.alarm{color:#ef4444}
-.idle{color:#eab308}
+.green{background:#22c55e}
+.yellow{background:#facc15}
+.red{background:#ef4444}
+.blue{background:#3b82f6}
 
 </style>
 </head>
@@ -112,287 +92,104 @@ font-size:34px;
 
 <header>
 Hill Manufacturing — Command Center
-<div id="loginBox"></div>
+<button onclick="adminLogin()">Admin Login</button>
 </header>
 
 <nav>
-<button onclick="showPage('shop')">Shop Floor</button>
-<button onclick="showPage('requests')">Requests</button>
-<button onclick="showPage('board')">Bulletin Board</button>
-<button onclick="showPage('tv')">Hill TV</button>
-<button onclick="showPage('management')">Management</button>
+<button>Shop Floor</button>
+<button>Requests</button>
+<button>Bulletin Board</button>
+<button>Hill TV</button>
+<button>Management</button>
 </nav>
 
-<!-- SHOP FLOOR -->
-
-<div id="shop" class="page active">
+<div class="section">
 
 <h2>Shop Floor Overview</h2>
 
-<div class="floor-grid">
+<div class="grid">
 
-<div class="machine" data-machine="1050-B">1050-B</div>
-<div class="machine" data-machine="7000">7000</div>
-<div class="machine" data-machine="VF-6">VF-6</div>
+<div class="cell">
+<h3>BIG MILL</h3>
+<div class="machine">1050-B <span class="status green"></span></div>
+<div class="machine">7000 <span class="status green"></span></div>
+<div class="machine">VF-6 <span class="status red"></span></div>
+</div>
 
-<div class="machine" data-machine="5100-B">5100-B</div>
-<div class="machine" data-machine="2500">2500</div>
-<div class="machine" data-machine="PUMA-3">PUMA-3</div>
+<div class="cell">
+<h3>5100-2500</h3>
+<div class="machine">5100-B <span class="status green"></span></div>
+<div class="machine">2500 <span class="status yellow"></span></div>
+<div class="machine">PUMA-3 <span class="status green"></span></div>
+</div>
 
-<div class="machine" data-machine="ST35">ST35</div>
-<div class="machine" data-machine="VF-2">VF-2</div>
-<div class="machine" data-machine="VF-3">VF-3</div>
+<div class="cell">
+<h3>MPPI</h3>
+<div class="machine">ST35 <span class="status yellow"></span></div>
+<div class="machine">VF-2 <span class="status green"></span></div>
+<div class="machine">VF-3 <span class="status green"></span></div>
+<div class="machine">PUMA-2 <span class="status red"></span></div>
+</div>
 
-<div class="machine" data-machine="403-A">403-A</div>
-<div class="machine" data-machine="403-B">403-B</div>
-<div class="machine" data-machine="403-C">403-C</div>
+<div class="cell">
+<h3>403 CELL</h3>
+<div class="machine">403-A <span class="status green"></span></div>
+<div class="machine">403-B <span class="status green"></span></div>
+<div class="machine">403-C <span class="status green"></span></div>
+</div>
 
+<div class="cell">
+<h3>SAWS</h3>
+<div class="machine">SAW-1 <span class="status yellow"></span></div>
+<div class="machine">SAW-2 <span class="status green"></span></div>
+</div>
+
+<div class="cell">
+<h3>MILL / LATHE</h3>
+<div class="machine">SHARP <span class="status red"></span></div>
+<div class="machine">5100-A <span class="status yellow"></span></div>
+<div class="machine">SH403 <span class="status green"></span></div>
+<div class="machine">5000 <span class="status green"></span></div>
+</div>
+
+<div class="cell">
+<h3>3000 CELL</h3>
+<div class="machine">3000-C <span class="status green"></span></div>
+</div>
+
+<div class="cell">
+<h3>HORIZONTAL</h3>
+<div class="machine">EMCO <span class="status red"></span></div>
+</div>
+
+<div class="cell">
+<h3>AUTOMATION CELL</h3>
+<div class="machine">PUMA-1 <span class="status green"></span></div>
+<div class="machine">303-B <span class="status yellow"></span></div>
+<div class="machine">TWIN <span class="status red"></span></div>
+<div class="machine">2500-Y <span class="status green"></span></div>
 </div>
 
 </div>
-
-<!-- REQUESTS -->
-
-<div id="requests" class="page">
-
-<h2>Machine Requests</h2>
-
-<select id="reqMachine"></select>
-<select id="reqType">
-<option>Inspection</option>
-<option>Machinist</option>
-<option>Tool Change</option>
-</select>
-
-<input id="reqDetail" placeholder="Details">
-
-<button onclick="submitRequest()">Submit Request</button>
-
-<div id="requestList"></div>
-
-</div>
-
-<!-- BULLETIN BOARD -->
-
-<div id="board" class="page">
-
-<h2>Bulletin Board</h2>
-
-<textarea id="postText" placeholder="Post message"></textarea>
-<button onclick="addPost()">Post</button>
-
-<div id="posts"></div>
-
-</div>
-
-<!-- HILL TV -->
-
-<div id="tv" class="page">
-
-<h2>Hill TV</h2>
-
-<input id="videoUrl" placeholder="YouTube URL">
-<button onclick="addVideo()">Add Video</button>
-
-<div id="videos"></div>
-
-</div>
-
-<!-- MANAGEMENT -->
-
-<div id="management" class="page">
-
-<h2>Management</h2>
-
-<p>Admin tools appear here.</p>
 
 </div>
 
 <script>
 
-/* PAGE CONTROL */
+function adminLogin(){
 
-function showPage(id){
+const user=prompt("Username")
+const pass=prompt("Password")
 
-document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"))
-document.getElementById(id).classList.add("active")
+if(user==="hilladmin" && pass==="Hill2024!"){
 
-}
-
-/* ADMIN LOGIN */
-
-const ADMIN_USER="hilladmin"
-const ADMIN_PASS="Hill2024!"
-
-function login(){
-
-let u=prompt("Username")
-let p=prompt("Password")
-
-if(u===ADMIN_USER && p===ADMIN_PASS){
-
-localStorage.setItem("admin","true")
-alert("Admin logged in")
+alert("Admin Logged In")
 
 }else{
 
 alert("Invalid login")
 
 }
-
-}
-
-loginBox.innerHTML='<button onclick="login()">Admin Login</button>'
-
-/* MACHINE STATUS */
-
-function setMachineStatus(machine,status){
-
-let el=document.querySelector('[data-machine="'+machine+'"]')
-
-if(!el) return
-
-el.classList.remove("has-green","has-red","has-yellow","has-blue")
-
-if(status==="running") el.classList.add("has-green")
-if(status==="alarm") el.classList.add("has-red")
-if(status==="idle") el.classList.add("has-yellow")
-if(status==="pending") el.classList.add("has-blue")
-
-}
-
-/* DATANOMIX HOOK */
-
-async function updateFromDatanomix(){
-
-try{
-
-let res=await fetch("/datanomix-api")
-let data=await res.json()
-
-data.machines.forEach(m=>{
-
-setMachineStatus(m.name,m.state)
-
-})
-
-}catch(e){
-
-console.log("Waiting for Datanomix connection")
-
-}
-
-}
-
-setInterval(updateFromDatanomix,5000)
-
-/* REQUEST SYSTEM */
-
-function submitRequest(){
-
-let m=reqMachine.value
-let t=reqType.value
-let d=reqDetail.value
-
-let list=JSON.parse(localStorage.getItem("requests")||"[]")
-
-list.push({machine:m,type:t,detail:d,time:new Date().toLocaleTimeString()})
-
-localStorage.setItem("requests",JSON.stringify(list))
-
-renderRequests()
-
-}
-
-function renderRequests(){
-
-let list=JSON.parse(localStorage.getItem("requests")||"[]")
-
-requestList.innerHTML=""
-
-list.forEach(r=>{
-
-requestList.innerHTML+=`<div>${r.machine} - ${r.type} - ${r.detail}</div>`
-
-})
-
-}
-
-/* POSTS */
-
-function addPost(){
-
-let text=postText.value
-
-let posts=JSON.parse(localStorage.getItem("posts")||"[]")
-
-posts.push({text,time:new Date().toLocaleString()})
-
-localStorage.setItem("posts",JSON.stringify(posts))
-
-renderPosts()
-
-}
-
-function renderPosts(){
-
-let posts=JSON.parse(localStorage.getItem("posts")||"[]")
-
-posts.forEach(p=>{
-
-document.getElementById("posts").innerHTML+=`<div>${p.text}</div>`
-
-})
-
-}
-
-/* VIDEO */
-
-function addVideo(){
-
-let url=videoUrl.value
-
-videos.innerHTML+=`<iframe width="420" height="240" src="${url.replace("watch?v=","embed/")}" frameborder="0"></iframe>`
-
-}
-
-/* MACHINE LIST */
-
-const machines=[
-"1050-B","7000","VF-6",
-"5100-B","2500","PUMA-3",
-"ST35","VF-2","VF-3",
-"403-A","403-B","403-C"
-]
-
-machines.forEach(m=>{
-
-reqMachine.innerHTML+=`<option>${m}</option>`
-
-})
-
-renderRequests()
-renderPosts()
-
-/* WALLBOARD MODE */
-
-const params=new URLSearchParams(window.location.search)
-
-if(params.get("wallboard")==="true"){
-
-document.body.classList.add("wallboard")
-
-let grid=document.createElement("div")
-grid.className="wallboard-grid"
-
-machines.forEach(m=>{
-
-grid.innerHTML+=`<div class="wall-machine">${m}<div class="running">RUNNING</div></div>`
-
-})
-
-document.body.innerHTML=""
-document.body.appendChild(grid)
 
 }
 
