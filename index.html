@@ -2,148 +2,150 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>CNC Shop Command Center</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Hill Shop Command Center</title>
 
 <style>
 
 body{
-font-family:Arial;
-background:#0f172a;
-color:white;
 margin:0;
+font-family:Arial,Helvetica,sans-serif;
+background:#0f2338;
+color:#f0f4f8;
 }
 
 header{
 background:#111827;
-padding:15px;
+padding:14px 18px;
+border-bottom:3px solid #f59e0b;
 font-size:22px;
-border-bottom:2px solid orange;
+font-weight:bold;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
 nav{
 display:flex;
 gap:10px;
 padding:10px;
-background:#1f2937;
-flex-wrap:wrap;
+background:#0b1c2e;
+border-bottom:2px solid #2a5a8c;
 }
 
 nav button{
-padding:8px 12px;
-background:#374151;
-border:none;
+background:#1f2937;
 color:white;
+border:none;
+padding:8px 14px;
+border-radius:6px;
 cursor:pointer;
-border-radius:5px;
 }
 
-.panel{
+nav button:hover{
+background:#374151;
+}
+
+.page{
 display:none;
 padding:20px;
 }
 
-.panel.active{
+.page.active{
 display:block;
 }
 
-.card{
-background:#1f2937;
-padding:15px;
-margin-bottom:10px;
-border-radius:8px;
-}
+/* MACHINE GRID */
 
-input,textarea,select{
-width:100%;
-padding:6px;
-margin-bottom:6px;
-border:none;
-border-radius:4px;
-}
-
-button.action{
-background:orange;
-color:black;
-border:none;
-padding:6px 10px;
-cursor:pointer;
-border-radius:4px;
+.floor-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:10px;
 }
 
 .machine{
-display:inline-block;
-width:160px;
-padding:10px;
-margin:5px;
-border-radius:6px;
-text-align:center;
+background:#152c45;
+border:1px solid #2a5a8c;
+border-radius:10px;
+padding:16px;
+font-size:20px;
 font-weight:bold;
+text-align:center;
 }
 
-.green{background:#16a34a}
-.yellow{background:#eab308;color:black}
-.red{background:#dc2626}
-.blue{background:#2563eb}
+.has-green{border-color:#22c55e}
+.has-red{border-color:#ef4444}
+.has-yellow{border-color:#eab308}
+.has-blue{border-color:#3b82f6}
 
-#chatBox{
-height:250px;
-overflow-y:auto;
+/* WALLBOARD */
+
+body.wallboard header,
+body.wallboard nav{
+display:none;
+}
+
+.wallboard-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:20px;
+padding:40px;
+}
+
+.wall-machine{
 background:#020617;
-padding:10px;
+border:2px solid #2a5a8c;
+border-radius:14px;
+padding:20px;
+text-align:center;
+font-size:34px;
 }
+
+.running{color:#22c55e}
+.alarm{color:#ef4444}
+.idle{color:#eab308}
 
 </style>
-
 </head>
+
 <body>
 
-<header>CNC SHOP COMMAND CENTER</header>
-
-<!-- LOGIN -->
-
-<div id="loginPanel">
-
-<div class="card">
-
-<h2>Login</h2>
-
-<input id="username" placeholder="Username">
-<input id="password" type="password" placeholder="Password">
-
-<button class="action" onclick="login()">Login</button>
-
-<p>Admin Login</p>
-<p>hilladmin / Hill2024!</p>
-
-</div>
-
-</div>
-
-<!-- APP -->
-
-<div id="app" style="display:none">
+<header>
+Hill Manufacturing — Command Center
+<div id="loginBox"></div>
+</header>
 
 <nav>
-
-<button onclick="showPanel('dashboard')">Dashboard</button>
-<button onclick="showPanel('requests')">Requests</button>
-<button onclick="showPanel('tools')">Tools</button>
-<button onclick="showPanel('maintenance')">Maintenance</button>
-<button onclick="showPanel('chat')">Chat</button>
-<button onclick="showPanel('admin')" id="adminTab">Admin</button>
-
+<button onclick="showPage('shop')">Shop Floor</button>
+<button onclick="showPage('requests')">Requests</button>
+<button onclick="showPage('board')">Bulletin Board</button>
+<button onclick="showPage('tv')">Hill TV</button>
+<button onclick="showPage('management')">Management</button>
 </nav>
 
-<!-- DASHBOARD -->
+<!-- SHOP FLOOR -->
 
-<div id="dashboard" class="panel active">
+<div id="shop" class="page active">
 
-<div class="card">
+<h2>Shop Floor Overview</h2>
 
-<h2>Machine Dashboard</h2>
+<div class="floor-grid">
 
-<div id="machineBoard"></div>
+<div class="machine" data-machine="1050-B">1050-B</div>
+<div class="machine" data-machine="7000">7000</div>
+<div class="machine" data-machine="VF-6">VF-6</div>
+
+<div class="machine" data-machine="5100-B">5100-B</div>
+<div class="machine" data-machine="2500">2500</div>
+<div class="machine" data-machine="PUMA-3">PUMA-3</div>
+
+<div class="machine" data-machine="ST35">ST35</div>
+<div class="machine" data-machine="VF-2">VF-2</div>
+<div class="machine" data-machine="VF-3">VF-3</div>
+
+<div class="machine" data-machine="403-A">403-A</div>
+<div class="machine" data-machine="403-B">403-B</div>
+<div class="machine" data-machine="403-C">403-C</div>
 
 </div>
 
@@ -151,357 +153,246 @@ padding:10px;
 
 <!-- REQUESTS -->
 
-<div id="requests" class="panel">
+<div id="requests" class="page">
 
-<div class="card">
+<h2>Machine Requests</h2>
 
-<h2>Create Request</h2>
-
-<select id="reqMachine">
-<option>CNC1</option>
-<option>CNC2</option>
-<option>CNC3</option>
-<option>CNC4</option>
-</select>
-
+<select id="reqMachine"></select>
 <select id="reqType">
 <option>Inspection</option>
 <option>Machinist</option>
 <option>Tool Change</option>
 </select>
 
-<button class="action" onclick="addRequest()">Submit</button>
+<input id="reqDetail" placeholder="Details">
 
-</div>
+<button onclick="submitRequest()">Submit Request</button>
 
 <div id="requestList"></div>
 
 </div>
 
-<!-- TOOLS -->
+<!-- BULLETIN BOARD -->
 
-<div id="tools" class="panel">
+<div id="board" class="page">
 
-<div class="card">
+<h2>Bulletin Board</h2>
 
-<h2>Tool Life Tracker</h2>
+<textarea id="postText" placeholder="Post message"></textarea>
+<button onclick="addPost()">Post</button>
 
-<input id="toolName" placeholder="Tool Name">
-<input id="toolLife" placeholder="Max Life">
-<input id="toolCurrent" placeholder="Current Count">
-
-<button class="action" onclick="addTool()">Add Tool</button>
+<div id="posts"></div>
 
 </div>
 
-<div id="toolList"></div>
+<!-- HILL TV -->
+
+<div id="tv" class="page">
+
+<h2>Hill TV</h2>
+
+<input id="videoUrl" placeholder="YouTube URL">
+<button onclick="addVideo()">Add Video</button>
+
+<div id="videos"></div>
 
 </div>
 
-<!-- MAINTENANCE -->
+<!-- MANAGEMENT -->
 
-<div id="maintenance" class="panel">
+<div id="management" class="page">
 
-<div class="card">
+<h2>Management</h2>
 
-<h2>Maintenance Ticket</h2>
-
-<input id="maintMachine" placeholder="Machine">
-<textarea id="maintIssue"></textarea>
-
-<button class="action" onclick="addTicket()">Submit Ticket</button>
-
-</div>
-
-<div id="ticketList"></div>
-
-</div>
-
-<!-- CHAT -->
-
-<div id="chat" class="panel">
-
-<div class="card">
-
-<h2>Shop Chat</h2>
-
-<div id="chatBox"></div>
-
-<input id="chatInput">
-
-<button class="action" onclick="sendMessage()">Send</button>
-
-</div>
-
-</div>
-
-<!-- ADMIN -->
-
-<div id="admin" class="panel">
-
-<div class="card">
-
-<h2>User Management</h2>
-
-<input id="newUser" placeholder="Username">
-<input id="newPass" placeholder="Password">
-
-<select id="role">
-<option>operator</option>
-<option>manager</option>
-</select>
-
-<button class="action" onclick="createUser()">Create User</button>
-
-</div>
-
-<div id="userList"></div>
-
-</div>
+<p>Admin tools appear here.</p>
 
 </div>
 
 <script>
 
-let currentUser=null
+/* PAGE CONTROL */
 
-let users=JSON.parse(localStorage.getItem("users"))||[
-{username:"hilladmin",password:"Hill2024!",role:"admin"}
-]
+function showPage(id){
 
-let requests=JSON.parse(localStorage.getItem("requests"))||[]
-let tools=JSON.parse(localStorage.getItem("tools"))||[]
-let tickets=JSON.parse(localStorage.getItem("tickets"))||[]
-let chat=JSON.parse(localStorage.getItem("chat"))||[]
-
-function save(){
-
-localStorage.setItem("users",JSON.stringify(users))
-localStorage.setItem("requests",JSON.stringify(requests))
-localStorage.setItem("tools",JSON.stringify(tools))
-localStorage.setItem("tickets",JSON.stringify(tickets))
-localStorage.setItem("chat",JSON.stringify(chat))
-
-}
-
-function login(){
-
-let user=users.find(u=>
-u.username===username.value && u.password===password.value)
-
-if(!user){
-alert("Invalid login")
-return
-}
-
-currentUser=user
-
-loginPanel.style.display="none"
-app.style.display="block"
-
-if(user.role!=="admin")
-adminTab.style.display="none"
-
-renderAll()
-
-}
-
-function showPanel(id){
-
-document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"))
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"))
 document.getElementById(id).classList.add("active")
 
 }
 
-function renderAll(){
+/* ADMIN LOGIN */
 
-renderMachines()
-renderRequests()
-renderTools()
-renderTickets()
-renderChat()
-renderUsers()
+const ADMIN_USER="hilladmin"
+const ADMIN_PASS="Hill2024!"
 
-}
+function login(){
 
-function renderMachines(){
+let u=prompt("Username")
+let p=prompt("Password")
 
-let machines=["CNC1","CNC2","CNC3","CNC4"]
+if(u===ADMIN_USER && p===ADMIN_PASS){
 
-let html=""
+localStorage.setItem("admin","true")
+alert("Admin logged in")
 
-machines.forEach(m=>{
+}else{
 
-html+=`<div class="machine green">${m}<br>RUNNING</div>`
-
-})
-
-machineBoard.innerHTML=html
+alert("Invalid login")
 
 }
 
-function addRequest(){
+}
 
-requests.push({
-machine:reqMachine.value,
-type:reqType.value
+loginBox.innerHTML='<button onclick="login()">Admin Login</button>'
+
+/* MACHINE STATUS */
+
+function setMachineStatus(machine,status){
+
+let el=document.querySelector('[data-machine="'+machine+'"]')
+
+if(!el) return
+
+el.classList.remove("has-green","has-red","has-yellow","has-blue")
+
+if(status==="running") el.classList.add("has-green")
+if(status==="alarm") el.classList.add("has-red")
+if(status==="idle") el.classList.add("has-yellow")
+if(status==="pending") el.classList.add("has-blue")
+
+}
+
+/* DATANOMIX HOOK */
+
+async function updateFromDatanomix(){
+
+try{
+
+let res=await fetch("/datanomix-api")
+let data=await res.json()
+
+data.machines.forEach(m=>{
+
+setMachineStatus(m.name,m.state)
+
 })
 
-save()
+}catch(e){
+
+console.log("Waiting for Datanomix connection")
+
+}
+
+}
+
+setInterval(updateFromDatanomix,5000)
+
+/* REQUEST SYSTEM */
+
+function submitRequest(){
+
+let m=reqMachine.value
+let t=reqType.value
+let d=reqDetail.value
+
+let list=JSON.parse(localStorage.getItem("requests")||"[]")
+
+list.push({machine:m,type:t,detail:d,time:new Date().toLocaleTimeString()})
+
+localStorage.setItem("requests",JSON.stringify(list))
+
 renderRequests()
 
 }
 
 function renderRequests(){
 
-let html=""
+let list=JSON.parse(localStorage.getItem("requests")||"[]")
 
-requests.forEach((r,i)=>{
+requestList.innerHTML=""
 
-html+=`
-<div class="card">
-${r.machine} - ${r.type}
-<button onclick="requests.splice(${i},1);save();renderRequests()">Complete</button>
-</div>
-`
+list.forEach(r=>{
+
+requestList.innerHTML+=`<div>${r.machine} - ${r.type} - ${r.detail}</div>`
 
 })
-
-requestList.innerHTML=html
 
 }
 
-function addTool(){
+/* POSTS */
 
-tools.push({
-name:toolName.value,
-life:parseInt(toolLife.value),
-current:parseInt(toolCurrent.value)
-})
+function addPost(){
 
-save()
-renderTools()
+let text=postText.value
 
-}
+let posts=JSON.parse(localStorage.getItem("posts")||"[]")
 
-function renderTools(){
+posts.push({text,time:new Date().toLocaleString()})
 
-let html=""
+localStorage.setItem("posts",JSON.stringify(posts))
 
-tools.forEach(t=>{
-
-let warn=(t.current/t.life>0.9)?"⚠ Replace Soon":""
-
-html+=`
-<div class="card">
-<b>${t.name}</b><br>
-${t.current}/${t.life}<br>
-${warn}
-</div>
-`
-
-})
-
-toolList.innerHTML=html
+renderPosts()
 
 }
 
-function addTicket(){
+function renderPosts(){
 
-tickets.push({
-machine:maintMachine.value,
-issue:maintIssue.value
+let posts=JSON.parse(localStorage.getItem("posts")||"[]")
+
+posts.forEach(p=>{
+
+document.getElementById("posts").innerHTML+=`<div>${p.text}</div>`
+
 })
-
-save()
-renderTickets()
 
 }
 
-function renderTickets(){
+/* VIDEO */
 
-let html=""
+function addVideo(){
 
-tickets.forEach(t=>{
+let url=videoUrl.value
 
-html+=`
-<div class="card">
-<b>${t.machine}</b><br>
-${t.issue}
-</div>
-`
-
-})
-
-ticketList.innerHTML=html
+videos.innerHTML+=`<iframe width="420" height="240" src="${url.replace("watch?v=","embed/")}" frameborder="0"></iframe>`
 
 }
 
-function sendMessage(){
+/* MACHINE LIST */
 
-chat.push({
-user:currentUser.username,
-text:chatInput.value,
-time:new Date().toLocaleTimeString()
-})
+const machines=[
+"1050-B","7000","VF-6",
+"5100-B","2500","PUMA-3",
+"ST35","VF-2","VF-3",
+"403-A","403-B","403-C"
+]
 
-chatInput.value=""
+machines.forEach(m=>{
 
-save()
-renderChat()
-
-}
-
-function renderChat(){
-
-let html=""
-
-chat.forEach(m=>{
-
-html+=`
-<div>
-<b>${m.user}</b> ${m.time}<br>
-${m.text}
-<hr>
-</div>
-`
+reqMachine.innerHTML+=`<option>${m}</option>`
 
 })
 
-chatBox.innerHTML=html
+renderRequests()
+renderPosts()
 
-}
+/* WALLBOARD MODE */
 
-function createUser(){
+const params=new URLSearchParams(window.location.search)
 
-if(currentUser.role!=="admin") return
+if(params.get("wallboard")==="true"){
 
-users.push({
-username:newUser.value,
-password:newPass.value,
-role:role.value
-})
+document.body.classList.add("wallboard")
 
-save()
-renderUsers()
+let grid=document.createElement("div")
+grid.className="wallboard-grid"
 
-}
+machines.forEach(m=>{
 
-function renderUsers(){
-
-let html=""
-
-users.forEach(u=>{
-
-html+=`
-<div class="card">
-${u.username} - ${u.role}
-</div>
-`
+grid.innerHTML+=`<div class="wall-machine">${m}<div class="running">RUNNING</div></div>`
 
 })
 
-userList.innerHTML=html
+document.body.innerHTML=""
+document.body.appendChild(grid)
 
 }
 
