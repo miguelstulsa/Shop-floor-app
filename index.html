@@ -1506,13 +1506,47 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     closeModal();
     showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
     if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue') {
-      const titles={red:'INSPECTION REQUEST',yellow:'MACHINIST REQUEST',blue:'PENDING WO'};
-      const sounds={red:'siren',yellow:'bugle',blue:'pushover'};
-      const parts=[currentCell+' - '+currentMachine]; if(operator)parts.push(operator); parts.push('WO: '+wo); if(detail)parts.push(detail);
-      fetch('https://api.pushover.net/1/messages.json',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'a3fz1eugorhyxgrjk5svuw9ym2nwy6',user:'uotiq5p4c7sycsw2wh1xv8mq9gpe4e',title:titles[selectedType],message:parts.join('\n'),priority:selectedType==='red'?1:0,sound:sounds[selectedType]})})
-      .then(function(r){return r.json();}).then(function(d){if(d.status!==1)console.warn('Pushover:',d.errors);})
-      .catch(function(){fetch('https://api.pushover.net/1/messages.json',{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'a3fz1eugorhyxgrjk5svuw9ym2nwy6',user:'uotiq5p4c7sycsw2wh1xv8mq9gpe4e',title:titles[selectedType],message:parts.join('\n'),priority:selectedType==='red'?1:0,sound:sounds[selectedType]})}).catch(()=>{});});
+      sendPushover(selectedType, currentCell, currentMachine, wo, detail, operator);
     }
+  }
+
+  // ── PUSHOVER NOTIFICATION ──
+  // Uses FormData (multipart) with no-cors — bypasses CORS preflight entirely
+  // This is the most reliable way to call Pushover from a browser
+  function sendPushover(type, cell, machine, wo, detail, operator) {
+    const PUSHOVER_TOKEN = 'a3fz1eugorhyxgrjk5svuw9ym2nwy6';
+    const PUSHOVER_USER  = 'uotiq5p4c7sycsw2wh1xv8mq9gpe4e';
+    const titles  = { red: '🔴 INSPECTION REQUEST', yellow: '🟡 MACHINIST REQUEST', blue: '🔵 PENDING WO' };
+    const sounds  = { red: 'siren', yellow: 'bugle', blue: 'pushover' };
+    const priority = type === 'red' ? '1' : '0';
+
+    const msgParts = [cell + ' — ' + machine];
+    if (operator) msgParts.push(operator);
+    msgParts.push('WO: ' + wo);
+    if (detail) msgParts.push(detail);
+    const message = msgParts.join('\n');
+
+    // Build FormData — works with no-cors, no preflight needed
+    const fd = new FormData();
+    fd.append('token',    PUSHOVER_TOKEN);
+    fd.append('user',     PUSHOVER_USER);
+    fd.append('title',    titles[type] || 'SHOP REQUEST');
+    fd.append('message',  message);
+    fd.append('priority', priority);
+    fd.append('sound',    sounds[type] || 'pushover');
+
+    fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST',
+      mode:   'no-cors',   // FormData with no-cors = no preflight, always fires
+      body:   fd
+    })
+    .then(function() {
+      console.log('Pushover fired (no-cors, response opaque)');
+    })
+    .catch(function(err) {
+      console.warn('Pushover failed:', err.message);
+      showToast('yellow', 'Notification may not have sent', 'Check your Pushover app.');
+    });
   }
 
   function enableNotifications() {
