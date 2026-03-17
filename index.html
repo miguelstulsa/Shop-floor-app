@@ -2095,15 +2095,10 @@
     if (btn) { btn.style.background = '#f59e0b'; btn.style.color = '#0f2338'; }
     if (tab === 'dms')   window.loadMgmtManagers && window.loadMgmtManagers();
     if (tab === 'group') window.startMgmtChatListener && window.startMgmtChatListener();
-    var header = document.querySelector('header');
-    var nav    = document.querySelector('nav.nav-tabs');
+    // Let CSS handle positioning — page-mgmt is fixed fullscreen, tabs at top
     var tabBar = document.getElementById('mgmt-tabs');
-    var hh = header ? header.offsetHeight : 60;
-    var nh = nav    ? nav.offsetHeight    : 44;
-    var th = tabBar ? tabBar.offsetHeight : 44;
-    if (tabBar) tabBar.style.paddingTop = hh + 'px';
-    var top = hh + nh + th;
-    ['group','dms','video'].forEach(t => { var p = document.getElementById('mgmt-'+t); if (p) p.style.top = top + 'px'; });
+    var th = tabBar ? tabBar.offsetHeight : 52;
+    ['group','dms','video'].forEach(t => { var p = document.getElementById('mgmt-'+t); if (p) p.style.top = th + 'px'; });
   }
 
   function openDmThread(username, displayName) {
