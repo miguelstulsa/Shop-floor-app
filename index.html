@@ -454,27 +454,31 @@ header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-b
 
 /* DATANOMIX PERF BAR — top strip, totally different from request dots */
 .perf-bar {
-height: 4px;
+height: 16px;
 width: 100%;
 border-radius: 6px 6px 0 0;
 background: #1e3a5f;
 transition: background 0.5s ease;
 flex-shrink: 0;
 position: relative;
+overflow: hidden;
 }
 .perf-bar::after {
 content: attr(data-label);
 position: absolute;
-right: 5px;
-top: 4px;
+right: 6px;
+top: 50%;
+transform: translateY(-50%);
 font-family: ‘Barlow Condensed’, sans-serif;
 font-size: 9px;
+font-weight: 700;
 letter-spacing: 1px;
 text-transform: uppercase;
-color: #475569;
+color: rgba(255,255,255,0.85);
 white-space: nowrap;
 pointer-events: none;
 transition: color 0.5s ease;
+text-shadow: 0 1px 3px rgba(0,0,0,0.6);
 }
 .perf-bar.pending  { background: #1e3a5f; }
 .perf-bar.green    { background: #22c55e; }
@@ -529,7 +533,7 @@ html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden;
 .machine { margin-bottom: 3px !important; border-radius: 6px !important; }
 .machine-body { padding: 4px 6px !important; }
 .machine-name { font-size: clamp(16px, 2vw, 26px) !important; letter-spacing: 1px !important; }
-.perf-bar { height: 3px !important; }
+.perf-bar { height: 16px !important; }
 .note-dot { width: 10px !important; height: 10px !important; }
 .machine-notes { padding: 2px 6px 3px 6px !important; gap: 3px !important; }
 .machine-led { width: 8px !important; height: 8px !important; }
