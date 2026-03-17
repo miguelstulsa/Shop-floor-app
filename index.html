@@ -1447,6 +1447,12 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     if (tab === 'shop') window.refreshMachineDots && window.refreshMachineDots();
 
     if (tab === 'mgmt') {
+      // Position the mgmt panel right below the app's header + nav bar
+      var appHeader = document.querySelector('header');
+      var appNav    = document.querySelector('.nav-tabs');
+      var topOffset = (appHeader ? appHeader.offsetHeight : 58) + (appNav ? appNav.offsetHeight : 36);
+      var mgmtEl = document.getElementById('page-mgmt');
+      if (mgmtEl) mgmtEl.style.top = topOffset + 'px';
       mgmtView('group');
       if (window.loadManagerList) window.loadManagerList();
       mgmtFetchUsers(function(u){ window._fbListenUsersCache=u; });
@@ -2056,9 +2062,8 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
 
   // ── Compute the offset of content panels (below topbar + tabs) ──
   function mgmtOffset() {
-    var tb = document.getElementById('mgmt-topbar');
     var tabs = document.getElementById('mgmt-tabs');
-    return (tb ? tb.offsetHeight : 51) + (tabs ? tabs.offsetHeight : 48);
+    return tabs ? tabs.offsetHeight : 48;
   }
 
   // ── Switch between GROUP / MESSAGES / VIDEO ──
@@ -2359,16 +2364,9 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
 
 <!-- MANAGEMENT PAGE -->
 
-<div id="page-mgmt" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:1000;background:#080f1d;flex-direction:column;overflow:hidden;">
+<div id="page-mgmt" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:500;background:#080f1d;flex-direction:column;overflow:hidden;">
 
-  <!-- Top bar -->
-
-  <div id="mgmt-topbar" style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#0f2338,#1a3a5c);border-bottom:3px solid #f59e0b;padding:8px 14px;flex-shrink:0;">
-    <button onclick="switchTab('shop')" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.5);color:#f59e0b;border-radius:8px;padding:7px 12px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">&#8249; BACK</button>
-    <span style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#f59e0b;flex:1;">&#x1F4BC; MANAGEMENT</span>
-  </div>
-
-  <!-- Sub-tabs -->
+  <!-- Sub-tabs — sits right at the top of the panel, which is positioned below app nav via JS -->
 
   <div id="mgmt-tabs" style="display:flex;background:#0a1525;border-bottom:2px solid #1e3a5f;flex-shrink:0;">
     <button id="mgmt-tab-group" onclick="mgmtView('group')"
