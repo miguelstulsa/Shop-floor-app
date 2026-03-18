@@ -493,6 +493,10 @@ text-shadow: 0 1px 3px rgba(0,0,0,0.6);
 @keyframes perf-pulse-yellow { 0%, 100% { box-shadow: 0 0 6px 1px rgba(234,179,8,0.6); } 50% { box-shadow: 0 0 14px 4px rgba(234,179,8,1); } }
 @keyframes perf-pulse-red    { 0%, 100% { box-shadow: 0 0 8px 2px rgba(239,68,68,0.7); } 50% { box-shadow: 0 0 16px 5px rgba(239,68,68,1); } }
 
+/* SHOP SWITCHER */
+.shop-switch-btn { display:none; align-items:center; gap:6px; background:linear-gradient(135deg,#1a0050,#4a00b4); border:1px solid rgba(168,85,247,0.6); border-radius:8px; color:#d8b4fe; font-family:‘Bebas Neue’,sans-serif; font-size:13px; letter-spacing:1px; padding:5px 12px; cursor:pointer; transition:all 0.2s; white-space:nowrap; text-decoration:none; }
+.shop-switch-btn:hover { background:linear-gradient(135deg,#2a0070,#6a00d4); border-color:#a855f7; color:#fff; transform:translateY(-1px); box-shadow:0 4px 14px rgba(168,85,247,0.35); }
+.shop-switch-btn.visible { display:flex; }
 /* SIDEBAR */
 .sidebar-header { padding: 18px 20px; border-bottom: 2px solid #1e3a5f; font-family: ‘Bebas Neue’, sans-serif; font-size: 18px; letter-spacing: 3px; color: #f0f4f8; text-transform: uppercase; display: flex; align-items: center; gap: 12px; background: #0a1525; flex-shrink: 0; }
 .notif-list { flex: 1; overflow-y: auto; padding: 14px 12px; }
@@ -647,6 +651,19 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     </div>
 
 ```
+<!-- QMI SHOP LINK -->
+<div class="admin-section">
+  <div class="admin-section-title">🏭 QMI Shop Link</div>
+  <div style="font-size:12px;color:#64748b;margin-bottom:10px;line-height:1.6;">Set the URL to your QMI app so the switch button works.</div>
+  <div style="display:flex;gap:8px;">
+    <input id="qmi-url-input" type="text" placeholder="https://miguelstulsa.github.io/qmi"
+      style="flex:1;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:13px;outline:none;"
+      value="" oninput="saveQmiUrl(this.value)" />
+    <button onclick="testQmiLink()" style="background:#a855f7;border:none;color:#fff;border-radius:8px;padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">TEST</button>
+  </div>
+  <div style="font-size:11px;color:#64748b;margin-top:6px;">Current: <span id="qmi-url-display" style="color:#d8b4fe;">not set</span></div>
+</div>
+
 <!-- PUSHOVER SETTINGS -->
 <div class="admin-section">
   <div class="admin-section-title">🔔 Pushover Notification Settings</div>
@@ -695,6 +712,7 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
       <div class="user-greeting" id="userGreeting">
         <span class="greeting-name">👋 <strong id="greetingName"></strong></span>
         <button class="admin-btn" id="adminBtn" onclick="openAdminPanel()">👑 Admin</button>
+        <a class="shop-switch-btn" id="shopSwitchBtn" href="#" target="_blank" title="Switch to QMI Shop Floor">🏭 QMI</a>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
     </div>
@@ -2033,6 +2051,14 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
       listenToUsers();
       var mgmtTab = document.getElementById('tab-mgmt');
       if (mgmtTab) mgmtTab.style.display = '';
+      // Show QMI switch button for admin
+      var switchBtn = document.getElementById('shopSwitchBtn');
+      if (switchBtn) {
+        switchBtn.classList.add('visible');
+        // Update this URL once QMI is deployed to GitHub Pages
+        var qmiUrl = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi';
+        switchBtn.href = qmiUrl;
+      }
     } else if (user.role === 'manager') {
       listenToUsers(); // managers need user list for DMs and call picker
       var mgmtTab = document.getElementById('tab-mgmt');
@@ -2055,6 +2081,8 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     document.getElementById('authOverlay').classList.remove('hidden');
     document.getElementById('userGreeting').classList.remove('visible');
     document.getElementById('adminBtn').classList.remove('visible');
+    var sb = document.getElementById('shopSwitchBtn');
+    if (sb) sb.classList.remove('visible');
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
     setMsg('loginMsg', '', '');
@@ -2088,6 +2116,29 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     if (window.loadManagerList) window.loadManagerList();
   }
   function closeAdminPanel() { document.getElementById('adminPanel').classList.remove('open'); }
+
+  function saveQmiUrl(url) {
+    url = url.trim();
+    localStorage.setItem('qmiShopUrl', url || 'https://miguelstulsa.github.io/qmi');
+    var btn = document.getElementById('shopSwitchBtn');
+    if (btn) btn.href = url || 'https://miguelstulsa.github.io/qmi';
+    var disp = document.getElementById('qmi-url-display');
+    if (disp) disp.textContent = url || 'not set';
+  }
+  function testQmiLink() {
+    var url = document.getElementById('qmi-url-input').value.trim() || localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi';
+    window.open(url, '_blank');
+  }
+  // Load saved QMI URL on page load
+  window.addEventListener('load', function() {
+    var saved = localStorage.getItem('qmiShopUrl') || '';
+    var inp = document.getElementById('qmi-url-input');
+    var disp = document.getElementById('qmi-url-display');
+    if (inp && saved) inp.value = saved;
+    if (disp) disp.textContent = saved || 'not set';
+    var btn = document.getElementById('shopSwitchBtn');
+    if (btn && saved) btn.href = saved;
+  });
 
   function listenToUsers() {
     if (!window.fbListenUsers) { setTimeout(listenToUsers, 500); return; }
