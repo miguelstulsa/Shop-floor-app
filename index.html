@@ -162,7 +162,72 @@ header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-b
 @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
 
 /* BULLETIN BOARD */
-.board-page { padding: 24px; min-height: calc(100vh - 121px); }
+.dash-period-btn { padding:7px 16px;border-radius:8px;border:1px solid #1a4a8c;background:rgba(255,255,255,0.04);color:#64748b;font-family:‘Bebas Neue’,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s; }
+.dash-period-btn.active { background:rgba(245,158,11,0.15);border-color:#f59e0b;color:#f59e0b; }
+.dash-summary-card { background:linear-gradient(145deg,#000d2a,#001433);border-radius:14px;border:1px solid #1a4a8c;padding:14px 16px; }
+.dash-summary-card.red   { border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0000,#2a0808); }
+.dash-summary-card.yellow{ border-color:rgba(234,179,8,0.4);background:linear-gradient(145deg,#1a1000,#2a1e00); }
+.dash-summary-card.blue  { border-color:rgba(59,130,246,0.4);background:linear-gradient(145deg,#00091a,#001030); }
+.dash-summary-card.green { border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10); }
+.dash-summary-label { font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#475569;margin-bottom:4px; }
+.dash-summary-num { font-family:‘Bebas Neue’,sans-serif;font-size:42px;letter-spacing:2px;line-height:1; }
+.dash-summary-card.red .dash-summary-num { color:#f87171; }
+.dash-summary-card.yellow .dash-summary-num { color:#fbbf24; }
+.dash-summary-card.blue .dash-summary-num { color:#60a5fa; }
+.dash-summary-card.green .dash-summary-num { color:#4ade80; }
+.dash-summary-sub { font-size:11px;color:#475569;margin-top:3px; }
+.dash-filter-btn { padding:5px 12px;border-radius:20px;border:1px solid #1a4a8c;background:rgba(255,255,255,0.04);color:#64748b;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.2s; }
+.dash-filter-btn.f-red.active    { background:rgba(239,68,68,0.15);border-color:#ef4444;color:#f87171; }
+.dash-filter-btn.f-yellow.active { background:rgba(234,179,8,0.15);border-color:#eab308;color:#fbbf24; }
+.dash-filter-btn.f-blue.active   { background:rgba(59,130,246,0.15);border-color:#3b82f6;color:#60a5fa; }
+.dash-filter-btn.f-green.active  { background:rgba(34,197,94,0.15);border-color:#22c55e;color:#4ade80; }
+.dash-filter-btn.f-all.active    { background:rgba(245,158,11,0.15);border-color:#f59e0b;color:#f59e0b; }
+.dash-weekly-card { background:linear-gradient(145deg,#000d2a,#001433);border:1px solid #1a4a8c;border-radius:14px;padding:16px;margin-bottom:12px; }
+.dash-weekly-title { font-family:‘Bebas Neue’,sans-serif;font-size:16px;letter-spacing:3px;color:#f59e0b;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between; }
+.dash-weekly-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:8px; }
+.dash-weekly-stat { text-align:center;padding:8px;background:rgba(255,255,255,0.03);border-radius:8px; }
+.dash-weekly-stat-num { font-family:‘Bebas Neue’,sans-serif;font-size:28px;line-height:1; }
+.dash-weekly-stat-lbl { font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;margin-top:2px; }
+.dash-top-machine { display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:4px; }
+.dash-top-machine-name { font-family:‘Bebas Neue’,sans-serif;font-size:16px;color:#f59e0b;letter-spacing:1px; }
+.dash-top-machine-count { font-size:12px;color:#94a3b8; }
+.dash-print-btn { width:100%;margin-top:12px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#f59e0b;border-radius:8px;padding:10px;font-family:‘Bebas Neue’,sans-serif;font-size:14px;letter-spacing:2px;cursor:pointer; }
+.dash-req-card { background:linear-gradient(145deg,#000d2a,#001230);border-radius:12px;border:1px solid #1a4a8c;padding:12px 14px;margin-bottom:8px;position:relative;overflow:hidden; }
+.dash-req-card::before { content:’’;position:absolute;left:0;top:0;bottom:0;width:4px; }
+.dash-req-card.type-red::before    { background:#ef4444; }
+.dash-req-card.type-yellow::before { background:#eab308; }
+.dash-req-card.type-blue::before   { background:#3b82f6; }
+.dash-req-card.type-green::before  { background:#22c55e; }
+.dash-req-card.resolved { opacity:0.4; }
+.dash-req-card.status-completed { border-color:rgba(34,197,94,0.5);background:linear-gradient(145deg,#001a08,#002a10); }
+.dash-req-card.status-completed::before { background:#22c55e; }
+.dash-status-badge { display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:999px;text-transform:uppercase; }
+.dash-status-badge.pending   { background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3); }
+.dash-status-badge.running   { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3); }
+.dash-status-badge.completed { background:rgba(34,197,94,0.25);color:#4ade80;border:1px solid #22c55e; }
+.dash-status-badge.issue     { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3); }
+.dash-action-btn { font-size:11px;padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:700;letter-spacing:0.5px;transition:all 0.15s; }
+.dash-action-btn.to-running   { background:rgba(34,197,94,0.2);color:#4ade80;border:1px solid rgba(34,197,94,0.4); }
+.dash-action-btn.to-completed { background:rgba(34,197,94,0.35);color:#fff;background:#16a34a; }
+.dash-action-btn.to-pending   { background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3); }
+.dash-duration { font-size:11px;color:#22c55e;margin-top:3px;font-weight:600; }
+.dash-issue-flag { font-size:11px;color:#f87171;margin-top:3px;font-weight:700;letter-spacing:0.5px; }
+.dash-section-hdr { font-family:“Bebas Neue”,sans-serif;font-size:13px;letter-spacing:3px;color:#475569;margin:14px 0 6px;display:flex;align-items:center;gap:8px; }
+.dash-section-hdr .cnt { background:rgba(255,255,255,0.08);border-radius:999px;padding:1px 8px;font-size:11px;color:#94a3b8; }
+.dash-req-top { display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px; }
+.dash-req-type { font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;border-radius:999px; }
+.dash-req-type.red    { background:rgba(239,68,68,0.15);color:#f87171; }
+.dash-req-type.yellow { background:rgba(234,179,8,0.15);color:#fbbf24; }
+.dash-req-type.blue   { background:rgba(59,130,246,0.15);color:#60a5fa; }
+.dash-req-type.green  { background:rgba(34,197,94,0.15);color:#4ade80; }
+.dash-req-time { font-size:11px;color:#475569; }
+.dash-req-machine { font-family:‘Bebas Neue’,sans-serif;font-size:20px;letter-spacing:1.5px;color:#f59e0b; }
+.dash-req-cell { font-size:11px;color:#475569;letter-spacing:1px; }
+.dash-req-wo { font-size:13px;color:#f0f4f8;font-weight:700;margin-top:4px; }
+.dash-req-detail { font-size:12px;color:#64748b;margin-top:2px; }
+.dash-req-operator { font-size:11px;color:#94a3b8;margin-top:4px; }
+.dash-resolve-btn { font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid rgba(34,197,94,0.4);background:rgba(34,197,94,0.1);color:#4ade80;cursor:pointer;font-weight:700; }
+.dash-empty { text-align:center;padding:40px 20px;color:#334155;font-size:13px;font-family:Barlow,sans-serif; }
 .board-hero { background: linear-gradient(135deg, #0d1f33 0%, #1a3a5c 60%, #0f2338 100%); border: 1px solid #2a5a8c; border-radius: 20px; padding: 28px 32px; margin-bottom: 28px; display: flex; align-items: center; gap: 28px; position: relative; overflow: hidden; }
 .board-hero::before { content: ‘’; position: absolute; inset: 0; background: radial-gradient(circle at 80% 50%, rgba(245,158,11,0.07) 0%, transparent 60%); pointer-events: none; }
 .board-hero-mascot { width: 110px; height: 110px; flex-shrink: 0; filter: drop-shadow(0 4px 16px rgba(245,158,11,0.3)); object-fit: contain; }
@@ -734,6 +799,7 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
+  <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📊 Dashboard</div>
 
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
 </nav>
@@ -1196,7 +1262,11 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     }
   }
 
-  window.submitNoteToFirebase = async function(note) { await addDoc(collection(db, "notes"), { ...note, createdAt: serverTimestamp() }); };
+  window.submitNoteToFirebase = async function(note) {
+    await addDoc(collection(db, "notes"), { ...note, createdAt: serverTimestamp() });
+    // Also save to hillRequests for dashboard tracking
+    await addDoc(collection(db, "hillRequests"), { ...note, createdAt: serverTimestamp(), resolvedAt: null, resolved: false });
+  };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
   window.changeNoteType = async function(id, newType) { await updateDoc(doc(db, "notes", id), { type: newType }); };
 
@@ -1583,12 +1653,14 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
 
   // ── TAB SWITCHING ──
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
     document.getElementById('page-shop').style.display     = tab === 'shop'     ? 'block' : 'none';
     document.getElementById('page-requests').style.display = tab === 'requests' ? 'block' : 'none';
+    var dashEl = document.getElementById('page-dashboard'); if (dashEl) dashEl.style.display = tab === 'dashboard' ? 'block' : 'none';
+    if (tab === 'dashboard') loadDashboard();
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
 
@@ -2052,6 +2124,8 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
       listenToUsers();
       var mgmtTab = document.getElementById('tab-mgmt');
       if (mgmtTab) mgmtTab.style.display = '';
+      var dashTab = document.getElementById('tab-dashboard');
+      if (dashTab) dashTab.style.display = '';
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
       // Show QMI switch button for admin
@@ -2066,6 +2140,8 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
       listenToUsers(); // managers need user list for DMs and call picker
       var mgmtTab = document.getElementById('tab-mgmt');
       if (mgmtTab) mgmtTab.style.display = '';
+      var dashTab = document.getElementById('tab-dashboard');
+      if (dashTab) dashTab.style.display = '';
     } else {
       // machinist — check legacy isManager flag as fallback
       if (window.checkManagerAccess) {
@@ -2901,7 +2977,286 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
       .then(function(){ showToast('blue','Event deleted',''); })
       .catch(function(e){ showToast('red','Delete failed',e.message||''); });
   }
+
+  // ══════════════════════════════════════════════
+  // ── REQUEST DASHBOARD ──
+  // ══════════════════════════════════════════════
+  var dashPeriod = 'week', dashFilter = 'all', dashMachineFilter = 'all', dashRequests = [];
+
+  function setDashPeriod(p,btn) {
+    dashPeriod=p;
+    document.querySelectorAll('.dash-period-btn').forEach(function(b){b.classList.remove('active');});
+    if(btn) btn.classList.add('active');
+    renderDashboard();
+  }
+  function setDashFilter(f,btn) {
+    dashFilter=f;
+    document.querySelectorAll('.dash-filter-btn:not(.dash-machine-btn)').forEach(function(b){b.classList.remove('active');});
+    if(btn) btn.classList.add('active');
+    renderDashboard();
+  }
+  function setDashMachineFilter(m,btn) {
+    dashMachineFilter=m;
+    document.querySelectorAll('.dash-machine-btn').forEach(function(b){b.classList.remove('active');b.style.borderColor='';b.style.color='';});
+    if(btn){btn.classList.add('active');btn.style.borderColor='#f59e0b';btn.style.color='#f59e0b';}
+    renderDashboard();
+  }
+  function loadDashboard() {
+    if(!window._db||!window._fbModules){setTimeout(loadDashboard,800);return;}
+    var mods=window._fbModules,db2=window._db;
+    mods.getDocs(mods.collection(db2,'hillRequests')).then(function(snap){
+      dashRequests=[];
+      snap.forEach(function(d){var r=d.data();r.id=d.id;dashRequests.push(r);});
+      dashRequests.sort(function(a,b){
+        var ta=a.createdAt?(a.createdAt.seconds||0):0;
+        var tb=b.createdAt?(b.createdAt.seconds||0):0;
+        return tb-ta;
+      });
+      renderDashboard();
+    }).catch(function(e){console.warn('loadDashboard:',e.message);});
+  }
+  function getDashStart() {
+    var now=new Date();
+    if(dashPeriod==='week'){var d=new Date(now);d.setDate(d.getDate()-d.getDay());d.setHours(0,0,0,0);return d;}
+    if(dashPeriod==='month'){return new Date(now.getFullYear(),now.getMonth(),1);}
+    return new Date(0);
+  }
+  function renderDashboard() {
+    // Show clear button only for admin
+    var clearWrap = document.getElementById('dash-clear-wrap');
+    if (clearWrap) {
+      if (window._isAdmin || window.currentUser === 'hilladmin') {
+        clearWrap.innerHTML = '<button onclick="clearDashboardRequests()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:12px;">🗑 CLEAR ALL REQUESTS (Admin Only)</button>';
+      } else {
+        clearWrap.innerHTML = '';
+      }
+    }
+    var start=getDashStart();
+    var periodAll=dashRequests.filter(function(r){
+      var ts=r.createdAt?new Date(r.createdAt.seconds*1000):new Date(0);
+      return ts>=start;
+    });
+    var filtered=periodAll.filter(function(r){
+      if(dashFilter!=='all'&&r.type!==dashFilter)return false;
+      if(dashMachineFilter!=='all'&&r.machine!==dashMachineFilter)return false;
+      return true;
+    });
+    // Counts
+    var counts={red:0,yellow:0,blue:0,green:0};
+    periodAll.forEach(function(r){if(counts[r.type]!==undefined)counts[r.type]++;});
+    ['red','yellow','blue','green'].forEach(function(t){
+      var el=document.getElementById('dash-count-'+t);if(el)el.textContent=counts[t];
+    });
+    // Machine filters
+    var machines={};
+    periodAll.forEach(function(r){if(r.machine)machines[r.machine]=(machines[r.machine]||0)+1;});
+    var mfRow=document.getElementById('dash-machine-filters');
+    if(mfRow){
+      mfRow.innerHTML='<button class="dash-filter-btn dash-machine-btn'+(dashMachineFilter==='all'?' active':'')+'" onclick="setDashMachineFilter(\'all\',this)" style="'+(dashMachineFilter==='all'?'border-color:#f59e0b;color:#f59e0b;':'')+'">ALL MACHINES</button>';
+      Object.keys(machines).sort().forEach(function(m){
+        var isA=dashMachineFilter===m;
+        mfRow.innerHTML+='<button class="dash-filter-btn dash-machine-btn'+(isA?' active':'')+'" onclick="setDashMachineFilter(\''+m+'\',this)" style="'+(isA?'border-color:#f59e0b;color:#f59e0b;':'')+'">'+m+' <span style="color:#475569;font-size:10px;">('+machines[m]+')</span></button>';
+      });
+    }
+    // Summary block
+    var sb=document.getElementById('dash-summary-block');
+    if(sb){
+      var topM=Object.entries(machines).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
+      var label=dashPeriod==='week'?'WEEK SUMMARY':dashPeriod==='month'?'MONTH SUMMARY':'ALL TIME';
+      var medals=['🥇','🥈','🥉'];
+      var h='<div class="dash-weekly-card">';
+      h+='<div class="dash-weekly-title"><span>📊 '+label+'</span><span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">'+periodAll.length+' total</span></div>';
+      h+='<div class="dash-weekly-grid">';
+      h+='<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#f87171;">'+counts.red+'</div><div class="dash-weekly-stat-lbl">Inspections</div></div>';
+      h+='<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#fbbf24;">'+counts.yellow+'</div><div class="dash-weekly-stat-lbl">Machinist Req</div></div>';
+      h+='<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+counts.blue+'</div><div class="dash-weekly-stat-lbl">Pending WO</div></div>';
+      h+='<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#4ade80;">'+counts.green+'</div><div class="dash-weekly-stat-lbl">Running WO</div></div>';
+      h+='</div>';
+      if(topM.length>0){
+        h+='<div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:2px;color:#475569;margin-bottom:6px;">TOP MACHINES BY REQUESTS</div>';
+        topM.forEach(function(e,i){h+='<div class="dash-top-machine"><span class="dash-top-machine-name">'+medals[i]+' '+e[0]+'</span><span class="dash-top-machine-count">'+e[1]+' requests</span></div>';});
+      }
+      h+='<button class="dash-print-btn" onclick="printDashboard()">🖨 PRINT / EXPORT REPORT</button>';
+      h+='</div>';
+      sb.innerHTML=h;
+    }
+    // Request log
+    var list=document.getElementById('dash-req-list');
+    if(!list)return;
+    if(filtered.length===0){list.innerHTML='<div class="dash-empty">No requests found for this period.</div>';return;}
+    var typeLabels={red:'🔴 INSPECTION',yellow:'🟡 MACHINIST REQ',blue:'🔵 PENDING WO',green:'🟢 RUNNING WO'};
+    list.innerHTML='';
+    filtered.forEach(function(r){
+      var ts=r.createdAt?new Date(r.createdAt.seconds*1000):null;
+      var timeStr=ts?ts.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
+      var card=document.createElement('div');
+      card.className='dash-req-card type-'+(r.type||'blue')+(r.resolved?' resolved':'');
+      card.innerHTML=
+        '<div class="dash-req-top">'+
+          '<span class="dash-req-type '+(r.type||'blue')+'">'+(typeLabels[r.type]||r.type)+'</span>'+
+          '<span class="dash-req-time">'+timeStr+'</span>'+
+        '</div>'+
+        '<div class="dash-req-machine">'+(r.machine||'')+' <span class="dash-req-cell">· '+(r.cell||'')+'</span></div>'+
+        '<div class="dash-req-wo">WO: '+(r.wo||'—')+'</div>'+
+        (r.detail?'<div class="dash-req-detail">'+r.detail+'</div>':'')+
+        (r.operator?'<div class="dash-req-operator">'+r.operator+'</div>':'')+
+        '<div style="margin-top:8px;display:flex;justify-content:flex-end;">'+
+          '<button class="dash-resolve-btn" onclick="toggleResolveRequest(\''+r.id+'\',this)">'+(r.resolved?'↩ REOPEN':'✓ RESOLVE')+'</button>'+
+        '</div>';
+      list.appendChild(card);
+    });
+  }
+  function toggleResolveRequest(id,btn) {
+    var req=dashRequests.find(function(r){return r.id===id;});
+    if(!req)return;
+    req.resolved=!req.resolved;
+    if(window._db&&window._fbModules){
+      window._fbModules.updateDoc(window._fbModules.doc(window._db,'hillRequests',id),{
+        resolved:req.resolved,
+        resolvedAt:req.resolved?window._fbModules.serverTimestamp():null
+      }).catch(function(e){console.warn('resolve:',e.message);});
+    }
+    renderDashboard();
+  }
+  function clearDashboardRequests() {
+    if (!window._isAdmin && window.currentUser !== 'hilladmin') {
+      showToast('red', 'Admin only', 'Only admin can clear the request history.');
+      return;
+    }
+    if (!confirm('Clear ALL request history? This cannot be undone.')) return;
+    if(!window._db||!window._fbModules)return;
+    var mods=window._fbModules,db2=window._db;
+    mods.getDocs(mods.collection(db2,'hillRequests')).then(function(snap){
+      snap.forEach(function(d){mods.deleteDoc(mods.doc(db2,'hillRequests',d.id));});
+      dashRequests=[];
+      renderDashboard();
+      showToast('green','Cleared','All request history deleted.');
+    });
+  }
+  function printDashboard() {
+    var start=getDashStart();
+    var label=dashPeriod==='week'?'This Week':dashPeriod==='month'?'This Month':'All Time';
+    var periodAll=dashRequests.filter(function(r){
+      var ts=r.createdAt?new Date(r.createdAt.seconds*1000):new Date(0);
+      return ts>=start;
+    });
+    var counts={red:0,yellow:0,blue:0,green:0};
+    periodAll.forEach(function(r){if(counts[r.type]!==undefined)counts[r.type]++;});
+    var machines={};
+    periodAll.forEach(function(r){if(r.machine)machines[r.machine]=(machines[r.machine]||0)+1;});
+    var topM=Object.entries(machines).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    var typeLabels={red:'Inspection',yellow:'Machinist Req',blue:'Pending WO',green:'Running WO'};
+    var rows=periodAll.map(function(r){
+      var ts=r.createdAt?new Date(r.createdAt.seconds*1000):null;
+      var t=ts?ts.toLocaleDateString()+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'--';
+      return [
+        '<tr style="border-bottom:1px solid #eee;">',
+        '<td style="padding:6px 10px;">'+t+'</td>',
+        '<td style="padding:6px 10px;font-weight:700;">'+(r.machine||'--')+'</td>',
+        '<td style="padding:6px 10px;">'+(r.cell||'--')+'</td>',
+        '<td style="padding:6px 10px;">'+(typeLabels[r.type]||r.type)+'</td>',
+        '<td style="padding:6px 10px;">'+(r.wo||'--')+'</td>',
+        '<td style="padding:6px 10px;">'+(r.operator||'--')+'</td>',
+        '<td style="padding:6px 10px;">'+(r.resolved?'Resolved':'Open')+'</td>',
+        '</tr>'
+      ].join('');
+    }).join('');
+    var topRows=topM.map(function(e,i){
+      var medals=['1st','2nd','3rd','4th','5th'];
+      var pct=periodAll.length>0?Math.round(e[1]/periodAll.length*100):0;
+      var bar='<div style="background:#eee;border-radius:4px;height:8px;width:100%;margin-top:3px;"><div style="background:#f59e0b;height:8px;border-radius:4px;width:'+pct+'%;"></div></div>';
+      return [
+        '<tr>',
+        '<td style="padding:8px 10px;font-weight:700;">'+medals[i]+'</td>',
+        '<td style="padding:8px 10px;font-weight:700;">'+e[0]+'</td>',
+        '<td style="padding:8px 10px;">'+e[1]+' requests'+bar+'</td>',
+        '<td style="padding:8px 10px;color:#666;">'+pct+'% of total</td>',
+        '</tr>'
+      ].join('');
+    }).join('');
+    var css = [
+      'body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#111;}',
+      'h1{color:#1a3a6a;border-bottom:3px solid #f59e0b;padding-bottom:8px;}',
+      'h2{color:#1a3a6a;margin-top:24px;font-size:15px;text-transform:uppercase;letter-spacing:1px;}',
+      '.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;}',
+      '.sc{border-radius:8px;padding:14px;text-align:center;}',
+      '.sc .n{font-size:36px;font-weight:900;line-height:1;}',
+      '.sc .l{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:4px;opacity:0.7;}',
+      'table{width:100%;border-collapse:collapse;font-size:12px;}',
+      'thead tr{background:#1a3a6a;color:#fff;}',
+      'thead th{padding:8px 10px;text-align:left;}',
+      'tbody tr:nth-child(even){background:#f9f9f9;}',
+      '@media print{button{display:none!important;}}'
+    ].join('');
+    var body = [
+      '<h1>Hill Manufacturing - Request Report</h1>',
+      '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
+      '<div class="sg">',
+        '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+counts.red+'</div><div class="l" style="color:#ef4444;">Inspections</div></div>',
+        '<div class="sc" style="background:#fffbeb;border:2px solid #f59e0b;"><div class="n" style="color:#f59e0b;">'+counts.yellow+'</div><div class="l" style="color:#f59e0b;">Machinist Req</div></div>',
+        '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+counts.blue+'</div><div class="l" style="color:#3b82f6;">Pending WO</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+counts.green+'</div><div class="l" style="color:#22c55e;">Running WO</div></div>',
+      '</div>',
+      '<h2>Top Machines by Request Volume</h2>',
+      '<table><thead><tr><th></th><th>Machine</th><th>Requests</th><th>% of Total</th></tr></thead><tbody>'+topRows+'</tbody></table>',
+      '<h2>Full Request Log ('+periodAll.length+' requests)</h2>',
+      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+      '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;">Print / Save as PDF</button>'
+    ].join('');
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+body+'</body></html>';
+
+```
+var blob = new Blob([html], {type: 'text/html'});
+var url = URL.createObjectURL(blob);
+var a = document.createElement('a');
+a.href = url; a.target = '_blank'; a.rel = 'noopener';
+document.body.appendChild(a);
+a.click();
+setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+```
+
+}
 </script>
+
+<!-- REQUEST DASHBOARD PAGE -->
+
+<div id="page-dashboard" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
+  <div style="padding:16px;">
+
+```
+<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+  <button class="dash-period-btn active" onclick="setDashPeriod('week',this)">THIS WEEK</button>
+  <button class="dash-period-btn" onclick="setDashPeriod('month',this)">THIS MONTH</button>
+  <button class="dash-period-btn" onclick="setDashPeriod('all',this)">ALL TIME</button>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
+  <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Waiting to run</div></div>
+  <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;">▶ Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
+  <div class="dash-summary-card green"><div class="dash-summary-label">✅ Completed</div><div class="dash-summary-num" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
+  <div class="dash-summary-card red"><div class="dash-summary-label">⚠ Issues</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Inspections & req</div></div>
+</div>
+
+<div id="dash-summary-block"></div>
+
+<div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+  <button class="dash-filter-btn f-all active" onclick="setDashFilter('all',this)">ALL</button>
+  <button class="dash-filter-btn f-blue" onclick="setDashFilter('pending',this)">🔵 PENDING</button>
+  <button class="dash-filter-btn f-green" onclick="setDashFilter('running',this)">▶ RUNNING</button>
+  <button class="dash-filter-btn f-green" onclick="setDashFilter('completed',this)">✅ COMPLETED</button>
+  <button class="dash-filter-btn f-red" onclick="setDashFilter('issues',this)">⚠ ISSUES</button>
+</div>
+
+<div id="dash-machine-filters" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
+
+<div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#475569;margin-bottom:8px;">REQUEST LOG</div>
+<div id="dash-req-list"></div>
+
+<div id="dash-clear-wrap"></div>
+```
+
+  </div>
+</div>
 
 <!-- MANAGEMENT PAGE -->
 
