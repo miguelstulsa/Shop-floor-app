@@ -656,7 +656,7 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
   <div class="admin-section-title">🏭 QMI Shop Link</div>
   <div style="font-size:12px;color:#64748b;margin-bottom:10px;line-height:1.6;">Set the URL to your QMI app so the switch button works.</div>
   <div style="display:flex;gap:8px;">
-    <input id="qmi-url-input" type="text" placeholder="https://miguelstulsa.github.io/qmi"
+    <input id="qmi-url-input" type="text" placeholder="https://miguelstulsa.github.io/qmi-shopfloor"
       style="flex:1;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:13px;outline:none;"
       value="" oninput="saveQmiUrl(this.value)" />
     <button onclick="testQmiLink()" style="background:#a855f7;border:none;color:#fff;border-radius:8px;padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">TEST</button>
@@ -1397,30 +1397,31 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
   };
   window.sendMgmtGroupMessage = async function(text, imageUrl) {
     const sender = window.currentUser || 'Admin';
-    await addDoc(collection(db, 'mgmtChat'), { text: text || '', imageUrl: imageUrl || '', sender, createdAt: serverTimestamp() });
+    await addDoc(collection(db, 'hillMgmtChat'), { text: text || '', imageUrl: imageUrl || '', sender, createdAt: serverTimestamp() });
     if (text) {
-      safePushover('💬 Group: ' + sender, text.slice(0, 100), 'pushover', 0);
+      safePushover('💬 Hill Group: ' + sender, text.slice(0, 100), 'pushover', 0);
     }
   };
   window.sendMgmtDm = async function(toUser, text) {
     const fromUser = window.currentUser || 'Admin';
     const threadId = [fromUser, toUser].sort().join('__');
-    await addDoc(collection(db, 'mgmtDMs'), { threadId, text, from: fromUser, to: toUser, createdAt: serverTimestamp() });
+    await addDoc(collection(db, 'hillMgmtDMs'), { threadId, text, from: fromUser, to: toUser, createdAt: serverTimestamp() });
     // Pushover alert to notify recipient they have a new DM
-    safePushover('📬 DM from ' + fromUser, text.slice(0, 100), 'pushover', 0);
+    safePushover('📬 Hill DM from ' + fromUser, text.slice(0, 100), 'pushover', 0);
   };
   window.loadMgmtManagers = function() { if(typeof mgmtLoadDmList==='function') mgmtLoadDmList(); };
 
   let mgmtChatUnsub = null;
   window.deleteMgmtGroupMsg = async function(docId) {
     if (!docId) return;
-    try { await deleteDoc(doc(db, 'mgmtChat', docId)); }
+    try { await deleteDoc(doc(db, 'hillMgmtChat', docId)); }
     catch(e) { console.error('Delete group msg error:', e); }
   };
   window.startMgmtChatListener = function() {
-    if (mgmtChatUnsub) return;
+    // Allow re-subscription if DB reconnects
+    if (mgmtChatUnsub) { try { mgmtChatUnsub(); } catch(e){} mgmtChatUnsub = null; }
     // No orderBy — sort client-side to avoid needing a Firestore index
-    mgmtChatUnsub = onSnapshot(query(collection(db, 'mgmtChat')), function(snap) {
+    mgmtChatUnsub = onSnapshot(query(collection(db, 'hillMgmtChat')), function(snap) {
       const box = document.getElementById('mgmt-messages');
       if (!box) return;
       const me = window.currentUser || '';
@@ -1500,7 +1501,7 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     const box = document.getElementById('mgmt-dm-messages');
     if (box) box.innerHTML = '<div class="dm-empty" style="text-align:center;color:#334155;font-size:12px;padding:24px;font-family:Barlow,sans-serif;">Loading messages...</div>';
     // No orderBy — avoids needing a Firestore composite index; sort client-side
-    const q = query(collection(db, 'mgmtDMs'), where('threadId','==',threadId));
+    const q = query(collection(db, 'hillMgmtDMs'), where('threadId','==',threadId));
     dmUnsub = onSnapshot(q, function(snap) {
       if (!box) return;
       const me = window.currentUser || '';
@@ -1565,7 +1566,7 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
 
   // ── PUSHOVER SAFETY WRAPPER — uses group key if set, falls back to default ──
   function safePushover(title, message, sound, priority) {
-    var userKey = savedGroupKey || PUSHOVER_DEFAULT_USER;
+    var userKey = localStorage.getItem('hillPushoverGroupKey') || savedGroupKey || PUSHOVER_DEFAULT_USER;
     var fd = new FormData();
     fd.append('token',    PUSHOVER_TOKEN);
     fd.append('user',     userKey);
@@ -2051,12 +2052,14 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
       listenToUsers();
       var mgmtTab = document.getElementById('tab-mgmt');
       if (mgmtTab) mgmtTab.style.display = '';
+      var switchBtn = document.getElementById('shopSwitchBtn');
+      if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
       // Show QMI switch button for admin
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) {
         switchBtn.classList.add('visible');
         // Update this URL once QMI is deployed to GitHub Pages
-        var qmiUrl = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi';
+        var qmiUrl = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor';
         switchBtn.href = qmiUrl;
       }
     } else if (user.role === 'manager') {
@@ -2119,14 +2122,14 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
 
   function saveQmiUrl(url) {
     url = url.trim();
-    localStorage.setItem('qmiShopUrl', url || 'https://miguelstulsa.github.io/qmi');
+    localStorage.setItem('qmiShopUrl', url || 'https://miguelstulsa.github.io/qmi-shopfloor');
     var btn = document.getElementById('shopSwitchBtn');
-    if (btn) btn.href = url || 'https://miguelstulsa.github.io/qmi';
+    if (btn) btn.href = url || 'https://miguelstulsa.github.io/qmi-shopfloor';
     var disp = document.getElementById('qmi-url-display');
     if (disp) disp.textContent = url || 'not set';
   }
   function testQmiLink() {
-    var url = document.getElementById('qmi-url-input').value.trim() || localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi';
+    var url = document.getElementById('qmi-url-input').value.trim() || localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor';
     window.open(url, '_blank');
   }
   // Load saved QMI URL on page load
