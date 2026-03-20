@@ -3021,100 +3021,197 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     if(dashPeriod==='month'){return new Date(now.getFullYear(),now.getMonth(),1);}
     return new Date(0);
   }
+  function getJobStatus(r) {
+    if (r.jobStatus) return r.jobStatus;
+    if (r.type === 'blue')  return 'pending';
+    if (r.type === 'green') return 'running';
+    return 'issue';
+  }
+
   function renderDashboard() {
-    // Show clear button only for admin
+    // Admin-only clear button
     var clearWrap = document.getElementById('dash-clear-wrap');
     if (clearWrap) {
-      if (window._isAdmin || window.currentUser === 'hilladmin') {
-        clearWrap.innerHTML = '<button onclick="clearDashboardRequests()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:12px;">🗑 CLEAR ALL REQUESTS (Admin Only)</button>';
-      } else {
-        clearWrap.innerHTML = '';
-      }
+      clearWrap.innerHTML = (window._isAdmin || window.currentUser === 'hilladmin')
+        ? '<button onclick="clearDashboardRequests()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:12px;">🗑 CLEAR ALL REQUESTS (Admin Only)</button>'
+        : '';
     }
-    var start=getDashStart();
-    var periodAll=dashRequests.filter(function(r){
-      var ts=r.createdAt?new Date(r.createdAt.seconds*1000):new Date(0);
-      return ts>=start;
+
+    var start = getDashStart();
+    var periodAll = dashRequests.filter(function(r) {
+      var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : new Date(0);
+      return ts >= start;
     });
-    var filtered=periodAll.filter(function(r){
-      if(dashFilter!=='all'&&r.type!==dashFilter)return false;
-      if(dashMachineFilter!=='all'&&r.machine!==dashMachineFilter)return false;
-      return true;
+
+    // Status counts
+    var pending=0, running=0, completed=0, issues=0;
+    var issueByMachine = {};
+    periodAll.forEach(function(r) {
+      var s = getJobStatus(r);
+      if (s==='completed') completed++;
+      else if (s==='running') running++;
+      else if (s==='pending') pending++;
+      else { issues++; issueByMachine[r.machine||''] = (issueByMachine[r.machine||'']||0)+1; }
     });
-    // Counts
-    var counts={red:0,yellow:0,blue:0,green:0};
-    periodAll.forEach(function(r){if(counts[r.type]!==undefined)counts[r.type]++;});
-    ['red','yellow','blue','green'].forEach(function(t){
-      var el=document.getElementById('dash-count-'+t);if(el)el.textContent=counts[t];
-    });
+    var el;
+    if ((el=document.getElementById('dash-count-pending')))   el.textContent = pending;
+    if ((el=document.getElementById('dash-count-running')))   el.textContent = running;
+    if ((el=document.getElementById('dash-count-completed'))) el.textContent = completed;
+    if ((el=document.getElementById('dash-count-issues')))    el.textContent = issues;
+
     // Machine filters
-    var machines={};
-    periodAll.forEach(function(r){if(r.machine)machines[r.machine]=(machines[r.machine]||0)+1;});
-    var mfRow=document.getElementById('dash-machine-filters');
-    if(mfRow){
-      mfRow.innerHTML='<button class="dash-filter-btn dash-machine-btn'+(dashMachineFilter==='all'?' active':'')+'" onclick="setDashMachineFilter(\'all\',this)" style="'+(dashMachineFilter==='all'?'border-color:#f59e0b;color:#f59e0b;':'')+'">ALL MACHINES</button>';
-      Object.keys(machines).sort().forEach(function(m){
-        var isA=dashMachineFilter===m;
-        mfRow.innerHTML+='<button class="dash-filter-btn dash-machine-btn'+(isA?' active':'')+'" onclick="setDashMachineFilter(\''+m+'\',this)" style="'+(isA?'border-color:#f59e0b;color:#f59e0b;':'')+'">'+m+' <span style="color:#475569;font-size:10px;">('+machines[m]+')</span></button>';
+    var machineCounts = {};
+    periodAll.forEach(function(r) { if(r.machine) machineCounts[r.machine]=(machineCounts[r.machine]||0)+1; });
+    var mfRow = document.getElementById('dash-machine-filters');
+    if (mfRow) {
+      var allActive = dashMachineFilter==='all';
+      mfRow.innerHTML = '<button class="dash-filter-btn dash-machine-btn'+(allActive?' active':'')+'" onclick="setDashMachineFilter(\'all\',this)" style="'+(allActive?'border-color:#f59e0b;color:#f59e0b;':'')+'">ALL MACHINES</button>';
+      Object.keys(machineCounts).sort().forEach(function(m) {
+        var isA = dashMachineFilter===m;
+        var flag = (issueByMachine[m]||0)>=3 ? ' ⚠' : '';
+        mfRow.innerHTML += '<button class="dash-filter-btn dash-machine-btn'+(isA?' active':'')+'" onclick="setDashMachineFilter(\''+m+'\',this)" style="'+(isA?'border-color:#f59e0b;color:#f59e0b;':'')+'">'+m+flag+' <span style="color:#475569;font-size:10px;">('+machineCounts[m]+')</span></button>';
       });
     }
-    // Summary block
-    var sb=document.getElementById('dash-summary-block');
-    if(sb){
-      var topM=Object.entries(machines).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
-      var label=dashPeriod==='week'?'WEEK SUMMARY':dashPeriod==='month'?'MONTH SUMMARY':'ALL TIME';
-      var medals=['🥇','🥈','🥉'];
-      var h='<div class="dash-weekly-card">';
-      h+='<div class="dash-weekly-title"><span>📊 '+label+'</span><span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">'+periodAll.length+' total</span></div>';
-      h+='<div class="dash-weekly-grid">';
-      h+='<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#f87171;">'+counts.red+'</div><div class="dash-weekly-stat-lbl">Inspections</div></div>';
-      h+='<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#fbbf24;">'+counts.yellow+'</div><div class="dash-weekly-stat-lbl">Machinist Req</div></div>';
-      h+='<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+counts.blue+'</div><div class="dash-weekly-stat-lbl">Pending WO</div></div>';
-      h+='<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#4ade80;">'+counts.green+'</div><div class="dash-weekly-stat-lbl">Running WO</div></div>';
-      h+='</div>';
-      if(topM.length>0){
-        h+='<div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:2px;color:#475569;margin-bottom:6px;">TOP MACHINES BY REQUESTS</div>';
-        topM.forEach(function(e,i){h+='<div class="dash-top-machine"><span class="dash-top-machine-name">'+medals[i]+' '+e[0]+'</span><span class="dash-top-machine-count">'+e[1]+' requests</span></div>';});
+
+    // Summary + production stats
+    var sb = document.getElementById('dash-summary-block');
+    if (sb) {
+      var periodLabel = dashPeriod==='week'?'THIS WEEK':dashPeriod==='month'?'THIS MONTH':'ALL TIME';
+      var completedByMachine = {};
+      periodAll.filter(function(r){ return getJobStatus(r)==='completed'; })
+        .forEach(function(r){ var m=r.machine||'Unknown'; completedByMachine[m]=(completedByMachine[m]||0)+1; });
+      var topProducers = Object.entries(completedByMachine).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+      var repeatOffenders = Object.entries(issueByMachine).filter(function(e){return e[1]>=3;}).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+      var completedWithTime = periodAll.filter(function(r){ return r.completedAt && r.createdAt; });
+      var avgHours = 0;
+      if (completedWithTime.length > 0) {
+        var totalSec = completedWithTime.reduce(function(sum,r){ return sum+(r.completedAt.seconds-r.createdAt.seconds); },0);
+        avgHours = Math.round(totalSec/completedWithTime.length/3600*10)/10;
       }
-      h+='<button class="dash-print-btn" onclick="printDashboard()">🖨 PRINT / EXPORT REPORT</button>';
-      h+='</div>';
-      sb.innerHTML=h;
+      var h = '<div class="dash-weekly-card">';
+      h += '<div class="dash-weekly-title"><span>📊 '+periodLabel+'</span><span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">'+periodAll.length+' total records</span></div>';
+      h += '<div class="dash-weekly-grid">';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+pending+'</div><div class="dash-weekly-stat-lbl">Pending</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#4ade80;">'+running+'</div><div class="dash-weekly-stat-lbl">Running</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#22c55e;">'+completed+'</div><div class="dash-weekly-stat-lbl">Completed</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#f87171;">'+issues+'</div><div class="dash-weekly-stat-lbl">Issues</div></div>';
+      h += '</div>';
+      if (avgHours > 0) h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(34,197,94,0.08);border-radius:8px;border:1px solid rgba(34,197,94,0.2);font-size:12px;color:#4ade80;">Avg job completion time: <strong>'+avgHours+'h</strong></div>';
+      if (topProducers.length > 0) {
+        h += '<div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:2px;color:#4ade80;margin-bottom:6px;">PRODUCTION OUTPUT</div>';
+        topProducers.forEach(function(e) { h += '<div class="dash-top-machine"><span class="dash-top-machine-name">'+e[0]+'</span><span style="font-size:12px;color:#4ade80;font-weight:700;">'+e[1]+' completed</span></div>'; });
+      }
+      if (repeatOffenders.length > 0) {
+        h += '<div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:2px;color:#f87171;margin-bottom:6px;">CONTINUOUS ISSUES (3+)</div>';
+        repeatOffenders.forEach(function(e) { h += '<div class="dash-top-machine"><span class="dash-top-machine-name" style="color:#f87171;">⚠ '+e[0]+'</span><span style="font-size:12px;color:#f87171;">'+e[1]+' issues</span></div>'; });
+      }
+      h += '<button class="dash-print-btn" onclick="printDashboard()" style="margin-top:12px;">PRINT / EXPORT REPORT</button>';
+      h += '</div>';
+      sb.innerHTML = h;
     }
-    // Request log
-    var list=document.getElementById('dash-req-list');
-    if(!list)return;
-    if(filtered.length===0){list.innerHTML='<div class="dash-empty">No requests found for this period.</div>';return;}
-    var typeLabels={red:'🔴 INSPECTION',yellow:'🟡 MACHINIST REQ',blue:'🔵 PENDING WO',green:'🟢 RUNNING WO'};
-    list.innerHTML='';
-    filtered.forEach(function(r){
-      var ts=r.createdAt?new Date(r.createdAt.seconds*1000):null;
-      var timeStr=ts?ts.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
-      var card=document.createElement('div');
-      card.className='dash-req-card type-'+(r.type||'blue')+(r.resolved?' resolved':'');
-      card.innerHTML=
-        '<div class="dash-req-top">'+
-          '<span class="dash-req-type '+(r.type||'blue')+'">'+(typeLabels[r.type]||r.type)+'</span>'+
-          '<span class="dash-req-time">'+timeStr+'</span>'+
-        '</div>'+
-        '<div class="dash-req-machine">'+(r.machine||'')+' <span class="dash-req-cell">· '+(r.cell||'')+'</span></div>'+
-        '<div class="dash-req-wo">WO: '+(r.wo||'—')+'</div>'+
-        (r.detail?'<div class="dash-req-detail">'+r.detail+'</div>':'')+
-        (r.operator?'<div class="dash-req-operator">'+r.operator+'</div>':'')+
-        '<div style="margin-top:8px;display:flex;justify-content:flex-end;">'+
-          '<button class="dash-resolve-btn" onclick="toggleResolveRequest(\''+r.id+'\',this)">'+(r.resolved?'↩ REOPEN':'✓ RESOLVE')+'</button>'+
-        '</div>';
+
+    // Charts
+    renderDashCharts(periodAll);
+
+    // Filter for log
+    var filtered = periodAll.filter(function(r) {
+      var s = getJobStatus(r);
+      if (dashFilter==='pending'   && s!=='pending')   return false;
+      if (dashFilter==='running'   && s!=='running')   return false;
+      if (dashFilter==='completed' && s!=='completed') return false;
+      if (dashFilter==='issues'    && s!=='issue')     return false;
+      if (dashMachineFilter!=='all' && r.machine!==dashMachineFilter) return false;
+      return true;
+    });
+
+    var list = document.getElementById('dash-req-list');
+    if (!list) return;
+    if (filtered.length === 0) { list.innerHTML='<div class="dash-empty">No records found for this filter.</div>'; return; }
+
+    var typeLabels = { red:'🔴 INSPECTION', yellow:'🟡 MACHINIST REQ', blue:'🔵 PENDING WO', green:'🟢 RUNNING WO' };
+    list.innerHTML = '';
+
+    filtered.forEach(function(r) {
+      var status = getJobStatus(r);
+      var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
+      var timeStr = ts ? ts.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—';
+      var completedTs = r.completedAt ? new Date(r.completedAt.seconds*1000) : null;
+      var completedStr = completedTs ? completedTs.toLocaleDateString([],{month:'short',day:'numeric'})+' '+completedTs.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : null;
+      var duration = (r.completedAt && r.createdAt) ? (function(){ var h=Math.round((r.completedAt.seconds-r.createdAt.seconds)/3600*10)/10; return h>0?h+'h':'<1h'; })() : null;
+      var issueCount = issueByMachine[r.machine]||0;
+      var isAdmin = window._isAdmin || window.currentUser==='hilladmin';
+
+      // Status badge
+      var statusBadge = {
+        pending:   '<span class="dash-status-badge pending">🔵 PENDING</span>',
+        running:   '<span class="dash-status-badge running"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;"></span> RUNNING</span>',
+        completed: '<span class="dash-status-badge completed">✅ COMPLETED</span>',
+        issue:     '<span class="dash-status-badge issue">'+(typeLabels[r.type]||'⚠ ISSUE')+'</span>'
+      }[status] || '';
+
+      // Action buttons
+      var actionBtns = '';
+      if (status==='pending') {
+        actionBtns = '<button class="dash-action-btn to-running" onclick="setJobStatus(\''+r.id+'\',\'running\')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> START JOB</button>';
+      } else if (status==='running') {
+        actionBtns = '<button class="dash-action-btn to-pending" onclick="setJobStatus(\''+r.id+'\',\'pending\')" style="margin-right:6px;">↩ PENDING</button>'+
+                     '<button class="dash-action-btn to-completed" onclick="setJobStatus(\''+r.id+'\',\'completed\')">✅ COMPLETE</button>';
+      } else if (status==='completed' && isAdmin) {
+        actionBtns = '<button class="dash-action-btn to-running" onclick="setJobStatus(\''+r.id+'\',\'running\')" style="font-size:10px;opacity:0.7;">↩ REOPEN</button>';
+      }
+
+      var card = document.createElement('div');
+      card.className = 'dash-req-card type-'+(r.type||'blue')+(status==='completed'?' status-completed':'');
+      card.innerHTML = [
+        // Top row: status badge + timestamp
+        '<div class="dash-req-top">'+statusBadge+'<span class="dash-req-time">'+timeStr+'</span></div>',
+
+        // Machine + cell
+        '<div class="dash-req-machine">'+escHtml(r.machine||'')+'<span class="dash-req-cell"> · '+escHtml(r.cell||'')+'</span></div>',
+
+        // WO number — prominent
+        '<div class="dash-req-wo" style="font-size:15px;margin-top:4px;">WO# '+escHtml(r.wo||'—')+'</div>',
+
+        // Request type label
+        r.type ? '<div style="font-size:11px;color:#64748b;margin-top:3px;letter-spacing:1px;">'+
+          (typeLabels[r.type]||r.type).replace(/[🔴🟡🔵🟢]/g,'').trim()+'</div>' : '',
+
+        // Details / notes — the actual request wording
+        r.detail ? '<div style="margin-top:6px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:6px;border-left:3px solid rgba(245,158,11,0.4);">'+
+          '<div style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:#64748b;margin-bottom:3px;">REQUEST NOTES</div>'+
+          '<div style="font-size:13px;color:#e2e8f0;line-height:1.5;">'+escHtml(r.detail)+'</div></div>' : '',
+
+        // Operator
+        r.operator ? '<div class="dash-req-operator" style="margin-top:6px;">'+escHtml(r.operator)+'</div>' : '',
+
+        // Completion info
+        completedStr ? '<div class="dash-duration">✅ Completed '+completedStr+(duration?' ('+duration+')':'')+'</div>' : '',
+
+        // Recurring issue flag
+        (issueCount>=3 && status==='issue') ? '<div class="dash-issue-flag">⚠ Recurring — '+issueCount+' issues on this machine</div>' : '',
+
+        // Action buttons
+        '<div style="margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">'+actionBtns+'</div>'
+      ].join('');
       list.appendChild(card);
     });
   }
-  function toggleResolveRequest(id,btn) {
-    var req=dashRequests.find(function(r){return r.id===id;});
-    if(!req)return;
-    req.resolved=!req.resolved;
-    if(window._db&&window._fbModules){
-      window._fbModules.updateDoc(window._fbModules.doc(window._db,'hillRequests',id),{
-        resolved:req.resolved,
-        resolvedAt:req.resolved?window._fbModules.serverTimestamp():null
-      }).catch(function(e){console.warn('resolve:',e.message);});
+
+  function setJobStatus(id, newStatus) {
+    var req = dashRequests.find(function(r){ return r.id===id; });
+    if (!req) return;
+    if (newStatus==='running' && req.jobStatus==='completed') {
+      if (!window._isAdmin && window.currentUser!=='hilladmin') {
+        showToast('red','Admin only','Only admin can reopen a completed job.'); return;
+      }
+    }
+    req.jobStatus = newStatus;
+    if (newStatus==='completed') req.completedAt = { seconds: Math.floor(Date.now()/1000) };
+    else req.completedAt = null;
+    if (window._db && window._fbModules) {
+      var update = { jobStatus: newStatus, completedAt: newStatus==='completed' ? window._fbModules.serverTimestamp() : null };
+      window._fbModules.updateDoc(window._fbModules.doc(window._db,'hillRequests',id), update)
+        .catch(function(e){ console.warn('setJobStatus:', e.message); });
     }
     renderDashboard();
   }
@@ -3133,6 +3230,95 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
       showToast('green','Cleared','All request history deleted.');
     });
   }
+  function renderDashCharts(data) {
+    var block = document.getElementById('dash-chart-block');
+    if (!block) return;
+    if (data.length === 0) { block.innerHTML = ''; return; }
+
+    // ── Build daily counts for bar chart (last 7 or 30 days) ──
+    var days = dashPeriod === 'month' ? 30 : dashPeriod === 'week' ? 7 : 14;
+    var dailyCompleted = {}, dailyIssues = {}, dailyPending = {};
+    var labels = [];
+    var now = new Date();
+    for (var i = days-1; i >= 0; i--) {
+      var d = new Date(now); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+      var key = d.toLocaleDateString([],{month:'short',day:'numeric'});
+      labels.push(key);
+      dailyCompleted[key] = 0; dailyIssues[key] = 0; dailyPending[key] = 0;
+    }
+    data.forEach(function(r) {
+      var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
+      if (!ts) return;
+      var key = ts.toLocaleDateString([],{month:'short',day:'numeric'});
+      var s = getJobStatus(r);
+      if (dailyCompleted[key] !== undefined) {
+        if (s === 'completed') dailyCompleted[key]++;
+        else if (s === 'issue') dailyIssues[key]++;
+        else dailyPending[key]++;
+      }
+    });
+
+    // ── Machine breakdown pie-style bars ──
+    var machineTotals = {};
+    data.forEach(function(r){ var m=r.machine||'Unknown'; machineTotals[m]=(machineTotals[m]||0)+1; });
+    var machineList = Object.entries(machineTotals).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+    var maxMachine = machineList.length > 0 ? machineList[0][1] : 1;
+
+    var html2 = '<div class="dash-weekly-card">';
+    html2 += '<div class="dash-weekly-title" style="margin-bottom:14px;"><span>📈 PRODUCTION CHART</span><span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">'+labels[0]+' – '+labels[labels.length-1]+'</span></div>';
+
+    // Bar chart using CSS
+    html2 += '<div style="margin-bottom:16px;">';
+    html2 += '<div style="font-size:10px;letter-spacing:2px;color:#475569;font-weight:700;margin-bottom:8px;">DAILY ACTIVITY</div>';
+    html2 += '<div style="display:flex;align-items:flex-end;gap:3px;height:80px;overflow-x:auto;padding-bottom:4px;">';
+    var maxVal = 1;
+    labels.forEach(function(k){ maxVal = Math.max(maxVal, (dailyCompleted[k]||0)+(dailyIssues[k]||0)+(dailyPending[k]||0)); });
+    labels.forEach(function(k) {
+      var c = dailyCompleted[k]||0, is = dailyIssues[k]||0, p = dailyPending[k]||0;
+      var total = c+is+p;
+      var h = total > 0 ? Math.max(4, Math.round(total/maxVal*72)) : 2;
+      var cH = total > 0 ? Math.round(c/total*h) : 0;
+      var iH = total > 0 ? Math.round(is/total*h) : 0;
+      var pH = h - cH - iH;
+      html2 += '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:28px;">';
+      html2 += '<div style="display:flex;flex-direction:column-reverse;width:20px;height:72px;justify-content:flex-start;">';
+      if (cH>0) html2 += '<div style="width:100%;height:'+cH+'px;background:#22c55e;border-radius:2px 2px 0 0;"></div>';
+      if (iH>0) html2 += '<div style="width:100%;height:'+iH+'px;background:#ef4444;"></div>';
+      if (pH>0) html2 += '<div style="width:100%;height:'+pH+'px;background:#3b82f6;border-radius:0 0 2px 2px;"></div>';
+      if (total===0) html2 += '<div style="width:100%;height:2px;background:#1a4a8c;border-radius:2px;margin-top:70px;"></div>';
+      html2 += '</div>';
+      html2 += '<div style="font-size:8px;color:#334155;margin-top:3px;text-align:center;transform:rotate(-45deg);transform-origin:top left;white-space:nowrap;margin-left:6px;">'+k+'</div>';
+      html2 += '</div>';
+    });
+    html2 += '</div>';
+    html2 += '<div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">';
+    html2 += '<span style="font-size:10px;color:#22c55e;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#22c55e;border-radius:2px;display:inline-block;"></span>Completed</span>';
+    html2 += '<span style="font-size:10px;color:#3b82f6;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block;"></span>Pending/Running</span>';
+    html2 += '<span style="font-size:10px;color:#ef4444;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span>Issues</span>';
+    html2 += '</div></div>';
+
+    // Machine breakdown bars
+    if (machineList.length > 0) {
+      html2 += '<div style="font-size:10px;letter-spacing:2px;color:#475569;font-weight:700;margin-bottom:8px;">REQUESTS BY MACHINE</div>';
+      machineList.forEach(function(e) {
+        var pct = Math.round(e[1]/maxMachine*100);
+        var issueCount = 0;
+        data.forEach(function(r){ if(r.machine===e[0]&&getJobStatus(r)==='issue') issueCount++; });
+        var barColor = issueCount >= 3 ? '#ef4444' : '#f59e0b';
+        html2 += '<div style="margin-bottom:8px;">';
+        html2 += '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">';
+        html2 += '<span style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1px;color:'+(issueCount>=3?'#f87171':'#f59e0b')+';">'+(issueCount>=3?'⚠ ':'')+e[0]+'</span>';
+        html2 += '<span style="font-size:11px;color:#94a3b8;">'+e[1]+' requests'+(issueCount>=3?' · '+issueCount+' issues':'')+'</span>';
+        html2 += '</div>';
+        html2 += '<div style="background:#1a3060;border-radius:4px;height:8px;overflow:hidden;">';
+        html2 += '<div style="background:'+barColor+';width:'+pct+'%;height:100%;border-radius:4px;transition:width 0.5s;"></div>';
+        html2 += '</div></div>';
+      });
+    }
+    html2 += '</div>';
+    block.innerHTML = html2;
+  }
+
   function printDashboard() {
     var start=getDashStart();
     var label=dashPeriod==='week'?'This Week':dashPeriod==='month'?'This Month':'All Time';
@@ -3206,13 +3392,62 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+body+'</body></html>';
 
 ```
-var blob = new Blob([html], {type: 'text/html'});
-var url = URL.createObjectURL(blob);
-var a = document.createElement('a');
-a.href = url; a.target = '_blank'; a.rel = 'noopener';
-document.body.appendChild(a);
-a.click();
-setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+// Build chart bars for print report
+var chartRows = '';
+var machines2 = {};
+periodAll.forEach(function(r){ var m=r.machine||'Unknown'; machines2[m]=(machines2[m]||0)+1; });
+var machList = Object.entries(machines2).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+var maxM = machList.length > 0 ? machList[0][1] : 1;
+machList.forEach(function(e) {
+  var pct = Math.round(e[1]/maxM*100);
+  var issC = 0;
+  periodAll.forEach(function(r){ if(r.machine===e[0]&&getJobStatus(r)==='issue') issC++; });
+  chartRows += '<tr><td style="padding:6px 10px;font-weight:700;">'+(issC>=3?'⚠ ':'')+e[0]+'</td>';
+  chartRows += '<td style="padding:6px 10px;"><div style="background:#eee;border-radius:4px;height:14px;"><div style="background:'+(issC>=3?'#ef4444':'#f59e0b')+';width:'+pct+'%;height:14px;border-radius:4px;"></div></div></td>';
+  chartRows += '<td style="padding:6px 10px;">'+e[1]+'</td>';
+  chartRows += '<td style="padding:6px 10px;color:#666;">'+(issC>=3?issC+' issues':'')+'</td></tr>';
+});
+
+// Status counts
+var pending2=0,running2=0,completed2=0,issues2=0;
+periodAll.forEach(function(r){
+  var s=getJobStatus(r);
+  if(s==='completed')completed2++;else if(s==='running')running2++;else if(s==='pending')pending2++;else issues2++;
+});
+
+var newBody = [
+  '<h1>Hill Manufacturing - Production Report</h1>',
+  '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
+  '<div class="sg">',
+    '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+pending2+'</div><div class="l">Pending</div></div>',
+    '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+running2+'</div><div class="l">Running</div></div>',
+    '<div class="sc" style="background:#f0fdf4;border:2px solid #16a34a;"><div class="n" style="color:#16a34a;">'+completed2+'</div><div class="l">Completed</div></div>',
+    '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+issues2+'</div><div class="l">Issues</div></div>',
+  '</div>',
+  '<h2>Machine Activity Chart</h2>',
+  '<table><thead><tr><th>Machine</th><th>Volume</th><th>Requests</th><th>Flags</th></tr></thead><tbody>'+chartRows+'</tbody></table>',
+  '<h2>Full Request Log ('+periodAll.length+' records)</h2>',
+  '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+  '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;margin-right:10px;">Print / Save as PDF</button>'
+].join('');
+
+var newHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+newBody+'</body></html>';
+
+// iOS-safe: open new window and write directly
+var w = window.open('', '_blank');
+if (w) {
+  w.document.open();
+  w.document.write(newHtml);
+  w.document.close();
+} else {
+  // Fallback: blob download
+  var blob = new Blob([newHtml], {type:'text/html'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'hill-report-'+label.replace(/ /g,'-')+'.html';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+}
 ```
 
 }
@@ -3232,17 +3467,18 @@ setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }
 
 <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
   <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Waiting to run</div></div>
-  <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;">▶ Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
+  <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;margin-right:4px;"></span> Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
   <div class="dash-summary-card green"><div class="dash-summary-label">✅ Completed</div><div class="dash-summary-num" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
   <div class="dash-summary-card red"><div class="dash-summary-label">⚠ Issues</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Inspections & req</div></div>
 </div>
 
 <div id="dash-summary-block"></div>
+<div id="dash-chart-block" style="margin-bottom:14px;"></div>
 
 <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
   <button class="dash-filter-btn f-all active" onclick="setDashFilter('all',this)">ALL</button>
   <button class="dash-filter-btn f-blue" onclick="setDashFilter('pending',this)">🔵 PENDING</button>
-  <button class="dash-filter-btn f-green" onclick="setDashFilter('running',this)">▶ RUNNING</button>
+  <button class="dash-filter-btn f-green" onclick="setDashFilter('running',this)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> RUNNING</button>
   <button class="dash-filter-btn f-green" onclick="setDashFilter('completed',this)">✅ COMPLETED</button>
   <button class="dash-filter-btn f-red" onclick="setDashFilter('issues',this)">⚠ ISSUES</button>
 </div>
