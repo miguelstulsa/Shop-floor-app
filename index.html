@@ -1795,7 +1795,19 @@
     clearImage();
     document.getElementById('postModalOverlay').classList.add('active');
   }
-  function closePostModal() { clearImage(); document.getElementById('postModalOverlay').classList.remove('active'); }
+  function closePostModal() {
+    clearImage();
+    var overlay = document.getElementById('postModalOverlay');
+    overlay.classList.remove('active');
+    overlay.style.display = 'none';
+    // Reset form fields fully
+    document.getElementById('postAuthor').value = '';
+    document.getElementById('postBody').value = '';
+    document.getElementById('charCount').textContent = '0';
+    document.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.remove('active','sel-general','sel-safety','sel-kudos','sel-maintenance','sel-schedule','sel-question'); });
+    selectedCat = '';
+    setTimeout(function(){ overlay.style.display = ''; }, 50);
+  }
   function handlePostOverlayClick(e) { if (e.target === document.getElementById('postModalOverlay')) closePostModal(); }
   function selectCat(cat, btn) {
     selectedCat = cat;
@@ -1811,10 +1823,21 @@
     if (file.size > 10 * 1024 * 1024) { showToast('red', 'Image too large', 'Please use an image under 10 MB.'); input.value = ''; return; }
     const reader = new FileReader();
     reader.onload = function(e) {
-      pendingImageData = e.target.result;
-      showImagePreview(pendingImageData);
-      document.getElementById('attachLabel').classList.add('has-file');
-      document.getElementById('gifUrl').value = '';
+      // Compress to max 800px and JPEG 0.72 so it stays under Firestore 1MB doc limit
+      const img = new Image();
+      img.onload = function() {
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        pendingImageData = canvas.toDataURL('image/jpeg', 0.72);
+        showImagePreview(pendingImageData);
+        document.getElementById('attachLabel').classList.add('has-file');
+        document.getElementById('gifUrl').value = '';
+      };
+      img.src = e.target.result;
     };
     reader.readAsDataURL(file);
   }
@@ -1848,10 +1871,9 @@
       const post = { author, body, category: selectedCat, pinned: false };
       if (pendingImageData) post.imageData = pendingImageData;
       await window.submitPostToFirebase(post);
-      clearImage();
       closePostModal();
       showToast('green', '📌 Posted!', 'Your message is on the board.');
-      switchTab('board');
+      // Board updates automatically via onSnapshot — no need to switchTab
     } catch(e) {
       showToast('red', 'Post failed', 'Check your connection and try again.');
     } finally {
