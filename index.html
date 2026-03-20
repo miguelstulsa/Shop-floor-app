@@ -207,7 +207,7 @@
   .dash-status-badge.issue     { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3); }
   .dash-action-btn { font-size:11px;padding:5px 12px;border-radius:6px;border:none;cursor:pointer;font-weight:700;letter-spacing:0.5px;transition:all 0.15s; }
   .dash-action-btn.to-running   { background:rgba(34,197,94,0.2);color:#4ade80;border:1px solid rgba(34,197,94,0.4); }
-  .dash-action-btn.to-completed { background:rgba(34,197,94,0.35);color:#fff;background:#16a34a; }
+  .dash-action-btn.to-completed { background:#22c55e;color:#0f2338;font-weight:900;font-size:13px;padding:8px 18px;border-radius:8px;box-shadow:0 0 12px rgba(34,197,94,0.4); }
   .dash-action-btn.to-pending   { background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3); }
   .dash-duration { font-size:11px;color:#22c55e;margin-top:3px;font-weight:600; }
   .dash-issue-flag { font-size:11px;color:#f87171;margin-top:3px;font-weight:700;letter-spacing:0.5px; }
@@ -980,7 +980,6 @@
     <div class="modal-machine" id="modalMachineName"></div>
     <div class="note-types">
       <button class="note-type-btn blue" onclick="selectType('blue')"><div class="note-type-label">🔵 Pending WO</div><div class="note-type-desc">Work order pending</div></button>
-      <button class="note-type-btn red" onclick="selectType('red')"><div class="note-type-label">🔴 Inspection</div><div class="note-type-desc">Quality check needed</div></button>
       <button class="note-type-btn yellow" onclick="selectType('yellow')"><div class="note-type-label">🟡 Machinist Req</div><div class="note-type-desc">Tool or fixture request</div></button>
       <button class="note-type-btn green" onclick="selectType('green')"><div class="note-type-label">🟢 Running WO</div><div class="note-type-desc">Currently running</div></button>
     </div>
@@ -1099,8 +1098,8 @@
 
   let knownIds = new Set();
   let isFirstLoad = true;
-  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
+  const typeLabels = { blue: 'Pending WO', yellow: 'Machinist Request', green: 'Running WO', red: 'Inspection Request' };
+  const typeIcons  = { blue: '🔵', yellow: '🟡', green: '🟢', red: '🔴' };
 
   // MACHINE NOTES
   const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
@@ -1269,6 +1268,7 @@
       textEl.innerHTML = '<strong>' + typeLabels[n.type] + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — ' + n.wo : '') + (n.detail ? ' · ' + n.detail : '');
       const actionsEl = document.createElement('div');
       actionsEl.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+      // Quick-toggle buttons for blue↔green (all users)
       if (n.type === 'blue') {
         const btn = document.createElement('button');
         btn.textContent = '🟢 READY';
@@ -1281,12 +1281,20 @@
         btn.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:4px 8px;border-radius:12px;border:none;background:#3b82f6;color:#fff;cursor:pointer;";
         btn.onclick = function() { window.changeNoteType(n.id, 'blue'); };
         actionsEl.appendChild(btn);
-      } else if (n.type === 'yellow') {
-        const btn = document.createElement('button');
-        btn.textContent = '🔴 INSPECT';
-        btn.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:4px 8px;border-radius:12px;border:none;background:#ef4444;color:#fff;cursor:pointer;";
-        btn.onclick = function() { window.changeNoteType(n.id, 'red'); };
-        actionsEl.appendChild(btn);
+      }
+      // Admin-only type changer dropdown
+      if (window._isAdmin || window.currentUser === 'hilladmin') {
+        const sel = document.createElement('select');
+        sel.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:3px 6px;border-radius:8px;border:1px solid #2a5a8c;background:#0f2338;color:#f59e0b;cursor:pointer;letter-spacing:1px;";
+        sel.title = 'Admin: change request type';
+        [['yellow','🟡 MACHINIST REQ'],['blue','🔵 PENDING WO'],['green','🟢 RUNNING WO'],['red','🔴 INSPECTION']].forEach(function(opt) {
+          const o = document.createElement('option');
+          o.value = opt[0]; o.textContent = opt[1];
+          if (n.type === opt[0]) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.onchange = function() { window.changeNoteType(n.id, sel.value); };
+        actionsEl.appendChild(sel);
       }
       const removeBtn = document.createElement('button');
       removeBtn.className = 'existing-note-remove';
@@ -1680,8 +1688,8 @@
   // ── MACHINE NOTES ──
   let currentMachine = '', currentCell = '', selectedType = null;
   window.machineNotes = {}; window.currentMachine = '';
-  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
+  const typeLabels = { blue: 'Pending WO', yellow: 'Machinist Request', green: 'Running WO', red: 'Inspection Request' };
+  const typeIcons  = { blue: '🔵', yellow: '🟡', green: '🟢', red: '🔴' };
 
   function openModal(machine, cell) {
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
@@ -1701,7 +1709,7 @@
   }
 
   async function submitNote() {
-    if (!selectedType) { showToast('red', 'Select a request type first!', 'Choose Blue, Red, Yellow or Green.'); return; }
+    if (!selectedType) { showToast('red', 'Select a request type first!', 'Choose Yellow, Blue, or Green.'); return; }
     const wo = document.getElementById('woInput').value.trim();
     const detail = document.getElementById('noteText').value.trim();
     const operator = document.getElementById('operatorName').value.trim();
@@ -1719,7 +1727,7 @@
     if (btn) { btn.disabled=false; btn.textContent='Submit'; }
     closeModal();
     showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
-    if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue') {
+    if (selectedType==='yellow'||selectedType==='blue') {
       sendPushover(selectedType, currentCell, currentMachine, wo, detail, operator);
     }
   }
@@ -3006,8 +3014,9 @@
   }
   function getJobStatus(r) {
     if (r.jobStatus) return r.jobStatus;
-    if (r.type === 'blue')  return 'pending';
-    if (r.type === 'green') return 'running';
+    if (r.type === 'blue')   return 'pending';
+    if (r.type === 'green')  return 'running';
+    if (r.type === 'yellow') return 'machinist';
     return 'issue';
   }
 
@@ -3027,20 +3036,20 @@
     });
 
     // Status counts
-    var pending=0, running=0, completed=0, issues=0;
+    var pending=0, running=0, completed=0, machinist=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
       var s = getJobStatus(r);
-      if (s==='completed') completed++;
-      else if (s==='running') running++;
-      else if (s==='pending') pending++;
-      else { issues++; issueByMachine[r.machine||''] = (issueByMachine[r.machine||'']||0)+1; }
+      if (s==='completed')  completed++;
+      else if (s==='running')   running++;
+      else if (s==='pending')   pending++;
+      else if (s==='machinist') { machinist++; issueByMachine[r.machine||''] = (issueByMachine[r.machine||'']||0)+1; }
     });
     var el;
-    if ((el=document.getElementById('dash-count-pending')))   el.textContent = pending;
-    if ((el=document.getElementById('dash-count-running')))   el.textContent = running;
-    if ((el=document.getElementById('dash-count-completed'))) el.textContent = completed;
-    if ((el=document.getElementById('dash-count-issues')))    el.textContent = issues;
+    if ((el=document.getElementById('dash-count-pending')))    el.textContent = pending;
+    if ((el=document.getElementById('dash-count-running')))    el.textContent = running;
+    if ((el=document.getElementById('dash-count-completed')))  el.textContent = completed;
+    if ((el=document.getElementById('dash-count-machinist')))  el.textContent = machinist;
 
     // Machine filters
     var machineCounts = {};
@@ -3051,7 +3060,7 @@
       mfRow.innerHTML = '<button class="dash-filter-btn dash-machine-btn'+(allActive?' active':'')+'" onclick="setDashMachineFilter(\'all\',this)" style="'+(allActive?'border-color:#f59e0b;color:#f59e0b;':'')+'">ALL MACHINES</button>';
       Object.keys(machineCounts).sort().forEach(function(m) {
         var isA = dashMachineFilter===m;
-        var flag = (issueByMachine[m]||0)>=3 ? ' ⚠' : '';
+        var flag = (issueByMachine[m]||0)>=3 ? ' 🟡' : '';
         mfRow.innerHTML += '<button class="dash-filter-btn dash-machine-btn'+(isA?' active':'')+'" onclick="setDashMachineFilter(\''+m+'\',this)" style="'+(isA?'border-color:#f59e0b;color:#f59e0b;':'')+'">'+m+flag+' <span style="color:#475569;font-size:10px;">('+machineCounts[m]+')</span></button>';
       });
     }
@@ -3077,7 +3086,7 @@
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+pending+'</div><div class="dash-weekly-stat-lbl">Pending</div></div>';
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#4ade80;">'+running+'</div><div class="dash-weekly-stat-lbl">Running</div></div>';
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#22c55e;">'+completed+'</div><div class="dash-weekly-stat-lbl">Completed</div></div>';
-      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#f87171;">'+issues+'</div><div class="dash-weekly-stat-lbl">Issues</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#eab308;">'+machinist+'</div><div class="dash-weekly-stat-lbl">Mach. Req</div></div>';
       h += '</div>';
       if (avgHours > 0) h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(34,197,94,0.08);border-radius:8px;border:1px solid rgba(34,197,94,0.2);font-size:12px;color:#4ade80;">Avg job completion time: <strong>'+avgHours+'h</strong></div>';
       if (topProducers.length > 0) {
@@ -3085,8 +3094,8 @@
         topProducers.forEach(function(e) { h += '<div class="dash-top-machine"><span class="dash-top-machine-name">'+e[0]+'</span><span style="font-size:12px;color:#4ade80;font-weight:700;">'+e[1]+' completed</span></div>'; });
       }
       if (repeatOffenders.length > 0) {
-        h += '<div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:2px;color:#f87171;margin-bottom:6px;">CONTINUOUS ISSUES (3+)</div>';
-        repeatOffenders.forEach(function(e) { h += '<div class="dash-top-machine"><span class="dash-top-machine-name" style="color:#f87171;">⚠ '+e[0]+'</span><span style="font-size:12px;color:#f87171;">'+e[1]+' issues</span></div>'; });
+        h += '<div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:2px;color:#eab308;margin-bottom:6px;">FREQUENT MACHINIST REQUESTS (3+)</div>';
+        repeatOffenders.forEach(function(e) { h += '<div class="dash-top-machine"><span class="dash-top-machine-name" style="color:#eab308;">🟡 '+e[0]+'</span><span style="font-size:12px;color:#eab308;">'+e[1]+' requests</span></div>'; });
       }
       h += '<button class="dash-print-btn" onclick="printDashboard()" style="margin-top:12px;">PRINT / EXPORT REPORT</button>';
       h += '</div>';
@@ -3099,10 +3108,10 @@
     // Filter for log
     var filtered = periodAll.filter(function(r) {
       var s = getJobStatus(r);
-      if (dashFilter==='pending'   && s!=='pending')   return false;
-      if (dashFilter==='running'   && s!=='running')   return false;
-      if (dashFilter==='completed' && s!=='completed') return false;
-      if (dashFilter==='issues'    && s!=='issue')     return false;
+      if (dashFilter==='pending'   && s!=='pending')    return false;
+      if (dashFilter==='running'   && s!=='running')    return false;
+      if (dashFilter==='completed' && s!=='completed')  return false;
+      if (dashFilter==='machinist' && s!=='machinist')  return false;
       if (dashMachineFilter!=='all' && r.machine!==dashMachineFilter) return false;
       return true;
     });
@@ -3126,10 +3135,11 @@
 
       // Status badge
       var statusBadge = {
-        pending:   '<span class="dash-status-badge pending">🔵 PENDING</span>',
-        running:   '<span class="dash-status-badge running"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;"></span> RUNNING</span>',
-        completed: '<span class="dash-status-badge completed">✅ COMPLETED</span>',
-        issue:     '<span class="dash-status-badge issue">'+(typeLabels[r.type]||'⚠ ISSUE')+'</span>'
+        pending:    '<span class="dash-status-badge pending">🔵 PENDING</span>',
+        running:    '<span class="dash-status-badge running"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;"></span> RUNNING</span>',
+        completed:  '<span class="dash-status-badge completed">✅ COMPLETED</span>',
+        machinist:  '<span class="dash-status-badge" style="background:rgba(234,179,8,0.15);color:#eab308;border:1px solid rgba(234,179,8,0.4);">🟡 MACHINIST REQ</span>',
+        issue:      '<span class="dash-status-badge issue">'+(typeLabels[r.type]||'⚠ ISSUE')+'</span>'
       }[status] || '';
 
       // Action buttons
@@ -3138,9 +3148,20 @@
         actionBtns = '<button class="dash-action-btn to-running" onclick="setJobStatus(\''+r.id+'\',\'running\')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> START JOB</button>';
       } else if (status==='running') {
         actionBtns = '<button class="dash-action-btn to-pending" onclick="setJobStatus(\''+r.id+'\',\'pending\')" style="margin-right:6px;">↩ PENDING</button>'+
-                     '<button class="dash-action-btn to-completed" onclick="setJobStatus(\''+r.id+'\',\'completed\')">✅ COMPLETE</button>';
+                     '<button class="dash-action-btn to-completed" onclick="setJobStatus(\''+r.id+'\',\'completed\')" style="background:#22c55e;color:#0f2338;font-weight:900;border-color:#22c55e;font-size:13px;padding:8px 16px;">✅ MARK COMPLETE</button>';
       } else if (status==='completed' && isAdmin) {
         actionBtns = '<button class="dash-action-btn to-running" onclick="setJobStatus(\''+r.id+'\',\'running\')" style="font-size:10px;opacity:0.7;">↩ REOPEN</button>';
+      }
+
+      // Admin-only type changer
+      var adminTypeChanger = '';
+      if (isAdmin) {
+        var tOpts = [['yellow','🟡 Machinist Req'],['blue','🔵 Pending WO'],['green','🟢 Running WO'],['red','🔴 Inspection']];
+        adminTypeChanger = '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(42,90,140,0.4);display:flex;align-items:center;gap:8px;">'
+          + '<span style="font-size:10px;letter-spacing:1.5px;color:#f59e0b;font-family:Bebas Neue,sans-serif;white-space:nowrap;">ADMIN — CHANGE TYPE</span>'
+          + '<select onchange="changeDashReqType(\''+r.id+'\',this.value)" style="flex:1;font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid #f59e0b;background:#0f2338;color:#f59e0b;cursor:pointer;">'
+          + tOpts.map(function(o){ return '<option value="'+o[0]+'"'+(r.type===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')
+          + '</select></div>';
       }
 
       var card = document.createElement('div');
@@ -3167,14 +3188,29 @@
         // Operator
         r.operator ? '<div class="dash-req-operator" style="margin-top:6px;">'+escHtml(r.operator)+'</div>' : '',
 
-        // Completion info
-        completedStr ? '<div class="dash-duration">✅ Completed '+completedStr+(duration?' ('+duration+')':'')+'</div>' : '',
+        // Started / completion info
+        (function(){
+          var out = [];
+          var startedTs = r.startedAt ? new Date(r.startedAt.seconds*1000) : null;
+          if (startedTs) {
+            var startedStr = startedTs.toLocaleDateString([],{month:'short',day:'numeric'})+' '+startedTs.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+            var waitSec = r.createdAt ? r.startedAt.seconds - r.createdAt.seconds : null;
+            var waitStr = waitSec !== null ? (waitSec < 3600 ? Math.round(waitSec/60)+'m wait' : Math.round(waitSec/3600*10)/10+'h wait') : '';
+            out.push('<div style="font-size:11px;color:#60a5fa;margin-top:4px;">▶ Started '+startedStr+(waitStr?' <span style=\'color:#475569;\'>· '+waitStr+' from submit</span>':'')+'</div>');
+          }
+          if (completedStr) {
+            var runSec = (r.completedAt && r.startedAt) ? r.completedAt.seconds - r.startedAt.seconds : null;
+            var runStr = runSec !== null ? (runSec < 3600 ? Math.round(runSec/60)+'m run time' : Math.round(runSec/3600*10)/10+'h run time') : (duration ? duration+' total' : '');
+            out.push('<div class="dash-duration">✅ Completed '+completedStr+(runStr?' <span style=\'color:#475569;\'>· '+runStr+'</span>':'')+'</div>');
+          }
+          return out.join('');
+        })(),
 
         // Recurring issue flag
         (issueCount>=3 && status==='issue') ? '<div class="dash-issue-flag">⚠ Recurring — '+issueCount+' issues on this machine</div>' : '',
 
         // Action buttons
-        '<div style="margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">'+actionBtns+'</div>'
+        '<div style="margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">'+actionBtns+adminTypeChanger+'</div>'
       ].join('');
       list.appendChild(card);
     });
@@ -3188,14 +3224,38 @@
         showToast('red','Admin only','Only admin can reopen a completed job.'); return;
       }
     }
+    var prevStatus = req.jobStatus || getJobStatus(req);
     req.jobStatus = newStatus;
+    if (newStatus==='running' && prevStatus==='pending') {
+      req.startedAt = { seconds: Math.floor(Date.now()/1000) };
+    }
     if (newStatus==='completed') req.completedAt = { seconds: Math.floor(Date.now()/1000) };
-    else req.completedAt = null;
+    else if (newStatus !== 'running') req.completedAt = null;
     if (window._db && window._fbModules) {
-      var update = { jobStatus: newStatus, completedAt: newStatus==='completed' ? window._fbModules.serverTimestamp() : null };
+      var update = { jobStatus: newStatus };
+      if (newStatus==='running' && prevStatus==='pending') {
+        update.startedAt = window._fbModules.serverTimestamp();
+      }
+      update.completedAt = newStatus==='completed' ? window._fbModules.serverTimestamp() : null;
       window._fbModules.updateDoc(window._fbModules.doc(window._db,'hillRequests',id), update)
         .catch(function(e){ console.warn('setJobStatus:', e.message); });
     }
+    renderDashboard();
+  }
+  function changeDashReqType(id, newType) {
+    if (!window._isAdmin && window.currentUser !== 'hilladmin') {
+      showToast('red','Admin only','Only admin can change request type.'); return;
+    }
+    var req = dashRequests.find(function(r){ return r.id===id; });
+    if (!req) return;
+    req.type = newType;
+    if (window._db && window._fbModules) {
+      window._fbModules.updateDoc(window._fbModules.doc(window._db,'hillRequests',id), { type: newType })
+        .catch(function(e){ console.warn('changeDashReqType:', e.message); });
+    }
+    // Also update the live notes collection so the shop floor reflects the change
+    if (window.changeNoteType) { window.changeNoteType(id, newType); }
+    showToast('green','Type updated','Request changed to ' + newType + '.');
     renderDashboard();
   }
   function clearDashboardRequests() {
@@ -3235,8 +3295,8 @@
       var key = ts.toLocaleDateString([],{month:'short',day:'numeric'});
       var s = getJobStatus(r);
       if (dailyCompleted[key] !== undefined) {
-        if (s === 'completed') dailyCompleted[key]++;
-        else if (s === 'issue') dailyIssues[key]++;
+        if (s === 'completed')  dailyCompleted[key]++;
+        else if (s === 'machinist') dailyIssues[key]++;  // yellow = machinist req in chart
         else dailyPending[key]++;
       }
     });
@@ -3266,7 +3326,7 @@
       html2 += '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:28px;">';
       html2 += '<div style="display:flex;flex-direction:column-reverse;width:20px;height:72px;justify-content:flex-start;">';
       if (cH>0) html2 += '<div style="width:100%;height:'+cH+'px;background:#22c55e;border-radius:2px 2px 0 0;"></div>';
-      if (iH>0) html2 += '<div style="width:100%;height:'+iH+'px;background:#ef4444;"></div>';
+      if (iH>0) html2 += '<div style="width:100%;height:'+iH+'px;background:#eab308;"></div>';
       if (pH>0) html2 += '<div style="width:100%;height:'+pH+'px;background:#3b82f6;border-radius:0 0 2px 2px;"></div>';
       if (total===0) html2 += '<div style="width:100%;height:2px;background:#1a4a8c;border-radius:2px;margin-top:70px;"></div>';
       html2 += '</div>';
@@ -3277,7 +3337,7 @@
     html2 += '<div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">';
     html2 += '<span style="font-size:10px;color:#22c55e;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#22c55e;border-radius:2px;display:inline-block;"></span>Completed</span>';
     html2 += '<span style="font-size:10px;color:#3b82f6;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block;"></span>Pending/Running</span>';
-    html2 += '<span style="font-size:10px;color:#ef4444;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span>Issues</span>';
+    html2 += '<span style="font-size:10px;color:#eab308;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#eab308;border-radius:2px;display:inline-block;"></span>Machinist Req</span>';
     html2 += '</div></div>';
 
     // Machine breakdown bars
@@ -3285,13 +3345,13 @@
       html2 += '<div style="font-size:10px;letter-spacing:2px;color:#475569;font-weight:700;margin-bottom:8px;">REQUESTS BY MACHINE</div>';
       machineList.forEach(function(e) {
         var pct = Math.round(e[1]/maxMachine*100);
-        var issueCount = 0;
-        data.forEach(function(r){ if(r.machine===e[0]&&getJobStatus(r)==='issue') issueCount++; });
-        var barColor = issueCount >= 3 ? '#ef4444' : '#f59e0b';
+        var machCount = 0, runningCount = 0;
+        data.forEach(function(r){ if(r.machine===e[0]) { if(getJobStatus(r)==='machinist') machCount++; if(getJobStatus(r)==='running') runningCount++; } });
+        var barColor = runningCount > 0 ? '#22c55e' : machCount > 0 ? '#eab308' : '#f59e0b';
         html2 += '<div style="margin-bottom:8px;">';
         html2 += '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">';
-        html2 += '<span style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1px;color:'+(issueCount>=3?'#f87171':'#f59e0b')+';">'+(issueCount>=3?'⚠ ':'')+e[0]+'</span>';
-        html2 += '<span style="font-size:11px;color:#94a3b8;">'+e[1]+' requests'+(issueCount>=3?' · '+issueCount+' issues':'')+'</span>';
+        html2 += '<span style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1px;color:'+(runningCount>0?'#4ade80':'#f59e0b')+';"><span style="'+(runningCount>0?'display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;vertical-align:middle;':'display:none;')+'"></span>'+e[0]+'</span>';
+        html2 += '<span style="font-size:11px;color:#94a3b8;">'+e[1]+' requests'+(runningCount>0?' · '+runningCount+' running':'')+(machCount>0?' · '+machCount+' mach req':'')+'</span>';
         html2 += '</div>';
         html2 += '<div style="background:#1a3060;border-radius:4px;height:8px;overflow:hidden;">';
         html2 += '<div style="background:'+barColor+';width:'+pct+'%;height:100%;border-radius:4px;transition:width 0.5s;"></div>';
@@ -3310,7 +3370,12 @@
       return ts>=start;
     });
     var counts={red:0,yellow:0,blue:0,green:0};
-    periodAll.forEach(function(r){if(counts[r.type]!==undefined)counts[r.type]++;});
+    var statusCounts={pending:0,running:0,completed:0,machinist:0};
+    periodAll.forEach(function(r){
+      if(counts[r.type]!==undefined)counts[r.type]++;
+      var s=getJobStatus(r);
+      if(statusCounts[s]!==undefined)statusCounts[s]++;
+    });
     var machines={};
     periodAll.forEach(function(r){if(r.machine)machines[r.machine]=(machines[r.machine]||0)+1;});
     var topM=Object.entries(machines).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
@@ -3318,6 +3383,11 @@
     var rows=periodAll.map(function(r){
       var ts=r.createdAt?new Date(r.createdAt.seconds*1000):null;
       var t=ts?ts.toLocaleDateString()+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'--';
+      var startedTs=r.startedAt?new Date(r.startedAt.seconds*1000):null;
+      var startedStr=startedTs?startedTs.toLocaleDateString()+' '+startedTs.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'--';
+      var waitMin=r.startedAt&&r.createdAt?Math.round((r.startedAt.seconds-r.createdAt.seconds)/60):null;
+      var runMin=r.completedAt&&r.startedAt?Math.round((r.completedAt.seconds-r.startedAt.seconds)/60):null;
+      var sLabel = getJobStatus(r); sLabel = sLabel.charAt(0).toUpperCase()+sLabel.slice(1);
       return [
         '<tr style="border-bottom:1px solid #eee;">',
         '<td style="padding:6px 10px;">'+t+'</td>',
@@ -3326,7 +3396,10 @@
         '<td style="padding:6px 10px;">'+(typeLabels[r.type]||r.type)+'</td>',
         '<td style="padding:6px 10px;">'+(r.wo||'--')+'</td>',
         '<td style="padding:6px 10px;">'+(r.operator||'--')+'</td>',
-        '<td style="padding:6px 10px;">'+(r.resolved?'Resolved':'Open')+'</td>',
+        '<td style="padding:6px 10px;">'+startedStr+'</td>',
+        '<td style="padding:6px 10px;">'+(waitMin!==null?waitMin+'m':'--')+'</td>',
+        '<td style="padding:6px 10px;">'+(runMin!==null?runMin+'m':'--')+'</td>',
+        '<td style="padding:6px 10px;">'+sLabel+'</td>',
         '</tr>'
       ].join('');
     }).join('');
@@ -3361,15 +3434,15 @@
       '<h1>Hill Manufacturing - Request Report</h1>',
       '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
       '<div class="sg">',
-        '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+counts.red+'</div><div class="l" style="color:#ef4444;">Inspections</div></div>',
-        '<div class="sc" style="background:#fffbeb;border:2px solid #f59e0b;"><div class="n" style="color:#f59e0b;">'+counts.yellow+'</div><div class="l" style="color:#f59e0b;">Machinist Req</div></div>',
-        '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+counts.blue+'</div><div class="l" style="color:#3b82f6;">Pending WO</div></div>',
-        '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+counts.green+'</div><div class="l" style="color:#22c55e;">Running WO</div></div>',
+        '<div class="sc" style="background:#fffbeb;border:2px solid #eab308;"><div class="n" style="color:#eab308;">'+statusCounts.machinist+'</div><div class="l" style="color:#eab308;">Machinist Req</div></div>',
+        '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+statusCounts.pending+'</div><div class="l" style="color:#3b82f6;">Pending</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+statusCounts.running+'</div><div class="l" style="color:#22c55e;">Running</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #16a34a;"><div class="n" style="color:#16a34a;">'+statusCounts.completed+'</div><div class="l" style="color:#16a34a;">Completed</div></div>',
       '</div>',
       '<h2>Top Machines by Request Volume</h2>',
       '<table><thead><tr><th></th><th>Machine</th><th>Requests</th><th>% of Total</th></tr></thead><tbody>'+topRows+'</tbody></table>',
       '<h2>Full Request Log ('+periodAll.length+' requests)</h2>',
-      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+      '<table><thead><tr><th>Submitted</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Started</th><th>Wait</th><th>Run Time</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
       '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;">Print / Save as PDF</button>'
     ].join('');
     var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+body+'</body></html>';
@@ -3389,26 +3462,21 @@
       chartRows += '<td style="padding:6px 10px;color:#666;">'+(issC>=3?issC+' issues':'')+'</td></tr>';
     });
 
-    // Status counts
-    var pending2=0,running2=0,completed2=0,issues2=0;
-    periodAll.forEach(function(r){
-      var s=getJobStatus(r);
-      if(s==='completed')completed2++;else if(s==='running')running2++;else if(s==='pending')pending2++;else issues2++;
-    });
+    // Status counts already in statusCounts (computed above)
 
     var newBody = [
       '<h1>Hill Manufacturing - Production Report</h1>',
       '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
       '<div class="sg">',
-        '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+pending2+'</div><div class="l">Pending</div></div>',
-        '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+running2+'</div><div class="l">Running</div></div>',
-        '<div class="sc" style="background:#f0fdf4;border:2px solid #16a34a;"><div class="n" style="color:#16a34a;">'+completed2+'</div><div class="l">Completed</div></div>',
-        '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+issues2+'</div><div class="l">Issues</div></div>',
+        '<div class="sc" style="background:#fffbeb;border:2px solid #eab308;"><div class="n" style="color:#eab308;">'+statusCounts.machinist+'</div><div class="l" style="color:#eab308;">Machinist Req</div></div>',
+        '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+statusCounts.pending+'</div><div class="l">Pending</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+statusCounts.running+'</div><div class="l">Running</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #16a34a;"><div class="n" style="color:#16a34a;">'+statusCounts.completed+'</div><div class="l">Completed</div></div>',
       '</div>',
       '<h2>Machine Activity Chart</h2>',
       '<table><thead><tr><th>Machine</th><th>Volume</th><th>Requests</th><th>Flags</th></tr></thead><tbody>'+chartRows+'</tbody></table>',
       '<h2>Full Request Log ('+periodAll.length+' records)</h2>',
-      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+      '<table><thead><tr><th>Submitted</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Started</th><th>Wait</th><th>Run Time</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
       '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;margin-right:10px;">Print / Save as PDF</button>'
     ].join('');
 
@@ -3444,7 +3512,7 @@
       <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Waiting to run</div></div>
       <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;margin-right:4px;"></span> Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
       <div class="dash-summary-card green"><div class="dash-summary-label">✅ Completed</div><div class="dash-summary-num" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
-      <div class="dash-summary-card red"><div class="dash-summary-label">⚠ Issues</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Inspections & req</div></div>
+      <div class="dash-summary-card" style="border-color:rgba(234,179,8,0.4);background:linear-gradient(145deg,#1a1400,#2a2000);"><div class="dash-summary-label" style="color:#eab308;">🟡 Machinist Req</div><div class="dash-summary-num" style="color:#eab308;" id="dash-count-machinist">0</div><div class="dash-summary-sub">Open requests</div></div>
     </div>
 
     <div id="dash-summary-block"></div>
@@ -3455,7 +3523,7 @@
       <button class="dash-filter-btn f-blue" onclick="setDashFilter('pending',this)">🔵 PENDING</button>
       <button class="dash-filter-btn f-green" onclick="setDashFilter('running',this)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> RUNNING</button>
       <button class="dash-filter-btn f-green" onclick="setDashFilter('completed',this)">✅ COMPLETED</button>
-      <button class="dash-filter-btn f-red" onclick="setDashFilter('issues',this)">⚠ ISSUES</button>
+      <button class="dash-filter-btn f-yellow" onclick="setDashFilter('machinist',this)" style="border-color:rgba(234,179,8,0.4);color:#eab308;">🟡 MACHINIST REQ</button>
     </div>
 
     <div id="dash-machine-filters" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
