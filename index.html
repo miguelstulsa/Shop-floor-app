@@ -1840,12 +1840,23 @@
     if (!author) { showToast('yellow', 'Enter your name', ''); return; }
     if (!selectedCat) { showToast('yellow', 'Pick a category', ''); return; }
     if (!body && !pendingImageData) { showToast('yellow', 'Write something or attach an image!', ''); return; }
-    const post = { author, body, category: selectedCat, pinned: false };
-    if (pendingImageData) post.imageData = pendingImageData;
-    if (window.submitPostToFirebase) await window.submitPostToFirebase(post);
-    clearImage(); closePostModal();
-    showToast('green', '📌 Posted!', 'Your message is on the board.');
-    switchTab('board');
+    if (!window.submitPostToFirebase) { showToast('red', 'Still connecting...', 'Wait a moment and try again.'); return; }
+    // Disable button to prevent double-submit
+    const submitBtn = document.querySelector('#postModalOverlay .btn-submit');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Posting...'; }
+    try {
+      const post = { author, body, category: selectedCat, pinned: false };
+      if (pendingImageData) post.imageData = pendingImageData;
+      await window.submitPostToFirebase(post);
+      clearImage();
+      closePostModal();
+      showToast('green', '📌 Posted!', 'Your message is on the board.');
+      switchTab('board');
+    } catch(e) {
+      showToast('red', 'Post failed', 'Check your connection and try again.');
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '📌 Post It'; }
+    }
   }
   function setFilter(f, btn) {
     activeFilter = f;
