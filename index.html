@@ -3467,8 +3467,8 @@
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
       <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Waiting to run</div></div>
       <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;margin-right:4px;"></span> Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
-      <div class="dash-summary-card green"><div class="dash-summary-label">✅ Completed</div><div class="dash-summary-num" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
-      <div class="dash-summary-card red"><div class="dash-summary-label">⚠ Issues</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Inspections & req</div></div>
+      <div class="dash-summary-card" style="border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffffff;box-shadow:0 0 6px rgba(255,255,255,0.6);flex-shrink:0;"></span>Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
+      <div class="dash-summary-card yellow"><div class="dash-summary-label">🟡 Machinist Req</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Inspections & req</div></div>
     </div>
 
     <div id="dash-summary-block"></div>
@@ -3479,7 +3479,7 @@
       <button class="dash-filter-btn f-blue" onclick="setDashFilter('pending',this)">🔵 PENDING</button>
       <button class="dash-filter-btn f-green" onclick="setDashFilter('running',this)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> RUNNING</button>
       <button class="dash-filter-btn f-green" onclick="setDashFilter('completed',this)">✅ COMPLETED</button>
-      <button class="dash-filter-btn f-red" onclick="setDashFilter('issues',this)">⚠ ISSUES</button>
+      <button class="dash-filter-btn f-yellow" onclick="setDashFilter('issues',this)">🟡 MACHINIST REQ</button>
     </div>
 
     <div id="dash-machine-filters" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
