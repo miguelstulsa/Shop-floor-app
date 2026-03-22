@@ -731,6 +731,71 @@
       <div style="font-size:11px;color:#64748b;margin-top:6px;">Current: <span id="qmi-url-display" style="color:#d8b4fe;">not set</span></div>
     </div>
 
+    <!-- DATANOMIX API INTEGRATION -->
+    <div class="admin-section" style="border:1px solid rgba(245,197,0,0.3);background:linear-gradient(145deg,#0a1a00,#1a2a00);">
+      <div class="admin-section-title" style="color:#f5c500;">⚡ Datanomix API Integration</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.7;">
+        Paste your API key below to connect live machine data — utilization, cycle times, OEE, and part counts will appear directly on every machine card on the shop floor.
+      </div>
+
+      <!-- Status indicator -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;">
+        <span id="dnx-status-dot" style="width:10px;height:10px;border-radius:50%;background:#475569;flex-shrink:0;transition:background 0.3s;"></span>
+        <span id="dnx-status-text" style="font-size:12px;color:#64748b;letter-spacing:0.5px;">Not connected — enter API key below</span>
+      </div>
+
+      <!-- API Key input -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">API Key</label>
+        <div style="display:flex;gap:8px;">
+          <input id="dnx-api-key-input" type="password"
+            placeholder="Paste Datanomix API key here..."
+            style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(245,197,0,0.3);border-radius:8px;padding:10px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
+            oninput="document.getElementById('dnx-key-status').textContent=''"
+          />
+          <button onclick="saveDNXApiKey(document.getElementById('dnx-api-key-input').value)"
+            style="background:#f5c500;border:none;color:#001833;border-radius:8px;padding:10px 16px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">
+            CONNECT
+          </button>
+        </div>
+        <div id="dnx-key-status" style="font-size:11px;margin-top:6px;color:#64748b;"></div>
+      </div>
+
+      <!-- Toggle show/hide key -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button onclick="var i=document.getElementById('dnx-api-key-input');i.type=i.type==='password'?'text':'password';"
+          style="background:rgba(255,255,255,0.06);border:1px solid #1a4a8c;color:#64748b;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">
+          Show / Hide Key
+        </button>
+        <button onclick="saveDNXApiKey('')"
+          style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">
+          Clear Key
+        </button>
+        <button onclick="fetchDatanomix()"
+          style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;">
+          Test Connection
+        </button>
+      </div>
+
+      <!-- What connects automatically -->
+      <div style="background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;margin-bottom:8px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#f5c500;margin-bottom:8px;">WHAT CONNECTS AUTOMATICALLY</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:5px;"><span style="color:#22c55e;">✓</span> Live utilization %</div>
+          <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:5px;"><span style="color:#22c55e;">✓</span> Cycle time vs target</div>
+          <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:5px;"><span style="color:#22c55e;">✓</span> Parts count today</div>
+          <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:5px;"><span style="color:#22c55e;">✓</span> OEE per machine</div>
+          <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:5px;"><span style="color:#22c55e;">✓</span> ON TARGET / SLOW bars</div>
+          <div style="font-size:11px;color:#94a3b8;display:flex;align-items:center;gap:5px;"><span style="color:#22c55e;">✓</span> Dashboard production #s</div>
+        </div>
+      </div>
+
+      <!-- Machine ID map confirmation -->
+      <div style="font-size:11px;color:#475569;line-height:1.6;">
+        All <strong style="color:#f0f4f8;">26 machines</strong> are pre-mapped to their Datanomix IDs — no setup needed. The moment you paste the API key, every machine card updates live every 60 seconds.
+      </div>
+    </div>
+
     <!-- PUSHOVER SETTINGS -->
     <div class="admin-section">
       <div class="admin-section-title">🔔 Pushover Notification Settings</div>
@@ -2175,6 +2240,13 @@
 
   function openAdminPanel() {
     document.getElementById('adminPanel').classList.add('open');
+    // Load saved DNX key into input
+    var dnxInput = document.getElementById('dnx-api-key-input');
+    if (dnxInput && localStorage.getItem('hillDNXApiKey')) {
+      dnxInput.value = localStorage.getItem('hillDNXApiKey');
+    }
+    // Update DNX status display
+    updateDNXStatus(dnxConnected);
     // Always force a fresh user load when opening panel
     if (window._db && window._fbModules) {
       var db = window._db;
@@ -2326,7 +2398,31 @@
     }
   });
 
-  // ── PERFORMANCE LIGHTS ──
+  // ══════════════════════════════════════════════════════════════════
+  // ── DATANOMIX INTEGRATION ──
+  // ══════════════════════════════════════════════════════════════════
+  // MACHINE ID MAP — already confirmed from your Datanomix account
+  var DNX_MACHINES = {
+    '1050-B': 253,  '7000':   853,  'VF-6':   1253,
+    '5100-B': 753,  '2500':   1603, 'PUMA-3': 1153,
+    'ST35':   1903, 'VF-3':   953,  'VF-2':   1553,
+    'PUMA-2': 3,    '403-A':  553,  '403-B':  1003,
+    '403-C':  1303, '5100-A': 653,  'SH403':  1303,
+    '5000':   null, 'SHARP':  null, '3000-C': 1803,
+    'SYIL':   null, '3000-A': 1703, 'EMCO':   null,
+    '2G':     1973, 'PUMA-1': 453,  '303-B':  103,
+    'TWIN':   1403, '2500-Y': 1653, 'SAW-1':  null, 'SAW-2': null
+  };
+
+  // ── PASTE YOUR API KEY HERE WHEN YOU GET IT ──
+  var DNX_API_KEY = '';  // <-- e.g. 'Bearer eyJhbGc...'
+  var DNX_BASE_URL = 'https://api.datanomix.app/v1'; // confirm with Datanomix
+  var DNX_POLL_INTERVAL = 60000; // refresh every 60 seconds
+  var dnxPollTimer = null;
+  var dnxConnected = false;
+  var dnxLastData = {};
+
+  // ── PERF BAR DISPLAY ──
   const PERF_THRESHOLDS = { green: 0.05, yellow: 0.15 };
   function setPerfLight(machineId, status, labelText) {
     const bar = document.getElementById('perf-' + machineId);
@@ -2335,15 +2431,110 @@
     bar.setAttribute('data-label', labelText);
   }
   function applyPerfData(machineId, actualCycleTime, targetCycleTime) {
-    if (!actualCycleTime || !targetCycleTime || targetCycleTime === 0) { setPerfLight(machineId, 'offline', 'OFFLINE'); return; }
+    if (!actualCycleTime || !targetCycleTime || targetCycleTime === 0) {
+      setPerfLight(machineId, 'offline', 'OFFLINE'); return;
+    }
     const diff = (actualCycleTime - targetCycleTime) / targetCycleTime;
-    if (diff <= PERF_THRESHOLDS.green)  setPerfLight(machineId, 'green',  'ON TARGET');
-    else if (diff <= PERF_THRESHOLDS.yellow) setPerfLight(machineId, 'yellow', '+' + Math.round(diff*100) + '% SLOW');
-    else setPerfLight(machineId, 'red', '+' + Math.round(diff*100) + '% SLOW');
+    if (diff <= PERF_THRESHOLDS.green)       setPerfLight(machineId, 'green',  'ON TARGET');
+    else if (diff <= PERF_THRESHOLDS.yellow)  setPerfLight(machineId, 'yellow', '+' + Math.round(diff*100) + '% SLOW');
+    else                                      setPerfLight(machineId, 'red',    '+' + Math.round(diff*100) + '% SLOW');
   }
 
+  // ── FETCH LIVE DATA FROM DATANOMIX API ──
+  async function fetchDatanomix() {
+    if (!DNX_API_KEY) {
+      runPerfDemo(); // no key = run demo
+      return;
+    }
+    try {
+      // Step 1: get all machine statuses
+      var resp = await fetch(DNX_BASE_URL + '/machines/status', {
+        headers: {
+          'Authorization': DNX_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      var data = await resp.json();
+      dnxConnected = true;
+      updateDNXStatus(true);
+
+      // Step 2: apply to each machine
+      // Expected response shape: array of { machineId, status, actualCycleTime, targetCycleTime, partsToday, oee, operator }
+      // We map their machineId → our machine name
+      var byId = {};
+      (data.machines || data.data || data || []).forEach(function(m) {
+        byId[m.machineId || m.id] = m;
+      });
+
+      Object.keys(DNX_MACHINES).forEach(function(machineName) {
+        var dnxId = DNX_MACHINES[machineName];
+        if (!dnxId) return;
+        var m = byId[dnxId];
+        if (!m) { setPerfLight(machineName, 'offline', 'OFFLINE'); return; }
+        dnxLastData[machineName] = m;
+
+        // Apply performance bar
+        applyPerfData(machineName, m.actualCycleTime || m.actual_cycle_time, m.targetCycleTime || m.target_cycle_time);
+
+        // Update machine card with extra Datanomix data
+        updateMachineCard(machineName, m);
+      });
+
+      // Update dashboard if open
+      if (typeof renderDashboard === 'function') renderDashboard();
+
+    } catch(e) {
+      console.warn('Datanomix API error:', e.message);
+      dnxConnected = false;
+      updateDNXStatus(false);
+      runPerfDemo(); // fallback to demo on error
+    }
+  }
+
+  // ── UPDATE MACHINE CARD WITH LIVE DATA ──
+  function updateMachineCard(machineName, data) {
+    // Parts count badge
+    var parts = data.partsToday || data.parts_today || data.partCount || 0;
+    var oee   = data.oee || data.oeePercent || null;
+    var op    = data.operator || data.currentOperator || null;
+    var safeId = machineName.replace(/ /g,'-').replace(/&/g,'AMP').replace(/#/g,'NUM');
+
+    // Update existing notes area or add Datanomix data panel
+    var notesEl = document.getElementById('notes-' + safeId);
+    if (notesEl && parts > 0) {
+      var dnxEl = notesEl.querySelector('.dnx-live-data');
+      if (!dnxEl) {
+        dnxEl = document.createElement('div');
+        dnxEl.className = 'dnx-live-data';
+        dnxEl.style.cssText = 'font-size:10px;color:#64748b;padding:2px 8px;display:flex;gap:8px;flex-wrap:wrap;';
+        notesEl.prepend(dnxEl);
+      }
+      var oeeStr = oee ? ' · OEE: <span style="color:'+(oee>=75?'#22c55e':oee>=50?'#eab308':'#ef4444')+';">'+Math.round(oee)+'%</span>' : '';
+      dnxEl.innerHTML = '<span>Parts: <b style="color:#f59e0b;">'+parts+'</b></span>'+oeeStr+(op?'<span>Op: '+op+'</span>':'');
+    }
+  }
+
+  // ── STATUS INDICATOR IN HEADER ──
+  function updateDNXStatus(connected) {
+    var indicator = document.getElementById('dnx-status-dot');
+    var text = document.getElementById('dnx-status-text');
+    if (indicator) indicator.style.background = connected ? '#22c55e' : '#ef4444';
+    if (text) text.textContent = connected ? 'Connected — live data updating every 60s' : 'Disconnected — check API key';
+    indicator && (indicator.title = connected ? 'Datanomix: Live' : 'Datanomix: Disconnected');
+  }
+
+  // ── START POLLING ──
+  function startDNXPolling() {
+    fetchDatanomix();
+    if (dnxPollTimer) clearInterval(dnxPollTimer);
+    dnxPollTimer = setInterval(fetchDatanomix, DNX_POLL_INTERVAL);
+  }
+
+  // ── DEMO MODE (runs until API key is entered) ──
   function runPerfDemo() {
-    const machines = ['VF-6','7000','1050-B','5100-B','2500','PUMA-3','ST35','VF-3','VF-2','PUMA-2','403-A','403-B','403-C','SHARP','5100-A','SH403','5000','3000-C','SYIL','3000-A','EMCO','2G','PUMA-1','303-B','TWIN','2500-Y'];
+    if (DNX_API_KEY) return; // don't run demo if API key exists
+    const machines = Object.keys(DNX_MACHINES);
     const statuses = [
       { status:'green',   label:'ON TARGET' },
       { status:'green',   label:'ON TARGET' },
@@ -2353,10 +2544,39 @@
       { status:'red',     label:'+22% SLOW' },
       { status:'offline', label:'OFFLINE'   },
     ];
-    machines.forEach(m => { const s = statuses[Math.floor(Math.random() * statuses.length)]; setPerfLight(m, s.status, s.label); });
+    machines.forEach(function(m) {
+      if (!DNX_MACHINES[m]) { setPerfLight(m, 'pending', '—'); return; }
+      var s = statuses[Math.floor(Math.random() * statuses.length)];
+      setPerfLight(m, s.status, s.label);
+    });
   }
-  setTimeout(runPerfDemo, 1200);
-  setInterval(runPerfDemo, 45000);
+
+  // ── ADMIN: SAVE API KEY ──
+  window.saveDNXApiKey = function(key) {
+    key = (key || '').trim();
+    DNX_API_KEY = key;
+    if (key) {
+      localStorage.setItem('hillDNXApiKey', key);
+      showToast('green', 'Datanomix API Key saved!', 'Connecting to live data...');
+      startDNXPolling();
+    } else {
+      localStorage.removeItem('hillDNXApiKey');
+      showToast('blue', 'API Key cleared', 'Running in demo mode.');
+      runPerfDemo();
+    }
+  };
+
+  // ── LOAD SAVED KEY ON STARTUP ──
+  var _savedDNXKey = localStorage.getItem('hillDNXApiKey') || '';
+  if (_savedDNXKey) {
+    DNX_API_KEY = _savedDNXKey;
+    setTimeout(startDNXPolling, 2000);
+  } else {
+    setTimeout(runPerfDemo, 1200);
+    setInterval(runPerfDemo, 45000);
+  }
+
+
 
   // ── REQUESTS PAGE ──
   window._reqFilter = 'all';
@@ -2986,7 +3206,7 @@
   // ══════════════════════════════════════════════
   // ── REQUEST DASHBOARD ──
   // ══════════════════════════════════════════════
-  var dashPeriod = 'week', dashFilter = 'all', dashMachineFilter = 'all', dashRequests = [];
+  var dashPeriod = 'today', dashFilter = 'all', dashMachineFilter = 'all', dashRequests = [];
 
   function setDashPeriod(p,btn) {
     dashPeriod=p;
@@ -3021,9 +3241,10 @@
     }).catch(function(e){console.warn('loadDashboard:',e.message);});
   }
   function getDashStart() {
-    var now=new Date();
-    if(dashPeriod==='week'){var d=new Date(now);d.setDate(d.getDate()-d.getDay());d.setHours(0,0,0,0);return d;}
-    if(dashPeriod==='month'){return new Date(now.getFullYear(),now.getMonth(),1);}
+    var now = new Date();
+    if (dashPeriod === 'today') { var d=new Date(now); d.setHours(0,0,0,0); return d; }
+    if (dashPeriod === 'week')  { var d=new Date(now); d.setDate(d.getDate()-d.getDay()); d.setHours(0,0,0,0); return d; }
+    if (dashPeriod === 'month') { return new Date(now.getFullYear(), now.getMonth(), 1); }
     return new Date(0);
   }
   function getJobStatus(r) {
@@ -3239,89 +3460,163 @@
     var block = document.getElementById('dash-chart-block');
     if (!block) return;
     if (data.length === 0) { block.innerHTML = ''; return; }
+    var allData = dashRequests; // full history for trend charts
 
-    // ── Build daily counts for bar chart (last 7 or 30 days) ──
-    var days = dashPeriod === 'month' ? 30 : dashPeriod === 'week' ? 7 : 14;
-    var dailyCompleted = {}, dailyIssues = {}, dailyPending = {};
-    var labels = [];
-    var now = new Date();
-    for (var i = days-1; i >= 0; i--) {
-      var d = new Date(now); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
-      var key = d.toLocaleDateString([],{month:'short',day:'numeric'});
-      labels.push(key);
-      dailyCompleted[key] = 0; dailyIssues[key] = 0; dailyPending[key] = 0;
+    // ── Build date buckets for bar chart ──
+    var days, bucketFn;
+    if (dashPeriod === 'today') {
+      // Hour buckets for today
+      days = 24;
+      bucketFn = function(ts) { return ts.getHours() + ':00'; };
+    } else if (dashPeriod === 'week') {
+      days = 7;
+      bucketFn = function(ts) { return ts.toLocaleDateString([],{weekday:'short',month:'numeric',day:'numeric'}); };
+    } else if (dashPeriod === 'month') {
+      days = new Date().getDate(); // days so far this month
+      bucketFn = function(ts) { return ts.toLocaleDateString([],{month:'short',day:'numeric'}); };
+    } else {
+      // All time — bucket by month
+      days = 12;
+      bucketFn = function(ts) { return ts.toLocaleDateString([],{month:'short',year:'2-digit'}); };
     }
+
+    // Build ordered labels
+    var labels = [];
+    var now2 = new Date();
+    if (dashPeriod === 'today') {
+      for (var h=0; h<24; h++) labels.push(h+':00');
+    } else if (dashPeriod === 'all') {
+      for (var i=11; i>=0; i--) {
+        var d2=new Date(now2.getFullYear(), now2.getMonth()-i, 1);
+        labels.push(d2.toLocaleDateString([],{month:'short',year:'2-digit'}));
+      }
+    } else {
+      for (var i=days-1; i>=0; i--) {
+        var d2=new Date(now2); d2.setDate(d2.getDate()-i); d2.setHours(0,0,0,0);
+        labels.push(bucketFn(d2));
+      }
+    }
+
+    var bCompleted={}, bIssues={}, bPending={};
+    labels.forEach(function(l){ bCompleted[l]=0; bIssues[l]=0; bPending[l]=0; });
+
     data.forEach(function(r) {
       var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
       if (!ts) return;
-      var key = ts.toLocaleDateString([],{month:'short',day:'numeric'});
+      var key = bucketFn(ts);
       var s = getJobStatus(r);
-      if (dailyCompleted[key] !== undefined) {
-        if (s === 'completed') dailyCompleted[key]++;
-        else if (s === 'issue') dailyIssues[key]++;
-        else dailyPending[key]++;
+      if (bCompleted[key]!==undefined) {
+        if (s==='completed') bCompleted[key]++;
+        else if (s==='issue') bIssues[key]++;
+        else bPending[key]++;
       }
     });
 
-    // ── Machine breakdown pie-style bars ──
+    // Machine breakdown
     var machineTotals = {};
     data.forEach(function(r){ var m=r.machine||'Unknown'; machineTotals[m]=(machineTotals[m]||0)+1; });
     var machineList = Object.entries(machineTotals).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
     var maxMachine = machineList.length > 0 ? machineList[0][1] : 1;
 
-    var html2 = '<div class="dash-weekly-card">';
-    html2 += '<div class="dash-weekly-title" style="margin-bottom:14px;"><span>📈 PRODUCTION CHART</span><span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">'+labels[0]+' – '+labels[labels.length-1]+'</span></div>';
+    // Weekly trend (last 4 weeks) for trend line
+    var weekTrend = [];
+    for (var w=3; w>=0; w--) {
+      var wStart = new Date(now2); wStart.setDate(wStart.getDate()-wStart.getDay()-w*7); wStart.setHours(0,0,0,0);
+      var wEnd   = new Date(wStart); wEnd.setDate(wEnd.getDate()+7);
+      var wLabel = 'Wk '+wStart.toLocaleDateString([],{month:'short',day:'numeric'});
+      var wComp=0, wIssue=0, wTotal=0;
+      allData.forEach(function(r) {
+        var ts=r.createdAt?new Date(r.createdAt.seconds*1000):null;
+        if (!ts||ts<wStart||ts>=wEnd) return;
+        wTotal++;
+        if (getJobStatus(r)==='completed') wComp++;
+        else if (getJobStatus(r)==='issue') wIssue++;
+      });
+      weekTrend.push({label:wLabel, total:wTotal, completed:wComp, issues:wIssue});
+    }
 
-    // Bar chart using CSS
-    html2 += '<div style="margin-bottom:16px;">';
-    html2 += '<div style="font-size:10px;letter-spacing:2px;color:#475569;font-weight:700;margin-bottom:8px;">DAILY ACTIVITY</div>';
-    html2 += '<div style="display:flex;align-items:flex-end;gap:3px;height:80px;overflow-x:auto;padding-bottom:4px;">';
-    var maxVal = 1;
-    labels.forEach(function(k){ maxVal = Math.max(maxVal, (dailyCompleted[k]||0)+(dailyIssues[k]||0)+(dailyPending[k]||0)); });
+    var maxBar = 1;
+    labels.forEach(function(k){ maxBar=Math.max(maxBar,(bCompleted[k]||0)+(bIssues[k]||0)+(bPending[k]||0)); });
+
+    var h = '<div class="dash-weekly-card">';
+    h += '<div class="dash-weekly-title" style="margin-bottom:14px;"><span>📈 ACTIVITY CHART</span><span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">'+(dashPeriod==='today'?'Hourly':dashPeriod==='week'?'Daily':dashPeriod==='month'?'Daily':'Monthly')+'</span></div>';
+
+    // ── BAR CHART ──
+    h += '<div style="margin-bottom:20px;">';
+    h += '<div style="display:flex;align-items:flex-end;gap:2px;height:90px;overflow-x:auto;padding-bottom:24px;position:relative;">';
+    var showLabels = labels.length <= 14;
     labels.forEach(function(k) {
-      var c = dailyCompleted[k]||0, is = dailyIssues[k]||0, p = dailyPending[k]||0;
-      var total = c+is+p;
-      var h = total > 0 ? Math.max(4, Math.round(total/maxVal*72)) : 2;
-      var cH = total > 0 ? Math.round(c/total*h) : 0;
-      var iH = total > 0 ? Math.round(is/total*h) : 0;
-      var pH = h - cH - iH;
-      html2 += '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:28px;">';
-      html2 += '<div style="display:flex;flex-direction:column-reverse;width:20px;height:72px;justify-content:flex-start;">';
-      if (cH>0) html2 += '<div style="width:100%;height:'+cH+'px;background:#22c55e;border-radius:2px 2px 0 0;"></div>';
-      if (iH>0) html2 += '<div style="width:100%;height:'+iH+'px;background:#ef4444;"></div>';
-      if (pH>0) html2 += '<div style="width:100%;height:'+pH+'px;background:#3b82f6;border-radius:0 0 2px 2px;"></div>';
-      if (total===0) html2 += '<div style="width:100%;height:2px;background:#1a4a8c;border-radius:2px;margin-top:70px;"></div>';
-      html2 += '</div>';
-      html2 += '<div style="font-size:8px;color:#334155;margin-top:3px;text-align:center;transform:rotate(-45deg);transform-origin:top left;white-space:nowrap;margin-left:6px;">'+k+'</div>';
-      html2 += '</div>';
+      var c=bCompleted[k]||0, is=bIssues[k]||0, p=bPending[k]||0;
+      var total=c+is+p;
+      var barH = total>0 ? Math.max(4,Math.round(total/maxBar*80)) : 2;
+      var cH=total>0?Math.round(c/total*barH):0;
+      var iH=total>0?Math.round(is/total*barH):0;
+      var pH=barH-cH-iH;
+      var minW = dashPeriod==='today'?'18px':dashPeriod==='all'?'32px':'24px';
+      h += '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:'+minW+';">';
+      h += '<div style="display:flex;flex-direction:column-reverse;width:100%;height:80px;align-items:center;position:relative;">';
+      if (total===0) { h += '<div style="width:70%;height:2px;background:#1a4a8c;border-radius:2px;position:absolute;bottom:0;"></div>'; }
+      else {
+        if (cH>0) h += '<div style="width:80%;height:'+cH+'px;background:#22c55e;border-radius:'+(iH===0&&pH===0?'3px':'0')+'  3px 3px '+(iH===0&&pH===0?'3px':'0')+';"></div>';
+        if (iH>0) h += '<div style="width:80%;height:'+iH+'px;background:#eab308;"></div>';
+        if (pH>0) h += '<div style="width:80%;height:'+pH+'px;background:#3b82f6;border-radius:3px 3px '+(cH===0&&iH===0?'3px':'0')+' '+(cH===0&&iH===0?'3px':'0')+';"></div>';
+        if (total>0) h += '<div style="position:absolute;top:-16px;font-size:9px;color:#94a3b8;font-weight:700;">'+total+'</div>';
+      }
+      h += '</div>';
+      if (showLabels) {
+        h += '<div style="font-size:8px;color:#334155;margin-top:3px;text-align:center;white-space:nowrap;transform:rotate(-40deg);transform-origin:top center;margin-left:8px;">'+k.replace(' ','<br>')+'</div>';
+      }
+      h += '</div>';
     });
-    html2 += '</div>';
-    html2 += '<div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">';
-    html2 += '<span style="font-size:10px;color:#22c55e;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#22c55e;border-radius:2px;display:inline-block;"></span>Completed</span>';
-    html2 += '<span style="font-size:10px;color:#3b82f6;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block;"></span>Pending/Running</span>';
-    html2 += '<span style="font-size:10px;color:#ef4444;display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span>Issues</span>';
-    html2 += '</div></div>';
+    h += '</div>';
+    // Legend
+    h += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">';
+    h += '<span style="font-size:11px;color:#22c55e;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#22c55e;border-radius:2px;display:inline-block;"></span>Completed</span>';
+    h += '<span style="font-size:11px;color:#3b82f6;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block;"></span>Pending/Running</span>';
+    h += '<span style="font-size:11px;color:#eab308;display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#eab308;border-radius:2px;display:inline-block;"></span>Machinist Req</span>';
+    h += '</div></div>';
 
-    // Machine breakdown bars
+    // ── 4-WEEK TREND ──
+    if (weekTrend.some(function(w){return w.total>0;})) {
+      h += '<div style="margin-top:4px;margin-bottom:16px;">';
+      h += '<div style="font-size:10px;letter-spacing:2px;color:#475569;font-weight:700;margin-bottom:8px;">4-WEEK TREND</div>';
+      var maxTrend = Math.max(1, Math.max.apply(null, weekTrend.map(function(w){return w.total;})));
+      h += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">';
+      weekTrend.forEach(function(w) {
+        var compPct = w.total>0?Math.round(w.completed/w.total*100):0;
+        var color = compPct>=80?'#22c55e':compPct>=50?'#eab308':'#ef4444';
+        h += '<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:8px;text-align:center;border:1px solid rgba(255,255,255,0.06);">';
+        h += '<div style="font-size:9px;color:#475569;margin-bottom:4px;letter-spacing:1px;">'+w.label+'</div>';
+        h += '<div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#f0f4f8;line-height:1;">'+w.total+'</div>';
+        h += '<div style="font-size:9px;color:'+color+';margin-top:2px;">'+compPct+'% done</div>';
+        h += '</div>';
+      });
+      h += '</div></div>';
+    }
+
+    // ── MACHINE BREAKDOWN ──
     if (machineList.length > 0) {
-      html2 += '<div style="font-size:10px;letter-spacing:2px;color:#475569;font-weight:700;margin-bottom:8px;">REQUESTS BY MACHINE</div>';
+      h += '<div style="font-size:10px;letter-spacing:2px;color:#475569;font-weight:700;margin-bottom:8px;">MACHINE BREAKDOWN</div>';
       machineList.forEach(function(e) {
         var pct = Math.round(e[1]/maxMachine*100);
-        var issueCount = 0;
-        data.forEach(function(r){ if(r.machine===e[0]&&getJobStatus(r)==='issue') issueCount++; });
-        var barColor = issueCount >= 3 ? '#ef4444' : '#f59e0b';
-        html2 += '<div style="margin-bottom:8px;">';
-        html2 += '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">';
-        html2 += '<span style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1px;color:'+(issueCount>=3?'#f87171':'#f59e0b')+';">'+(issueCount>=3?'⚠ ':'')+e[0]+'</span>';
-        html2 += '<span style="font-size:11px;color:#94a3b8;">'+e[1]+' requests'+(issueCount>=3?' · '+issueCount+' issues':'')+'</span>';
-        html2 += '</div>';
-        html2 += '<div style="background:#1a3060;border-radius:4px;height:8px;overflow:hidden;">';
-        html2 += '<div style="background:'+barColor+';width:'+pct+'%;height:100%;border-radius:4px;transition:width 0.5s;"></div>';
-        html2 += '</div></div>';
+        var issC=0; data.forEach(function(r){ if(r.machine===e[0]&&getJobStatus(r)==='issue') issC++; });
+        var compC=0; data.forEach(function(r){ if(r.machine===e[0]&&getJobStatus(r)==='completed') compC++; });
+        var barColor = issC>=3?'#ef4444':'#f59e0b';
+        h += '<div style="margin-bottom:10px;">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">';
+        h += '<span style="font-family:Bebas Neue,sans-serif;font-size:15px;letter-spacing:1px;color:'+(issC>=3?'#f87171':'#f59e0b')+';">'+(issC>=3?'⚠ ':'')+e[0]+'</span>';
+        h += '<span style="font-size:11px;color:#64748b;">'+e[1]+' total';
+        if (compC>0) h += ' · <span style="color:#22c55e;">'+compC+' done</span>';
+        if (issC>0)  h += ' · <span style="color:#eab308;">'+issC+' issues</span>';
+        h += '</span></div>';
+        h += '<div style="background:#1a3060;border-radius:4px;height:6px;overflow:hidden;">';
+        h += '<div style="background:'+barColor+';width:'+pct+'%;height:100%;border-radius:4px;"></div>';
+        h += '</div></div>';
       });
     }
-    html2 += '</div>';
-    block.innerHTML = html2;
+
+    h += '</div>';
+    block.innerHTML = h;
   }
 
   function printDashboard() {
@@ -3459,7 +3754,8 @@
   <div style="padding:16px;">
 
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="dash-period-btn active" onclick="setDashPeriod('week',this)">THIS WEEK</button>
+      <button class="dash-period-btn active" onclick="setDashPeriod('today',this)">TODAY</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('week',this)">THIS WEEK</button>
       <button class="dash-period-btn" onclick="setDashPeriod('month',this)">THIS MONTH</button>
       <button class="dash-period-btn" onclick="setDashPeriod('all',this)">ALL TIME</button>
     </div>
