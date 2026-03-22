@@ -3086,7 +3086,7 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     var clearWrap = document.getElementById('dash-clear-wrap');
     if (clearWrap) {
       clearWrap.innerHTML = (window._isAdmin || window.currentUser === 'hilladmin')
-        ? '<button onclick="clearDashboardRequests()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:12px;">🗑 CLEAR ALL REQUESTS (Admin Only)</button>'
+        ? ''  // Clear all removed — use per-card delete instead
         : '';
     }
 
@@ -3273,8 +3273,21 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
         // Recurring issue flag
         (issueCount>=3 && status==='issue') ? '<div class="dash-issue-flag">⚠ Recurring — '+issueCount+' issues on this machine</div>' : '',
 
-        // Action buttons
-        '<div style="margin-top:10px;display:flex;justify-content:flex-end;gap:6px;">'+actionBtns+adminTypeChanger+'</div>'
+        // Action buttons + admin delete
+        (function(){
+          var deleteBtn = '';
+          if (isAdmin) {
+            deleteBtn = '<button onclick="deleteRequest(\"'+r.id+'\")" title="Delete this request" '
+              + 'style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);color:#f87171;'
+              + 'border-radius:8px;padding:6px 10px;font-size:16px;cursor:pointer;line-height:1;flex-shrink:0;" '
+              + 'onmouseover="this.style.opacity=0.7" '
+              + 'onmouseout="this.style.opacity=1">🗑</button>';
+          }
+          return '<div style="margin-top:10px;display:flex;justify-content:flex-end;align-items:flex-start;gap:6px;">'
+            + '<div style="flex:1;">'+actionBtns+adminTypeChanger+'</div>'
+            + deleteBtn
+            + '</div>';
+        })()
       ].join('');
       list.appendChild(card);
     });
@@ -3322,6 +3335,20 @@ header { padding: 3px 8px !important; min-height: 0 !important; flex-wrap: nowra
     showToast('green','Type updated','Request changed to ' + newType + '.');
     renderDashboard();
   }
+  function deleteRequest(id) {
+    if (!window._isAdmin && window.currentUser !== 'hilladmin') {
+      showToast('red', 'Admin only', 'Only admin can delete requests.'); return;
+    }
+    if (!confirm('Delete this request? This cannot be undone.')) return;
+    dashRequests = dashRequests.filter(function(r){ return r.id !== id; });
+    if (window._db && window._fbModules) {
+      window._fbModules.deleteDoc(window._fbModules.doc(window._db, 'hillRequests', id))
+        .catch(function(e){ console.warn('deleteRequest:', e.message); });
+    }
+    showToast('green', 'Deleted', 'Request removed.');
+    renderDashboard();
+  }
+
   function clearDashboardRequests() {
     if (!window._isAdmin && window.currentUser !== 'hilladmin') {
       showToast('red', 'Admin only', 'Only admin can clear the request history.');
