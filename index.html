@@ -522,6 +522,146 @@
   .game-lb-close:hover { background: #dc2626; }
   .game-lb-body { flex: 1; overflow: hidden; }
 
+  /* ── DATANOMIX LIVE DISPLAY TAB ── */
+  .dnx-display-page { background:#00050f;min-height:calc(100vh - 88px);padding:0;color:#f0f4f8; }
+  .dnx-display-header { background:linear-gradient(90deg,#000d20,#001433,#000d20);border-bottom:2px solid #f5c500;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap; }
+  .dnx-display-title { font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:4px;color:#f5c500; }
+  .dnx-display-sub { font-size:11px;color:#475569;letter-spacing:1.5px;text-transform:uppercase; }
+  .dnx-display-controls { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+  .dnx-ctrl-btn { background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:8px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;transition:all 0.15s; }
+  .dnx-ctrl-btn.active { background:rgba(245,197,0,0.15);border-color:#f5c500;color:#f5c500; }
+  .dnx-ctrl-btn:hover { border-color:#f5c500;color:#f5c500; }
+  .dnx-tv-btn { background:rgba(245,197,0,0.15);border:1px solid #f5c500;color:#f5c500;border-radius:8px;padding:6px 16px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;cursor:pointer; }
+  .dnx-machine-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding:16px; }
+  .dnx-machine-tile { background:linear-gradient(145deg,#000e22,#001530);border-radius:14px;border:1px solid rgba(26,74,140,0.6);overflow:hidden;transition:all 0.3s;cursor:pointer; }
+  .dnx-machine-tile:hover { border-color:#f5c500;box-shadow:0 0 20px rgba(245,197,0,0.1); }
+  .dnx-machine-tile.status-green { border-color:rgba(34,197,94,0.5); }
+  .dnx-machine-tile.status-yellow { border-color:rgba(234,179,8,0.5); }
+  .dnx-machine-tile.status-red { border-color:rgba(239,68,68,0.5);animation:pulse-card 2s ease-in-out infinite; }
+  .dnx-machine-tile.status-offline { border-color:rgba(71,85,105,0.4);opacity:0.5; }
+  .dnx-tile-header { padding:12px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(26,74,140,0.4); }
+  .dnx-tile-name { font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:2px;color:#f5c500; }
+  .dnx-tile-cell { font-size:10px;color:#475569;letter-spacing:2px;text-transform:uppercase; }
+  .dnx-tile-status { font-size:10px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:999px; }
+  .dnx-tile-status.green { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.4); }
+  .dnx-tile-status.yellow { background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.4); }
+  .dnx-tile-status.red { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.4); }
+  .dnx-tile-status.offline { background:rgba(71,85,105,0.15);color:#64748b;border:1px solid rgba(71,85,105,0.4); }
+  .dnx-tile-status.pending { background:rgba(26,74,140,0.15);color:#64748b;border:1px solid rgba(26,74,140,0.4); }
+  .dnx-tile-body { padding:12px 16px; }
+  .dnx-tile-stat-row { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px; }
+  .dnx-tile-stat { text-align:center; }
+  .dnx-tile-stat-val { font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;line-height:1; }
+  .dnx-tile-stat-lbl { font-size:9px;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px; }
+  .dnx-cycle-bar-wrap { background:#1a3060;border-radius:4px;height:6px;overflow:hidden;margin-top:4px; }
+  .dnx-cycle-bar { height:100%;border-radius:4px;transition:width 0.5s; }
+  .dnx-tile-hud-link { display:flex;align-items:center;justify-content:center;padding:6px;background:rgba(245,197,0,0.06);border-top:1px solid rgba(26,74,140,0.3);font-size:11px;color:#f5c500;text-decoration:none;letter-spacing:1px;font-family:'Bebas Neue',sans-serif;transition:all 0.15s; }
+  .dnx-tile-hud-link:hover { background:rgba(245,197,0,0.12); }
+
+  /* DNX PRIORITY & ATTENTION FLAGS */
+  .dnx-machine-tile.priority-hot { border-color:#ef4444 !important;box-shadow:0 0 20px rgba(239,68,68,0.4) !important;animation:pulse-card 1.5s ease-in-out infinite !important; }
+  .dnx-machine-tile.priority-high { border-color:#f97316 !important;box-shadow:0 0 16px rgba(249,115,22,0.3) !important; }
+  .dnx-machine-tile.priority-normal { border-color:rgba(59,130,246,0.5) !important; }
+  .dnx-machine-tile.needs-attention { border-top:3px solid #f59e0b !important; }
+  .dnx-priority-badge { font-size:9px;font-weight:700;letter-spacing:1.5px;padding:2px 8px;border-radius:999px;text-transform:uppercase; }
+  .dnx-priority-badge.hot    { background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.5); }
+  .dnx-priority-badge.high   { background:rgba(249,115,22,0.2);color:#fb923c;border:1px solid rgba(249,115,22,0.5); }
+  .dnx-priority-badge.normal { background:rgba(59,130,246,0.1);color:#60a5fa;border:1px solid rgba(59,130,246,0.3); }
+  .dnx-attn-badge { font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:999px;background:rgba(245,158,11,0.2);color:#f59e0b;border:1px solid rgba(245,158,11,0.4);animation:blink-yellow 1.5s step-end infinite; }
+  .dnx-tile-actions { display:flex;gap:6px;padding:8px 12px;background:rgba(0,0,0,0.2);border-top:1px solid rgba(26,74,140,0.3);flex-wrap:wrap; }
+  .dnx-action-sm { font-size:10px;padding:3px 8px;border-radius:5px;border:none;cursor:pointer;font-weight:700;letter-spacing:0.5px;transition:all 0.15s; }
+  .dnx-action-sm.attn { background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3); }
+  .dnx-action-sm.attn.active { background:rgba(245,158,11,0.35);color:#f59e0b;border-color:#f59e0b; }
+  .dnx-action-sm.pri-hot  { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3); }
+  .dnx-action-sm.pri-high { background:rgba(249,115,22,0.15);color:#fb923c;border:1px solid rgba(249,115,22,0.3); }
+  .dnx-action-sm.pri-norm { background:rgba(59,130,246,0.1);color:#60a5fa;border:1px solid rgba(59,130,246,0.3); }
+  .dnx-action-sm.clear    { background:rgba(100,116,139,0.1);color:#64748b;border:1px solid rgba(100,116,139,0.3); }
+  .dnx-speed-panel { display:flex;align-items:center;gap:10px;padding:10px 20px;background:#000d1f;border-bottom:1px solid rgba(26,74,140,0.4);flex-wrap:wrap; }
+
+  /* DNX TV FULLSCREEN */
+  .dnx-tv-mode { position:fixed;inset:0;z-index:9500;background:#00050f;display:none;flex-direction:column;overflow:hidden; }
+  .dnx-tv-mode.open { display:flex; }
+  .dnx-tv-header { background:linear-gradient(90deg,#000d20,#001433,#000d20);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #f5c500;flex-shrink:0; }
+  .dnx-tv-title { font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:5px;color:#f5c500; }
+  .dnx-tv-clock { font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:2px;color:#fff; }
+  .dnx-tv-controls { background:#000d1f;padding:6px 24px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(26,74,140,0.5);flex-shrink:0;flex-wrap:wrap; }
+  .dnx-tv-stage { flex:1;overflow:hidden;position:relative; }
+  .dnx-tv-slide { position:absolute;inset:0;padding:16px 20px;overflow-y:auto;opacity:0;transition:opacity 0.5s;pointer-events:none; }
+  .dnx-tv-slide.active { opacity:1;pointer-events:auto; }
+  .dnx-tv-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px; }
+  .dnx-tv-prog-bar { flex:1;height:3px;background:#1a3060;border-radius:2px;min-width:60px;overflow:hidden; }
+  .dnx-tv-prog-fill { height:100%;background:linear-gradient(90deg,#f5c500,#ffd633);border-radius:2px;transition:width 0.1s linear;width:0%; }
+  .dnx-tv-dots { display:flex;gap:8px;align-items:center; }
+  .dnx-tv-dot { width:8px;height:8px;border-radius:50%;background:#1a3060;transition:all 0.3s; }
+  .dnx-tv-dot.active { background:#f5c500;box-shadow:0 0 8px rgba(245,197,0,0.8); }
+  .dnx-tv-exit { background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:6px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer; }
+  .dnx-tv-pause-btn { background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.3);color:#f5c500;border-radius:6px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer; }
+  .dnx-speed-range { -webkit-appearance:none;width:90px;height:4px;border-radius:2px;background:#1a4a8c;outline:none;cursor:pointer; }
+  .dnx-speed-range::-webkit-slider-thumb { -webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#f5c500;cursor:pointer; }
+
+  /* SHOP TV PAGE */
+  #page-shoptv { position:fixed;inset:0;z-index:8000;background:#00050f;display:none;flex-direction:column;overflow:hidden; }
+  .stv-header { background:linear-gradient(90deg,#000d20,#001433,#000d20);border-bottom:3px solid #f5c500;padding:0 24px;height:68px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px; }
+  .stv-logo-bar { width:8px;height:38px;background:#f5c500;border-radius:2px;margin-right:14px;box-shadow:0 0 14px rgba(245,197,0,0.7);flex-shrink:0; }
+  .stv-company { font-size:10px;letter-spacing:4px;color:#64748b;text-transform:uppercase;margin-bottom:2px; }
+  .stv-title { font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:5px;color:#f5c500; }
+  .stv-clock { font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:2px;color:#fff;line-height:1; }
+  .stv-date { font-size:10px;color:#64748b;letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;text-align:right; }
+  .stv-header-center { display:flex;flex-direction:column;align-items:center;gap:3px; }
+  .stv-slide-label { font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:4px;color:#94a3b8; }
+  .stv-dots { display:flex;gap:8px;align-items:center; }
+  .stv-dot { width:10px;height:10px;border-radius:50%;background:#1a3060;cursor:pointer;transition:all 0.3s; }
+  .stv-dot.active { background:#f5c500;box-shadow:0 0 10px rgba(245,197,0,0.8);transform:scale(1.3); }
+  .stv-dot.hot { background:#ef4444;box-shadow:0 0 8px rgba(239,68,68,0.7); }
+  .stv-controls { background:#000d1f;border-bottom:1px solid rgba(26,74,140,0.5);padding:6px 24px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap; }
+  .stv-ctrl-lbl { font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:#475569; }
+  .stv-ctrl-btn { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#94a3b8;border-radius:6px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer; }
+  .stv-ctrl-btn.active { background:rgba(245,197,0,0.15);border-color:#f5c500;color:#f5c500; }
+  .stv-speed-range { -webkit-appearance:none;width:80px;height:4px;border-radius:2px;background:#1a4a8c;cursor:pointer; }
+  .stv-speed-range::-webkit-slider-thumb { -webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#f5c500; }
+  .stv-speed-val { font-family:'Bebas Neue',sans-serif;font-size:13px;color:#f5c500;min-width:26px; }
+  .stv-prog-bar { flex:1;height:3px;background:#1a3060;border-radius:2px;min-width:60px;overflow:hidden; }
+  .stv-prog-fill { height:100%;background:linear-gradient(90deg,#f5c500,#ffd633);border-radius:2px;transition:width 0.1s linear;width:0%; }
+  .stv-pause-btn { background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.3);color:#f5c500;border-radius:6px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer; }
+  .stv-exit-btn { background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:6px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;cursor:pointer; }
+  .stv-dnx-dot { width:7px;height:7px;border-radius:50%;background:#475569;transition:background 0.3s; }
+  .stv-stage { flex:1;overflow:hidden;position:relative; }
+  .stv-slide { position:absolute;inset:0;padding:14px 18px 10px;overflow-y:auto;opacity:0;transition:opacity 0.6s ease;pointer-events:none; }
+  .stv-slide.active { opacity:1;pointer-events:auto; }
+  .stv-section-hdr { display:flex;align-items:center;gap:14px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(245,197,0,0.15); }
+  .stv-section-name { font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:5px;color:#f5c500; }
+  .stv-section-badge { background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.25);color:#f5c500;border-radius:6px;padding:2px 10px;font-family:'Bebas Neue',sans-serif;font-size:13px;margin-left:auto; }
+  .stv-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px; }
+  .stv-card { background:linear-gradient(145deg,#000e22,#001530);border-radius:12px;border:1px solid rgba(26,74,140,0.5);overflow:hidden; }
+  .stv-card.s-green  { border-color:rgba(34,197,94,0.5); }
+  .stv-card.s-yellow { border-color:rgba(234,179,8,0.5); }
+  .stv-card.s-red    { border-color:rgba(239,68,68,0.6);box-shadow:0 0 18px rgba(239,68,68,0.25);animation:pulse-card 2s ease-in-out infinite; }
+  .stv-card.s-offline { opacity:0.35; }
+  .stv-card.p-hot  { border-color:#ef4444 !important;box-shadow:0 0 24px rgba(239,68,68,0.4) !important;animation:pulse-card 1.5s ease-in-out infinite !important; }
+  .stv-card.p-high { border-color:#f97316 !important;box-shadow:0 0 14px rgba(249,115,22,0.3) !important; }
+  .stv-card.flagged { border-top:3px solid #f5c500 !important; }
+  .stv-card-hdr { padding:9px 13px;background:linear-gradient(90deg,rgba(245,197,0,0.06),transparent);border-bottom:1px solid rgba(26,74,140,0.3);display:flex;align-items:flex-start;justify-content:space-between; }
+  .stv-card-name { font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#f5c500;line-height:1; }
+  .stv-card-cell { font-size:9px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-top:1px; }
+  .stv-card-pills { display:flex;flex-direction:column;align-items:flex-end;gap:3px; }
+  .stv-pill { font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:999px;text-transform:uppercase; }
+  .stv-pill.green  { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.35); }
+  .stv-pill.yellow { background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.35); }
+  .stv-pill.red    { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.35); }
+  .stv-pill.offline { background:rgba(71,85,105,0.15);color:#64748b;border:1px solid rgba(71,85,105,0.3); }
+  .stv-pill.pending { background:rgba(26,74,140,0.1);color:#475569;border:1px solid rgba(26,74,140,0.3); }
+  .stv-pill.hot  { background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.5); }
+  .stv-pill.high { background:rgba(249,115,22,0.2);color:#fb923c;border:1px solid rgba(249,115,22,0.5); }
+  .stv-pill.attn { background:rgba(245,197,0,0.2);color:#f5c500;border:1px solid rgba(245,197,0,0.5);animation:blink-yellow 1.2s step-end infinite; }
+  .stv-stats { display:grid;grid-template-columns:repeat(3,1fr); }
+  .stv-stat { text-align:center;padding:9px 4px;border-right:1px solid rgba(26,74,140,0.3); }
+  .stv-stat:last-child { border-right:none; }
+  .stv-stat-val { font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;line-height:1; }
+  .stv-stat-lbl { font-size:9px;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-top:1px; }
+  .stv-bar-wrap { padding:6px 13px 8px; }
+  .stv-bar-bg { background:#1a3060;border-radius:4px;height:4px;overflow:hidden; }
+  .stv-bar-fill { height:100%;border-radius:4px; }
+
   /* DATANOMIX PERF BAR — top strip, totally different from request dots */
   .perf-bar {
     height: 16px;
@@ -867,6 +1007,8 @@
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📊 Dashboard</div>
+  <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Datanomix</div>
+  <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv">📺 Shop TV</div>
   
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
   </nav>
@@ -1723,7 +1865,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -1731,6 +1873,11 @@
     document.getElementById('page-requests').style.display = tab === 'requests' ? 'block' : 'none';
     var dashEl = document.getElementById('page-dashboard'); if (dashEl) dashEl.style.display = tab === 'dashboard' ? 'block' : 'none';
     if (tab === 'dashboard') loadDashboard();
+    var dnxEl = document.getElementById('page-datanomix'); if (dnxEl) dnxEl.style.display = tab === 'datanomix' ? 'block' : 'none';
+    if (tab === 'datanomix') initDNXDisplay();
+    var stvEl = document.getElementById('page-shoptv'); if (stvEl) stvEl.style.display = tab === 'shoptv' ? 'flex' : 'none';
+    if (tab === 'shoptv') { initShopTV(); document.body.classList.remove('scrollable'); }
+    else { stopShopTV(); }
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
 
@@ -2578,6 +2725,655 @@
 
 
 
+  // ══════════════════════════════════════════════════════════════════
+  // ── DATANOMIX LIVE DISPLAY TAB + TV MODE ──
+  // ══════════════════════════════════════════════════════════════════
+
+  // Machine config with cell grouping and HUD links
+  var DNX_MACHINE_CONFIG = [
+    { name:'1050-B', cell:'Big Mill',    id:253,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=253'  },
+    { name:'7000',   cell:'Big Mill',    id:853,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=853'  },
+    { name:'VF-6',   cell:'Big Mill',    id:1253, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1253' },
+    { name:'5100-B', cell:'5100 Cell',   id:753,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=753'  },
+    { name:'2500',   cell:'5100 Cell',   id:1603, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1603' },
+    { name:'PUMA-3', cell:'5100 Cell',   id:1153, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1153' },
+    { name:'ST35',   cell:'MPPI',        id:1903, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1903' },
+    { name:'VF-3',   cell:'MPPI',        id:953,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=953'  },
+    { name:'VF-2',   cell:'MPPI',        id:1553, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1553' },
+    { name:'PUMA-2', cell:'MPPI',        id:3,    hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=3'    },
+    { name:'403-A',  cell:'403 Cell',    id:553,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=553'  },
+    { name:'403-B',  cell:'403 Cell',    id:1003, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1003' },
+    { name:'403-C',  cell:'403 Cell',    id:1303, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1303' },
+    { name:'5100-A', cell:'Mill/Lathe',  id:653,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=653'  },
+    { name:'SHARP',  cell:'Mill/Lathe',  id:null, hud:null },
+    { name:'SH403',  cell:'Mill/Lathe',  id:null, hud:null },
+    { name:'5000',   cell:'Mill/Lathe',  id:null, hud:null },
+    { name:'3000-C', cell:'3000 Cell',   id:1803, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1803' },
+    { name:'SYIL',   cell:'3000 Cell',   id:null, hud:null },
+    { name:'3000-A', cell:'3000 Cell',   id:1703, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1703' },
+    { name:'EMCO',   cell:'Horizontal',  id:null, hud:null },
+    { name:'2G',     cell:'Horizontal',  id:1973, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1973' },
+    { name:'PUMA-1', cell:'Automation',  id:453,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=453'  },
+    { name:'303-B',  cell:'Automation',  id:103,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=103'  },
+    { name:'TWIN',   cell:'Automation',  id:1403, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1403' },
+    { name:'2500-Y', cell:'Automation',  id:1653, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1653' },
+    { name:'SAW-1',  cell:'Saws',        id:null, hud:null },
+    { name:'SAW-2',  cell:'Saws',        id:null, hud:null },
+  ];
+
+  var dnxView = 'all';
+  var dnxSort = 'priority';
+  var dnxLiveData = {};     // machineId → live data from API
+  var dnxMachineState = {}; // machineName → { priority, attention, note }
+
+  // Load saved machine states from localStorage
+  (function loadDNXState() {
+    try {
+      var saved = localStorage.getItem('hillDNXMachineState');
+      if (saved) dnxMachineState = JSON.parse(saved);
+    } catch(e) {}
+  })();
+
+  function saveDNXState() {
+    try { localStorage.setItem('hillDNXMachineState', JSON.stringify(dnxMachineState)); } catch(e) {}
+    // Also save to Firebase for cross-device sync
+    if (window._db && window._fbModules) {
+      window._fbModules.updateDoc(
+        window._fbModules.doc(window._db, 'hillMachineState', 'dnxState'),
+        { state: JSON.stringify(dnxMachineState), updatedAt: window._fbModules.serverTimestamp() }
+      ).catch(function(){
+        // Doc might not exist yet — create it
+        window._fbModules.addDoc(window._fbModules.collection(window._db, 'hillMachineState'),
+          { state: JSON.stringify(dnxMachineState), updatedAt: window._fbModules.serverTimestamp() }
+        ).catch(function(e){ console.warn('saveDNXState:', e.message); });
+      });
+    }
+  }
+
+  function setDNXSort(sort, btn) {
+    dnxSort = sort;
+    document.querySelectorAll('#sort-priority,#sort-cell,#sort-status').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderDNXGrid();
+  }
+
+  function setMachinePriority(machineName, priority) {
+    if (!dnxMachineState[machineName]) dnxMachineState[machineName] = {};
+    if (dnxMachineState[machineName].priority === priority) {
+      dnxMachineState[machineName].priority = null; // toggle off
+    } else {
+      dnxMachineState[machineName].priority = priority;
+    }
+    saveDNXState();
+    renderDNXGrid();
+    if (dnxTv.open) buildDNXTvSlides();
+  }
+
+  function toggleMachineAttention(machineName) {
+    if (!dnxMachineState[machineName]) dnxMachineState[machineName] = {};
+    dnxMachineState[machineName].attention = !dnxMachineState[machineName].attention;
+    saveDNXState();
+    renderDNXGrid();
+    if (dnxTv.open) buildDNXTvSlides();
+    // Send Pushover if flagging attention
+    if (dnxMachineState[machineName].attention) {
+      safePushover('⚠ Needs Attention: ' + machineName, machineName + ' has been flagged for attention on the shop floor.', 'siren', 1);
+      showToast('yellow', '⚠ ' + machineName + ' flagged', 'Managers notified via Pushover');
+    }
+  }
+
+  function clearMachineFlags(machineName) {
+    dnxMachineState[machineName] = { priority: null, attention: false };
+    saveDNXState();
+    renderDNXGrid();
+    if (dnxTv.open) buildDNXTvSlides();
+  }
+
+  function setDNXView(view, btn) {
+    dnxView = view;
+    document.querySelectorAll('.dnx-ctrl-btn').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderDNXGrid();
+  }
+
+  function initDNXDisplay() {
+    renderDNXGrid();
+    updateDNXDisplayStatus();
+  }
+
+  function updateDNXDisplayStatus() {
+    var el = document.getElementById('dnx-display-status');
+    if (!el) return;
+    if (!DNX_API_KEY) {
+      el.textContent = 'Demo mode — enter API key in Admin panel to see live data';
+    } else if (dnxConnected) {
+      el.textContent = 'Live — updating every 60s · Last refresh: ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    } else {
+      el.textContent = 'Connecting...';
+    }
+  }
+
+  function getMachinePerfStatus(m) {
+    // Use actual data if connected, otherwise use perf bar state
+    var bar = document.getElementById('perf-' + m.name);
+    if (!bar) return 'pending';
+    var cls = bar.className.replace('perf-bar','').trim();
+    return cls || 'pending';
+  }
+
+  function buildMachineTile(m, tvMode) {
+    var status = getMachinePerfStatus(m);
+    var bar = document.getElementById('perf-' + m.name);
+    var label = bar ? bar.getAttribute('data-label') : '—';
+    var liveD = dnxLiveData[m.id] || {};
+    var oee   = liveD.oee ? Math.round(liveD.oee) + '%' : (DNX_API_KEY ? '—' : Math.floor(Math.random()*30+65)+'%');
+    var parts = liveD.partsToday || (DNX_API_KEY ? '—' : Math.floor(Math.random()*40+10));
+    var util  = liveD.utilization ? Math.round(liveD.utilization) + '%' : (DNX_API_KEY ? '—' : Math.floor(Math.random()*40+50)+'%');
+    var cycleBarPct = status==='green'?90:status==='yellow'?65:status==='red'?35:0;
+    var barColor = status==='green'?'#22c55e':status==='yellow'?'#eab308':status==='red'?'#ef4444':'#334155';
+    var statusLabel = label || (status==='offline'?'OFFLINE':status==='pending'?'NO DATA':'—');
+
+    // Machine state — priority & attention
+    var state = dnxMachineState[m.name] || {};
+    var priority  = state.priority  || null;
+    var attention = state.attention || false;
+
+    // Build tile classes
+    var tileClass = 'dnx-machine-tile status-' + status;
+    if (priority === 'hot')    tileClass += ' priority-hot';
+    if (priority === 'high')   tileClass += ' priority-high';
+    if (priority === 'normal') tileClass += ' priority-normal';
+    if (attention)             tileClass += ' needs-attention';
+
+    var safeId = m.name.replace(/[^a-z0-9]/gi,'-');
+
+    var tile = '';
+    tile += '<div class="'+tileClass+'" id="dnx-tile-'+safeId+'">';
+
+    // ── HEADER ──
+    tile += '<div class="dnx-tile-header">';
+    tile += '<div>';
+    tile += '<div class="dnx-tile-name">'+m.name+'</div>';
+    tile += '<div class="dnx-tile-cell">'+m.cell+'</div>';
+    tile += '</div>';
+    tile += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">';
+    tile += '<span class="dnx-tile-status '+status+'">'+statusLabel+'</span>';
+    if (priority) tile += '<span class="dnx-priority-badge '+priority+'">'+(priority==='hot'?'🔴 HOT JOB':priority==='high'?'🟠 HIGH':'🔵 NORMAL')+'</span>';
+    if (attention) tile += '<span class="dnx-attn-badge">⚠ NEEDS ATTENTION</span>';
+    tile += '</div>';
+    tile += '</div>';
+
+    // ── STATS ──
+    tile += '<div class="dnx-tile-body">';
+    tile += '<div class="dnx-tile-stat-row">';
+    tile += '<div class="dnx-tile-stat"><div class="dnx-tile-stat-val" style="color:#f5c500;">'+parts+'</div><div class="dnx-tile-stat-lbl">Parts Today</div></div>';
+    tile += '<div class="dnx-tile-stat"><div class="dnx-tile-stat-val" style="color:'+(typeof oee==='string'&&oee!=='—'?(parseInt(oee)>=75?'#22c55e':parseInt(oee)>=50?'#eab308':'#ef4444'):'#94a3b8')+';">'+oee+'</div><div class="dnx-tile-stat-lbl">OEE</div></div>';
+    tile += '<div class="dnx-tile-stat"><div class="dnx-tile-stat-val" style="color:#60a5fa;">'+util+'</div><div class="dnx-tile-stat-lbl">Utilization</div></div>';
+    tile += '</div>';
+    tile += '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:10px;color:#475569;letter-spacing:1px;">CYCLE TIME</span><span style="font-size:10px;color:'+barColor+';">'+statusLabel+'</span></div>';
+    tile += '<div class="dnx-cycle-bar-wrap"><div class="dnx-cycle-bar" style="width:'+cycleBarPct+'%;background:'+barColor+';"></div></div>';
+    tile += '</div>';
+
+    // ── ACTION BUTTONS (not in TV mode) ──
+    if (!tvMode) {
+      tile += '<div class="dnx-tile-actions" data-machine="'+m.name+'">';
+      tile += '<span style="font-size:9px;font-weight:700;letter-spacing:1.5px;color:#475569;text-transform:uppercase;align-self:center;">Priority:</span>';
+      tile += '<button class="dnx-action-sm pri-hot dnx-pri-btn'+(priority==='hot'?' active':'')+'" data-machine="'+m.name+'" data-priority="hot">🔴 HOT</button>';
+      tile += '<button class="dnx-action-sm pri-high dnx-pri-btn'+(priority==='high'?' active':'')+'" data-machine="'+m.name+'" data-priority="high">🟠 HIGH</button>';
+      tile += '<button class="dnx-action-sm pri-norm dnx-pri-btn'+(priority==='normal'?' active':'')+'" data-machine="'+m.name+'" data-priority="normal">🔵 NORMAL</button>';
+      tile += '<div style="flex:1;"></div>';
+      tile += '<button class="dnx-action-sm attn dnx-attn-btn'+(attention?' active':'')+'" data-machine="'+m.name+'">'+(attention?'⚠ FLAGGED':'⚠ ATTENTION')+'</button>';
+      tile += '<button class="dnx-action-sm clear dnx-clear-btn" data-machine="'+m.name+'">✕ CLEAR</button>';
+      tile += '</div>';
+    }
+
+    if (m.hud) {
+      tile += '<a href="'+m.hud+'" target="_blank" class="dnx-tile-hud-link">VIEW FULL HUD ↗</a>';
+    }
+    tile += '</div>';
+    return tile;
+  }
+
+  function renderDNXGrid() {
+    var grid = document.getElementById('dnx-machine-grid');
+    if (!grid) return;
+
+    var machines = DNX_MACHINE_CONFIG.filter(function(m) {
+      var status = getMachinePerfStatus(m);
+      var state = dnxMachineState[m.name] || {};
+      if (dnxView === 'active')  return status !== 'offline' && status !== 'pending';
+      if (dnxView === 'issues')  return status === 'red' || status === 'yellow' || state.attention;
+      return true;
+    });
+
+    // Sort machines
+    var priOrder = { hot:0, high:1, normal:2 };
+    var statusOrder = { red:0, yellow:1, green:2, offline:3, pending:4 };
+    machines = machines.slice().sort(function(a, b) {
+      var sa = dnxMachineState[a.name] || {}, sb = dnxMachineState[b.name] || {};
+      if (dnxSort === 'priority') {
+        // Attention first, then priority, then status
+        var attnA = sa.attention ? 0 : 1, attnB = sb.attention ? 0 : 1;
+        if (attnA !== attnB) return attnA - attnB;
+        var pA = sa.priority ? (priOrder[sa.priority]||9) : 9;
+        var pB = sb.priority ? (priOrder[sb.priority]||9) : 9;
+        if (pA !== pB) return pA - pB;
+        return (statusOrder[getMachinePerfStatus(a)]||9) - (statusOrder[getMachinePerfStatus(b)]||9);
+      }
+      if (dnxSort === 'status') {
+        return (statusOrder[getMachinePerfStatus(a)]||9) - (statusOrder[getMachinePerfStatus(b)]||9);
+      }
+      // By cell — keep original order
+      return 0;
+    });
+
+    if (machines.length === 0) {
+      grid.innerHTML = '<div style="text-align:center;padding:40px;color:#334155;font-family:Barlow,sans-serif;grid-column:1/-1;">No machines match this filter.</div>';
+      return;
+    }
+
+    grid.innerHTML = machines.map(function(m){ return buildMachineTile(m, false); }).join('');
+    updateDNXDisplayStatus();
+  }
+
+  // ── TV MODE ──
+  var dnxTv = {
+    open: false,
+    paused: false,
+    speed: 10,
+    curSlide: 0,
+    slides: [],
+    timer: null,
+    progTimer: null,
+    progStart: null,
+    clockTimer: null
+  };
+
+  function openDNXTvMode() {
+    var el = document.getElementById('dnxTvMode');
+    if (el) { el.classList.add('open'); dnxTv.open = true; }
+    buildDNXTvSlides();
+    startDNXTvClock();
+    startDNXTvTimer();
+  }
+
+  function closeDNXTvMode() {
+    var el = document.getElementById('dnxTvMode');
+    if (el) { el.classList.remove('open'); dnxTv.open = false; }
+    if (dnxTv.timer) clearInterval(dnxTv.timer);
+    if (dnxTv.progTimer) clearInterval(dnxTv.progTimer);
+    if (dnxTv.clockTimer) clearInterval(dnxTv.clockTimer);
+  }
+
+  function buildDNXTvSlides() {
+    // Group machines by cell
+    var cells = {};
+    DNX_MACHINE_CONFIG.forEach(function(m) {
+      if (!cells[m.cell]) cells[m.cell] = [];
+      cells[m.cell].push(m);
+    });
+
+    dnxTv.slides = Object.keys(cells).map(function(cell) {
+      return { cell: cell, machines: cells[cell] };
+    });
+
+    // Build dots
+    var dots = document.getElementById('dnxTvDots');
+    if (dots) {
+      dots.innerHTML = dnxTv.slides.map(function(s, i) {
+        return '<div class="dnx-tv-dot'+(i===0?' active':'')+'" onclick="goToDNXSlide('+i+')"></div>';
+      }).join('');
+    }
+
+    // Build stage slides
+    var stage = document.getElementById('dnxTvStage');
+    if (stage) {
+      stage.innerHTML = dnxTv.slides.map(function(s, i) {
+        var html = '<div class="dnx-tv-slide'+(i===0?' active':'')+'" id="dnxSlide'+i+'">';
+        html += '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:5px;color:#f5c500;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(245,197,0,0.15);">'+s.cell+'</div>';
+        html += '<div class="dnx-tv-grid">';
+        html += s.machines.map(function(m){ return buildMachineTile(m, true); }).join('');
+        html += '</div></div>';
+        return html;
+      }).join('');
+    }
+
+    dnxTv.curSlide = 0;
+  }
+
+  function goToDNXSlide(idx) {
+    dnxTv.curSlide = idx;
+    // Update slides
+    document.querySelectorAll('.dnx-tv-slide').forEach(function(s, i) {
+      s.classList.toggle('active', i === idx);
+    });
+    // Update dots
+    document.querySelectorAll('#dnxTvDots .dnx-tv-dot').forEach(function(d, i) {
+      d.classList.toggle('active', i === idx);
+    });
+    // Reset progress bar
+    resetDNXProgress();
+  }
+
+  function nextDNXSlide() {
+    goToDNXSlide((dnxTv.curSlide + 1) % dnxTv.slides.length);
+  }
+
+  function startDNXTvTimer() {
+    if (dnxTv.timer) clearInterval(dnxTv.timer);
+    dnxTv.timer = setInterval(function() {
+      if (!dnxTv.paused) nextDNXSlide();
+    }, dnxTv.speed * 1000);
+    resetDNXProgress();
+  }
+
+  function resetDNXProgress() {
+    if (dnxTv.progTimer) clearInterval(dnxTv.progTimer);
+    var fill = document.getElementById('dnxTvProg');
+    if (!fill) return;
+    fill.style.width = '0%';
+    dnxTv.progStart = Date.now();
+    dnxTv.progTimer = setInterval(function() {
+      if (dnxTv.paused) return;
+      var pct = Math.min(100, (Date.now() - dnxTv.progStart) / (dnxTv.speed * 1000) * 100);
+      fill.style.width = pct + '%';
+    }, 100);
+  }
+
+  function setDNXTvSpeed(val) {
+    dnxTv.speed = parseInt(val);
+    var el = document.getElementById('dnxTvSpeedVal');
+    if (el) el.textContent = val + 's';
+    startDNXTvTimer();
+  }
+
+  function toggleDNXTvPause() {
+    dnxTv.paused = !dnxTv.paused;
+    var btn = document.getElementById('dnxTvPauseBtn');
+    if (btn) btn.textContent = dnxTv.paused ? '▶ RESUME' : '⏸ PAUSE';
+    if (!dnxTv.paused) { dnxTv.progStart = Date.now() - (dnxTv.speed*1000*(parseFloat(document.getElementById('dnxTvProg').style.width)/100)); }
+  }
+
+  function startDNXTvClock() {
+    function tick() {
+      var el = document.getElementById('dnxTvClock');
+      var de = document.getElementById('dnxTvDate');
+      var now = new Date();
+      if (el) {
+        var h=now.getHours(), m=now.getMinutes(), ap=h>=12?'PM':'AM';
+        h=h%12||12;
+        el.textContent = h+':'+(m<10?'0':'')+m+' '+ap;
+      }
+      if (de) de.textContent = now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+    }
+    tick();
+    dnxTv.clockTimer = setInterval(tick, 1000);
+  }
+
+  // Event delegation for DNX tile action buttons
+  document.addEventListener('click', function(e) {
+    // Priority buttons
+    var priBtn = e.target.closest('.dnx-pri-btn');
+    if (priBtn) { setMachinePriority(priBtn.dataset.machine, priBtn.dataset.priority); return; }
+    // Attention buttons
+    var attnBtn = e.target.closest('.dnx-attn-btn');
+    if (attnBtn) { toggleMachineAttention(attnBtn.dataset.machine); return; }
+    // Clear buttons
+    var clearBtn = e.target.closest('.dnx-clear-btn');
+    if (clearBtn) { clearMachineFlags(clearBtn.dataset.machine); return; }
+  });
+
+  // Refresh DNX display when new data arrives
+  var _origFetchDNX = window.fetchDatanomix;
+  // After each fetch, refresh the display tab if open
+  (function patchFetch() {
+    var orig = fetchDatanomix;
+    fetchDatanomix = async function() {
+      await orig.apply(this, arguments);
+      if (document.getElementById('page-datanomix') &&
+          document.getElementById('page-datanomix').style.display !== 'none') {
+        renderDNXGrid();
+      }
+    };
+  })();
+
+
+  // ══════════════════════════════════════════════════════════════════
+  // ── SHOP TV MODE — WALL DISPLAY POWERED BY DATANOMIX ──
+  // ══════════════════════════════════════════════════════════════════
+  var stv = {
+    view: 'cell',     // cell | priority | all
+    speed: 12,
+    paused: false,
+    curSlide: 0,
+    slides: [],
+    timer: null,
+    progTimer: null,
+    progStart: null,
+    clockTimer: null
+  };
+
+  function initShopTV() {
+    buildStvSlides();
+    startStvClock();
+    startStvTimer();
+    updateStvDnxDot();
+  }
+
+  function stopShopTV() {
+    if (stv.timer)     { clearInterval(stv.timer);     stv.timer = null; }
+    if (stv.progTimer) { clearInterval(stv.progTimer); stv.progTimer = null; }
+    if (stv.clockTimer){ clearInterval(stv.clockTimer);stv.clockTimer = null; }
+  }
+
+  function setStvView(view, btn) {
+    stv.view = view;
+    document.querySelectorAll('#stv-view-cell,#stv-view-priority,#stv-view-all').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    buildStvSlides();
+    startStvTimer();
+  }
+
+  function setStvSpeed(val) {
+    stv.speed = parseInt(val);
+    var el = document.getElementById('stvSpeedVal');
+    if (el) el.textContent = val + 's';
+    startStvTimer();
+  }
+
+  function toggleStvPause() {
+    stv.paused = !stv.paused;
+    var btn = document.getElementById('stvPauseBtn');
+    if (btn) btn.textContent = stv.paused ? '▶ RESUME' : '⏸ PAUSE';
+    if (!stv.paused) {
+      var fill = document.getElementById('stvProg');
+      stv.progStart = Date.now() - (stv.speed * 1000 * (parseFloat(fill ? fill.style.width : '0') / 100));
+    }
+  }
+
+  function updateStvDnxDot() {
+    var dot = document.getElementById('stvDnxDot');
+    if (dot) dot.style.background = dnxConnected ? '#22c55e' : (DNX_API_KEY ? '#ef4444' : '#475569');
+  }
+
+  // ── BUILD SLIDES ──
+  function buildStvSlides() {
+    var machines = DNX_MACHINE_CONFIG.slice();
+
+    if (stv.view === 'priority') {
+      // Sort: attention first, then hot, high, normal, then by status
+      var priOrder = { hot:0, high:1, normal:2 };
+      var statusOrder = { red:0, yellow:1, green:2, offline:3, pending:4 };
+      machines.sort(function(a, b) {
+        var sa = dnxMachineState[a.name] || {}, sb = dnxMachineState[b.name] || {};
+        var attnA = sa.attention ? 0 : 1, attnB = sb.attention ? 0 : 1;
+        if (attnA !== attnB) return attnA - attnB;
+        var pA = sa.priority ? (priOrder[sa.priority]||9) : 9;
+        var pB = sb.priority ? (priOrder[sb.priority]||9) : 9;
+        if (pA !== pB) return pA - pB;
+        return (statusOrder[getMachinePerfStatus(a)]||9) - (statusOrder[getMachinePerfStatus(b)]||9);
+      });
+      // Show as pages of 6
+      stv.slides = [];
+      for (var i = 0; i < machines.length; i += 6) {
+        stv.slides.push({ label: 'PRIORITY VIEW', machines: machines.slice(i, i+6), idx: Math.floor(i/6)+1 });
+      }
+    } else if (stv.view === 'all') {
+      // All machines in pages of 8
+      stv.slides = [];
+      for (var i = 0; i < machines.length; i += 8) {
+        stv.slides.push({ label: 'ALL MACHINES', machines: machines.slice(i, i+8), idx: Math.floor(i/8)+1 });
+      }
+    } else {
+      // By cell — one slide per cell
+      var cells = {};
+      var cellOrder = [];
+      machines.forEach(function(m) {
+        if (!cells[m.cell]) { cells[m.cell] = []; cellOrder.push(m.cell); }
+        cells[m.cell].push(m);
+      });
+      stv.slides = cellOrder.map(function(cell) {
+        return { label: cell.toUpperCase(), machines: cells[cell] };
+      });
+    }
+
+    // Render dots
+    var dotsEl = document.getElementById('stvDots');
+    if (dotsEl) {
+      dotsEl.innerHTML = stv.slides.map(function(s, i) {
+        var hasHot = s.machines.some(function(m){ return (dnxMachineState[m.name]||{}).priority==='hot'; });
+        return '<div class="stv-dot'+(i===0?' active':'')+(hasHot?' hot':'')+'" onclick="goToStvSlide('+i+')"></div>';
+      }).join('');
+    }
+
+    // Render stage
+    var stage = document.getElementById('stvStage');
+    if (!stage) return;
+    stage.innerHTML = stv.slides.map(function(s, i) {
+      var html = '<div class="stv-slide'+(i===0?' active':'')+'" id="stvSlide'+i+'">';
+      html += '<div class="stv-section-hdr">';
+      html += '<div class="stv-section-name">'+s.label+'</div>';
+      if (s.idx) html += '<span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">Page '+s.idx+' of '+stv.slides.length+'</span>';
+      html += '<span class="stv-section-badge">'+(i+1)+' / '+stv.slides.length+'</span>';
+      html += '</div>';
+      html += '<div class="stv-grid">';
+      html += s.machines.map(buildStvCard).join('');
+      html += '</div></div>';
+      return html;
+    }).join('');
+
+    goToStvSlide(0);
+  }
+
+  // ── BUILD INDIVIDUAL MACHINE CARD ──
+  function buildStvCard(m) {
+    var status = getMachinePerfStatus(m);
+    var bar = document.getElementById('perf-' + m.name);
+    var label = bar ? bar.getAttribute('data-label') : '—';
+    var liveD = dnxLiveData[m.id] || {};
+    var oee   = liveD.oee ? Math.round(liveD.oee)+'%' : (DNX_API_KEY?'—':Math.floor(Math.random()*30+65)+'%');
+    var parts = liveD.partsToday || (DNX_API_KEY?'—':Math.floor(Math.random()*40+10));
+    var util  = liveD.utilization ? Math.round(liveD.utilization)+'%' : (DNX_API_KEY?'—':Math.floor(Math.random()*40+50)+'%');
+    var state = dnxMachineState[m.name] || {};
+    var priority = state.priority || null;
+    var attention = state.attention || false;
+    var cycleBarPct = status==='green'?92:status==='yellow'?62:status==='red'?30:0;
+    var barColor = status==='green'?'#22c55e':status==='yellow'?'#eab308':status==='red'?'#ef4444':'#334155';
+    var statusLabel = label || (status==='offline'?'OFFLINE':status==='pending'?'—':'—');
+    var oeeColor = '#94a3b8';
+    if (typeof oee === 'string' && oee !== '—') {
+      var n = parseInt(oee); oeeColor = n>=75?'#22c55e':n>=50?'#eab308':'#ef4444';
+    }
+
+    var cardClass = 'stv-card s-'+status;
+    if (priority==='hot')  cardClass += ' p-hot';
+    if (priority==='high') cardClass += ' p-high';
+    if (attention)         cardClass += ' flagged';
+
+    return [
+      '<div class="'+cardClass+'">',
+        '<div class="stv-card-hdr">',
+          '<div>',
+            '<div class="stv-card-name">'+m.name+'</div>',
+            '<div class="stv-card-cell">'+m.cell+'</div>',
+          '</div>',
+          '<div class="stv-card-pills">',
+            '<span class="stv-pill '+status+'">'+statusLabel+'</span>',
+            priority==='hot'  ? '<span class="stv-pill hot">🔴 HOT</span>' : '',
+            priority==='high' ? '<span class="stv-pill high">🟠 HIGH</span>' : '',
+            attention         ? '<span class="stv-pill attn">⚠ ATTN</span>' : '',
+          '</div>',
+        '</div>',
+        '<div class="stv-stats">',
+          '<div class="stv-stat"><div class="stv-stat-val" style="color:#f5c500;">'+parts+'</div><div class="stv-stat-lbl">Parts</div></div>',
+          '<div class="stv-stat"><div class="stv-stat-val" style="color:'+oeeColor+';">'+oee+'</div><div class="stv-stat-lbl">OEE</div></div>',
+          '<div class="stv-stat"><div class="stv-stat-val" style="color:#60a5fa;">'+util+'</div><div class="stv-stat-lbl">Util</div></div>',
+        '</div>',
+        '<div class="stv-bar-wrap">',
+          '<div class="stv-bar-bg"><div class="stv-bar-fill" style="width:'+cycleBarPct+'%;background:'+barColor+';"></div></div>',
+        '</div>',
+      '</div>'
+    ].join('');
+  }
+
+  // ── SLIDE NAVIGATION ──
+  function goToStvSlide(idx) {
+    stv.curSlide = idx;
+    document.querySelectorAll('.stv-slide').forEach(function(s, i){ s.classList.toggle('active', i===idx); });
+    document.querySelectorAll('#stvDots .stv-dot').forEach(function(d, i){ d.classList.toggle('active', i===idx); });
+    var lbl = document.getElementById('stvSlideLabel');
+    if (lbl && stv.slides[idx]) lbl.textContent = stv.slides[idx].label;
+    resetStvProgress();
+  }
+
+  function nextStvSlide() {
+    if (stv.slides.length === 0) return;
+    goToStvSlide((stv.curSlide + 1) % stv.slides.length);
+  }
+
+  function startStvTimer() {
+    if (stv.timer) clearInterval(stv.timer);
+    stv.timer = setInterval(function(){ if (!stv.paused) nextStvSlide(); }, stv.speed * 1000);
+    resetStvProgress();
+  }
+
+  function resetStvProgress() {
+    if (stv.progTimer) clearInterval(stv.progTimer);
+    var fill = document.getElementById('stvProg');
+    if (!fill) return;
+    fill.style.width = '0%';
+    stv.progStart = Date.now();
+    stv.progTimer = setInterval(function() {
+      if (stv.paused) return;
+      var pct = Math.min(100, (Date.now() - stv.progStart) / (stv.speed * 1000) * 100);
+      fill.style.width = pct + '%';
+    }, 100);
+  }
+
+  function startStvClock() {
+    function tick() {
+      var now = new Date();
+      var h = now.getHours(), m = now.getMinutes(), ap = h>=12?'PM':'AM';
+      h = h%12||12;
+      var cl = document.getElementById('stvClock');
+      var dt = document.getElementById('stvDate');
+      if (cl) cl.textContent = h+':'+(m<10?'0':'')+m+' '+ap;
+      if (dt) dt.textContent = now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    }
+    tick();
+    stv.clockTimer = setInterval(tick, 1000);
+  }
+
+  // Refresh STV when Datanomix data updates
+  var _origFetchDNX2 = fetchDatanomix;
+  fetchDatanomix = async function() {
+    await _origFetchDNX2.apply(this, arguments);
+    updateStvDnxDot();
+    var stvEl = document.getElementById('page-shoptv');
+    if (stvEl && stvEl.style.display !== 'none') buildStvSlides();
+  };
+
+
   // ── REQUESTS PAGE ──
   window._reqFilter = 'all';
   function filterRequests(type) {
@@ -3375,15 +4171,17 @@
         issue:     '<span class="dash-status-badge issue">'+(typeLabels[r.type]||'⚠ ISSUE')+'</span>'
       }[status] || '';
 
-      // Action buttons
+      // Action buttons — ADMIN ONLY
       var actionBtns = '';
-      if (status==='pending') {
-        actionBtns = '<button class="dash-action-btn to-running" onclick="setJobStatus(\''+r.id+'\',\'running\')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> START JOB</button>';
-      } else if (status==='running') {
-        actionBtns = '<button class="dash-action-btn to-pending" onclick="setJobStatus(\''+r.id+'\',\'pending\')" style="margin-right:6px;">↩ PENDING</button>'+
-                     '<button class="dash-action-btn to-completed" onclick="setJobStatus(\''+r.id+'\',\'completed\')">✅ COMPLETE</button>';
-      } else if (status==='completed' && isAdmin) {
-        actionBtns = '<button class="dash-action-btn to-running" onclick="setJobStatus(\''+r.id+'\',\'running\')" style="font-size:10px;opacity:0.7;">↩ REOPEN</button>';
+      if (isAdmin) {
+        if (status==='pending') {
+          actionBtns = '<button class="dash-action-btn to-running" onclick="setJobStatus(\''+r.id+'\',\'running\')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> START JOB</button>';
+        } else if (status==='running') {
+          actionBtns = '<button class="dash-action-btn to-pending" onclick="setJobStatus(\''+r.id+'\',\'pending\')" style="margin-right:6px;">↩ PENDING</button>'+
+                       '<button class="dash-action-btn to-completed" onclick="setJobStatus(\''+r.id+'\',\'completed\')">✅ COMPLETE</button>';
+        } else if (status==='completed') {
+          actionBtns = '<button class="dash-action-btn to-running" onclick="setJobStatus(\''+r.id+'\',\'running\')" style="font-size:10px;opacity:0.7;">↩ REOPEN</button>';
+        }
       }
 
       var card = document.createElement('div');
@@ -3424,13 +4222,13 @@
   }
 
   function setJobStatus(id, newStatus) {
+    // Admin only — full stop
+    if (!window._isAdmin && window.currentUser !== 'hilladmin') {
+      showToast('red', 'Admin only', 'Only admin can update job status.');
+      return;
+    }
     var req = dashRequests.find(function(r){ return r.id===id; });
     if (!req) return;
-    if (newStatus==='running' && req.jobStatus==='completed') {
-      if (!window._isAdmin && window.currentUser!=='hilladmin') {
-        showToast('red','Admin only','Only admin can reopen a completed job.'); return;
-      }
-    }
     req.jobStatus = newStatus;
     if (newStatus==='completed') req.completedAt = { seconds: Math.floor(Date.now()/1000) };
     else req.completedAt = null;
