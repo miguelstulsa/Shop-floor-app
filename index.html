@@ -5718,36 +5718,41 @@ window.plannerSetView = function(view) {
   }
 
   // Tap a scheduled chip → show action sheet
+  window._chipWO = null; // store the current WO for the action sheet buttons to reference
   window.plannerChipTap = function(id) {
     var w = plannerWOs.find(function(x){ return x.id===id; });
     if(!w) return;
+    window._chipWO = w;
     var overlay = document.getElementById('pl-chip-overlay');
     var title   = document.getElementById('pl-chip-title');
     var sub     = document.getElementById('pl-chip-sub');
-    if(!overlay) return;
-    title.textContent = (w.wo||'WO') + (w.part ? ' — ' + w.part : '');
-    sub.textContent   = (w.machine||'') + (w.scheduledDate ? ' · ' + new Date(w.scheduledDate+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}) : '');
-    // Wire buttons
-    document.getElementById('pl-chip-unschedule').onclick = function(){
-      w.machine=''; w.scheduledDate='';
-      plannerSave(); plannerRender();
-      plannerCloseChip();
-      if(window.showToast) showToast('blue','Moved back to pool', w.wo+' is now unassigned');
-    };
-    document.getElementById('pl-chip-edit').onclick = function(){
-      plannerCloseChip();
-      plannerEditWO(id);
-    };
-    document.getElementById('pl-chip-delete').onclick = function(){
-      if(!confirm('Delete WO '+w.wo+' permanently?')) return;
-      plannerDeleteWO(id);
-      plannerCloseChip();
-    };
+    if(!overlay){ alert('overlay missing'); return; }
+    if(title) title.textContent = (w.wo||'WO') + (w.part ? ' — ' + w.part : '');
+    if(sub)   sub.textContent   = (w.machine||'') + (w.scheduledDate ? ' · ' + new Date(w.scheduledDate+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}) : '');
     overlay.classList.add('open');
   };
   window.plannerCloseChip = function(){
     var overlay = document.getElementById('pl-chip-overlay');
     if(overlay) overlay.classList.remove('open');
+    window._chipWO = null;
+  };
+  window.plannerChipUnschedule = function(){
+    var w = window._chipWO; if(!w) return;
+    w.machine=''; w.scheduledDate='';
+    plannerSave(); plannerRender(); plannerCloseChip();
+    if(window.showToast) showToast('blue', 'Moved back to pool', (w.wo||'WO')+' is now unassigned');
+  };
+  window.plannerChipEdit = function(){
+    var w = window._chipWO; if(!w) return;
+    var id = w.id;
+    plannerCloseChip();
+    plannerEditWO(id);
+  };
+  window.plannerChipDelete = function(){
+    var w = window._chipWO; if(!w) return;
+    if(!confirm('Delete WO '+(w.wo||'')+'? This removes it from your database.')) return;
+    plannerDeleteWO(w.id);
+    plannerCloseChip();
   };
 
   function plannerRenderPool(){
@@ -6172,14 +6177,14 @@ window.plannerSetView = function(view) {
     <div class="pl-chip-info" id="pl-chip-sub">—</div>
     <div class="pl-chip-hint">Moving to another machine? Use <strong style="color:#60a5fa;">Move to Pool</strong> — the job stays in your database and can be reassigned anytime.</div>
     <div class="pl-chip-actions">
-      <button class="pl-chip-btn unschedule" id="pl-chip-unschedule">
+      <button class="pl-chip-btn unschedule" id="pl-chip-unschedule" onclick="plannerChipUnschedule()">
         <span>↩</span> MOVE TO POOL — REASSIGN LATER
       </button>
-      <button class="pl-chip-btn edit" id="pl-chip-edit">
+      <button class="pl-chip-btn edit" id="pl-chip-edit" onclick="plannerChipEdit()">
         <span>✏️</span> EDIT / CHANGE MACHINE OR DATE
       </button>
       <hr class="pl-chip-divider">
-      <button class="pl-chip-btn del" id="pl-chip-delete">
+      <button class="pl-chip-btn del" id="pl-chip-delete" onclick="plannerChipDelete()">
         🗑 Remove permanently from database
       </button>
       <button class="pl-chip-btn cancel" onclick="plannerCloseChip()">CANCEL</button>
