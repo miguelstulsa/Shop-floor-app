@@ -1969,7 +1969,7 @@
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
     if (tab === 'proshop') { var psFrame = document.getElementById('proshop-iframe'); if (psFrame && !psFrame.src) psFrame.src = PROSHOP_BASE + '/'; }
     var planEl = document.getElementById('page-planner'); if (planEl) planEl.style.display = tab === 'planner' ? 'flex' : 'none';
-    if (tab === 'planner') { plannerSetView(_plannerView || 'proshop'); }
+    if (tab === 'planner') { plannerSetView(_plannerView || 'hill'); }
 
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
@@ -5386,7 +5386,7 @@
         <div class="pl-pool-toggle" id="pl-pool-toggle">▲</div>
       </div>
       <!-- Quick-assign grid -->
-      <div id="pl-pool-body" style="overflow-y:auto;max-height:42vh;padding:8px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;"></div>
+      <div id="pl-pool-body" style="overflow-y:auto;max-height:55vh;padding:8px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;"></div>
     </div>
 
   </div>
@@ -5394,7 +5394,7 @@
 
 <script>
 // ── Planner view switcher ──
-var _plannerView = 'proshop'; // default: show ProShop schedule first
+var _plannerView = 'hill'; // default to Hill Planner
 window.plannerSetView = function(view) {
   _plannerView = view;
   var psView    = document.getElementById('pl-ps-view');
@@ -5530,7 +5530,7 @@ window.plannerSetView = function(view) {
   var plannerWeekOffset = 0;     // 0 = current week
   var plannerEditId = null;      // id of WO being edited
   var plannerSelectedPri = 'normal';
-  var plannerPoolOpen = true;
+  var plannerPoolOpen = true;  // always open by default
   // Expose mutable state so window-level onclick handlers can read/write it
   window._pl = {
     get editId(){ return plannerEditId; },
@@ -5630,7 +5630,7 @@ window.plannerSetView = function(view) {
     plannerRender();
   };
   window.plannerInit = function() {
-    plannerSetView(_plannerView || 'proshop');
+    plannerSetView(_plannerView || 'hill');
   };
 
   function plannerPopulateMachineSelect(){
@@ -5711,14 +5711,46 @@ window.plannerSetView = function(view) {
     }
     return '<div class="pl-wo '+priClass+'" draggable="true"'
       +' ondragstart="plannerDragStart(event,\''+w.id+'\')"'
-      +' onclick="event.stopPropagation();plannerEditWO(\''+w.id+'\')">'
-      +'<button class="pl-wo-del" onclick="event.stopPropagation();plannerDeleteWO(\''+w.id+'\')">✕</button>'
+      +' onclick="event.stopPropagation();plannerChipTap(\''+w.id+'\')">'
       +'<div class="pl-wo-num">'+escHtml(w.wo||'WO')+(w.qty?' <span style="font-size:10px;color:#94a3b8;font-family:Barlow,sans-serif;">×'+escHtml(w.qty)+'</span>':'')+'</div>'
       +'<div class="pl-wo-part">'+escHtml(w.part||'')+'</div>'
       +(w.customer?'<div style="font-size:10px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">'+escHtml(w.customer)+'</div>':'')
       +'<div class="pl-wo-meta">'+(w.operator?'👤 '+escHtml(w.operator)+' ':'')+(daysLeft?'📅 '+daysLeft:'')+(w.runtime?' ⏱ '+escHtml(w.runtime):'')+'</div>'
       +'</div>';
   }
+
+  // Tap a scheduled chip → show action sheet
+  window.plannerChipTap = function(id) {
+    var w = plannerWOs.find(function(x){ return x.id===id; });
+    if(!w) return;
+    var overlay = document.getElementById('pl-chip-overlay');
+    var title   = document.getElementById('pl-chip-title');
+    var sub     = document.getElementById('pl-chip-sub');
+    if(!overlay) return;
+    title.textContent = (w.wo||'WO') + (w.part ? ' — ' + w.part : '');
+    sub.textContent   = (w.machine||'') + (w.scheduledDate ? ' · ' + new Date(w.scheduledDate+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}) : '');
+    // Wire buttons
+    document.getElementById('pl-chip-unschedule').onclick = function(){
+      w.machine=''; w.scheduledDate='';
+      plannerSave(); plannerRender();
+      plannerCloseChip();
+      if(window.showToast) showToast('blue','Moved back to pool', w.wo+' is now unassigned');
+    };
+    document.getElementById('pl-chip-edit').onclick = function(){
+      plannerCloseChip();
+      plannerEditWO(id);
+    };
+    document.getElementById('pl-chip-delete').onclick = function(){
+      if(!confirm('Delete WO '+w.wo+' permanently?')) return;
+      plannerDeleteWO(id);
+      plannerCloseChip();
+    };
+    overlay.classList.add('open');
+  };
+  window.plannerCloseChip = function(){
+    var overlay = document.getElementById('pl-chip-overlay');
+    if(overlay) overlay.classList.remove('open');
+  };
 
   function plannerRenderPool(){
     var unassigned=plannerWOs.filter(function(w){return !w.machine||!w.scheduledDate;});
@@ -6046,12 +6078,25 @@ window.plannerSetView = function(view) {
         added++;
       });
 
+      // Force pool open so WOs are visible immediately
+      plannerPoolOpen = true;
+      var tog = document.getElementById('pl-pool-toggle');
+      if(tog) tog.textContent = '▲';
+
       plannerSave(); plannerRender();
-      var msg = added+' added';
-      if(updated) msg += ', '+updated+' updated';
-      var hotCount=plannerWOs.filter(function(w){return w.priority==='hot';}).length;
+
+      // Scroll pool into view after render
+      setTimeout(function(){
+        var pool = document.getElementById('pl-pool');
+        if(pool) pool.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 150);
+
+      var msg = added + ' WOs loaded';
+      if(updated) msg += ', ' + updated + ' updated';
+      var hotCount = plannerWOs.filter(function(w){return w.priority==='hot';}).length;
+      var highCount = plannerWOs.filter(function(w){return w.priority==='high';}).length;
       if(window.showToast){
-        showToast('green', msg+' from ProShop CSV', hotCount>0?'🔴 '+hotCount+' HOT/overdue WOs flagged':'All WOs loaded into pool');
+        showToast('green', msg, '🔴 '+hotCount+' HOT  🟠 '+highCount+' HIGH — assign from pool below');
       }
     };
     reader.readAsText(file);
@@ -6063,7 +6108,47 @@ window.plannerSetView = function(view) {
 })();
 </script>
 
-<!-- SHOP TV PAGE -->
+<!-- CHIP TAP ACTION SHEET -->
+<style>
+#pl-chip-overlay { position:fixed;inset:0;z-index:4000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.6);padding-bottom:env(safe-area-inset-bottom,0px); }
+#pl-chip-overlay.open { display:flex; }
+.pl-chip-sheet { background:#0f2338;border:1px solid #2a5a8c;border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px 20px 32px;box-shadow:0 -8px 40px rgba(0,0,0,0.6); }
+.pl-chip-handle { width:40px;height:4px;background:#2a5a8c;border-radius:2px;margin:0 auto 16px; }
+.pl-chip-wo { font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:#f5c500;margin-bottom:2px; }
+.pl-chip-info { font-size:12px;color:#475569;letter-spacing:1px;margin-bottom:6px; }
+.pl-chip-hint { font-size:11px;color:#334155;margin-bottom:20px;line-height:1.5; }
+.pl-chip-actions { display:flex;flex-direction:column;gap:10px; }
+.pl-chip-btn { width:100%;padding:15px;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;border:none;text-align:center;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px; }
+.pl-chip-btn.unschedule { background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60a5fa; }
+.pl-chip-btn.unschedule:active { background:rgba(59,130,246,0.3); }
+.pl-chip-btn.edit { background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#f59e0b; }
+.pl-chip-btn.edit:active { background:rgba(245,158,11,0.3); }
+.pl-chip-btn.del { background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#475569;font-size:13px;padding:10px; }
+.pl-chip-btn.del:active { background:rgba(239,68,68,0.18);color:#f87171; }
+.pl-chip-btn.cancel { background:rgba(255,255,255,0.05);border:1px solid #1e3a5f;color:#475569;margin-top:4px; }
+.pl-chip-divider { border:none;border-top:1px solid #1e3a5f;margin:4px 0; }
+</style>
+<div id="pl-chip-overlay" onclick="if(event.target===this)plannerCloseChip()">
+  <div class="pl-chip-sheet">
+    <div class="pl-chip-handle"></div>
+    <div class="pl-chip-wo" id="pl-chip-title">—</div>
+    <div class="pl-chip-info" id="pl-chip-sub">—</div>
+    <div class="pl-chip-hint">Moving to another machine? Use <strong style="color:#60a5fa;">Move to Pool</strong> — the job stays in your database and can be reassigned anytime.</div>
+    <div class="pl-chip-actions">
+      <button class="pl-chip-btn unschedule" id="pl-chip-unschedule">
+        <span>↩</span> MOVE TO POOL — REASSIGN LATER
+      </button>
+      <button class="pl-chip-btn edit" id="pl-chip-edit">
+        <span>✏️</span> EDIT / CHANGE MACHINE OR DATE
+      </button>
+      <hr class="pl-chip-divider">
+      <button class="pl-chip-btn del" id="pl-chip-delete">
+        🗑 Remove permanently from database
+      </button>
+      <button class="pl-chip-btn cancel" onclick="plannerCloseChip()">CANCEL</button>
+    </div>
+  </div>
+</div>
 <div id="page-shoptv" style="display:none;position:fixed;inset:0;z-index:8000;background:#00050f;flex-direction:column;overflow:hidden;">
   <div class="stv-header">
     <div style="display:flex;align-items:center;">
