@@ -1067,8 +1067,8 @@
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📊 Dashboard</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Datanomix</div>
   <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv">📺 Shop TV</div>
-  <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop">🔗 ProShop</div>
-  <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner">📅 Planner</div>
+  <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop" style="display:none;">🔗 ProShop</div>
+  <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;">📅 Planner</div>
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
   </nav>
   <button class="nav-scroll-btn right" onclick="scrollTabs(120)" aria-label="Scroll tabs right">&#8250;</button>
@@ -2450,6 +2450,10 @@
       if (mgmtTab) mgmtTab.style.display = '';
       var dashTab = document.getElementById('tab-dashboard');
       if (dashTab) dashTab.style.display = '';
+      var proshopTab = document.getElementById('tab-proshop');
+      if (proshopTab) proshopTab.style.display = '';
+      var plannerTab = document.getElementById('tab-planner');
+      if (plannerTab) plannerTab.style.display = '';
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
       // Show QMI switch button for admin
@@ -2461,11 +2465,15 @@
         switchBtn.href = qmiUrl;
       }
     } else if (user.role === 'manager') {
-      listenToUsers(); // managers need user list for DMs and call picker
+      listenToUsers();
       var mgmtTab = document.getElementById('tab-mgmt');
       if (mgmtTab) mgmtTab.style.display = '';
       var dashTab = document.getElementById('tab-dashboard');
       if (dashTab) dashTab.style.display = '';
+      var proshopTab = document.getElementById('tab-proshop');
+      if (proshopTab) proshopTab.style.display = '';
+      var plannerTab = document.getElementById('tab-planner');
+      if (plannerTab) plannerTab.style.display = '';
     } else {
       // machinist — check legacy isManager flag as fallback
       if (window.checkManagerAccess) {
@@ -2486,6 +2494,12 @@
     document.getElementById('adminBtn').classList.remove('visible');
     var sb = document.getElementById('shopSwitchBtn');
     if (sb) sb.classList.remove('visible');
+    // Hide admin-only tabs
+    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner'].forEach(function(id){
+      var t = document.getElementById(id); if(t) t.style.display = 'none';
+    });
+    // Switch back to shop floor if on a hidden tab
+    switchTab('shop');
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
     setMsg('loginMsg', '', '');
