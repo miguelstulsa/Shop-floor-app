@@ -1969,7 +1969,7 @@
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
     if (tab === 'proshop') { var psFrame = document.getElementById('proshop-iframe'); if (psFrame && !psFrame.src) psFrame.src = PROSHOP_BASE + '/'; }
     var planEl = document.getElementById('page-planner'); if (planEl) planEl.style.display = tab === 'planner' ? 'flex' : 'none';
-    if (tab === 'planner') { if (window.plannerInit) window.plannerInit(); }
+    if (tab === 'planner') { plannerSetView(_plannerView || 'proshop'); }
 
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
@@ -5192,38 +5192,145 @@
 <!-- PLANNER PAGE -->
 <div id="page-planner" style="display:none;flex-direction:column;height:calc(100vh - 88px);background:#00071a;">
 
-  <!-- Toolbar -->
-  <div class="pl-toolbar">
-    <div class="pl-toolbar-title">📅 PLANNER</div>
-    <div class="pl-week-nav">
+  <!-- Unified Toolbar -->
+  <div class="pl-toolbar" style="gap:6px;">
+
+    <!-- VIEW TOGGLE — ProShop Schedule vs Hill Planner -->
+    <div style="display:flex;background:#0a1422;border:1px solid #1e3a5f;border-radius:9px;overflow:hidden;flex-shrink:0;">
+      <button id="pl-view-ps-btn" onclick="plannerSetView('proshop')"
+        style="padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;border:none;cursor:pointer;transition:all .2s;background:#f59e0b;color:#0f2338;">
+        🔗 PROSHOP SCHEDULE
+      </button>
+      <button id="pl-view-hill-btn" onclick="plannerSetView('hill')"
+        style="padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;border:none;cursor:pointer;transition:all .2s;background:transparent;color:#475569;">
+        📅 HILL PLANNER
+      </button>
+    </div>
+
+    <!-- Week nav — only shown in Hill Planner view -->
+    <div class="pl-week-nav" id="pl-week-nav-wrap">
       <button class="pl-week-btn" onclick="plannerShiftWeek(-1)">&#8249;</button>
       <div class="pl-week-label" id="pl-week-label">—</div>
       <button class="pl-week-btn" onclick="plannerShiftWeek(1)">&#8250;</button>
+      <button class="pl-week-btn" onclick="plannerGoToday()" style="font-size:11px;padding:5px 10px;">TODAY</button>
     </div>
-    <button class="pl-week-btn" onclick="plannerGoToday()" style="font-size:11px;padding:5px 10px;">TODAY</button>
+
+    <!-- ProShop reload — only shown in ProShop view -->
+    <button id="pl-ps-reload-btn" onclick="document.getElementById('pl-ps-frame').src='https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule'"
+      style="display:none;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">
+      ↺ RELOAD
+    </button>
+    <button id="pl-ps-browser-btn" onclick="window.open('https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule','_blank')"
+      style="display:none;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;color:#64748b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">
+      ↗ BROWSER
+    </button>
+
     <div class="pl-spacer"></div>
-    <button class="pl-action-btn" onclick="switchTab('proshop')" style="background:rgba(96,165,250,0.12);border-color:rgba(96,165,250,0.35);color:#60a5fa;">🔗 PROSHOP</button>
-    <button class="pl-action-btn amber" onclick="document.getElementById('pl-csv-input').click()">📥 IMPORT CSV</button>
-    <input type="file" id="pl-csv-input" accept=".csv,.txt" style="display:none" onchange="plannerImportCSV(this)">
-    <button class="pl-action-btn green" onclick="plannerOpenAddModal()">＋ ADD WO</button>
-    <button class="pl-action-btn" onclick="plannerClearAll()" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3);color:#f87171;">🗑 CLEAR</button>
-  </div>
 
-  <!-- Calendar scroll body -->
-  <div class="pl-body" id="pl-body">
-    <div id="pl-grid-wrap"></div>
-  </div>
-
-  <!-- Unassigned pool -->
-  <div class="pl-pool" id="pl-pool">
-    <div class="pl-pool-header" onclick="plannerTogglePool()">
-      <div class="pl-pool-title">⬛ UNASSIGNED WORK ORDERS</div>
-      <div class="pl-pool-count" id="pl-pool-count">0</div>
-      <div class="pl-pool-toggle" id="pl-pool-toggle">▲</div>
+    <!-- Hill Planner actions — only shown in Hill view -->
+    <div id="pl-hill-actions" style="display:flex;gap:6px;align-items:center;">
+      <button class="pl-action-btn amber" onclick="document.getElementById('pl-csv-input').click()">📥 IMPORT CSV</button>
+      <input type="file" id="pl-csv-input" accept=".csv,.txt" style="display:none" onchange="plannerImportCSV(this)">
+      <button class="pl-action-btn green" onclick="plannerOpenAddModal()">＋ ADD WO</button>
+      <button class="pl-action-btn" onclick="plannerClearAll()" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3);color:#f87171;">🗑</button>
     </div>
-    <div class="pl-pool-body" id="pl-pool-body"></div>
+  </div>
+
+  <!-- ── PROSHOP SCHEDULE IFRAME VIEW ── -->
+  <div id="pl-ps-view" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <iframe id="pl-ps-frame" src="" style="flex:1;width:100%;border:none;background:#fff;" loading="lazy"></iframe>
+    <!-- Blocked fallback -->
+    <div id="pl-ps-blocked" style="display:none;position:absolute;inset:88px 0 0;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:40px;pointer-events:none;">
+      <div style="font-size:44px;">🔗</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#f59e0b;">PROSHOP SCHEDULE</div>
+      <div style="font-size:13px;color:#64748b;max-width:340px;line-height:1.7;">
+        ProShop may block embedding for security.<br>
+        Tap <strong style="color:#f0f4f8;">↗ BROWSER</strong> to open it full screen,<br>
+        then use <strong style="color:#f59e0b;">📅 HILL PLANNER</strong> to manage assignments here.
+      </div>
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule','_blank')" style="pointer-events:all;background:#f59e0b;border:none;color:#0f2338;border-radius:10px;padding:12px 28px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;">↗ OPEN PROSHOP SCHEDULE</button>
+    </div>
+  </div>
+
+  <!-- ── HILL PLANNER VIEW ── -->
+  <div id="pl-hill-view" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+
+    <!-- Calendar scroll body -->
+    <div class="pl-body" id="pl-body">
+      <div id="pl-grid-wrap"></div>
+    </div>
+
+    <!-- Unassigned pool -->
+    <div class="pl-pool" id="pl-pool">
+      <div class="pl-pool-header" onclick="plannerTogglePool()">
+        <div class="pl-pool-title">⬛ UNASSIGNED WORK ORDERS</div>
+        <div class="pl-pool-count" id="pl-pool-count">0</div>
+        <div class="pl-pool-toggle" id="pl-pool-toggle">▲</div>
+      </div>
+      <div class="pl-pool-body" id="pl-pool-body"></div>
+    </div>
+
   </div>
 </div>
+
+<script>
+// ── Planner view switcher ──
+var _plannerView = 'proshop'; // default: show ProShop schedule first
+window.plannerSetView = function(view) {
+  _plannerView = view;
+  var psView    = document.getElementById('pl-ps-view');
+  var hillView  = document.getElementById('pl-hill-view');
+  var psBtn     = document.getElementById('pl-view-ps-btn');
+  var hillBtn   = document.getElementById('pl-view-hill-btn');
+  var weekNav   = document.getElementById('pl-week-nav-wrap');
+  var hillAct   = document.getElementById('pl-hill-actions');
+  var psReload  = document.getElementById('pl-ps-reload-btn');
+  var psBrowser = document.getElementById('pl-ps-browser-btn');
+
+  if (view === 'proshop') {
+    psView.style.display   = 'flex';
+    hillView.style.display = 'none';
+    psBtn.style.background  = '#f59e0b';  psBtn.style.color  = '#0f2338';
+    hillBtn.style.background = 'transparent'; hillBtn.style.color = '#475569';
+    weekNav.style.display   = 'none';
+    hillAct.style.display   = 'none';
+    psReload.style.display  = '';
+    psBrowser.style.display = '';
+    // Lazy-load the frame the first time
+    var frame = document.getElementById('pl-ps-frame');
+    if (frame && !frame.src) frame.src = 'https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule';
+    // Show blocked notice after 4s if frame is still blank (X-Frame-Options)
+    setTimeout(function() {
+      try {
+        var blocked = document.getElementById('pl-ps-blocked');
+        if (blocked && frame && (!frame.contentDocument || !frame.contentDocument.body || frame.contentDocument.body.innerHTML === '')) {
+          blocked.style.display = 'flex';
+        }
+      } catch(e) {
+        // Cross-origin access throws — means it loaded but we can't read it (that's fine, not blocked)
+      }
+    }, 4000);
+  } else {
+    psView.style.display    = 'none';
+    hillView.style.display  = 'flex';
+    psBtn.style.background  = 'transparent'; psBtn.style.color  = '#475569';
+    hillBtn.style.background = '#f59e0b';    hillBtn.style.color = '#0f2338';
+    weekNav.style.display   = 'flex';
+    hillAct.style.display   = 'flex';
+    psReload.style.display  = 'none';
+    psBrowser.style.display = 'none';
+    if (window.plannerInit) window.plannerInit();
+  }
+};
+
+// Override plannerInit to respect view state
+var _origPlannerInit = window.plannerInit;
+window.plannerInit = function() {
+  // Always default to ProShop schedule view first
+  plannerSetView(_plannerView);
+  if (_origPlannerInit && _plannerView === 'hill') _origPlannerInit();
+};
+</script>
 
 <!-- ADD/EDIT WO MODAL -->
 <div class="pl-modal-overlay" id="pl-modal" onclick="if(event.target===this)plannerCloseModal()">
@@ -5446,14 +5553,19 @@
 
   function plannerWOChip(w){
     var priClass='pri-'+(w.priority||'normal');
-    var dueLabel=w.due?(' · Due: '+new Date(w.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'})):'';
+    var daysLeft='';
+    if(w.due){
+      var dl=Math.ceil((new Date(w.due+'T12:00')-new Date())/(1000*60*60*24));
+      daysLeft=dl<0?'<span style="color:#f87171;font-weight:700;">'+Math.abs(dl)+'d LATE</span>':dl===0?'<span style="color:#f87171;">DUE TODAY</span>':'<span style="color:'+(dl<=3?'#f87171':dl<=7?'#fbbf24':'#64748b')+';">'+dl+'d</span>';
+    }
     return '<div class="pl-wo '+priClass+'" draggable="true"'
       +' ondragstart="plannerDragStart(event,\''+w.id+'\')"'
       +' onclick="event.stopPropagation();plannerEditWO(\''+w.id+'\')">'
       +'<button class="pl-wo-del" onclick="event.stopPropagation();plannerDeleteWO(\''+w.id+'\')">✕</button>'
-      +'<div class="pl-wo-num">'+escHtml(w.wo||'WO')+'</div>'
+      +'<div class="pl-wo-num">'+escHtml(w.wo||'WO')+(w.qty?' <span style="font-size:10px;color:#94a3b8;font-family:Barlow,sans-serif;">×'+escHtml(w.qty)+'</span>':'')+'</div>'
       +'<div class="pl-wo-part">'+escHtml(w.part||'')+'</div>'
-      +'<div class="pl-wo-meta">'+(w.operator?'👤 '+escHtml(w.operator):'')+(w.runtime?' ⏱ '+escHtml(w.runtime):'')+(dueLabel?'<br>📅'+dueLabel:'')+'</div>'
+      +(w.customer?'<div style="font-size:10px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">'+escHtml(w.customer)+'</div>':'')
+      +'<div class="pl-wo-meta">'+(w.operator?'👤 '+escHtml(w.operator)+' ':'')+(daysLeft?'📅 '+daysLeft:'')+(w.runtime?' ⏱ '+escHtml(w.runtime):'')+'</div>'
       +'</div>';
   }
 
@@ -5467,12 +5579,15 @@
     if(count===0){body.innerHTML='<div style="font-size:12px;color:#334155;padding:4px 0;">All work orders assigned. Use + ADD WO or import a CSV to get started.</div>';return;}
     body.innerHTML=unassigned.map(function(w){
       var isLate=w.due&&new Date(w.due+'T23:59')<new Date();
-      return '<div class="pl-pool-wo'+(isLate?' late':'')+'" draggable="true"'
+      var isHot=w.priority==='hot';
+      return '<div class="pl-pool-wo'+(isLate||isHot?' late':'')+'" draggable="true"'
         +' ondragstart="plannerDragStart(event,\''+w.id+'\')"'
         +' onclick="plannerEditWO(\''+w.id+'\')">'
-        +'<div class="pl-pool-wo-num">'+escHtml(w.wo||'WO')+'</div>'
+        +'<div class="pl-pool-wo-num">'+escHtml(w.wo||'WO')+(w.qty?' <span style="font-size:10px;opacity:.7;">×'+escHtml(w.qty)+'</span>':'')+(isHot?' 🔴':'')+'</div>'
         +'<div class="pl-pool-wo-part">'+escHtml(w.part||'—')+'</div>'
-        +'<div class="pl-pool-wo-due">'+(w.due?'Due: '+new Date(w.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'}):'No due date')+(isLate?' ⚠ LATE':'')+'</div>'
+        +(w.customer?'<div style="font-size:10px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">'+escHtml(w.customer)+'</div>':'')
+        +'<div class="pl-pool-wo-due">'+(w.due?'🚢 '+new Date(w.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'}):'No due date')+(isLate?' ⚠ LATE':'')+'</div>'
+        +(w.planner?'<div style="font-size:10px;color:#334155;">👤 '+escHtml(w.planner)+'</div>':'')
         +'</div>';
     }).join('');
   }
@@ -5588,51 +5703,128 @@
     if(window.showToast) showToast('blue','Planner cleared','');
   };
 
-  // ── CSV Import (reuses ProShop CSV parser) ──
+  // ── CSV Import — mapped to ProShop's exact export columns ──
+  // Columns: "Work Order #","Part #","QtyOrdered","Customer","PartRev",
+  //          "WO Must Leave By","Cust. Due","Cust. PO #","Project Manager","Planner","Status","Material","Grade"
   window.plannerImportCSV=function(input){
     var file=input.files[0]; if(!file) return;
     var reader=new FileReader();
     reader.onload=function(ev){
       var text=ev.target.result;
+
+      // Split lines, skip empty
       var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
       if(lines.length<2){if(window.showToast)showToast('yellow','Empty CSV','No data rows found.');return;}
-      var header=lines[0].split(',').map(function(h){return h.replace(/"/g,'').trim().toLowerCase();});
-      var find=function(names){var i=-1;names.forEach(function(n){if(i<0){var j=header.findIndex(function(h){return h.indexOf(n)>=0;});if(j>=0)i=j;}});return i;};
-      var iWo=find(['work order','wo#','wo number','order']);
-      var iPart=find(['part','description','item']);
-      var iDue=find(['due','ship','required']);
-      var iMachine=find(['machine','resource','workcenter']);
-      var iQty=find(['qty','quantity']);
-      var iOp=find(['operator','assigned','employee']);
-      var added=0;
+
+      // Parse a quoted CSV line properly
+      function parseCSVLine(line){
+        var result=[],cur='',inQ=false;
+        for(var i=0;i<line.length;i++){
+          var c=line[i];
+          if(c==='"'){inQ=!inQ;}
+          else if(c===','&&!inQ){result.push(cur.trim());cur='';}
+          else cur+=c;
+        }
+        result.push(cur.trim());
+        return result;
+      }
+
+      // Map header names to indexes
+      var header=parseCSVLine(lines[0]).map(function(h){return h.toLowerCase();});
+      function col(name){ return header.indexOf(name); }
+
+      var iWo    = col('work order #');
+      var iPart  = col('part #');
+      var iQty   = col('qtyordered');
+      var iCust  = col('customer');
+      var iLeave = col('wo must leave by');   // "Must Leave By" = hard ship deadline
+      var iDue   = col('cust. due');
+      var iPO    = col('cust. po #');
+      var iPM    = col('project manager');
+      var iPlnr  = col('planner');
+      var iStat  = col('status');
+      var iMat   = col('material');
+
+      var today=new Date(); today.setHours(0,0,0,0);
+      var added=0, skipped=0, updated=0;
+
       lines.slice(1).forEach(function(line){
-        var cols=line.split(',').map(function(c){return c.replace(/^"|"$/g,'').trim();});
-        var wo=iWo>=0?cols[iWo]||'':'';
-        var part=iPart>=0?cols[iPart]||'':'';
-        if(!wo&&!part) return;
-        // Skip if already exists
-        if(plannerWOs.some(function(w){return w.wo&&w.wo===wo;})) return;
-        var dueRaw=iDue>=0?cols[iDue]||'':'';
-        var dueDate='';
-        if(dueRaw){var dp=new Date(dueRaw);if(!isNaN(dp))dueDate=plannerDateKey(dp);}
-        var machineName=iMachine>=0?cols[iMachine]||'':'';
-        // Try to match machine name to known machines
-        var matched=PLANNER_MACHINES.find(function(m){return m.name.toLowerCase()===machineName.toLowerCase();});
+        var c=parseCSVLine(line);
+
+        var wo   = iWo>=0   ? c[iWo]||''   : '';
+        var part = iPart>=0 ? c[iPart]||'' : '';
+
+        // Skip totals row and blank rows
+        if(!wo && !part) return;
+        if(wo.toUpperCase()==='TOTALS') return;
+
+        var status = iStat>=0 ? c[iStat]||'' : '';
+
+        // Parse "WO Must Leave By" as the primary due date (hardest deadline)
+        var leaveRaw = iLeave>=0 ? c[iLeave]||'' : '';
+        var dueRaw   = iDue>=0  ? c[iDue]||''  : '';
+        var dueDateStr='', leaveDate=null;
+        if(leaveRaw){ var dp=new Date(leaveRaw); if(!isNaN(dp)){leaveDate=dp; dueDateStr=plannerDateKey(dp);} }
+        else if(dueRaw){ var dp=new Date(dueRaw); if(!isNaN(dp)){leaveDate=dp; dueDateStr=plannerDateKey(dp);} }
+
+        // Auto-set priority based on "Must Leave By" date
+        var pri='normal';
+        if(leaveDate){
+          var daysLeft=Math.ceil((leaveDate-today)/(1000*60*60*24));
+          if(daysLeft<0)         pri='hot';    // already past due → HOT
+          else if(daysLeft<=3)   pri='hot';    // due within 3 days → HOT
+          else if(daysLeft<=7)   pri='high';   // due within a week → HIGH
+        }
+        if(status.toLowerCase().indexOf('complet')>=0) pri='done';
+
+        var planner = iPlnr>=0 ? c[iPlnr]||'' : '';
+        var pm      = iPM>=0   ? c[iPM]||''   : '';
+        var customer= iCust>=0 ? c[iCust]||'' : '';
+        var material= iMat>=0  ? c[iMat]||''  : '';
+        var po      = iPO>=0   ? c[iPO]||''   : '';
+
+        // If WO already exists — update priority & due date but keep assignment
+        var existing=plannerWOs.find(function(w){return w.wo&&w.wo===wo;});
+        if(existing){
+          existing.part=part||existing.part;
+          existing.due=dueDateStr||existing.due;
+          existing.priority=existing.priority==='hot'?'hot':pri; // don't downgrade a manually-set HOT
+          existing.customer=customer; existing.planner=planner; existing.pm=pm;
+          existing.material=material; existing.po=po;
+          existing.qty=iQty>=0?c[iQty]||existing.qty:existing.qty;
+          existing.status=status;
+          updated++;
+          return;
+        }
+
         plannerWOs.push({
-          id:Date.now().toString(36)+Math.random().toString(36).slice(2)+(added++),
-          wo:wo, part:part,
-          qty:iQty>=0?cols[iQty]||'':'',
-          due:dueDate,
-          machine:matched?matched.name:'',
-          scheduledDate:'',
-          operator:iOp>=0?cols[iOp]||'':'',
-          runtime:'', notes:'',
-          priority:'normal'
+          id: Date.now().toString(36)+Math.random().toString(36).slice(2)+(added),
+          wo: wo, part: part,
+          qty: iQty>=0 ? c[iQty]||'' : '',
+          due: dueDateStr,
+          customer: customer,
+          planner: planner,
+          pm: pm,
+          material: material,
+          po: po,
+          status: status,
+          machine: '',
+          scheduledDate: '',
+          operator: planner, // default operator to Planner field
+          runtime: '',
+          notes: material ? 'Material: '+material : '',
+          priority: pri
         });
         added++;
       });
+
       plannerSave(); plannerRender();
-      if(window.showToast) showToast('green',added+' WOs imported','Drag them onto machines to schedule');
+      var msg = added+' added';
+      if(updated) msg += ', '+updated+' updated';
+      var hotCount=plannerWOs.filter(function(w){return w.priority==='hot';}).length;
+      if(window.showToast){
+        showToast('green', msg+' from ProShop CSV', hotCount>0?'🔴 '+hotCount+' HOT/overdue WOs flagged':'All WOs loaded into pool');
+      }
     };
     reader.readAsText(file);
     input.value='';
