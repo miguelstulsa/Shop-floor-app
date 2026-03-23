@@ -5439,10 +5439,10 @@ window.plannerSetView = function(view) {
     if(hillAct)   hillAct.style.display   = 'flex';
     if(psReload)  psReload.style.display  = 'none';
     if(psBrowser) psBrowser.style.display = 'none';
-    // Directly call the real render functions — no fragile override needed
-    if(window._plannerReady) {
-      window._plannerDoInit();
-    }
+    // Directly call the real render functions — deferred so the IIFE has always run by this point
+    setTimeout(function(){
+      if(window._plannerDoInit) window._plannerDoInit();
+    }, 0);
   }
 };
 </script>
@@ -5593,19 +5593,26 @@ window.plannerSetView = function(view) {
   function plannerToday() { var d=new Date(); d.setHours(0,0,0,0); return plannerDateKey(d); }
 
   // ── Init / render ──
+  var _plannerInited = false;
   window._plannerReady = false;
   window._plannerDoInit = function() {
     plannerLoad();
     plannerPopulateMachineSelect();
     plannerRender();
-    // Try to sync from Firebase
-    if(window._db && window._fbModules){
-      var mods=window._fbModules, db2=window._db;
-      mods.getDoc(mods.doc(db2,'hillPlanner','wos')).then(function(snap){
-        if(snap.exists()){
-          try{ var d=JSON.parse(snap.data().data||'[]'); if(d.length>0){plannerWOs=d;plannerSave();plannerRender();} }catch(e){}
-        }
-      }).catch(function(){});
+    if(!_plannerInited) {
+      _plannerInited = true;
+      // One-time Firebase sync
+      if(window._db && window._fbModules){
+        var mods=window._fbModules, db2=window._db;
+        mods.getDoc(mods.doc(db2,'hillPlanner','wos')).then(function(snap){
+          if(snap.exists()){
+            try{
+              var d=JSON.parse(snap.data().data||'[]');
+              if(d.length>0){ plannerWOs=d; plannerSave(); plannerRender(); }
+            }catch(e){}
+          }
+        }).catch(function(){});
+      }
     }
   };
   window.plannerInit = function() {
@@ -5632,11 +5639,12 @@ window.plannerSetView = function(view) {
   function plannerRender(){
     plannerRenderGrid();
     plannerRenderPool();
-    // update week label
-    var days=plannerWeekDays(plannerWeekOffset);
-    var opts={month:'short',day:'numeric'};
-    document.getElementById('pl-week-label').textContent=
-      days[0].toLocaleDateString([],opts)+' – '+days[6].toLocaleDateString([],opts);
+    var wlEl = document.getElementById('pl-week-label');
+    if(wlEl) {
+      var days=plannerWeekDays(plannerWeekOffset);
+      var opts={month:'short',day:'numeric'};
+      wlEl.textContent = days[0].toLocaleDateString([],opts)+' – '+days[6].toLocaleDateString([],opts);
+    }
   }
 
   function plannerRenderGrid(){
@@ -6036,9 +6044,8 @@ window.plannerSetView = function(view) {
     input.value='';
   };
 
-  // Load on startup + mark ready
+  // Load on startup
   plannerLoad();
-  window._plannerReady = true;
 })();
 </script>
 
