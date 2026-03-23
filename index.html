@@ -1065,6 +1065,7 @@
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Datanomix</div>
   <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv">📺 Shop TV</div>
   <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop">🔗 ProShop</div>
+  <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner">📅 Planner</div>
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
   </nav>
   <button class="nav-scroll-btn right" onclick="scrollTabs(120)" aria-label="Scroll tabs right">&#8250;</button>
@@ -1950,7 +1951,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -1967,6 +1968,8 @@
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
     if (tab === 'proshop') { var psFrame = document.getElementById('proshop-iframe'); if (psFrame && !psFrame.src) psFrame.src = PROSHOP_BASE + '/'; }
+    var planEl = document.getElementById('page-planner'); if (planEl) planEl.style.display = tab === 'planner' ? 'flex' : 'none';
+    if (tab === 'planner') { if (window.plannerInit) window.plannerInit(); }
 
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
@@ -5090,7 +5093,8 @@
     <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:#60a5fa;">🔗 PROSHOP</div>
     <div style="flex:1;"></div>
     <button onclick="document.getElementById('proshop-iframe').src=PROSHOP_BASE+'/'" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">↺ RELOAD</button>
-    <button onclick="window.open(PROSHOP_BASE+'/', '_blank')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">↗ OPEN IN BROWSER</button>
+    <button onclick="switchTab('planner')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📅 PLANNER</button>
+    <button onclick="window.open(PROSHOP_BASE+'/', '_blank')" style="background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;color:#94a3b8;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">↗ OPEN IN BROWSER</button>
   </div>
   <!-- Iframe -->
   <iframe id="proshop-iframe" src="" style="flex:1;width:100%;border:none;background:#fff;" allow="fullscreen" loading="lazy"></iframe>
@@ -5101,6 +5105,543 @@
     <div style="font-size:13px;color:#64748b;max-width:320px;line-height:1.6;">If the site doesn't load inside the app, use the <strong style="color:#f0f4f8;">Open in Browser</strong> button above — some sites block embedded frames for security.</div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHEDULE PLANNER PAGE
+════════════════════════════════════════════════════════════ -->
+<style>
+/* ── PLANNER LAYOUT ── */
+#page-planner { background:#00071a; flex-direction:column; overflow:hidden; height:calc(100vh - 88px); }
+.pl-toolbar { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#0b1c2e; border-bottom:2px solid #1e3a5f; flex-shrink:0; flex-wrap:wrap; }
+.pl-toolbar-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; color:#f59e0b; white-space:nowrap; }
+.pl-week-nav { display:flex; align-items:center; gap:6px; }
+.pl-week-btn { background:rgba(255,255,255,0.06); border:1px solid #2a5a8c; color:#94a3b8; border-radius:7px; padding:5px 12px; font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+.pl-week-btn:hover { border-color:#f59e0b; color:#f59e0b; }
+.pl-week-label { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; color:#60a5fa; white-space:nowrap; min-width:160px; text-align:center; }
+.pl-spacer { flex:1; }
+.pl-action-btn { background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.35); color:#60a5fa; border-radius:7px; padding:5px 14px; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; white-space:nowrap; transition:all .2s; }
+.pl-action-btn:hover { background:rgba(59,130,246,0.22); }
+.pl-action-btn.amber { background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.35); color:#f59e0b; }
+.pl-action-btn.amber:hover { background:rgba(245,158,11,0.22); }
+.pl-action-btn.green { background:rgba(34,197,94,0.12); border-color:rgba(34,197,94,0.35); color:#4ade80; }
+
+/* ── CALENDAR GRID ── */
+.pl-body { flex:1; overflow:auto; position:relative; }
+.pl-grid { display:grid; min-width:700px; }
+/* header row */
+.pl-head { display:contents; }
+.pl-corner { position:sticky; left:0; z-index:20; background:#0b1c2e; border-right:2px solid #1e3a5f; border-bottom:2px solid #1e3a5f; padding:8px 10px; min-width:110px; }
+.pl-day-head { background:#0b1c2e; border-bottom:2px solid #1e3a5f; border-right:1px solid #1a3a5c; padding:8px 6px; text-align:center; position:sticky; top:0; z-index:10; }
+.pl-day-name { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; color:#64748b; }
+.pl-day-date { font-family:'Bebas Neue',sans-serif; font-size:20px; color:#f0f4f8; line-height:1; }
+.pl-day-head.today .pl-day-name { color:#f59e0b; }
+.pl-day-head.today .pl-day-date { color:#f59e0b; text-shadow:0 0 12px rgba(245,158,11,0.6); }
+/* machine rows */
+.pl-machine-label { position:sticky; left:0; z-index:5; background:#0d1f35; border-right:2px solid #1e3a5f; border-bottom:1px solid #1a3a5c; padding:6px 10px; min-width:110px; }
+.pl-machine-name { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1.5px; color:#f5d050; white-space:nowrap; }
+.pl-machine-cell { font-size:10px; color:#475569; letter-spacing:1px; margin-top:1px; }
+.pl-cell { border-right:1px solid #1a3a5c; border-bottom:1px solid #1a3a5c; padding:4px; min-height:72px; vertical-align:top; position:relative; cursor:pointer; transition:background .15s; }
+.pl-cell:hover { background:rgba(245,158,11,0.04); }
+.pl-cell.drop-over { background:rgba(245,158,11,0.12); outline:2px dashed #f59e0b; }
+/* WO chips */
+.pl-wo { border-radius:6px; padding:4px 7px; margin-bottom:3px; cursor:pointer; font-size:11px; line-height:1.35; position:relative; transition:transform .15s, box-shadow .15s; user-select:none; }
+.pl-wo:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+.pl-wo:active { transform:scale(.97); }
+.pl-wo.pri-hot    { background:rgba(239,68,68,0.25);   border-left:3px solid #ef4444; }
+.pl-wo.pri-high   { background:rgba(245,158,11,0.2);   border-left:3px solid #f59e0b; }
+.pl-wo.pri-normal { background:rgba(59,130,246,0.18);  border-left:3px solid #3b82f6; }
+.pl-wo.pri-done   { background:rgba(34,197,94,0.12);   border-left:3px solid #22c55e; opacity:.7; }
+.pl-wo-num  { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:1px; color:#f5c500; }
+.pl-wo-part { color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+.pl-wo-meta { color:#64748b; font-size:10px; margin-top:1px; }
+.pl-wo-del  { position:absolute; top:3px; right:4px; background:none; border:none; color:#334155; cursor:pointer; font-size:12px; padding:0; line-height:1; display:none; }
+.pl-wo:hover .pl-wo-del { display:block; }
+.pl-wo-del:hover { color:#ef4444; }
+/* unassigned pool */
+.pl-pool { border-top:2px solid #1e3a5f; flex-shrink:0; background:#080f1d; }
+.pl-pool-header { display:flex; align-items:center; gap:10px; padding:6px 14px; cursor:pointer; border-bottom:1px solid #1a3a5c; }
+.pl-pool-title { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; color:#475569; flex:1; }
+.pl-pool-count { background:rgba(239,68,68,0.2); color:#f87171; border-radius:999px; font-size:11px; font-weight:700; padding:1px 8px; }
+.pl-pool-toggle { color:#475569; font-size:13px; transition:transform .2s; }
+.pl-pool-body { padding:8px 12px; display:flex; gap:8px; flex-wrap:wrap; max-height:130px; overflow-y:auto; }
+.pl-pool-wo { border-radius:7px; padding:5px 10px; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); cursor:grab; user-select:none; transition:all .15s; }
+.pl-pool-wo:hover { background:rgba(59,130,246,0.25); transform:translateY(-1px); }
+.pl-pool-wo.late { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.3); }
+.pl-pool-wo-num  { font-family:'Bebas Neue',sans-serif; font-size:13px; color:#f5c500; letter-spacing:1px; }
+.pl-pool-wo-part { font-size:11px; color:#94a3b8; white-space:nowrap; max-width:130px; overflow:hidden; text-overflow:ellipsis; }
+.pl-pool-wo-due  { font-size:10px; color:#64748b; margin-top:1px; }
+/* Modal */
+.pl-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:3000; display:none; align-items:center; justify-content:center; padding:16px; }
+.pl-modal-overlay.open { display:flex; }
+.pl-modal { background:#0f2338; border:1px solid #2a5a8c; border-radius:16px; padding:24px; width:100%; max-width:460px; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,0.7); }
+.pl-modal-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#f59e0b; margin-bottom:16px; }
+.pl-field-label { font-size:11px; color:#64748b; letter-spacing:1px; margin-bottom:4px; text-transform:uppercase; }
+.pl-input { width:100%; background:rgba(255,255,255,0.06); border:1px solid #2a5a8c; border-radius:8px; padding:9px 12px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; outline:none; box-sizing:border-box; color-scheme:dark; transition:border-color .2s; }
+.pl-input:focus { border-color:#f59e0b; }
+.pl-pri-btns { display:flex; gap:8px; flex-wrap:wrap; }
+.pl-pri-btn { padding:7px 16px; border-radius:20px; border:1px solid #2a5a8c; background:transparent; color:#64748b; font-size:12px; font-weight:700; cursor:pointer; transition:all .2s; letter-spacing:.5px; }
+.pl-pri-btn.sel-hot    { border-color:#ef4444; background:rgba(239,68,68,0.2);   color:#f87171; }
+.pl-pri-btn.sel-high   { border-color:#f59e0b; background:rgba(245,158,11,0.2);  color:#f59e0b; }
+.pl-pri-btn.sel-normal { border-color:#3b82f6; background:rgba(59,130,246,0.2);  color:#60a5fa; }
+.pl-machine-select { width:100%; background:rgba(255,255,255,0.06); border:1px solid #2a5a8c; border-radius:8px; padding:9px 12px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; outline:none; box-sizing:border-box; color-scheme:dark; }
+.pl-btn-row { display:flex; gap:10px; margin-top:20px; }
+.pl-save-btn { flex:2; padding:13px; background:#f59e0b; border:none; color:#0f2338; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; cursor:pointer; font-weight:900; }
+.pl-cancel-btn { flex:1; padding:13px; background:rgba(255,255,255,0.06); border:1px solid #2a5a8c; color:#94a3b8; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; cursor:pointer; }
+</style>
+
+<!-- PLANNER PAGE -->
+<div id="page-planner" style="display:none;flex-direction:column;height:calc(100vh - 88px);background:#00071a;">
+
+  <!-- Toolbar -->
+  <div class="pl-toolbar">
+    <div class="pl-toolbar-title">📅 PLANNER</div>
+    <div class="pl-week-nav">
+      <button class="pl-week-btn" onclick="plannerShiftWeek(-1)">&#8249;</button>
+      <div class="pl-week-label" id="pl-week-label">—</div>
+      <button class="pl-week-btn" onclick="plannerShiftWeek(1)">&#8250;</button>
+    </div>
+    <button class="pl-week-btn" onclick="plannerGoToday()" style="font-size:11px;padding:5px 10px;">TODAY</button>
+    <div class="pl-spacer"></div>
+    <button class="pl-action-btn" onclick="switchTab('proshop')" style="background:rgba(96,165,250,0.12);border-color:rgba(96,165,250,0.35);color:#60a5fa;">🔗 PROSHOP</button>
+    <button class="pl-action-btn amber" onclick="document.getElementById('pl-csv-input').click()">📥 IMPORT CSV</button>
+    <input type="file" id="pl-csv-input" accept=".csv,.txt" style="display:none" onchange="plannerImportCSV(this)">
+    <button class="pl-action-btn green" onclick="plannerOpenAddModal()">＋ ADD WO</button>
+    <button class="pl-action-btn" onclick="plannerClearAll()" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3);color:#f87171;">🗑 CLEAR</button>
+  </div>
+
+  <!-- Calendar scroll body -->
+  <div class="pl-body" id="pl-body">
+    <div id="pl-grid-wrap"></div>
+  </div>
+
+  <!-- Unassigned pool -->
+  <div class="pl-pool" id="pl-pool">
+    <div class="pl-pool-header" onclick="plannerTogglePool()">
+      <div class="pl-pool-title">⬛ UNASSIGNED WORK ORDERS</div>
+      <div class="pl-pool-count" id="pl-pool-count">0</div>
+      <div class="pl-pool-toggle" id="pl-pool-toggle">▲</div>
+    </div>
+    <div class="pl-pool-body" id="pl-pool-body"></div>
+  </div>
+</div>
+
+<!-- ADD/EDIT WO MODAL -->
+<div class="pl-modal-overlay" id="pl-modal" onclick="if(event.target===this)plannerCloseModal()">
+  <div class="pl-modal">
+    <div class="pl-modal-title" id="pl-modal-title">NEW WORK ORDER</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div>
+        <div class="pl-field-label">WO #</div>
+        <input class="pl-input" id="pl-f-wo" placeholder="e.g. 10452" maxlength="30">
+      </div>
+      <div>
+        <div class="pl-field-label">Qty</div>
+        <input class="pl-input" id="pl-f-qty" placeholder="e.g. 12" maxlength="10">
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Part / Description</div>
+      <input class="pl-input" id="pl-f-part" placeholder="Part name or number" maxlength="80">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div>
+        <div class="pl-field-label">Due Date</div>
+        <input class="pl-input" id="pl-f-due" type="date">
+      </div>
+      <div>
+        <div class="pl-field-label">Est. Run Time</div>
+        <input class="pl-input" id="pl-f-runtime" placeholder="e.g. 4h, 2 days">
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Assign to Machine</div>
+      <select class="pl-machine-select" id="pl-f-machine">
+        <option value="">— Unassigned —</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Scheduled Date</div>
+      <input class="pl-input" id="pl-f-date" type="date">
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Operator</div>
+      <input class="pl-input" id="pl-f-operator" placeholder="Operator name" maxlength="40">
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Priority</div>
+      <div class="pl-pri-btns" id="pl-pri-btns">
+        <button class="pl-pri-btn sel-normal" onclick="plannerSelPri('normal',this)">NORMAL</button>
+        <button class="pl-pri-btn" onclick="plannerSelPri('high',this)">🟠 HIGH</button>
+        <button class="pl-pri-btn" onclick="plannerSelPri('hot',this)">🔴 HOT</button>
+        <button class="pl-pri-btn" onclick="plannerSelPri('done',this)">✅ DONE</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:4px;">
+      <div class="pl-field-label">Notes</div>
+      <textarea class="pl-input" id="pl-f-notes" rows="2" placeholder="Special instructions, tooling notes…" style="resize:none;"></textarea>
+    </div>
+
+    <div class="pl-btn-row">
+      <button class="pl-cancel-btn" onclick="plannerCloseModal()">CANCEL</button>
+      <button class="pl-save-btn" onclick="plannerSaveWO()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// SCHEDULE PLANNER
+// ══════════════════════════════════════════════════
+(function(){
+
+  // ── State ──
+  var PLANNER_KEY = 'hillPlannerWOs_v2';
+  var plannerWOs  = [];          // array of WO objects
+  var plannerWeekOffset = 0;     // 0 = current week
+  var plannerEditId = null;      // id of WO being edited
+  var plannerSelectedPri = 'normal';
+  var plannerPoolOpen = true;
+
+  // Machine list from DNX config
+  var PLANNER_MACHINES = [
+    {name:'1050-B',cell:'Big Mill'},{name:'7000',cell:'Big Mill'},{name:'VF-6',cell:'Big Mill'},
+    {name:'5100-B',cell:'5100 Cell'},{name:'2500',cell:'5100 Cell'},{name:'PUMA-3',cell:'5100 Cell'},
+    {name:'ST35',cell:'MPPI'},{name:'VF-3',cell:'MPPI'},{name:'VF-2',cell:'MPPI'},{name:'PUMA-2',cell:'MPPI'},
+    {name:'403-A',cell:'403 Cell'},{name:'403-B',cell:'403 Cell'},{name:'403-C',cell:'403 Cell'},
+    {name:'5100-A',cell:'Mill/Lathe'},{name:'SHARP',cell:'Mill/Lathe'},{name:'SH403',cell:'Mill/Lathe'},{name:'5000',cell:'Mill/Lathe'},
+    {name:'3000-C',cell:'3000 Cell'},{name:'SYIL',cell:'3000 Cell'},{name:'3000-A',cell:'3000 Cell'},
+    {name:'EMCO',cell:'Horizontal'},{name:'2G',cell:'Horizontal'},
+    {name:'PUMA-1',cell:'Automation'},{name:'303-B',cell:'Automation'},{name:'TWIN',cell:'Automation'},{name:'2500-Y',cell:'Automation'},
+    {name:'SAW-1',cell:'Saws'},{name:'SAW-2',cell:'Saws'}
+  ];
+
+  // ── Persistence ──
+  function plannerLoad() {
+    try { var s=localStorage.getItem(PLANNER_KEY); if(s) plannerWOs=JSON.parse(s); } catch(e){}
+  }
+  function plannerSave() {
+    try { localStorage.setItem(PLANNER_KEY, JSON.stringify(plannerWOs)); } catch(e){}
+    // Firebase sync
+    if(window._db && window._fbModules){
+      var mods=window._fbModules, db2=window._db;
+      mods.setDoc(mods.doc(db2,'hillPlanner','wos'), {data: JSON.stringify(plannerWOs), updatedAt: mods.serverTimestamp()})
+        .catch(function(){});
+    }
+  }
+
+  // ── Week helpers ──
+  function plannerWeekStart(offset) {
+    var d = new Date();
+    d.setHours(0,0,0,0);
+    var day = d.getDay(); // 0=Sun
+    d.setDate(d.getDate() - day + (offset * 7));
+    return d;
+  }
+  function plannerWeekDays(offset) {
+    var start = plannerWeekStart(offset);
+    var days = [];
+    for(var i=0;i<7;i++){
+      var d2 = new Date(start);
+      d2.setDate(start.getDate()+i);
+      days.push(d2);
+    }
+    return days;
+  }
+  function plannerDateKey(d) {
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function plannerToday() { var d=new Date(); d.setHours(0,0,0,0); return plannerDateKey(d); }
+
+  // ── Init / render ──
+  window.plannerInit = function() {
+    plannerLoad();
+    plannerPopulateMachineSelect();
+    plannerRender();
+    // Try to sync from Firebase
+    if(window._db && window._fbModules){
+      var mods=window._fbModules, db2=window._db;
+      mods.getDoc(mods.doc(db2,'hillPlanner','wos')).then(function(snap){
+        if(snap.exists()){
+          try{ var d=JSON.parse(snap.data().data||'[]'); if(d.length>0){plannerWOs=d;plannerSave();plannerRender();} }catch(e){}
+        }
+      }).catch(function(){});
+    }
+  };
+
+  function plannerPopulateMachineSelect(){
+    var sel=document.getElementById('pl-f-machine');
+    if(!sel||sel.options.length>1) return;
+    var lastCell='';
+    PLANNER_MACHINES.forEach(function(m){
+      if(m.cell!==lastCell){
+        var og=document.createElement('optgroup');
+        og.label='── '+m.cell+' ──';
+        sel.appendChild(og);
+        lastCell=m.cell;
+      }
+      var op=document.createElement('option');
+      op.value=m.name; op.textContent=m.name+' ('+m.cell+')';
+      sel.appendChild(op);
+    });
+  }
+
+  function plannerRender(){
+    plannerRenderGrid();
+    plannerRenderPool();
+    // update week label
+    var days=plannerWeekDays(plannerWeekOffset);
+    var opts={month:'short',day:'numeric'};
+    document.getElementById('pl-week-label').textContent=
+      days[0].toLocaleDateString([],opts)+' – '+days[6].toLocaleDateString([],opts);
+  }
+
+  function plannerRenderGrid(){
+    var days=plannerWeekDays(plannerWeekOffset);
+    var todayKey=plannerToday();
+    var wrap=document.getElementById('pl-grid-wrap');
+    if(!wrap) return;
+
+    var cols=1+7; // machine col + 7 days
+    var html='<div style="display:grid;grid-template-columns:110px repeat(7,minmax(120px,1fr));width:100%;">';
+
+    // Header row
+    html+='<div class="pl-corner"><div style="font-size:10px;color:#334155;letter-spacing:1px;">MACHINE</div></div>';
+    var dayNames=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    days.forEach(function(d,i){
+      var isToday=plannerDateKey(d)===todayKey;
+      html+='<div class="pl-day-head'+(isToday?' today':'')+'">'
+        +'<div class="pl-day-name">'+dayNames[i]+'</div>'
+        +'<div class="pl-day-date">'+d.getDate()+'</div>'
+        +'</div>';
+    });
+
+    // Machine rows
+    PLANNER_MACHINES.forEach(function(m){
+      html+='<div class="pl-machine-label">'
+        +'<div class="pl-machine-name">'+m.name+'</div>'
+        +'<div class="pl-machine-cell">'+m.cell+'</div>'
+        +'</div>';
+      days.forEach(function(d){
+        var dk=plannerDateKey(d);
+        var cellWOs=plannerWOs.filter(function(w){return w.machine===m.name && w.scheduledDate===dk;});
+        html+='<div class="pl-cell" data-machine="'+m.name+'" data-date="'+dk+'" onclick="plannerCellClick(this,event)"'
+          +' ondragover="plannerDragOver(event,this)" ondragleave="plannerDragLeave(this)" ondrop="plannerDrop(event,this)">';
+        cellWOs.forEach(function(w){
+          html+=plannerWOChip(w);
+        });
+        html+='</div>';
+      });
+    });
+    html+='</div>';
+    wrap.innerHTML=html;
+  }
+
+  function plannerWOChip(w){
+    var priClass='pri-'+(w.priority||'normal');
+    var dueLabel=w.due?(' · Due: '+new Date(w.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'})):'';
+    return '<div class="pl-wo '+priClass+'" draggable="true"'
+      +' ondragstart="plannerDragStart(event,\''+w.id+'\')"'
+      +' onclick="event.stopPropagation();plannerEditWO(\''+w.id+'\')">'
+      +'<button class="pl-wo-del" onclick="event.stopPropagation();plannerDeleteWO(\''+w.id+'\')">✕</button>'
+      +'<div class="pl-wo-num">'+escHtml(w.wo||'WO')+'</div>'
+      +'<div class="pl-wo-part">'+escHtml(w.part||'')+'</div>'
+      +'<div class="pl-wo-meta">'+(w.operator?'👤 '+escHtml(w.operator):'')+(w.runtime?' ⏱ '+escHtml(w.runtime):'')+(dueLabel?'<br>📅'+dueLabel:'')+'</div>'
+      +'</div>';
+  }
+
+  function plannerRenderPool(){
+    var unassigned=plannerWOs.filter(function(w){return !w.machine||!w.scheduledDate;});
+    var count=unassigned.length;
+    document.getElementById('pl-pool-count').textContent=count;
+    var body=document.getElementById('pl-pool-body');
+    if(!plannerPoolOpen){body.style.display='none';return;}
+    body.style.display='flex';
+    if(count===0){body.innerHTML='<div style="font-size:12px;color:#334155;padding:4px 0;">All work orders assigned. Use + ADD WO or import a CSV to get started.</div>';return;}
+    body.innerHTML=unassigned.map(function(w){
+      var isLate=w.due&&new Date(w.due+'T23:59')<new Date();
+      return '<div class="pl-pool-wo'+(isLate?' late':'')+'" draggable="true"'
+        +' ondragstart="plannerDragStart(event,\''+w.id+'\')"'
+        +' onclick="plannerEditWO(\''+w.id+'\')">'
+        +'<div class="pl-pool-wo-num">'+escHtml(w.wo||'WO')+'</div>'
+        +'<div class="pl-pool-wo-part">'+escHtml(w.part||'—')+'</div>'
+        +'<div class="pl-pool-wo-due">'+(w.due?'Due: '+new Date(w.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'}):'No due date')+(isLate?' ⚠ LATE':'')+'</div>'
+        +'</div>';
+    }).join('');
+  }
+
+  // ── Navigation ──
+  window.plannerShiftWeek=function(dir){ plannerWeekOffset+=dir; plannerRender(); };
+  window.plannerGoToday=function(){ plannerWeekOffset=0; plannerRender(); };
+  window.plannerTogglePool=function(){
+    plannerPoolOpen=!plannerPoolOpen;
+    document.getElementById('pl-pool-toggle').textContent=plannerPoolOpen?'▲':'▼';
+    plannerRenderPool();
+  };
+
+  // ── Drag & drop ──
+  var _dragId=null;
+  window.plannerDragStart=function(e,id){ _dragId=id; e.dataTransfer.effectAllowed='move'; };
+  window.plannerDragOver=function(e,el){ e.preventDefault(); e.dataTransfer.dropEffect='move'; el.classList.add('drop-over'); };
+  window.plannerDragLeave=function(el){ el.classList.remove('drop-over'); };
+  window.plannerDrop=function(e,el){
+    e.preventDefault(); el.classList.remove('drop-over');
+    var machine=el.dataset.machine, date=el.dataset.date;
+    if(!_dragId||!machine||!date) return;
+    var wo=plannerWOs.find(function(w){return w.id===_dragId;});
+    if(!wo) return;
+    wo.machine=machine; wo.scheduledDate=date;
+    plannerSave(); plannerRender();
+    if(window.showToast) showToast('green','WO '+wo.wo+' assigned','→ '+machine+' on '+new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
+    _dragId=null;
+  };
+
+  // ── Cell click (add WO to that machine/date) ──
+  window.plannerCellClick=function(el,e){
+    if(e.target.closest('.pl-wo')) return;
+    plannerOpenAddModal(el.dataset.machine, el.dataset.date);
+  };
+
+  // ── Modal ──
+  window.plannerOpenAddModal=function(machine,date){
+    plannerEditId=null;
+    document.getElementById('pl-modal-title').textContent='NEW WORK ORDER';
+    document.getElementById('pl-f-wo').value='';
+    document.getElementById('pl-f-part').value='';
+    document.getElementById('pl-f-qty').value='';
+    document.getElementById('pl-f-due').value='';
+    document.getElementById('pl-f-runtime').value='';
+    document.getElementById('pl-f-operator').value='';
+    document.getElementById('pl-f-notes').value='';
+    document.getElementById('pl-f-machine').value=machine||'';
+    document.getElementById('pl-f-date').value=date||'';
+    plannerSelPri('normal');
+    document.getElementById('pl-modal').classList.add('open');
+  };
+  window.plannerEditWO=function(id){
+    var w=plannerWOs.find(function(x){return x.id===id;});
+    if(!w) return;
+    plannerEditId=id;
+    document.getElementById('pl-modal-title').textContent='EDIT WORK ORDER';
+    document.getElementById('pl-f-wo').value=w.wo||'';
+    document.getElementById('pl-f-part').value=w.part||'';
+    document.getElementById('pl-f-qty').value=w.qty||'';
+    document.getElementById('pl-f-due').value=w.due||'';
+    document.getElementById('pl-f-runtime').value=w.runtime||'';
+    document.getElementById('pl-f-operator').value=w.operator||'';
+    document.getElementById('pl-f-notes').value=w.notes||'';
+    document.getElementById('pl-f-machine').value=w.machine||'';
+    document.getElementById('pl-f-date').value=w.scheduledDate||'';
+    plannerSelPri(w.priority||'normal');
+    document.getElementById('pl-modal').classList.add('open');
+  };
+  window.plannerCloseModal=function(){
+    document.getElementById('pl-modal').classList.remove('open');
+  };
+  window.plannerSelPri=function(pri,btn){
+    plannerSelectedPri=pri;
+    document.querySelectorAll('.pl-pri-btn').forEach(function(b){
+      b.className='pl-pri-btn';
+      if(b.onclick&&b.getAttribute('onclick')&&b.getAttribute('onclick').indexOf("'"+pri+"'")>=0) b.className='pl-pri-btn sel-'+pri;
+    });
+  };
+  window.plannerSaveWO=function(){
+    var wo=(document.getElementById('pl-f-wo').value||'').trim();
+    var part=(document.getElementById('pl-f-part').value||'').trim();
+    if(!wo&&!part){if(window.showToast)showToast('yellow','Missing info','Add a WO# or part name.');return;}
+    var obj={
+      id: plannerEditId||(Date.now().toString(36)+Math.random().toString(36).slice(2)),
+      wo:wo, part:part,
+      qty:(document.getElementById('pl-f-qty').value||'').trim(),
+      due:(document.getElementById('pl-f-due').value||''),
+      runtime:(document.getElementById('pl-f-runtime').value||'').trim(),
+      operator:(document.getElementById('pl-f-operator').value||'').trim(),
+      notes:(document.getElementById('pl-f-notes').value||'').trim(),
+      machine:(document.getElementById('pl-f-machine').value||''),
+      scheduledDate:(document.getElementById('pl-f-date').value||''),
+      priority:plannerSelectedPri
+    };
+    if(plannerEditId){
+      var idx=plannerWOs.findIndex(function(x){return x.id===plannerEditId;});
+      if(idx>=0) plannerWOs[idx]=obj;
+    } else {
+      plannerWOs.push(obj);
+    }
+    plannerSave(); plannerRender(); plannerCloseModal();
+    if(window.showToast) showToast('green', (plannerEditId?'Updated':'Added')+' WO '+wo, obj.machine?'→ '+obj.machine:'Unassigned');
+  };
+  window.plannerDeleteWO=function(id){
+    plannerWOs=plannerWOs.filter(function(w){return w.id!==id;});
+    plannerSave(); plannerRender();
+  };
+  window.plannerClearAll=function(){
+    if(!confirm('Clear ALL scheduled work orders? This cannot be undone.')) return;
+    plannerWOs=[];
+    plannerSave(); plannerRender();
+    if(window.showToast) showToast('blue','Planner cleared','');
+  };
+
+  // ── CSV Import (reuses ProShop CSV parser) ──
+  window.plannerImportCSV=function(input){
+    var file=input.files[0]; if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var text=ev.target.result;
+      var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
+      if(lines.length<2){if(window.showToast)showToast('yellow','Empty CSV','No data rows found.');return;}
+      var header=lines[0].split(',').map(function(h){return h.replace(/"/g,'').trim().toLowerCase();});
+      var find=function(names){var i=-1;names.forEach(function(n){if(i<0){var j=header.findIndex(function(h){return h.indexOf(n)>=0;});if(j>=0)i=j;}});return i;};
+      var iWo=find(['work order','wo#','wo number','order']);
+      var iPart=find(['part','description','item']);
+      var iDue=find(['due','ship','required']);
+      var iMachine=find(['machine','resource','workcenter']);
+      var iQty=find(['qty','quantity']);
+      var iOp=find(['operator','assigned','employee']);
+      var added=0;
+      lines.slice(1).forEach(function(line){
+        var cols=line.split(',').map(function(c){return c.replace(/^"|"$/g,'').trim();});
+        var wo=iWo>=0?cols[iWo]||'':'';
+        var part=iPart>=0?cols[iPart]||'':'';
+        if(!wo&&!part) return;
+        // Skip if already exists
+        if(plannerWOs.some(function(w){return w.wo&&w.wo===wo;})) return;
+        var dueRaw=iDue>=0?cols[iDue]||'':'';
+        var dueDate='';
+        if(dueRaw){var dp=new Date(dueRaw);if(!isNaN(dp))dueDate=plannerDateKey(dp);}
+        var machineName=iMachine>=0?cols[iMachine]||'':'';
+        // Try to match machine name to known machines
+        var matched=PLANNER_MACHINES.find(function(m){return m.name.toLowerCase()===machineName.toLowerCase();});
+        plannerWOs.push({
+          id:Date.now().toString(36)+Math.random().toString(36).slice(2)+(added++),
+          wo:wo, part:part,
+          qty:iQty>=0?cols[iQty]||'':'',
+          due:dueDate,
+          machine:matched?matched.name:'',
+          scheduledDate:'',
+          operator:iOp>=0?cols[iOp]||'':'',
+          runtime:'', notes:'',
+          priority:'normal'
+        });
+        added++;
+      });
+      plannerSave(); plannerRender();
+      if(window.showToast) showToast('green',added+' WOs imported','Drag them onto machines to schedule');
+    };
+    reader.readAsText(file);
+    input.value='';
+  };
+
+  // Load on startup
+  plannerLoad();
+})();
+</script>
 
 <!-- SHOP TV PAGE -->
 <div id="page-shoptv" style="display:none;position:fixed;inset:0;z-index:8000;background:#00050f;flex-direction:column;overflow:hidden;">
