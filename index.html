@@ -5086,25 +5086,142 @@
   </div>
 </div>
 
-<!-- PROSHOP EMBEDDED PAGE -->
-<div id="page-proshop" style="display:none;flex-direction:column;height:calc(100vh - 88px);background:#0a1525;">
-  <!-- Toolbar -->
-  <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:#0b1c2e;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:#60a5fa;">🔗 PROSHOP</div>
-    <div style="flex:1;"></div>
-    <button onclick="document.getElementById('proshop-iframe').src=PROSHOP_BASE+'/'" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">↺ RELOAD</button>
-    <button onclick="switchTab('planner')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📅 PLANNER</button>
-    <button onclick="window.open(PROSHOP_BASE+'/', '_blank')" style="background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;color:#94a3b8;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">↗ OPEN IN BROWSER</button>
+<!-- PROSHOP HUB PAGE -->
+<div id="page-proshop" style="display:none;flex-direction:column;height:calc(100vh - 88px);background:#00071a;overflow-y:auto;">
+
+  <!-- Header bar -->
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#0b1c2e;border-bottom:2px solid #1e3a5f;flex-shrink:0;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#60a5fa;">🔗 PROSHOP</div>
+    <div style="flex:1;font-size:11px;color:#334155;letter-spacing:1px;">hill.adionsystems.com</div>
+    <button onclick="switchTab('planner')" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📅 PLANNER</button>
   </div>
-  <!-- Iframe -->
-  <iframe id="proshop-iframe" src="" style="flex:1;width:100%;border:none;background:#fff;" allow="fullscreen" loading="lazy"></iframe>
-  <!-- Blocked notice (shown if iframe fails to load due to X-Frame-Options) -->
-  <div id="proshop-blocked" style="display:none;position:absolute;inset:0;top:120px;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:40px;pointer-events:none;">
-    <div style="font-size:48px;">🔗</div>
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f59e0b;">PROSHOP</div>
-    <div style="font-size:13px;color:#64748b;max-width:320px;line-height:1.6;">If the site doesn't load inside the app, use the <strong style="color:#f0f4f8;">Open in Browser</strong> button above — some sites block embedded frames for security.</div>
+
+  <div style="padding:16px;max-width:700px;margin:0 auto;width:100%;">
+
+    <!-- Can't embed notice -->
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:24px;flex-shrink:0;">ℹ️</div>
+      <div>
+        <div style="font-size:13px;color:#94a3b8;line-height:1.6;">ProShop blocks embedding for security — tap any link below to open directly in your browser. Use <strong style="color:#f59e0b;">↗ OPEN PROSHOP</strong> to log in, then come back and import your CSV into the Planner.</div>
+      </div>
+    </div>
+
+    <!-- Big open button -->
+    <button onclick="window.open('https://hill.adionsystems.com/procnc','_blank')"
+      style="width:100%;padding:18px;background:linear-gradient(135deg,#1e4976,#2a6ab5);border:2px solid #3b82f6;border-radius:14px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 20px rgba(59,130,246,0.2);">
+      <span style="font-size:26px;">🔗</span> OPEN PROSHOP IN BROWSER
+    </button>
+
+    <!-- Quick links grid -->
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#475569;margin-bottom:10px;">QUICK LINKS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">📅</span>
+        <span>SCHEDULE</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">View shop schedule</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/workorders','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">📋</span>
+        <span>WORK ORDERS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Export CSV from here</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/parts','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🔩</span>
+        <span>PARTS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Part library</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/customers','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🏢</span>
+        <span>CUSTOMERS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Customer list</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/tools','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🔧</span>
+        <span>TOOLS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Tool library</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/purchaseorders','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🛒</span>
+        <span>PURCHASE ORDERS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">PO management</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/fixtures','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🗜️</span>
+        <span>FIXTURES</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Fixture library</span>
+      </button>
+
+    </div>
+
+    <!-- Import CSV section -->
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#475569;margin-bottom:10px;">IMPORT INTO PLANNER</div>
+    <div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:14px;padding:18px;">
+      <div style="font-size:13px;color:#94a3b8;line-height:1.8;margin-bottom:14px;">
+        <strong style="color:#f0f4f8;">How to export from ProShop:</strong><br>
+        1. Open <strong style="color:#60a5fa;">Work Orders</strong> in ProShop<br>
+        2. Click <strong style="color:#60a5fa;">Reports</strong> → <em>Active WOs by Must Leave By</em><br>
+        3. Hit <strong style="color:#60a5fa;">Export CSV</strong> and save the file<br>
+        4. Tap the button below to import it
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="document.getElementById('ps-hub-csv').click()"
+          style="flex:1;min-width:160px;padding:13px;background:#f59e0b;border:none;color:#0f2338;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;font-weight:900;">
+          📥 IMPORT CSV → PLANNER
+        </button>
+        <button onclick="switchTab('planner');setTimeout(function(){plannerSetView('hill');},100);"
+          style="flex:1;min-width:140px;padding:13px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;">
+          📅 GO TO PLANNER
+        </button>
+      </div>
+      <input type="file" id="ps-hub-csv" accept=".csv,.txt" style="display:none" onchange="plannerImportCSV(this);switchTab('planner');setTimeout(function(){plannerSetView('hill');},200);">
+      <div id="ps-hub-import-status" style="margin-top:10px;font-size:12px;color:#4ade80;display:none;"></div>
+    </div>
+
+    <!-- WO summary pulled from planner data -->
+    <div style="margin-top:20px;" id="ps-hub-summary"></div>
   </div>
 </div>
+
+<script>
+// Refresh ProShop hub summary when tab opens
+(function(){
+  var _origST = window.switchTab;
+  window.switchTab = function(tab) {
+    _origST(tab);
+    if(tab === 'proshop') {
+      setTimeout(function(){
+        var el = document.getElementById('ps-hub-summary');
+        if(!el || !window._pl) return;
+        var wos = window._pl.wos || [];
+        if(!wos.length){ el.innerHTML=''; return; }
+        var unassigned = wos.filter(function(w){return !w.machine||!w.scheduledDate;}).length;
+        var hot  = wos.filter(function(w){return w.priority==='hot';}).length;
+        var done = wos.filter(function(w){return w.priority==='done';}).length;
+        el.innerHTML = '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:2px;color:#475569;margin-bottom:10px;">PLANNER STATUS</div>'
+          +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'
+          +'<div style="background:#0d1f35;border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#f87171;">'+hot+'</div><div style="font-size:10px;color:#475569;letter-spacing:1px;">🔴 HOT</div></div>'
+          +'<div style="background:#0d1f35;border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#60a5fa;">'+unassigned+'</div><div style="font-size:10px;color:#475569;letter-spacing:1px;">UNASSIGNED</div></div>'
+          +'<div style="background:#0d1f35;border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#4ade80;">'+done+'</div><div style="font-size:10px;color:#475569;letter-spacing:1px;">✅ DONE</div></div>'
+          +'</div>';
+      }, 50);
+    }
+  };
+})();
+</script>
 
 <!-- ═══════════════════════════════════════════════════════════
      SCHEDULE PLANNER PAGE
@@ -5260,14 +5377,16 @@
       <div id="pl-grid-wrap"></div>
     </div>
 
-    <!-- Unassigned pool -->
+    <!-- Unassigned pool — full quick-assign panel -->
     <div class="pl-pool" id="pl-pool">
       <div class="pl-pool-header" onclick="plannerTogglePool()">
         <div class="pl-pool-title">⬛ UNASSIGNED WORK ORDERS</div>
         <div class="pl-pool-count" id="pl-pool-count">0</div>
+        <div style="font-size:10px;color:#334155;letter-spacing:1px;flex:1;padding-left:8px;" id="pl-pool-hint"></div>
         <div class="pl-pool-toggle" id="pl-pool-toggle">▲</div>
       </div>
-      <div class="pl-pool-body" id="pl-pool-body"></div>
+      <!-- Quick-assign grid -->
+      <div id="pl-pool-body" style="overflow-y:auto;max-height:42vh;padding:8px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px;"></div>
     </div>
 
   </div>
@@ -5380,10 +5499,10 @@ window.plannerSetView = function(view) {
     <div style="margin-bottom:12px;">
       <div class="pl-field-label">Priority</div>
       <div class="pl-pri-btns" id="pl-pri-btns">
-        <button class="pl-pri-btn sel-normal" onclick="plannerSelPri('normal',this)">NORMAL</button>
-        <button class="pl-pri-btn" onclick="plannerSelPri('high',this)">🟠 HIGH</button>
-        <button class="pl-pri-btn" onclick="plannerSelPri('hot',this)">🔴 HOT</button>
-        <button class="pl-pri-btn" onclick="plannerSelPri('done',this)">✅ DONE</button>
+        <button class="pl-pri-btn sel-normal" data-pri="normal"  onclick="plannerSelPri('normal')">NORMAL</button>
+        <button class="pl-pri-btn"            data-pri="high"    onclick="plannerSelPri('high')">🟠 HIGH</button>
+        <button class="pl-pri-btn"            data-pri="hot"     onclick="plannerSelPri('hot')">🔴 HOT</button>
+        <button class="pl-pri-btn"            data-pri="done"    onclick="plannerSelPri('done')">✅ DONE</button>
       </div>
     </div>
 
@@ -5412,6 +5531,16 @@ window.plannerSetView = function(view) {
   var plannerEditId = null;      // id of WO being edited
   var plannerSelectedPri = 'normal';
   var plannerPoolOpen = true;
+  // Expose mutable state so window-level onclick handlers can read/write it
+  window._pl = {
+    get editId(){ return plannerEditId; },
+    set editId(v){ plannerEditId=v; },
+    get pri(){ return plannerSelectedPri; },
+    set pri(v){ plannerSelectedPri=v; },
+    get wos(){ return plannerWOs; },
+    save: function(){ plannerSave(); },
+    render: function(){ plannerRender(); }
+  };
 
   // Machine list from DNX config
   var PLANNER_MACHINES = [
@@ -5572,25 +5701,90 @@ window.plannerSetView = function(view) {
   function plannerRenderPool(){
     var unassigned=plannerWOs.filter(function(w){return !w.machine||!w.scheduledDate;});
     var count=unassigned.length;
-    document.getElementById('pl-pool-count').textContent=count;
+    var el=document.getElementById('pl-pool-count');
+    if(el) el.textContent=count;
+    var hint=document.getElementById('pl-pool-hint');
+    if(hint) hint.textContent=count>0?'Tap a card — pick machine & day — hit ASSIGN':'';
     var body=document.getElementById('pl-pool-body');
+    if(!body) return;
     if(!plannerPoolOpen){body.style.display='none';return;}
-    body.style.display='flex';
-    if(count===0){body.innerHTML='<div style="font-size:12px;color:#334155;padding:4px 0;">All work orders assigned. Use + ADD WO or import a CSV to get started.</div>';return;}
-    body.innerHTML=unassigned.map(function(w){
+    body.style.display='grid';
+    if(count===0){
+      body.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;font-size:13px;color:#334155;">All WOs assigned ✅ — Import a CSV or tap + ADD WO to add more.</div>';
+      return;
+    }
+
+    // Sort: hot first, then by due date
+    var sorted=unassigned.slice().sort(function(a,b){
+      var priOrder={hot:0,high:1,normal:2,done:3};
+      var pa=priOrder[a.priority||'normal']||2, pb=priOrder[b.priority||'normal']||2;
+      if(pa!==pb) return pa-pb;
+      return (a.due||'9999')-(b.due||'9999');
+    });
+
+    // Build machine options once
+    var machOpts='<option value="">— Pick machine —</option>';
+    var lastCell='';
+    PLANNER_MACHINES.forEach(function(m){
+      if(m.cell!==lastCell){ machOpts+='<optgroup label="'+m.cell+'">'; lastCell=m.cell; }
+      machOpts+='<option value="'+m.name+'">'+m.name+'</option>';
+    });
+
+    // Today as default date
+    var todayStr=plannerDateKey(new Date());
+
+    body.innerHTML=sorted.map(function(w){
       var isLate=w.due&&new Date(w.due+'T23:59')<new Date();
       var isHot=w.priority==='hot';
-      return '<div class="pl-pool-wo'+(isLate||isHot?' late':'')+'" draggable="true"'
-        +' ondragstart="plannerDragStart(event,\''+w.id+'\')"'
-        +' onclick="plannerEditWO(\''+w.id+'\')">'
-        +'<div class="pl-pool-wo-num">'+escHtml(w.wo||'WO')+(w.qty?' <span style="font-size:10px;opacity:.7;">×'+escHtml(w.qty)+'</span>':'')+(isHot?' 🔴':'')+'</div>'
-        +'<div class="pl-pool-wo-part">'+escHtml(w.part||'—')+'</div>'
-        +(w.customer?'<div style="font-size:10px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;">'+escHtml(w.customer)+'</div>':'')
-        +'<div class="pl-pool-wo-due">'+(w.due?'🚢 '+new Date(w.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'}):'No due date')+(isLate?' ⚠ LATE':'')+'</div>'
-        +(w.planner?'<div style="font-size:10px;color:#334155;">👤 '+escHtml(w.planner)+'</div>':'')
+      var priColor=isHot?'#ef4444':w.priority==='high'?'#f59e0b':'#3b82f6';
+      var dueLabel=w.due?new Date(w.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}):'No due date';
+      var daysLeft='';
+      if(w.due){
+        var dl=Math.ceil((new Date(w.due+'T12:00')-new Date())/(1000*60*60*24));
+        daysLeft=dl<0?'⚠ '+Math.abs(dl)+'d LATE':dl===0?'DUE TODAY':dl+'d left';
+      }
+      return '<div style="background:#0d1f35;border:1px solid '+(isHot?'rgba(239,68,68,0.4)':'rgba(26,74,140,0.5)')+';border-left:3px solid '+priColor+';border-radius:10px;padding:10px 12px;">'
+        // Top row: WO# + due badge
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:1px;color:#f5c500;">'+escHtml(w.wo||'WO')+(w.qty?' <span style="font-size:11px;color:#64748b;font-family:Barlow,sans-serif;">×'+escHtml(w.qty)+'</span>':'')+'</div>'
+          +(daysLeft?'<div style="font-size:10px;font-weight:700;color:'+(isLate?'#f87171':w.priority==='high'?'#fbbf24':'#64748b')+';">'+daysLeft+'</div>':'')
+        +'</div>'
+        // Part + customer
+        +'<div style="font-size:12px;color:#cbd5e1;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(w.part||'—')+'</div>'
+        +(w.customer?'<div style="font-size:10px;color:#475569;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(w.customer)+'</div>':'<div style="margin-bottom:6px;"></div>')
+        // Inline assign controls
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">'
+          +'<select id="qa-m-'+w.id+'" style="background:#0a1525;border:1px solid #2a5a8c;border-radius:6px;padding:5px 7px;color:#f0f4f8;font-size:12px;width:100%;color-scheme:dark;outline:none;">'+machOpts+'</select>'
+          +'<input type="date" id="qa-d-'+w.id+'" value="'+todayStr+'" style="background:#0a1525;border:1px solid #2a5a8c;border-radius:6px;padding:5px 7px;color:#f0f4f8;font-size:12px;width:100%;color-scheme:dark;outline:none;">'
+        +'</div>'
+        // Assign + Edit buttons
+        +'<div style="display:flex;gap:6px;">'
+          +'<button onclick="plannerQuickAssign(\''+w.id+'\')" style="flex:2;padding:7px;background:#f59e0b;border:none;color:#0f2338;border-radius:7px;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1.5px;cursor:pointer;font-weight:900;">ASSIGN</button>'
+          +'<button onclick="plannerEditWO(\''+w.id+'\')" style="flex:1;padding:7px;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;color:#64748b;border-radius:7px;font-family:Bebas Neue,sans-serif;font-size:13px;cursor:pointer;">EDIT</button>'
+          +'<button onclick="plannerDeleteWO(\''+w.id+'\')" style="padding:7px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171;border-radius:7px;font-size:13px;cursor:pointer;">✕</button>'
+        +'</div>'
         +'</div>';
     }).join('');
   }
+
+  // Quick-assign from pool card
+  window.plannerQuickAssign=function(id){
+    var machine=(document.getElementById('qa-m-'+id)||{}).value||'';
+    var date=(document.getElementById('qa-d-'+id)||{}).value||'';
+    if(!machine){if(window.showToast)showToast('yellow','Pick a machine','Select a machine from the dropdown.');return;}
+    if(!date){if(window.showToast)showToast('yellow','Pick a date','Select a scheduled date.');return;}
+    var wo=plannerWOs.find(function(w){return w.id===id;});
+    if(!wo) return;
+    wo.machine=machine; wo.scheduledDate=date;
+    plannerSave(); plannerRender();
+    if(window.showToast) showToast('green','WO '+wo.wo+' assigned','→ '+machine+' · '+new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
+    // Jump calendar to the week of the assigned date
+    var assigned=new Date(date+'T12:00');
+    var today=new Date(); today.setHours(0,0,0,0);
+    var diffDays=Math.round((assigned-today)/(1000*60*60*24));
+    plannerWeekOffset=Math.floor((diffDays+(today.getDay()))/7);
+    plannerRender();
+  };
 
   // ── Navigation ──
   window.plannerShiftWeek=function(dir){ plannerWeekOffset+=dir; plannerRender(); };
@@ -5626,7 +5820,7 @@ window.plannerSetView = function(view) {
 
   // ── Modal ──
   window.plannerOpenAddModal=function(machine,date){
-    plannerEditId=null;
+    window._pl.editId=null;
     document.getElementById('pl-modal-title').textContent='NEW WORK ORDER';
     document.getElementById('pl-f-wo').value='';
     document.getElementById('pl-f-part').value='';
@@ -5637,14 +5831,14 @@ window.plannerSetView = function(view) {
     document.getElementById('pl-f-notes').value='';
     document.getElementById('pl-f-machine').value=machine||'';
     document.getElementById('pl-f-date').value=date||'';
-    plannerSelPri('normal');
+    window.plannerSelPri('normal');
     document.getElementById('pl-modal').classList.add('open');
   };
   window.plannerEditWO=function(id){
     var w=plannerWOs.find(function(x){return x.id===id;});
     if(!w) return;
-    plannerEditId=id;
-    document.getElementById('pl-modal-title').textContent='EDIT WORK ORDER';
+    window._pl.editId=id;
+    document.getElementById('pl-modal-title').textContent='ASSIGN / EDIT WO';
     document.getElementById('pl-f-wo').value=w.wo||'';
     document.getElementById('pl-f-part').value=w.part||'';
     document.getElementById('pl-f-qty').value=w.qty||'';
@@ -5654,43 +5848,55 @@ window.plannerSetView = function(view) {
     document.getElementById('pl-f-notes').value=w.notes||'';
     document.getElementById('pl-f-machine').value=w.machine||'';
     document.getElementById('pl-f-date').value=w.scheduledDate||'';
-    plannerSelPri(w.priority||'normal');
+    window.plannerSelPri(w.priority||'normal');
     document.getElementById('pl-modal').classList.add('open');
+    // Scroll machine select into view on mobile
+    setTimeout(function(){ var el=document.getElementById('pl-f-machine'); if(el) el.focus(); },200);
   };
   window.plannerCloseModal=function(){
     document.getElementById('pl-modal').classList.remove('open');
   };
-  window.plannerSelPri=function(pri,btn){
-    plannerSelectedPri=pri;
+  window.plannerSelPri=function(pri){
+    window._pl.pri=pri;
     document.querySelectorAll('.pl-pri-btn').forEach(function(b){
-      b.className='pl-pri-btn';
-      if(b.onclick&&b.getAttribute('onclick')&&b.getAttribute('onclick').indexOf("'"+pri+"'")>=0) b.className='pl-pri-btn sel-'+pri;
+      var bPri=b.getAttribute('data-pri');
+      b.className='pl-pri-btn'+(bPri===pri?' sel-'+pri:'');
     });
   };
   window.plannerSaveWO=function(){
     var wo=(document.getElementById('pl-f-wo').value||'').trim();
     var part=(document.getElementById('pl-f-part').value||'').trim();
-    if(!wo&&!part){if(window.showToast)showToast('yellow','Missing info','Add a WO# or part name.');return;}
+    if(!wo&&!part){if(window.showToast)showToast('yellow','Missing info','Need a WO# or part name.');return;}
+    var machine=(document.getElementById('pl-f-machine').value||'').trim();
+    var schedDate=(document.getElementById('pl-f-date').value||'').trim();
+    // Warn but don't block if no machine selected — goes to unassigned pool
+    var editId=window._pl.editId;
     var obj={
-      id: plannerEditId||(Date.now().toString(36)+Math.random().toString(36).slice(2)),
+      id: editId||(Date.now().toString(36)+Math.random().toString(36).slice(2)),
       wo:wo, part:part,
       qty:(document.getElementById('pl-f-qty').value||'').trim(),
       due:(document.getElementById('pl-f-due').value||''),
       runtime:(document.getElementById('pl-f-runtime').value||'').trim(),
       operator:(document.getElementById('pl-f-operator').value||'').trim(),
       notes:(document.getElementById('pl-f-notes').value||'').trim(),
-      machine:(document.getElementById('pl-f-machine').value||''),
-      scheduledDate:(document.getElementById('pl-f-date').value||''),
-      priority:plannerSelectedPri
+      machine: machine,
+      scheduledDate: schedDate,
+      priority: window._pl.pri||'normal',
+      // preserve ProShop fields if editing existing
+      customer: (plannerWOs.find(function(x){return x.id===editId;})||{}).customer||'',
+      planner:  (plannerWOs.find(function(x){return x.id===editId;})||{}).planner||'',
+      material: (plannerWOs.find(function(x){return x.id===editId;})||{}).material||''
     };
-    if(plannerEditId){
-      var idx=plannerWOs.findIndex(function(x){return x.id===plannerEditId;});
-      if(idx>=0) plannerWOs[idx]=obj;
+    if(editId){
+      var idx=plannerWOs.findIndex(function(x){return x.id===editId;});
+      if(idx>=0){ plannerWOs[idx]=obj; }
+      else { plannerWOs.push(obj); }
     } else {
       plannerWOs.push(obj);
     }
     plannerSave(); plannerRender(); plannerCloseModal();
-    if(window.showToast) showToast('green', (plannerEditId?'Updated':'Added')+' WO '+wo, obj.machine?'→ '+obj.machine:'Unassigned');
+    var dest=machine?'→ '+machine+(schedDate?' on '+new Date(schedDate+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'}):''):'→ Unassigned pool';
+    if(window.showToast) showToast('green',(editId?'Updated':'Saved')+' WO '+wo, dest);
   };
   window.plannerDeleteWO=function(id){
     plannerWOs=plannerWOs.filter(function(w){return w.id!==id;});
