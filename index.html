@@ -558,6 +558,29 @@
   .dnx-tile-hud-link { display:flex;align-items:center;justify-content:center;padding:6px;background:rgba(245,197,0,0.06);border-top:1px solid rgba(26,74,140,0.3);font-size:11px;color:#f5c500;text-decoration:none;letter-spacing:1px;font-family:'Bebas Neue',sans-serif;transition:all 0.15s; }
   .dnx-tile-hud-link:hover { background:rgba(245,197,0,0.12); }
 
+  /* STV MACHINE DETAIL MODAL */
+  .stv-modal-overlay { position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px); }
+  .stv-modal-overlay.open { display:flex; }
+  .stv-modal { background:linear-gradient(145deg,#000d22,#001433);border:1px solid #1a4a8c;border-radius:20px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,0.9);animation:slideUp 0.25s ease; }
+  @keyframes slideUp { from{transform:translateY(30px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+  .stv-modal-header { padding:20px 24px 16px;border-bottom:2px solid #f5c500;display:flex;align-items:flex-start;justify-content:space-between;background:linear-gradient(90deg,rgba(245,197,0,0.08),transparent); }
+  .stv-modal-name { font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:3px;color:#f5c500;line-height:1; }
+  .stv-modal-cell { font-size:12px;color:#64748b;letter-spacing:3px;text-transform:uppercase;margin-top:4px; }
+  .stv-modal-close { background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:#94a3b8;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s; }
+  .stv-modal-close:hover { background:rgba(239,68,68,0.2);color:#f87171;border-color:rgba(239,68,68,0.4); }
+  .stv-modal-body { padding:20px 24px 24px; }
+  .stv-modal-stats { display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px; }
+  .stv-modal-stat { background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;text-align:center;border:1px solid rgba(26,74,140,0.3); }
+  .stv-modal-stat-val { font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:1px;line-height:1; }
+  .stv-modal-stat-lbl { font-size:12px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-top:6px; }
+  .stv-modal-section { margin-bottom:16px; }
+  .stv-modal-section-title { font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:#475569;margin-bottom:8px; }
+  .stv-modal-cycle-bg { background:#1a3060;border-radius:8px;height:16px;overflow:hidden;margin-bottom:6px; }
+  .stv-modal-cycle-fill { height:100%;border-radius:8px;transition:width 0.5s; }
+  .stv-modal-hud-btn { display:block;text-align:center;background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.4);color:#f5c500;border-radius:10px;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;text-decoration:none;margin-top:16px;transition:all 0.2s; }
+  .stv-modal-hud-btn:hover { background:rgba(245,197,0,0.2); }
+  .stv-modal-flag-row { display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap; }
+
   /* DNX PRIORITY & ATTENTION FLAGS */
   .dnx-machine-tile.priority-hot { border-color:#ef4444 !important;box-shadow:0 0 20px rgba(239,68,68,0.4) !important;animation:pulse-card 1.5s ease-in-out infinite !important; }
   .dnx-machine-tile.priority-high { border-color:#f97316 !important;box-shadow:0 0 16px rgba(249,115,22,0.3) !important; }
@@ -631,8 +654,9 @@
   .stv-section-hdr { display:flex;align-items:center;gap:14px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(245,197,0,0.15); }
   .stv-section-name { font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:5px;color:#f5c500; }
   .stv-section-badge { background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.25);color:#f5c500;border-radius:6px;padding:2px 10px;font-family:'Bebas Neue',sans-serif;font-size:13px;margin-left:auto; }
-  .stv-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px; }
-  .stv-card { background:linear-gradient(145deg,#000e22,#001530);border-radius:12px;border:1px solid rgba(26,74,140,0.5);overflow:hidden; }
+  .stv-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px; }
+  .stv-card { background:linear-gradient(145deg,#000e22,#001530);border-radius:14px;border:1px solid rgba(26,74,140,0.5);overflow:hidden;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s; }
+  .stv-card:active { transform:scale(0.98); }
   .stv-card.s-green  { border-color:rgba(34,197,94,0.5); }
   .stv-card.s-yellow { border-color:rgba(234,179,8,0.5); }
   .stv-card.s-red    { border-color:rgba(239,68,68,0.6);box-shadow:0 0 18px rgba(239,68,68,0.25);animation:pulse-card 2s ease-in-out infinite; }
@@ -640,11 +664,11 @@
   .stv-card.p-hot  { border-color:#ef4444 !important;box-shadow:0 0 24px rgba(239,68,68,0.4) !important;animation:pulse-card 1.5s ease-in-out infinite !important; }
   .stv-card.p-high { border-color:#f97316 !important;box-shadow:0 0 14px rgba(249,115,22,0.3) !important; }
   .stv-card.flagged { border-top:3px solid #f5c500 !important; }
-  .stv-card-hdr { padding:9px 13px;background:linear-gradient(90deg,rgba(245,197,0,0.06),transparent);border-bottom:1px solid rgba(26,74,140,0.3);display:flex;align-items:flex-start;justify-content:space-between; }
-  .stv-card-name { font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;color:#f5c500;line-height:1; }
-  .stv-card-cell { font-size:9px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-top:1px; }
+  .stv-card-hdr { padding:14px 18px;background:linear-gradient(90deg,rgba(245,197,0,0.06),transparent);border-bottom:1px solid rgba(26,74,140,0.3);display:flex;align-items:flex-start;justify-content:space-between; }
+  .stv-card-name { font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:2px;color:#f5c500;line-height:1; }
+  .stv-card-cell { font-size:11px;color:#475569;letter-spacing:2px;text-transform:uppercase;margin-top:3px; }
   .stv-card-pills { display:flex;flex-direction:column;align-items:flex-end;gap:3px; }
-  .stv-pill { font-size:9px;font-weight:700;letter-spacing:1px;padding:2px 7px;border-radius:999px;text-transform:uppercase; }
+  .stv-pill { font-size:11px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:999px;text-transform:uppercase; }
   .stv-pill.green  { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.35); }
   .stv-pill.yellow { background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.35); }
   .stv-pill.red    { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.35); }
@@ -653,13 +677,13 @@
   .stv-pill.hot  { background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.5); }
   .stv-pill.high { background:rgba(249,115,22,0.2);color:#fb923c;border:1px solid rgba(249,115,22,0.5); }
   .stv-pill.attn { background:rgba(245,197,0,0.2);color:#f5c500;border:1px solid rgba(245,197,0,0.5);animation:blink-yellow 1.2s step-end infinite; }
-  .stv-stats { display:grid;grid-template-columns:repeat(3,1fr); }
-  .stv-stat { text-align:center;padding:9px 4px;border-right:1px solid rgba(26,74,140,0.3); }
+  .stv-stats { display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(26,74,140,0.2); }
+  .stv-stat { text-align:center;padding:14px 6px;border-right:1px solid rgba(26,74,140,0.3); }
   .stv-stat:last-child { border-right:none; }
-  .stv-stat-val { font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;line-height:1; }
-  .stv-stat-lbl { font-size:9px;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-top:1px; }
-  .stv-bar-wrap { padding:6px 13px 8px; }
-  .stv-bar-bg { background:#1a3060;border-radius:4px;height:4px;overflow:hidden; }
+  .stv-stat-val { font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;line-height:1; }
+  .stv-stat-lbl { font-size:11px;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px; }
+  .stv-bar-wrap { padding:8px 18px 14px; }
+  .stv-bar-bg { background:#1a3060;border-radius:6px;height:8px;overflow:hidden; }
   .stv-bar-fill { height:100%;border-radius:4px; }
 
   /* DATANOMIX PERF BAR — top strip, totally different from request dots */
@@ -3369,8 +3393,9 @@
     if (priority==='high') cardClass += ' p-high';
     if (attention)         cardClass += ' flagged';
 
+    var safeN = m.name.replace(/[^a-z0-9]/gi,'_');
     return [
-      '<div class="'+cardClass+'">',
+      '<div class="'+cardClass+' stv-card-clickable" data-machine="'+m.name+'">',
         '<div class="stv-card-hdr">',
           '<div>',
             '<div class="stv-card-name">'+m.name+'</div>',
@@ -3393,6 +3418,121 @@
         '</div>',
       '</div>'
     ].join('');
+  }
+
+  // Event delegation for STV card taps
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.stv-card-clickable');
+    if (card && card.dataset.machine) {
+      openStvMachineModal(card.dataset.machine);
+    }
+  });
+
+  // ── MACHINE DETAIL MODAL ──
+  function openStvMachineModal(machineName) {
+    // Pause TV cycling while modal is open
+    var wasPaused = stv.paused;
+    stv.paused = true;
+
+    var m = DNX_MACHINE_CONFIG.find(function(x){ return x.name === machineName; });
+    if (!m) return;
+
+    var status = getMachinePerfStatus(m);
+    var bar = document.getElementById('perf-' + m.name);
+    var label = bar ? bar.getAttribute('data-label') : '—';
+    var liveD = dnxLiveData[m.id] || {};
+    var state = dnxMachineState[m.name] || {};
+
+    var oee   = liveD.oee ? Math.round(liveD.oee)+'%' : (DNX_API_KEY?'No data':Math.floor(Math.random()*30+65)+'%');
+    var parts = liveD.partsToday !== undefined ? liveD.partsToday : (DNX_API_KEY?'No data':Math.floor(Math.random()*40+10));
+    var util  = liveD.utilization ? Math.round(liveD.utilization)+'%' : (DNX_API_KEY?'No data':Math.floor(Math.random()*40+50)+'%');
+    var cycleActual = liveD.actualCycleTime ? formatTime(liveD.actualCycleTime) : (DNX_API_KEY?'—':'53m 30s');
+    var cycleTarget = liveD.targetCycleTime ? formatTime(liveD.targetCycleTime) : (DNX_API_KEY?'—':'38m 25s');
+    var operator = liveD.operator || liveD.currentOperator || (DNX_API_KEY?'—':'Operator');
+    var jobName  = liveD.job || liveD.currentJob || (DNX_API_KEY?'No active job':'BCG1-113972 REV C1 OP50');
+    var cycleBarPct = status==='green'?92:status==='yellow'?62:status==='red'?30:0;
+    var barColor = status==='green'?'#22c55e':status==='yellow'?'#eab308':status==='red'?'#ef4444':'#334155';
+    var oeeColor = '#94a3b8';
+    if (typeof oee === 'string' && oee !== 'No data') { var n=parseInt(oee); oeeColor=n>=75?'#22c55e':n>=50?'#eab308':'#ef4444'; }
+
+    document.getElementById('stvModalName').textContent = m.name;
+    document.getElementById('stvModalCell').textContent = m.cell;
+
+    var statusColors = { green:'#22c55e', yellow:'#eab308', red:'#ef4444', offline:'#475569', pending:'#475569' };
+    var sc = statusColors[status] || '#475569';
+
+    var body = '';
+
+    // Status + flags row
+    body += '<div class="stv-modal-flag-row">';
+    body += '<span class="stv-pill '+status+'" style="font-size:13px;padding:5px 14px;">'+label+'</span>';
+    if (state.priority==='hot')  body += '<span class="stv-pill hot" style="font-size:13px;padding:5px 14px;">🔴 HOT JOB</span>';
+    if (state.priority==='high') body += '<span class="stv-pill high" style="font-size:13px;padding:5px 14px;">🟠 HIGH PRIORITY</span>';
+    if (state.attention)         body += '<span class="stv-pill attn" style="font-size:13px;padding:5px 14px;">⚠ NEEDS ATTENTION</span>';
+    body += '</div>';
+
+    // Current job
+    body += '<div class="stv-modal-section">';
+    body += '<div class="stv-modal-section-title">CURRENT JOB</div>';
+    body += '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:1px;color:#f0f4f8;">'+jobName+'</div>';
+    if (operator !== '—') body += '<div style="font-size:13px;color:#64748b;margin-top:4px;">👤 Operator: <span style="color:#94a3b8;">'+operator+'</span></div>';
+    body += '</div>';
+
+    // Stats
+    body += '<div class="stv-modal-stats">';
+    body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:#f5c500;">'+parts+'</div><div class="stv-modal-stat-lbl">Parts Today</div></div>';
+    body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:'+oeeColor+';">'+oee+'</div><div class="stv-modal-stat-lbl">OEE</div></div>';
+    body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:#60a5fa;">'+util+'</div><div class="stv-modal-stat-lbl">Utilization</div></div>';
+    body += '</div>';
+
+    // Cycle time breakdown
+    body += '<div class="stv-modal-section">';
+    body += '<div class="stv-modal-section-title">CYCLE TIME PERFORMANCE</div>';
+    body += '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">';
+    body += '<span style="font-family:Bebas Neue,sans-serif;font-size:28px;color:'+barColor+';">'+cycleActual+'</span>';
+    body += '<span style="font-size:12px;color:#475569;align-self:flex-end;padding-bottom:4px;">Goal: '+cycleTarget+'</span>';
+    body += '</div>';
+    body += '<div class="stv-modal-cycle-bg"><div class="stv-modal-cycle-fill" style="width:'+cycleBarPct+'%;background:'+barColor+';"></div></div>';
+    body += '<div style="font-size:12px;color:#475569;margin-top:4px;">'+label+'</div>';
+    body += '</div>';
+
+    // Additional DNX data if connected
+    if (liveD.utilization) {
+      body += '<div class="stv-modal-section">';
+      body += '<div class="stv-modal-section-title">LIVE DATA FROM DATANOMIX</div>';
+      body += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">';
+      if (liveD.productionHours) body += '<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#f0f4f8;">'+formatTime(liveD.productionHours*3600)+'</div><div style="font-size:10px;color:#475569;letter-spacing:1.5px;margin-top:2px;">PRODUCTION HOURS</div></div>';
+      if (liveD.cuttingTime) body += '<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#f0f4f8;">'+formatTime(liveD.cuttingTime)+'</div><div style="font-size:10px;color:#475569;letter-spacing:1.5px;margin-top:2px;">CUTTING TIME</div></div>';
+      body += '</div></div>';
+    }
+
+    // View Full HUD link
+    if (m.hud) {
+      body += '<a href="'+m.hud+'" target="_blank" class="stv-modal-hud-btn">VIEW FULL DATANOMIX HUD ↗</a>';
+    }
+
+    document.getElementById('stvModalBody').innerHTML = body;
+    document.getElementById('stvMachineModal').classList.add('open');
+
+    // Store paused state to restore on close
+    document.getElementById('stvMachineModal').dataset.wasPaused = wasPaused;
+  }
+
+  function closeStvModal(e) {
+    if (e && e.target !== document.getElementById('stvMachineModal')) return;
+    document.getElementById('stvMachineModal').classList.remove('open');
+    // Restore TV cycling
+    var wasPaused = document.getElementById('stvMachineModal').dataset.wasPaused === 'true';
+    stv.paused = wasPaused;
+    var btn = document.getElementById('stvPauseBtn');
+    if (btn) btn.textContent = stv.paused ? '▶ RESUME' : '⏸ PAUSE';
+  }
+
+  function formatTime(seconds) {
+    if (!seconds || isNaN(seconds)) return '—';
+    var m = Math.floor(seconds / 60);
+    var s = Math.floor(seconds % 60);
+    return m > 0 ? m+'m '+s+'s' : s+'s';
   }
 
   // ── SLIDE NAVIGATION ──
@@ -4720,6 +4860,20 @@
     <button class="stv-exit-btn" onclick="switchTab('shop')">✕ EXIT</button>
   </div>
   <div class="stv-stage" id="stvStage"></div>
+</div>
+
+<!-- STV MACHINE DETAIL MODAL -->
+<div class="stv-modal-overlay" id="stvMachineModal" onclick="closeStvModal(event)">
+  <div class="stv-modal" id="stvMachineModalContent">
+    <div class="stv-modal-header">
+      <div>
+        <div class="stv-modal-name" id="stvModalName">—</div>
+        <div class="stv-modal-cell" id="stvModalCell">—</div>
+      </div>
+      <button class="stv-modal-close" onclick="closeStvModal()">&times;</button>
+    </div>
+    <div class="stv-modal-body" id="stvModalBody"></div>
+  </div>
 </div>
 
 <!-- MANAGEMENT PAGE -->
