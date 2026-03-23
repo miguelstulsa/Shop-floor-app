@@ -1064,7 +1064,7 @@
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📊 Dashboard</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Datanomix</div>
   <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv">📺 Shop TV</div>
-  
+  <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop">🔗 ProShop</div>
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
   </nav>
   <button class="nav-scroll-btn right" onclick="scrollTabs(120)" aria-label="Scroll tabs right">&#8250;</button>
@@ -1950,7 +1950,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -1965,6 +1965,8 @@
     else { stopShopTV(); }
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
+    var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
+    if (tab === 'proshop') { var psFrame = document.getElementById('proshop-iframe'); if (psFrame && !psFrame.src) psFrame.src = PROSHOP_BASE + '/'; }
 
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
@@ -5078,6 +5080,25 @@
     <div id="dash-req-list"></div>
 
     <div id="dash-clear-wrap"></div>
+  </div>
+</div>
+
+<!-- PROSHOP EMBEDDED PAGE -->
+<div id="page-proshop" style="display:none;flex-direction:column;height:calc(100vh - 88px);background:#0a1525;">
+  <!-- Toolbar -->
+  <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:#0b1c2e;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:3px;color:#60a5fa;">🔗 PROSHOP</div>
+    <div style="flex:1;"></div>
+    <button onclick="document.getElementById('proshop-iframe').src=PROSHOP_BASE+'/'" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">↺ RELOAD</button>
+    <button onclick="window.open(PROSHOP_BASE+'/', '_blank')" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">↗ OPEN IN BROWSER</button>
+  </div>
+  <!-- Iframe -->
+  <iframe id="proshop-iframe" src="" style="flex:1;width:100%;border:none;background:#fff;" allow="fullscreen" loading="lazy"></iframe>
+  <!-- Blocked notice (shown if iframe fails to load due to X-Frame-Options) -->
+  <div id="proshop-blocked" style="display:none;position:absolute;inset:0;top:120px;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:40px;pointer-events:none;">
+    <div style="font-size:48px;">🔗</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f59e0b;">PROSHOP</div>
+    <div style="font-size:13px;color:#64748b;max-width:320px;line-height:1.6;">If the site doesn't load inside the app, use the <strong style="color:#f0f4f8;">Open in Browser</strong> button above — some sites block embedded frames for security.</div>
   </div>
 </div>
 
