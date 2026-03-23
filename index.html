@@ -5375,6 +5375,12 @@
   <!-- ── HILL PLANNER VIEW ── -->
   <div id="pl-hill-view" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
 
+    <!-- Selection banner — shown when a WO is selected -->
+    <div id="pl-select-banner" style="display:none;align-items:center;gap:10px;padding:8px 14px;background:rgba(245,158,11,0.15);border-bottom:2px solid #f59e0b;flex-shrink:0;">
+      <div id="pl-select-label" style="flex:1;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:#f59e0b;"></div>
+      <button onclick="plannerDeselectWO()" style="background:rgba(0,0,0,0.3);border:1px solid #f59e0b;color:#f59e0b;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">✕ CANCEL</button>
+    </div>
+
     <!-- Calendar scroll body -->
     <div class="pl-body" id="pl-body">
       <div id="pl-grid-wrap"></div>
@@ -5689,7 +5695,8 @@ window.plannerSetView = function(view) {
         var dk=plannerDateKey(d);
         var cellWOs=plannerWOs.filter(function(w){return w.machine===m.name && w.scheduledDate===dk;});
         html+='<div class="pl-cell" data-machine="'+m.name+'" data-date="'+dk+'" onclick="plannerCellClick(this,event)"'
-          +' ondragover="plannerDragOver(event,this)" ondragleave="plannerDragLeave(this)" ondrop="plannerDrop(event,this)">';
+          +' ondragover="plannerDragOver(event,this)" ondragleave="plannerDragLeave(this)" ondrop="plannerDrop(event,this)"'
+          +(window._selectedId?' style="background:rgba(245,158,11,0.08);cursor:crosshair;"':'')+'>';
         cellWOs.forEach(function(w){
           html+=plannerWOChip(w);
         });
@@ -5761,7 +5768,7 @@ window.plannerSetView = function(view) {
     var el=document.getElementById('pl-pool-count');
     if(el) el.textContent=count;
     var hint=document.getElementById('pl-pool-hint');
-    if(hint) hint.textContent=count>0?'Tap a card to select it, then tap a calendar cell to place it':'';
+    if(hint) hint.textContent=count>0?'Tap a card to select → tap a calendar cell to place it. Tap card again to deselect.':'';
     var body=document.getElementById('pl-pool-body');
     if(!body) return;
     if(!plannerPoolOpen){body.style.display='none';return;}
@@ -5846,52 +5853,72 @@ window.plannerSetView = function(view) {
   };
 
   // ── Tap-to-select → tap-cell-to-place ──
-  var _selectedId = null;
+  window._selectedId = null;
 
   window.plannerSelectWO = function(id) {
-    _selectedId = id;
-    // Highlight selected card in pool
-    document.querySelectorAll('.pl-pool-card').forEach(function(c){
-      c.style.outline = c.dataset.woid === id ? '2px solid #f59e0b' : 'none';
-      c.style.background = c.dataset.woid === id ? 'rgba(245,158,11,0.15)' : '';
-    });
-    // Flash calendar cells to show they're tappable
-    document.querySelectorAll('.pl-cell').forEach(function(c){
-      c.style.background = 'rgba(245,158,11,0.06)';
-    });
+    // Toggle off if tapping same card again
+    if(window._selectedId === id) {
+      window.plannerDeselectWO();
+      return;
+    }
+    window._selectedId = id;
     var wo = plannerWOs.find(function(w){ return w.id===id; });
-    if(window.showToast && wo) showToast('blue', 'WO '+wo.wo+' selected', 'Now tap any cell on the calendar to place it');
+    if(!wo) return;
+
+    // Collapse pool so calendar is fully visible
+    plannerPoolOpen = false;
+    var tog = document.getElementById('pl-pool-toggle');
+    if(tog) tog.textContent = '▼';
+    var body = document.getElementById('pl-pool-body');
+    if(body) body.style.display = 'none';
+
+    // Show cancel banner
+    var banner = document.getElementById('pl-select-banner');
+    if(banner){
+      banner.style.display = 'flex';
+      var lbl = document.getElementById('pl-select-label');
+      if(lbl) lbl.textContent = '📌 ' + (wo.wo||'WO') + ' selected — tap any cell to place it';
+    }
+
+    // Highlight cells
+    plannerRenderGrid();
+    if(window.showToast) showToast('blue', wo.wo+' selected', 'Tap a machine cell on the calendar above');
   };
 
   window.plannerDeselectWO = function() {
-    _selectedId = null;
-    document.querySelectorAll('.pl-pool-card').forEach(function(c){
-      c.style.outline = 'none';
-      c.style.background = '';
-    });
-    document.querySelectorAll('.pl-cell').forEach(function(c){
-      c.style.background = '';
-    });
+    window._selectedId = null;
+    var banner = document.getElementById('pl-select-banner');
+    if(banner) banner.style.display = 'none';
+    // Re-open pool
+    plannerPoolOpen = true;
+    var tog = document.getElementById('pl-pool-toggle');
+    if(tog) tog.textContent = '▲';
+    plannerRenderPool();
+    plannerRenderGrid();
   };
 
   // ── Cell click — place selected WO, or open add modal ──
   window.plannerCellClick = function(el, e) {
-    if(e.target.closest('.pl-wo')) return;
-    if(_selectedId) {
-      // Place the selected WO into this cell
-      var wo = plannerWOs.find(function(w){ return w.id===_selectedId; });
+    // If a chip was tapped, ignore
+    if(e && e.target && e.target.closest && e.target.closest('.pl-wo')) return;
+    if(window._selectedId) {
+      var wo = plannerWOs.find(function(w){ return w.id===window._selectedId; });
       if(wo) {
         wo.machine = el.dataset.machine;
         wo.scheduledDate = el.dataset.date;
-        plannerSave(); plannerRender();
-        if(window.showToast) showToast('green', wo.wo+' → '+wo.machine, new Date(wo.scheduledDate+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
-        // Jump to that week
+        plannerSave();
+        window.plannerDeselectWO(); // clears selection + re-opens pool
+        plannerRender();
+        if(window.showToast) showToast('green', wo.wo + ' → ' + wo.machine,
+          new Date(wo.scheduledDate+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
+        // Jump calendar to that week
         var d = new Date(wo.scheduledDate+'T12:00');
         var today = new Date(); today.setHours(0,0,0,0);
         plannerWeekOffset = Math.floor((Math.round((d-today)/(864e5)) + today.getDay()) / 7);
         plannerRender();
+      } else {
+        window.plannerDeselectWO();
       }
-      plannerDeselectWO();
     } else {
       plannerOpenAddModal(el.dataset.machine, el.dataset.date);
     }
