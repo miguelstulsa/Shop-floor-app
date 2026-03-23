@@ -229,6 +229,20 @@
   .dash-req-machine { font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1.5px;color:#f59e0b; }
   .dash-req-cell { font-size:11px;color:#475569;letter-spacing:1px; }
   .dash-req-wo { font-size:13px;color:#f0f4f8;font-weight:700;margin-top:4px; }
+  .ps-link { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:1px;color:#60a5fa;text-decoration:none;background:rgba(59,130,186,0.1);border:1px solid rgba(59,130,186,0.3);border-radius:6px;padding:3px 8px;margin-top:4px;transition:all 0.15s; }
+  .ps-link:hover { background:rgba(59,130,186,0.2);border-color:#60a5fa; }
+  .ps-import-zone { border:2px dashed rgba(59,130,186,0.4);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s;background:rgba(59,130,186,0.04); }
+  .ps-import-zone:hover,.ps-import-zone.drag-over { border-color:#60a5fa;background:rgba(59,130,186,0.1); }
+  .ps-import-zone input[type=file] { display:none; }
+  .ps-wo-row { display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(26,74,140,0.3);margin-bottom:6px; }
+  .ps-wo-num { font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:#f5c500;min-width:80px; }
+  .ps-wo-part { font-size:12px;color:#f0f4f8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .ps-wo-due { font-size:10px;color:#64748b;white-space:nowrap; }
+  .ps-wo-status { font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap; }
+  .ps-wo-status.open    { background:rgba(59,130,186,0.15);color:#60a5fa;border:1px solid rgba(59,130,186,0.3); }
+  .ps-wo-status.late    { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3); }
+  .ps-wo-status.done    { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3); }
+  .ps-wo-open-btn { font-size:10px;color:#60a5fa;background:none;border:1px solid rgba(59,130,186,0.3);border-radius:5px;padding:2px 8px;cursor:pointer;white-space:nowrap;font-family:'Bebas Neue',sans-serif;letter-spacing:0.5px; }
   .dash-req-detail { font-size:12px;color:#64748b;margin-top:2px; }
   .dash-req-operator { font-size:11px;color:#94a3b8;margin-top:4px; }
   .dash-resolve-btn { font-size:11px;padding:4px 12px;border-radius:6px;border:1px solid rgba(34,197,94,0.4);background:rgba(34,197,94,0.1);color:#4ade80;cursor:pointer;font-weight:700; }
@@ -3420,6 +3434,12 @@
     ].join('');
   }
 
+  // Event delegation for ProShop WO open buttons
+  document.addEventListener('click', function(e) {
+    var psBtn = e.target.closest('.ps-open-btn');
+    if (psBtn && psBtn.dataset.wo) { openProShopWO(psBtn.dataset.wo); }
+  });
+
   // Event delegation for STV card taps
   document.addEventListener('click', function(e) {
     var card = e.target.closest('.stv-card-clickable');
@@ -3592,6 +3612,221 @@
     if (stvEl && stvEl.style.display !== 'none') buildStvSlides();
   };
 
+
+  // ══════════════════════════════════════════════════════════════════
+  // ── PROSHOP INTEGRATION ──
+  // ══════════════════════════════════════════════════════════════════
+  var PROSHOP_BASE = 'https://hill.adionsystems.com/procnc';
+  var psWorkOrders = []; // loaded from CSV
+
+  function openProShop() {
+    window.open(PROSHOP_BASE + '/', '_blank');
+  }
+
+  function openProShopWO(wo) {
+    window.open(PROSHOP_BASE + '/workorders/' + encodeURIComponent(wo), '_blank');
+  }
+
+  // ── CSV IMPORT ──
+  function importProShopCSV(input) {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var text = e.target.result;
+      parseProShopCSV(text, file.name);
+    };
+    reader.readAsText(file);
+    input.value = ''; // reset so same file can be re-imported
+  }
+
+  function parseProShopCSV(text, filename) {
+    var lines = text.split('\n').map(function(l){ return l.replace(/\r/g,''); }).filter(function(l){ return l.trim(); });
+
+
+    if (lines.length < 2) { showToast('red', 'Invalid CSV', 'File appears empty or invalid.'); return; }
+
+    // Auto-detect delimiter
+    var delim = lines[0].includes('	') ? '	' : ',';
+
+    // Parse header row — find column indexes flexibly
+    var headers = lines[0].split(delim).map(function(h){ return h.replace(/"/g,'').trim().toLowerCase(); });
+
+    function findCol() {
+      var candidates = Array.from(arguments);
+      for (var i=0; i<candidates.length; i++) {
+        var idx = headers.findIndex(function(h){ return h.includes(candidates[i]); });
+        if (idx >= 0) return idx;
+      }
+      return -1;
+    }
+
+    var colWO     = findCol('work order','wo#','wo #','job','order');
+    var colPart   = findCol('part','description','item','part name','part number');
+    var colDue    = findCol('due','ship','need','date');
+    var colStatus = findCol('status','state');
+    var colMach   = findCol('machine','workcenter','work center','resource');
+    var colQty    = findCol('qty','quantity','ordered');
+    var colOp     = findCol('operation','op','step');
+
+    if (colWO < 0) { showToast('red', 'WO column not found', 'Make sure your CSV has a Work Order or WO# column.'); return; }
+
+    var rows = [];
+    for (var i = 1; i < lines.length; i++) {
+      var cells = splitCSVLine(lines[i], delim);
+      if (!cells[colWO] || !cells[colWO].trim()) continue;
+      var wo = cells[colWO].replace(/"/g,'').trim();
+      var part = colPart >= 0 ? cells[colPart].replace(/"/g,'').trim() : '—';
+      var due  = colDue  >= 0 ? cells[colDue].replace(/"/g,'').trim()  : '';
+      var stat = colStatus>=0 ? cells[colStatus].replace(/"/g,'').trim() : '';
+      var mach = colMach >= 0 ? cells[colMach].replace(/"/g,'').trim()  : '';
+      var qty  = colQty  >= 0 ? cells[colQty].replace(/"/g,'').trim()   : '';
+      var op   = colOp   >= 0 ? cells[colOp].replace(/"/g,'').trim()    : '';
+
+      // Determine if late
+      var isLate = false;
+      if (due) {
+        var dueDate = new Date(due);
+        if (!isNaN(dueDate) && dueDate < new Date()) isLate = true;
+      }
+      rows.push({ wo:wo, part:part, due:due, status:stat, machine:mach, qty:qty, op:op, isLate:isLate });
+    }
+
+    if (rows.length === 0) { showToast('red', 'No data found', 'Check your CSV export from ProShop.'); return; }
+
+    psWorkOrders = rows;
+    // Save to localStorage so it persists between sessions
+    try { localStorage.setItem('hillProShopWOs', JSON.stringify({ data: rows, file: filename, imported: new Date().toISOString() })); } catch(e){}
+    renderProShopWOs();
+    showToast('green', rows.length + ' work orders imported', 'From: ' + filename);
+  }
+
+  function splitCSVLine(line, delim) {
+    // Handle quoted fields
+    var result = [], cur = '', inQ = false;
+    for (var i=0; i<line.length; i++) {
+      var c = line[i];
+      if (c==='"') { inQ=!inQ; }
+      else if (c===delim && !inQ) { result.push(cur); cur=''; }
+      else cur += c;
+    }
+    result.push(cur);
+    return result;
+  }
+
+  function renderProShopWOs() {
+    var list = document.getElementById('ps-wo-list');
+    var clearBtn = document.getElementById('ps-clear-btn');
+    if (!list) return;
+
+    if (!psWorkOrders || psWorkOrders.length === 0) {
+      list.innerHTML = '<div class="ps-import-zone" onclick="document.getElementById(&quot;ps-file-input&quot;).click()">' +
+        '<div style="font-size:28px;margin-bottom:8px;">📋</div>' +
+        '<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:2px;color:#475569;margin-bottom:4px;">IMPORT PROSHOP WORK ORDERS</div>' +
+        '<div style="font-size:12px;color:#334155;line-height:1.6;">In ProShop - Work Orders - Export CSV then tap here or drag & drop</div></div>';
+      if (clearBtn) clearBtn.style.display = 'none';
+      return;
+    }
+
+    if (clearBtn) clearBtn.style.display = '';
+
+    // Summary bar
+    var late  = psWorkOrders.filter(function(r){ return r.isLate; }).length;
+    var open  = psWorkOrders.filter(function(r){ return !r.isLate && r.status.toLowerCase().indexOf('complet') < 0; }).length;
+    var done  = psWorkOrders.filter(function(r){ return r.status.toLowerCase().indexOf('complet') >= 0 || r.status.toLowerCase().indexOf('done') >= 0 || r.status.toLowerCase().indexOf('ship') >= 0; }).length;
+
+    var saved = JSON.parse(localStorage.getItem('hillProShopWOs') || '{}');
+    var importedStr = saved.imported ? 'Last import: ' + new Date(saved.imported).toLocaleDateString([], {month:'short',day:'numeric'}) + ' ' + new Date(saved.imported).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+
+    var html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">';
+    html += '<div style="background:rgba(59,130,186,0.08);border:1px solid rgba(59,130,186,0.25);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:28px;color:#60a5fa;">'+open+'</div><div style="font-size:10px;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;">Open WOs</div></div>';
+    html += '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:28px;color:#f87171;">'+late+'</div><div style="font-size:10px;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;">Past Due</div></div>';
+    html += '<div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:10px;text-align:center;"><div style="font-family:Bebas Neue,sans-serif;font-size:28px;color:#4ade80;">'+done+'</div><div style="font-size:10px;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;">Completed</div></div>';
+    html += '</div>';
+    if (importedStr) html += '<div style="font-size:10px;color:#334155;margin-bottom:8px;letter-spacing:0.5px;">'+importedStr+' · '+psWorkOrders.length+' total WOs</div>';
+
+    // Search bar
+    html += '<div style="margin-bottom:8px;"><input id="ps-search" type="text" placeholder="Search WO#, part, machine..." oninput="filterProShopWOs(this.value)" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(26,74,140,0.4);border-radius:8px;padding:8px 12px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:13px;outline:none;box-sizing:border-box;"></div>';
+
+    // WO rows — show late first, then by due date
+    var sorted = psWorkOrders.slice().sort(function(a,b){
+      if (a.isLate && !b.isLate) return -1;
+      if (!a.isLate && b.isLate) return 1;
+      return new Date(a.due||'9999') - new Date(b.due||'9999');
+    });
+
+    html += '<div id="ps-wo-rows">';
+    sorted.forEach(function(r) {
+      var statusClass = r.status.toLowerCase().indexOf('complet')>=0||r.status.toLowerCase().indexOf('done')>=0?'done':r.isLate?'late':'open';
+      var dueStr = r.due ? new Date(r.due).toLocaleDateString([],{month:'short',day:'numeric'}) : '—';
+      html += '<div class="ps-wo-row">';
+      html += '<div class="ps-wo-num">'+escHtml(r.wo)+'</div>';
+      html += '<div style="flex:1;overflow:hidden;">';
+      html += '<div class="ps-wo-part">'+escHtml(r.part)+'</div>';
+      if (r.machine||r.op) html += '<div style="font-size:10px;color:#475569;margin-top:1px;">'+(r.machine?'🔧 '+escHtml(r.machine):'')+(r.op?' · '+escHtml(r.op):'')+'</div>';
+      html += '</div>';
+      if (r.qty) html += '<div style="font-size:11px;color:#64748b;white-space:nowrap;margin-right:4px;">Qty: '+escHtml(r.qty)+'</div>';
+      html += '<div class="ps-wo-due" style="color:'+(r.isLate?'#f87171':'#64748b')+';">'+dueStr+'</div>';
+      html += '<span class="ps-wo-status '+statusClass+'">'+(statusClass==='done'?'Done':statusClass==='late'?'LATE':'Open')+'</span>';
+      html += '<button class="ps-wo-open-btn ps-open-btn" data-wo="'+escHtml(r.wo)+'" title="Open in ProShop">🔗 ProShop</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+    list.innerHTML = html;
+
+    // Setup drag and drop
+    setupPSDropZone();
+  }
+
+  function filterProShopWOs(query) {
+    var q = query.toLowerCase();
+    var rows = document.querySelectorAll('#ps-wo-rows .ps-wo-row');
+    rows.forEach(function(row) {
+      var text = row.textContent.toLowerCase();
+      row.style.display = text.includes(q) ? '' : 'none';
+    });
+  }
+
+  function clearProShopData() {
+    if (!confirm('Clear imported ProShop work orders?')) return;
+    psWorkOrders = [];
+    localStorage.removeItem('hillProShopWOs');
+    renderProShopWOs();
+  }
+
+  function setupPSDropZone() {
+    var zone = document.getElementById('page-dashboard');
+    if (!zone || zone._psDropSetup) return;
+    zone._psDropSetup = true;
+    zone.addEventListener('dragover', function(e){ e.preventDefault(); });
+    zone.addEventListener('drop', function(e){
+      e.preventDefault();
+      var file = e.dataTransfer.files[0];
+      if (file && (file.name.endsWith('.csv') || file.name.endsWith('.txt'))) {
+        var reader = new FileReader();
+        reader.onload = function(ev){ parseProShopCSV(ev.target.result, file.name); };
+        reader.readAsText(file);
+      }
+    });
+  }
+
+  // Load saved ProShop WOs on dashboard open
+  var _origLoadDashboard = loadDashboard;
+  loadDashboard = function() {
+    _origLoadDashboard.apply(this, arguments);
+    // Load saved ProShop data
+    try {
+      var saved = localStorage.getItem('hillProShopWOs');
+      if (saved) {
+        var parsed = JSON.parse(saved);
+        if (parsed.data && parsed.data.length > 0) {
+          psWorkOrders = parsed.data;
+          renderProShopWOs();
+        }
+      }
+    } catch(e){}
+    setupPSDropZone();
+  };
 
   // ── REQUESTS PAGE ──
   window._reqFilter = 'all';
@@ -4413,7 +4648,7 @@
         '<div class="dash-req-machine">'+escHtml(r.machine||'')+'<span class="dash-req-cell"> · '+escHtml(r.cell||'')+'</span></div>',
 
         // WO number — prominent
-        '<div class="dash-req-wo" style="font-size:15px;margin-top:4px;">WO# '+escHtml(r.wo||'—')+'</div>',
+        '<div class="dash-req-wo" style="font-size:15px;margin-top:4px;">WO# '+escHtml(r.wo||'—')+(r.wo?'  <a class="ps-link" href="https://hill.adionsystems.com/procnc/workorders/'+encodeURIComponent(r.wo)+'" target="_blank">🔗 ProShop</a>':'')+'</div>',
 
         // Request type label
         r.type ? '<div style="font-size:11px;color:#64748b;margin-top:3px;letter-spacing:1px;">'+
@@ -4815,6 +5050,29 @@
     </div>
 
     <div id="dash-machine-filters" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
+
+    <!-- PROSHOP SECTION -->
+    <div id="ps-section" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#475569;">
+          <span style="color:#60a5fa;">PROSHOP</span> — WORK ORDERS
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="document.getElementById('ps-file-input').click()" style="background:rgba(59,130,186,0.1);border:1px solid rgba(59,130,186,0.3);color:#60a5fa;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">📥 IMPORT CSV</button>
+          <button onclick="openProShop()" style="background:rgba(59,130,186,0.1);border:1px solid rgba(59,130,186,0.3);color:#60a5fa;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">🔗 OPEN PROSHOP</button>
+          <button onclick="clearProShopData()" id="ps-clear-btn" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:7px;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:12px;cursor:pointer;">✕ CLEAR</button>
+        </div>
+      </div>
+      <input type="file" id="ps-file-input" accept=".csv,.txt" onchange="importProShopCSV(this)">
+      <div id="ps-wo-list">
+        <div class="ps-import-zone" onclick="document.getElementById('ps-file-input').click()" id="ps-drop-zone">
+          <div style="font-size:28px;margin-bottom:8px;">📋</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:#475569;margin-bottom:4px;">IMPORT PROSHOP WORK ORDERS</div>
+          <div style="font-size:12px;color:#334155;line-height:1.6;">In ProShop → Work Orders → Export CSV<br>Then tap here or drag & drop the file</div>
+          <div style="margin-top:10px;font-size:11px;color:#1a4a8c;">Reads: WO#, Part, Due Date, Status, Machine, Qty</div>
+        </div>
+      </div>
+    </div>
 
     <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#475569;margin-bottom:8px;">REQUEST LOG</div>
     <div id="dash-req-list"></div>
