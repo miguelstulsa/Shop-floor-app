@@ -5655,6 +5655,17 @@ window.plannerSetView = function(view) {
   }
 
   function plannerRender(){
+    // Force reflow so Safari/iOS actually repaints after innerHTML changes
+    var wrap = document.getElementById('pl-grid-wrap');
+    var pool = document.getElementById('pl-pool-body');
+    if(wrap) wrap.style.display='none';
+    if(pool) pool.style.display='none';
+    // Reading offsetHeight forces the browser to flush layout
+    if(wrap) void wrap.offsetHeight;
+    if(pool) void pool.offsetHeight;
+    if(wrap) wrap.style.display='';
+    if(pool) pool.style.display='';
+
     plannerRenderGrid();
     plannerRenderPool();
     var wlEl = document.getElementById('pl-week-label');
@@ -5748,21 +5759,23 @@ window.plannerSetView = function(view) {
     w.machine=''; w.scheduledDate='';
     plannerSave();
     plannerCloseChip();
+    plannerRender();
     if(window.showToast) showToast('blue', 'Moved back to pool', (w.wo||'WO')+' is now unassigned');
-    setTimeout(function(){ plannerRender(); }, 30);
   };
   window.plannerChipEdit = function(){
     var w = window._chipWO; if(!w) return;
     var id = w.id;
     plannerCloseChip();
-    setTimeout(function(){ plannerEditWO(id); }, 30);
+    plannerEditWO(id);
   };
   window.plannerChipDelete = function(){
     var w = window._chipWO; if(!w) return;
     if(!confirm('Delete WO '+(w.wo||'')+'? This removes it from your database.')) return;
-    plannerDeleteWO(w.id);
+    plannerWOs = plannerWOs.filter(function(x){ return x.id !== w.id; });
+    plannerSave();
     plannerCloseChip();
-    setTimeout(function(){ plannerRender(); }, 30);
+    plannerRender();
+    if(window.showToast) showToast('red', 'WO '+(w.wo||'')+' deleted', 'Removed from database');
   };
 
   function plannerRenderPool(){
@@ -5892,12 +5905,10 @@ window.plannerSetView = function(view) {
     window._selectedId = null;
     var banner = document.getElementById('pl-select-banner');
     if(banner) banner.style.display = 'none';
-    // Re-open pool
     plannerPoolOpen = true;
     var tog = document.getElementById('pl-pool-toggle');
     if(tog) tog.textContent = '▲';
-    plannerRenderPool();
-    plannerRenderGrid();
+    plannerRender();
   };
 
   // ── Cell click — place selected WO, or open add modal ──
@@ -5908,28 +5919,24 @@ window.plannerSetView = function(view) {
       var machine = el.dataset.machine;
       var date    = el.dataset.date;
       if(wo && machine && date) {
-        wo.machine      = machine;
+        wo.machine       = machine;
         wo.scheduledDate = date;
-        // Clear selection immediately so banner hides
         window._selectedId = null;
+        plannerPoolOpen = true;
+        // Hide banner instantly
         var banner = document.getElementById('pl-select-banner');
         if(banner) banner.style.display = 'none';
-        // Re-open pool
-        plannerPoolOpen = true;
         var tog = document.getElementById('pl-pool-toggle');
         if(tog) tog.textContent = '▲';
-        // Save first
+        // Save + jump week
         plannerSave();
-        // Jump week offset to where the job was placed
         var d = new Date(date+'T12:00');
         var today = new Date(); today.setHours(0,0,0,0);
         plannerWeekOffset = Math.floor((Math.round((d-today)/(864e5)) + today.getDay()) / 7);
-        // Force a clean re-render after a short delay so the DOM can flush
-        setTimeout(function(){
-          plannerRender();
-          if(window.showToast) showToast('green', wo.wo + ' → ' + machine,
-            new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
-        }, 30);
+        // Render immediately
+        plannerRender();
+        if(window.showToast) showToast('green', wo.wo + ' → ' + machine,
+          new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
       } else {
         window.plannerDeselectWO();
       }
@@ -6033,14 +6040,14 @@ window.plannerSetView = function(view) {
     }
     plannerSave();
     plannerCloseModal();
+    plannerRender();
     var dest=machine?'→ '+machine+(schedDate?' on '+new Date(schedDate+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'}):''):'→ Unassigned pool';
     if(window.showToast) showToast('green',(editId?'Updated':'Saved')+' WO '+wo, dest);
-    setTimeout(function(){ plannerRender(); }, 30);
   };
   window.plannerDeleteWO=function(id){
     plannerWOs=plannerWOs.filter(function(w){return w.id!==id;});
     plannerSave();
-    setTimeout(function(){ plannerRender(); }, 30);
+    plannerRender();
   };
   window.plannerClearAll=function(){
     if(!confirm('Clear ALL scheduled work orders? This cannot be undone.')) return;
