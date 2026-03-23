@@ -5542,7 +5542,9 @@ window.plannerSetView = function(view) {
     render: function(){ plannerRender(); }
   };
 
-  // Machine list from DNX config
+  function plannerMakeId(){
+    return 'wo'+(Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/[^a-z0-9]/gi,'');
+  }
   var PLANNER_MACHINES = [
     {name:'1050-B',cell:'Big Mill'},{name:'7000',cell:'Big Mill'},{name:'VF-6',cell:'Big Mill'},
     {name:'5100-B',cell:'5100 Cell'},{name:'2500',cell:'5100 Cell'},{name:'PUMA-3',cell:'5100 Cell'},
@@ -5557,15 +5559,28 @@ window.plannerSetView = function(view) {
 
   // ── Persistence ──
   function plannerLoad() {
-    try { var s=localStorage.getItem(PLANNER_KEY); if(s) plannerWOs=JSON.parse(s); } catch(e){}
+    try {
+      var s=localStorage.getItem(PLANNER_KEY);
+      if(s){ var parsed=JSON.parse(s); if(Array.isArray(parsed)&&parsed.length>0) plannerWOs=parsed; }
+    } catch(e){ console.warn('plannerLoad:',e); }
   }
   function plannerSave() {
-    try { localStorage.setItem(PLANNER_KEY, JSON.stringify(plannerWOs)); } catch(e){}
-    // Firebase sync
+    // Strip bulky fields before storing to avoid 5MB localStorage limit
+    var slim=plannerWOs.map(function(w){
+      return {
+        id:w.id, wo:w.wo, part:w.part, qty:w.qty, due:w.due,
+        machine:w.machine, scheduledDate:w.scheduledDate,
+        priority:w.priority, operator:w.operator, runtime:w.runtime,
+        notes:w.notes, customer:w.customer, planner:w.planner, material:w.material
+      };
+    });
+    try { localStorage.setItem(PLANNER_KEY, JSON.stringify(slim)); } catch(e){ console.warn('plannerSave localStorage full:',e); }
+    // Firebase sync — full data
     if(window._db && window._fbModules){
       var mods=window._fbModules, db2=window._db;
-      mods.setDoc(mods.doc(db2,'hillPlanner','wos'), {data: JSON.stringify(plannerWOs), updatedAt: mods.serverTimestamp()})
-        .catch(function(){});
+      mods.setDoc(mods.doc(db2,'hillPlanner','wos'),
+        {data: JSON.stringify(slim), updatedAt: mods.serverTimestamp()}
+      ).catch(function(e){ console.warn('plannerSave Firebase:',e); });
     }
   }
 
@@ -5594,15 +5609,13 @@ window.plannerSetView = function(view) {
 
   // ── Init / render ──
   var _plannerInited = false;
-  window._plannerReady = false;
   window._plannerDoInit = function() {
-    plannerLoad();
-    plannerPopulateMachineSelect();
-    plannerRender();
     if(!_plannerInited) {
       _plannerInited = true;
-      // One-time Firebase sync
-      if(window._db && window._fbModules){
+      plannerLoad();
+      plannerPopulateMachineSelect();
+      // One-time Firebase sync — only if localStorage was empty
+      if(plannerWOs.length === 0 && window._db && window._fbModules){
         var mods=window._fbModules, db2=window._db;
         mods.getDoc(mods.doc(db2,'hillPlanner','wos')).then(function(snap){
           if(snap.exists()){
@@ -5614,6 +5627,7 @@ window.plannerSetView = function(view) {
         }).catch(function(){});
       }
     }
+    plannerRender();
   };
   window.plannerInit = function() {
     plannerSetView(_plannerView || 'proshop');
@@ -5880,7 +5894,7 @@ window.plannerSetView = function(view) {
     // Warn but don't block if no machine selected — goes to unassigned pool
     var editId=window._pl.editId;
     var obj={
-      id: editId||(Date.now().toString(36)+Math.random().toString(36).slice(2)),
+      id: editId||plannerMakeId(),
       wo:wo, part:part,
       qty:(document.getElementById('pl-f-qty').value||'').trim(),
       due:(document.getElementById('pl-f-due').value||''),
@@ -6012,7 +6026,7 @@ window.plannerSetView = function(view) {
         }
 
         plannerWOs.push({
-          id: Date.now().toString(36)+Math.random().toString(36).slice(2)+(added),
+          id: plannerMakeId(),
           wo: wo, part: part,
           qty: iQty>=0 ? c[iQty]||'' : '',
           due: dueDateStr,
