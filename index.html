@@ -5758,7 +5758,7 @@ window.plannerSetView = function(view) {
     var el=document.getElementById('pl-pool-count');
     if(el) el.textContent=count;
     var hint=document.getElementById('pl-pool-hint');
-    if(hint) hint.textContent=count>0?'Tap a card — pick machine & day — hit ASSIGN':'';
+    if(hint) hint.textContent=count>0?'Tap a card to select it, then tap a calendar cell to place it':'';
     var body=document.getElementById('pl-pool-body');
     if(!body) return;
     if(!plannerPoolOpen){body.style.display='none';return;}
@@ -5797,26 +5797,19 @@ window.plannerSetView = function(view) {
         var dl=Math.ceil((new Date(w.due+'T12:00')-new Date())/(1000*60*60*24));
         daysLeft=dl<0?'⚠ '+Math.abs(dl)+'d LATE':dl===0?'DUE TODAY':dl+'d left';
       }
-      return '<div style="background:#0d1f35;border:1px solid '+(isHot?'rgba(239,68,68,0.4)':'rgba(26,74,140,0.5)')+';border-left:3px solid '+priColor+';border-radius:10px;padding:10px 12px;">'
-        // Top row: WO# + due badge
-        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'
+      return '<div class="pl-pool-card" data-woid="'+w.id+'" onclick="plannerSelectWO(\''+w.id+'\')"'
+        +' style="background:#0d1f35;border:1px solid '+(isHot?'rgba(239,68,68,0.4)':'rgba(26,74,140,0.5)')+';border-left:4px solid '+priColor+';border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;user-select:none;">'
+        // Top: WO# + days left
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
           +'<div style="font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:1px;color:#f5c500;">'+escHtml(w.wo||'WO')+(w.qty?' <span style="font-size:11px;color:#64748b;font-family:Barlow,sans-serif;">×'+escHtml(w.qty)+'</span>':'')+'</div>'
           +(daysLeft?'<div style="font-size:10px;font-weight:700;color:'+(isLate?'#f87171':w.priority==='high'?'#fbbf24':'#64748b')+';">'+daysLeft+'</div>':'')
         +'</div>'
-        // Part + customer
+        // Part
         +'<div style="font-size:12px;color:#cbd5e1;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(w.part||'—')+'</div>'
+        // Customer
         +(w.customer?'<div style="font-size:10px;color:#475569;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(w.customer)+'</div>':'<div style="margin-bottom:6px;"></div>')
-        // Inline assign controls
-        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">'
-          +'<select id="qa-m-'+w.id+'" style="background:#0a1525;border:1px solid #2a5a8c;border-radius:6px;padding:5px 7px;color:#f0f4f8;font-size:12px;width:100%;color-scheme:dark;outline:none;">'+machOpts+'</select>'
-          +'<input type="date" id="qa-d-'+w.id+'" value="'+todayStr+'" style="background:#0a1525;border:1px solid #2a5a8c;border-radius:6px;padding:5px 7px;color:#f0f4f8;font-size:12px;width:100%;color-scheme:dark;outline:none;">'
-        +'</div>'
-        // Assign + Edit buttons
-        +'<div style="display:flex;gap:6px;">'
-          +'<button onclick="plannerQuickAssign(\''+w.id+'\')" style="flex:2;padding:7px;background:#f59e0b;border:none;color:#0f2338;border-radius:7px;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:1.5px;cursor:pointer;font-weight:900;">ASSIGN</button>'
-          +'<button onclick="plannerEditWO(\''+w.id+'\')" style="flex:1;padding:7px;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;color:#64748b;border-radius:7px;font-family:Bebas Neue,sans-serif;font-size:13px;cursor:pointer;">EDIT</button>'
-          +'<button onclick="plannerDeleteWO(\''+w.id+'\')" style="padding:7px 10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#f87171;border-radius:7px;font-size:13px;cursor:pointer;">✕</button>'
-        +'</div>'
+        // Tap hint
+        +'<div style="font-size:10px;color:#334155;letter-spacing:1px;border-top:1px solid #1a3a5c;padding-top:6px;margin-top:2px;">👆 TAP TO SELECT → THEN TAP A CELL</div>'
         +'</div>';
     }).join('');
   }
@@ -5849,7 +5842,59 @@ window.plannerSetView = function(view) {
     plannerRenderPool();
   };
 
-  // ── Drag & drop ──
+  // ── Tap-to-select → tap-cell-to-place ──
+  var _selectedId = null;
+
+  window.plannerSelectWO = function(id) {
+    _selectedId = id;
+    // Highlight selected card in pool
+    document.querySelectorAll('.pl-pool-card').forEach(function(c){
+      c.style.outline = c.dataset.woid === id ? '2px solid #f59e0b' : 'none';
+      c.style.background = c.dataset.woid === id ? 'rgba(245,158,11,0.15)' : '';
+    });
+    // Flash calendar cells to show they're tappable
+    document.querySelectorAll('.pl-cell').forEach(function(c){
+      c.style.background = 'rgba(245,158,11,0.06)';
+    });
+    var wo = plannerWOs.find(function(w){ return w.id===id; });
+    if(window.showToast && wo) showToast('blue', 'WO '+wo.wo+' selected', 'Now tap any cell on the calendar to place it');
+  };
+
+  window.plannerDeselectWO = function() {
+    _selectedId = null;
+    document.querySelectorAll('.pl-pool-card').forEach(function(c){
+      c.style.outline = 'none';
+      c.style.background = '';
+    });
+    document.querySelectorAll('.pl-cell').forEach(function(c){
+      c.style.background = '';
+    });
+  };
+
+  // ── Cell click — place selected WO, or open add modal ──
+  window.plannerCellClick = function(el, e) {
+    if(e.target.closest('.pl-wo')) return;
+    if(_selectedId) {
+      // Place the selected WO into this cell
+      var wo = plannerWOs.find(function(w){ return w.id===_selectedId; });
+      if(wo) {
+        wo.machine = el.dataset.machine;
+        wo.scheduledDate = el.dataset.date;
+        plannerSave(); plannerRender();
+        if(window.showToast) showToast('green', wo.wo+' → '+wo.machine, new Date(wo.scheduledDate+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
+        // Jump to that week
+        var d = new Date(wo.scheduledDate+'T12:00');
+        var today = new Date(); today.setHours(0,0,0,0);
+        plannerWeekOffset = Math.floor((Math.round((d-today)/(864e5)) + today.getDay()) / 7);
+        plannerRender();
+      }
+      plannerDeselectWO();
+    } else {
+      plannerOpenAddModal(el.dataset.machine, el.dataset.date);
+    }
+  };
+
+  // ── Keep HTML5 drag for desktop ──
   var _dragId=null;
   window.plannerDragStart=function(e,id){ _dragId=id; e.dataTransfer.effectAllowed='move'; };
   window.plannerDragOver=function(e,el){ e.preventDefault(); e.dataTransfer.dropEffect='move'; el.classList.add('drop-over'); };
@@ -5864,12 +5909,6 @@ window.plannerSetView = function(view) {
     plannerSave(); plannerRender();
     if(window.showToast) showToast('green','WO '+wo.wo+' assigned','→ '+machine+' on '+new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
     _dragId=null;
-  };
-
-  // ── Cell click (add WO to that machine/date) ──
-  window.plannerCellClick=function(el,e){
-    if(e.target.closest('.pl-wo')) return;
-    plannerOpenAddModal(el.dataset.machine, el.dataset.date);
   };
 
   // ── Modal ──
