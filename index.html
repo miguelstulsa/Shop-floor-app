@@ -5746,20 +5746,23 @@ window.plannerSetView = function(view) {
   window.plannerChipUnschedule = function(){
     var w = window._chipWO; if(!w) return;
     w.machine=''; w.scheduledDate='';
-    plannerSave(); plannerRender(); plannerCloseChip();
+    plannerSave();
+    plannerCloseChip();
     if(window.showToast) showToast('blue', 'Moved back to pool', (w.wo||'WO')+' is now unassigned');
+    setTimeout(function(){ plannerRender(); }, 30);
   };
   window.plannerChipEdit = function(){
     var w = window._chipWO; if(!w) return;
     var id = w.id;
     plannerCloseChip();
-    plannerEditWO(id);
+    setTimeout(function(){ plannerEditWO(id); }, 30);
   };
   window.plannerChipDelete = function(){
     var w = window._chipWO; if(!w) return;
     if(!confirm('Delete WO '+(w.wo||'')+'? This removes it from your database.')) return;
     plannerDeleteWO(w.id);
     plannerCloseChip();
+    setTimeout(function(){ plannerRender(); }, 30);
   };
 
   function plannerRenderPool(){
@@ -5899,23 +5902,34 @@ window.plannerSetView = function(view) {
 
   // ── Cell click — place selected WO, or open add modal ──
   window.plannerCellClick = function(el, e) {
-    // If a chip was tapped, ignore
     if(e && e.target && e.target.closest && e.target.closest('.pl-wo')) return;
     if(window._selectedId) {
       var wo = plannerWOs.find(function(w){ return w.id===window._selectedId; });
-      if(wo) {
-        wo.machine = el.dataset.machine;
-        wo.scheduledDate = el.dataset.date;
+      var machine = el.dataset.machine;
+      var date    = el.dataset.date;
+      if(wo && machine && date) {
+        wo.machine      = machine;
+        wo.scheduledDate = date;
+        // Clear selection immediately so banner hides
+        window._selectedId = null;
+        var banner = document.getElementById('pl-select-banner');
+        if(banner) banner.style.display = 'none';
+        // Re-open pool
+        plannerPoolOpen = true;
+        var tog = document.getElementById('pl-pool-toggle');
+        if(tog) tog.textContent = '▲';
+        // Save first
         plannerSave();
-        window.plannerDeselectWO(); // clears selection + re-opens pool
-        plannerRender();
-        if(window.showToast) showToast('green', wo.wo + ' → ' + wo.machine,
-          new Date(wo.scheduledDate+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
-        // Jump calendar to that week
-        var d = new Date(wo.scheduledDate+'T12:00');
+        // Jump week offset to where the job was placed
+        var d = new Date(date+'T12:00');
         var today = new Date(); today.setHours(0,0,0,0);
         plannerWeekOffset = Math.floor((Math.round((d-today)/(864e5)) + today.getDay()) / 7);
-        plannerRender();
+        // Force a clean re-render after a short delay so the DOM can flush
+        setTimeout(function(){
+          plannerRender();
+          if(window.showToast) showToast('green', wo.wo + ' → ' + machine,
+            new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
+        }, 30);
       } else {
         window.plannerDeselectWO();
       }
@@ -6017,13 +6031,16 @@ window.plannerSetView = function(view) {
     } else {
       plannerWOs.push(obj);
     }
-    plannerSave(); plannerRender(); plannerCloseModal();
+    plannerSave();
+    plannerCloseModal();
     var dest=machine?'→ '+machine+(schedDate?' on '+new Date(schedDate+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'}):''):'→ Unassigned pool';
     if(window.showToast) showToast('green',(editId?'Updated':'Saved')+' WO '+wo, dest);
+    setTimeout(function(){ plannerRender(); }, 30);
   };
   window.plannerDeleteWO=function(id){
     plannerWOs=plannerWOs.filter(function(w){return w.id!==id;});
-    plannerSave(); plannerRender();
+    plannerSave();
+    setTimeout(function(){ plannerRender(); }, 30);
   };
   window.plannerClearAll=function(){
     if(!confirm('Clear ALL scheduled work orders? This cannot be undone.')) return;
