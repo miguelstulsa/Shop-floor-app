@@ -2,7 +2,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hill Manufacturing — Shop Floor</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Hill Manufacturing — Shop Floor v26</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -5205,8 +5208,8 @@
     if(tab === 'proshop') {
       setTimeout(function(){
         var el = document.getElementById('ps-hub-summary');
-        if(!el || !window._pl) return;
-        var wos = window._pl.wos || [];
+        if(!el || !window._plannerGetWOs) return;
+        var wos = window._plannerGetWOs() || [];
         if(!wos.length){ el.innerHTML=''; return; }
         var unassigned = wos.filter(function(w){return !w.machine||!w.scheduledDate;}).length;
         var hot  = wos.filter(function(w){return w.priority==='hot';}).length;
@@ -5526,21 +5529,16 @@ window.plannerSetView = function(view) {
 
   // ── State ──
   var PLANNER_KEY = 'hillPlannerWOs_v2';
-  var plannerWOs  = [];          // array of WO objects
-  var plannerWeekOffset = 0;     // 0 = current week
-  var plannerEditId = null;      // id of WO being edited
-  var plannerSelectedPri = 'normal';
+  var plannerWOs  = [];
+  var plannerWeekOffset = 0;
   var plannerPoolOpen = true;  // always open by default
-  // Expose mutable state so window-level onclick handlers can read/write it
-  window._pl = {
-    get editId(){ return plannerEditId; },
-    set editId(v){ plannerEditId=v; },
-    get pri(){ return plannerSelectedPri; },
-    set pri(v){ plannerSelectedPri=v; },
-    get wos(){ return plannerWOs; },
-    save: function(){ plannerSave(); },
-    render: function(){ plannerRender(); }
-  };
+
+  // Store edit state directly on window — no proxy, no scope issues
+  window._plannerEditId  = null;
+  window._plannerPri     = 'normal';
+
+  // Give hub summary access to WO list
+  window._plannerGetWOs = function(){ return plannerWOs; };
 
   function plannerMakeId(){
     return 'wo'+(Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/[^a-z0-9]/gi,'');
@@ -5913,7 +5911,7 @@ window.plannerSetView = function(view) {
 
   // ── Modal ──
   window.plannerOpenAddModal=function(machine,date){
-    window._pl.editId=null;
+    window._plannerEditId=null;
     document.getElementById('pl-modal-title').textContent='NEW WORK ORDER';
     document.getElementById('pl-f-wo').value='';
     document.getElementById('pl-f-part').value='';
@@ -5930,7 +5928,7 @@ window.plannerSetView = function(view) {
   window.plannerEditWO=function(id){
     var w=plannerWOs.find(function(x){return x.id===id;});
     if(!w) return;
-    window._pl.editId=id;
+    window._plannerEditId=id;
     document.getElementById('pl-modal-title').textContent='ASSIGN / EDIT WO';
     document.getElementById('pl-f-wo').value=w.wo||'';
     document.getElementById('pl-f-part').value=w.part||'';
@@ -5950,7 +5948,7 @@ window.plannerSetView = function(view) {
     document.getElementById('pl-modal').classList.remove('open');
   };
   window.plannerSelPri=function(pri){
-    window._pl.pri=pri;
+    window._plannerPri=pri;
     document.querySelectorAll('.pl-pri-btn').forEach(function(b){
       var bPri=b.getAttribute('data-pri');
       b.className='pl-pri-btn'+(bPri===pri?' sel-'+pri:'');
@@ -5963,7 +5961,7 @@ window.plannerSetView = function(view) {
     var machine=(document.getElementById('pl-f-machine').value||'').trim();
     var schedDate=(document.getElementById('pl-f-date').value||'').trim();
     // Warn but don't block if no machine selected — goes to unassigned pool
-    var editId=window._pl.editId;
+    var editId=window._plannerEditId;
     var obj={
       id: editId||plannerMakeId(),
       wo:wo, part:part,
@@ -5974,7 +5972,7 @@ window.plannerSetView = function(view) {
       notes:(document.getElementById('pl-f-notes').value||'').trim(),
       machine: machine,
       scheduledDate: schedDate,
-      priority: window._pl.pri||'normal',
+      priority: window._plannerPri||'normal',
       // preserve ProShop fields if editing existing
       customer: (plannerWOs.find(function(x){return x.id===editId;})||{}).customer||'',
       planner:  (plannerWOs.find(function(x){return x.id===editId;})||{}).planner||'',
