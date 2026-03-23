@@ -5288,14 +5288,14 @@ window.plannerSetView = function(view) {
   var psBrowser = document.getElementById('pl-ps-browser-btn');
 
   if (view === 'proshop') {
-    psView.style.display   = 'flex';
-    hillView.style.display = 'none';
-    psBtn.style.background  = '#f59e0b';  psBtn.style.color  = '#0f2338';
-    hillBtn.style.background = 'transparent'; hillBtn.style.color = '#475569';
-    weekNav.style.display   = 'none';
-    hillAct.style.display   = 'none';
-    psReload.style.display  = '';
-    psBrowser.style.display = '';
+    if(psView)   psView.style.display   = 'flex';
+    if(hillView) hillView.style.display = 'none';
+    if(psBtn)  { psBtn.style.background  = '#f59e0b';  psBtn.style.color  = '#0f2338'; }
+    if(hillBtn){ hillBtn.style.background = 'transparent'; hillBtn.style.color = '#475569'; }
+    if(weekNav)   weekNav.style.display   = 'none';
+    if(hillAct)   hillAct.style.display   = 'none';
+    if(psReload)  psReload.style.display  = '';
+    if(psBrowser) psBrowser.style.display = '';
     // Lazy-load the frame the first time
     var frame = document.getElementById('pl-ps-frame');
     if (frame && !frame.src) frame.src = 'https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule';
@@ -5307,28 +5307,24 @@ window.plannerSetView = function(view) {
           blocked.style.display = 'flex';
         }
       } catch(e) {
-        // Cross-origin access throws — means it loaded but we can't read it (that's fine, not blocked)
+        // Cross-origin — means it loaded fine, just can't read it
       }
     }, 4000);
   } else {
-    psView.style.display    = 'none';
-    hillView.style.display  = 'flex';
-    psBtn.style.background  = 'transparent'; psBtn.style.color  = '#475569';
-    hillBtn.style.background = '#f59e0b';    hillBtn.style.color = '#0f2338';
-    weekNav.style.display   = 'flex';
-    hillAct.style.display   = 'flex';
-    psReload.style.display  = 'none';
-    psBrowser.style.display = 'none';
-    if (window.plannerInit) window.plannerInit();
+    // ── HILL PLANNER view ──
+    if(psView)   psView.style.display    = 'none';
+    if(hillView) hillView.style.display  = 'flex';
+    if(psBtn)  { psBtn.style.background  = 'transparent'; psBtn.style.color  = '#475569'; }
+    if(hillBtn){ hillBtn.style.background = '#f59e0b';    hillBtn.style.color = '#0f2338'; }
+    if(weekNav)   weekNav.style.display   = 'flex';
+    if(hillAct)   hillAct.style.display   = 'flex';
+    if(psReload)  psReload.style.display  = 'none';
+    if(psBrowser) psBrowser.style.display = 'none';
+    // Directly call the real render functions — no fragile override needed
+    if(window._plannerReady) {
+      window._plannerDoInit();
+    }
   }
-};
-
-// Override plannerInit to respect view state
-var _origPlannerInit = window.plannerInit;
-window.plannerInit = function() {
-  // Always default to ProShop schedule view first
-  plannerSetView(_plannerView);
-  if (_origPlannerInit && _plannerView === 'hill') _origPlannerInit();
 };
 </script>
 
@@ -5468,7 +5464,8 @@ window.plannerInit = function() {
   function plannerToday() { var d=new Date(); d.setHours(0,0,0,0); return plannerDateKey(d); }
 
   // ── Init / render ──
-  window.plannerInit = function() {
+  window._plannerReady = false;
+  window._plannerDoInit = function() {
     plannerLoad();
     plannerPopulateMachineSelect();
     plannerRender();
@@ -5481,6 +5478,9 @@ window.plannerInit = function() {
         }
       }).catch(function(){});
     }
+  };
+  window.plannerInit = function() {
+    plannerSetView(_plannerView || 'proshop');
   };
 
   function plannerPopulateMachineSelect(){
@@ -5830,8 +5830,9 @@ window.plannerInit = function() {
     input.value='';
   };
 
-  // Load on startup
+  // Load on startup + mark ready
   plannerLoad();
+  window._plannerReady = true;
 })();
 </script>
 
