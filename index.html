@@ -1002,6 +1002,23 @@
         <div style="font-size:11px;color:#64748b;line-height:1.6;">Alerts sent <strong style="color:#f0f4f8;">only to you</strong>: HOT priority, Needs Attention, Job Running, Job Completed, Pending WO, Machinist Req, New User Signup</div>
       </div>
 
+      <!-- Quality Manager key -->
+      <div style="margin-bottom:14px;padding:12px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.25);border-radius:10px;">
+        <label style="font-size:11px;color:#f87171;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">🔴 Quality Manager Key (Inspection Alerts Only)</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input id="quality-pushover-key" type="password"
+            placeholder="Quality Manager's Pushover User Key..."
+            style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
+            oninput="localStorage.setItem('hillQualityPushoverKey',this.value.trim())"
+          />
+          <button onclick="testQualityPushover()"
+            style="background:#ef4444;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
+            TEST
+          </button>
+        </div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">Every 🔴 <strong style="color:#f0f4f8;">Inspection Request</strong> fires a <strong style="color:#f87171;">siren alert</strong> to this key — directly to your Quality Manager's phone.</div>
+      </div>
+
       <div style="margin-bottom:10px;">
         <label style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Group Key (notifies ALL managers)</label>
         <div style="display:flex;gap:8px;">
@@ -1415,6 +1432,7 @@
     if (!isFirstLoad) {
       notes.forEach(n => {
         if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue')) {
+          // Only browser notification from listener — Pushover fires from submit button only
           sendBrowserNotif(n);
           showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.cell + ' — ' + n.machine + ': ' + n.wo);
         }
@@ -1523,8 +1541,17 @@
 
   window.submitNoteToFirebase = async function(note) {
     await addDoc(collection(db, "notes"), { ...note, createdAt: serverTimestamp() });
-    // Also save to hillRequests for dashboard tracking
+    // Save to hillRequests for dashboard tracking
     await addDoc(collection(db, "hillRequests"), { ...note, createdAt: serverTimestamp(), resolvedAt: null, resolved: false });
+    // Inspection requests also go to permanent archive — this collection is NEVER cleared
+    if (note.type === 'red') {
+      await addDoc(collection(db, "hillInspections"), {
+        ...note,
+        createdAt: serverTimestamp(),
+        archivedAt: serverTimestamp(),
+        appVersion: 'v35'
+      });
+    }
   };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
   window.changeNoteType = async function(id, newType) { await updateDoc(doc(db, "notes", id), { type: newType }); };
@@ -1873,6 +1900,12 @@
     var inp = document.getElementById('pushover-group-key');
     if (inp) inp.value = savedGroupKey;
   }
+  // Load saved quality manager key (falls back to hardcoded default)
+  var _savedQualityKey = localStorage.getItem('hillQualityPushoverKey') || 'uaaqjftkq7qibdc3o9bk6b4h7ksdez';
+  if (_savedQualityKey) {
+    var qInp = document.getElementById('quality-pushover-key');
+    if (qInp) qInp.value = _savedQualityKey;
+  }
 
   function pushoverKeyChanged(val) {
     savedGroupKey = val.trim();
@@ -1923,7 +1956,31 @@
     }).catch(function(e){ console.warn('Admin Pushover:', e.message); });
   }
 
-  // ── PUSHOVER SAFETY WRAPPER — uses group key if set, falls back to default ──
+  // ── QUALITY MANAGER PUSHOVER — fires on every red/inspection request ──
+  var QUALITY_MANAGER_KEY = 'uaaqjftkq7qibdc3o9bk6b4h7ksdez'; // QC Manager
+  function qualityPushover(title, message) {
+    var qualityKey = localStorage.getItem('hillQualityPushoverKey') || QUALITY_MANAGER_KEY;
+    if (!qualityKey) return;
+    var fd = new FormData();
+    fd.append('token',    PUSHOVER_TOKEN);
+    fd.append('user',     qualityKey);
+    fd.append('title',    title   || '🔴 INSPECTION REQUEST');
+    fd.append('message',  message || '');
+    fd.append('sound',    'siren');
+    fd.append('priority', '1'); // high priority — bypasses quiet hours
+    fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST', mode: 'no-cors', body: fd
+    }).catch(function(e){ console.warn('Quality Pushover:', e.message); });
+  }
+
+  function testQualityPushover() {
+    var key = (document.getElementById('quality-pushover-key') || {}).value || '';
+    key = key.trim();
+    if (!key) { showToast('yellow', 'Enter a key first', 'Paste the Quality Manager\'s Pushover User Key above.'); return; }
+    localStorage.setItem('hillQualityPushoverKey', key);
+    qualityPushover('🔴 TEST — Inspection Alert', 'Quality Manager alerts are working! You will receive this on every Inspection Request.');
+    showToast('green', 'Test sent!', 'Check the Quality Manager\'s Pushover app.');
+  }
   function safePushover(title, message, sound, priority) {
     var userKey = localStorage.getItem('hillPushoverGroupKey') || savedGroupKey || PUSHOVER_DEFAULT_USER;
     var fd = new FormData();
@@ -2047,6 +2104,10 @@
     closeModal();
     showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
     if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue') {
+      // Store a dedup key so multi-session installs don't double-fire
+      var _dedupKey = 'hillPushSent_' + Date.now();
+      localStorage.setItem(_dedupKey, '1');
+      setTimeout(function(){ localStorage.removeItem(_dedupKey); }, 10000);
       sendPushover(selectedType, currentCell, currentMachine, wo, detail, operator);
     }
     // Admin-specific alerts
@@ -2094,12 +2155,30 @@
     if (operator) parts.push(operator);
     parts.push('WO: ' + wo);
     if (detail) parts.push(detail);
-    safePushover(
-      titles[type] || 'SHOP REQUEST',
-      parts.join('\n'),
-      sounds[type] || 'pushover',
-      type === 'red' ? 1 : 0
-    );
+    var msgBody = parts.join('\n');
+
+    // For red/inspection: fire quality manager key directly (siren, high priority)
+    // Only also fire group key if no quality key is set (avoid double-alerting QM)
+    if (type === 'red') {
+      var hasQualityKey = !!((localStorage.getItem('hillQualityPushoverKey') || QUALITY_MANAGER_KEY || '').trim());
+      qualityPushover(
+        '🔴 INSPECTION — ' + machine,
+        (cell ? cell + ' · ' : '') + machine + '\nWO: ' + wo + (operator ? '\nOperator: ' + operator : '') + (detail ? '\n' + detail : '')
+      );
+      // Also alert admin personally
+      adminPushover(titles.red, msgBody, 'siren', 1);
+      // Only hit group key if quality key not set (prevents double-alert if QM is in the group)
+      if (!hasQualityKey) {
+        safePushover(titles.red, msgBody, 'siren', 1);
+      }
+    } else {
+      safePushover(
+        titles[type] || 'SHOP REQUEST',
+        msgBody,
+        sounds[type] || 'pushover',
+        0
+      );
+    }
   }
 
   function enableNotifications() {
@@ -4531,7 +4610,7 @@
     var clearWrap = document.getElementById('dash-clear-wrap');
     if (clearWrap) {
       clearWrap.innerHTML = (window._isAdmin || window.currentUser === 'hilladmin')
-        ? '<button onclick="clearDashboardRequests()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:12px;">🗑 CLEAR ALL REQUESTS (Admin Only)</button>'
+        ? '<button onclick="clearDashboardRequests()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:12px;">🗑 CLEAR NON-INSPECTION HISTORY (Admin Only) · 🔴 Inspections kept forever</button>'
         : '';
     }
 
@@ -4739,14 +4818,28 @@
       showToast('red', 'Admin only', 'Only admin can clear the request history.');
       return;
     }
-    if (!confirm('Clear ALL request history? This cannot be undone.')) return;
+    // Count inspection records that will be protected
+    var inspectionCount = dashRequests.filter(function(r){ return r.type === 'red'; }).length;
+    var msg = 'Clear non-inspection request history?';
+    if (inspectionCount > 0) {
+      msg = 'Clear request history?\n\n⚠ ' + inspectionCount + ' INSPECTION REQUEST(S) will be kept permanently — inspection records are never deleted.';
+    }
+    if (!confirm(msg)) return;
     if(!window._db||!window._fbModules)return;
     var mods=window._fbModules,db2=window._db;
     mods.getDocs(mods.collection(db2,'hillRequests')).then(function(snap){
-      snap.forEach(function(d){mods.deleteDoc(mods.doc(db2,'hillRequests',d.id));});
-      dashRequests=[];
+      var deleteCount = 0;
+      snap.forEach(function(d){
+        var data = d.data();
+        // NEVER delete inspection requests (type === 'red')
+        if (data.type === 'red') return;
+        mods.deleteDoc(mods.doc(db2,'hillRequests',d.id));
+        deleteCount++;
+      });
+      // Keep inspection records in local state too
+      dashRequests = dashRequests.filter(function(r){ return r.type === 'red'; });
       renderDashboard();
-      showToast('green','Cleared','All request history deleted.');
+      showToast('green', deleteCount + ' records cleared', inspectionCount > 0 ? inspectionCount + ' inspection records kept permanently' : 'History cleared');
     });
   }
   function renderDashCharts(data) {
@@ -5214,8 +5307,10 @@
 </div>
 
 <script>
-// Refresh ProShop hub summary when tab opens
+// ProShop hub summary — hooks into switchTab without wrapping it
+// Uses a delegated approach: check on every tab switch via a passive observer
 (function(){
+  // Patch the existing switchTab to add proshop summary update inline
   var _origST = window.switchTab;
   window.switchTab = function(tab) {
     _origST(tab);
