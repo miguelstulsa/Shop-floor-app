@@ -188,7 +188,7 @@
   .dash-filter-btn.f-red.active    { background:rgba(239,68,68,0.15);border-color:#ef4444;color:#f87171; }
   .dash-filter-btn.f-yellow.active { background:rgba(234,179,8,0.15);border-color:#eab308;color:#fbbf24; }
   .dash-filter-btn.f-blue.active   { background:rgba(59,130,246,0.15);border-color:#3b82f6;color:#60a5fa; }
-  .dash-filter-btn.f-green.active  { background:rgba(34,197,94,0.15);border-color:#22c55e;color:#4ade80; }
+  .dash-filter-btn.f-red.active    { background:rgba(239,68,68,0.15);border-color:#ef4444;color:#f87171; }
   .dash-filter-btn.f-all.active    { background:rgba(245,158,11,0.15);border-color:#f59e0b;color:#f59e0b; }
   .dash-weekly-card { background:linear-gradient(145deg,#000d2a,#001433);border:1px solid #1a4a8c;border-radius:14px;padding:16px;margin-bottom:12px; }
   .dash-weekly-title { font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:#f59e0b;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between; }
@@ -2011,7 +2011,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -2019,6 +2019,8 @@
     document.getElementById('page-requests').style.display = tab === 'requests' ? 'block' : 'none';
     var dashEl = document.getElementById('page-dashboard'); if (dashEl) dashEl.style.display = tab === 'dashboard' ? 'block' : 'none';
     if (tab === 'dashboard') loadDashboard();
+    var inspEl = document.getElementById('page-inspections'); if (inspEl) inspEl.style.display = tab === 'inspections' ? 'block' : 'none';
+    if (tab === 'inspections') loadInspections();
     var dnxEl = document.getElementById('page-datanomix'); if (dnxEl) dnxEl.style.display = tab === 'datanomix' ? 'block' : 'none';
     if (tab === 'datanomix') initDNXDisplay();
     var stvEl = document.getElementById('page-shoptv'); if (stvEl) stvEl.style.display = tab === 'shoptv' ? 'flex' : 'none';
@@ -2533,6 +2535,8 @@
       if (proshopTab) proshopTab.style.display = '';
       var plannerTab = document.getElementById('tab-planner');
       if (plannerTab) plannerTab.style.display = '';
+      var inspTab = document.getElementById('tab-inspections');
+      if (inspTab) inspTab.style.display = '';
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
       // Show QMI switch button for admin
@@ -2553,6 +2557,8 @@
       if (proshopTab) proshopTab.style.display = '';
       var plannerTab = document.getElementById('tab-planner');
       if (plannerTab) plannerTab.style.display = '';
+      var inspTab = document.getElementById('tab-inspections');
+      if (inspTab) inspTab.style.display = '';
     } else {
       // machinist — check legacy isManager flag as fallback
       if (window.checkManagerAccess) {
@@ -2574,7 +2580,7 @@
     var sb = document.getElementById('shopSwitchBtn');
     if (sb) sb.classList.remove('visible');
     // Hide admin-only tabs
-    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner'].forEach(function(id){
+    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections'].forEach(function(id){
       var t = document.getElementById(id); if(t) t.style.display = 'none';
     });
     // Switch back to shop floor if on a hidden tab
@@ -4621,20 +4627,25 @@
     });
 
     // Status counts
-    var pending=0, running=0, completed=0, issues=0;
+    var pending=0, running=0, completed=0, issues=0, inspections=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
       var s = getJobStatus(r);
       if (s==='completed') completed++;
       else if (s==='running') running++;
       else if (s==='pending') pending++;
-      else { issues++; issueByMachine[r.machine||''] = (issueByMachine[r.machine||'']||0)+1; }
+      else {
+        if (r.type === 'red') { inspections++; }
+        else { issues++; }
+        issueByMachine[r.machine||''] = (issueByMachine[r.machine||'']||0)+1;
+      }
     });
     var el;
-    if ((el=document.getElementById('dash-count-pending')))   el.textContent = pending;
-    if ((el=document.getElementById('dash-count-running')))   el.textContent = running;
-    if ((el=document.getElementById('dash-count-completed'))) el.textContent = completed;
-    if ((el=document.getElementById('dash-count-issues')))    el.textContent = issues;
+    if ((el=document.getElementById('dash-count-pending')))     el.textContent = pending;
+    if ((el=document.getElementById('dash-count-running')))     el.textContent = running;
+    if ((el=document.getElementById('dash-count-completed')))   el.textContent = completed;
+    if ((el=document.getElementById('dash-count-issues')))      el.textContent = issues;
+    if ((el=document.getElementById('dash-count-inspections'))) el.textContent = inspections;
 
     // Machine filters
     var machineCounts = {};
@@ -4693,10 +4704,11 @@
     // Filter for log
     var filtered = periodAll.filter(function(r) {
       var s = getJobStatus(r);
-      if (dashFilter==='pending'   && s!=='pending')   return false;
-      if (dashFilter==='running'   && s!=='running')   return false;
-      if (dashFilter==='completed' && s!=='completed') return false;
-      if (dashFilter==='issues'    && s!=='issue')     return false;
+      if (dashFilter==='pending'     && s!=='pending')   return false;
+      if (dashFilter==='running'     && s!=='running')   return false;
+      if (dashFilter==='completed'   && s!=='completed') return false;
+      if (dashFilter==='issues'      && (s!=='issue' || r.type==='red')) return false;
+      if (dashFilter==='inspections' && r.type!=='red')  return false;
       if (dashMachineFilter!=='all' && r.machine!==dashMachineFilter) return false;
       return true;
     });
@@ -5150,7 +5162,8 @@
       <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Waiting to run</div></div>
       <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;margin-right:4px;"></span> Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
       <div class="dash-summary-card" style="border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffffff;box-shadow:0 0 6px rgba(255,255,255,0.6);flex-shrink:0;"></span>Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
-      <div class="dash-summary-card yellow"><div class="dash-summary-label">🟡 Machinist Req</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Inspections & req</div></div>
+      <div class="dash-summary-card yellow"><div class="dash-summary-label">🟡 Machinist Req</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Machinist requests</div></div>
+      <div class="dash-summary-card" style="grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted</div></div>
     </div>
 
     <div id="dash-summary-block"></div>
@@ -5162,6 +5175,7 @@
       <button class="dash-filter-btn f-green" onclick="setDashFilter('running',this)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> RUNNING</button>
       <button class="dash-filter-btn f-green" onclick="setDashFilter('completed',this)">✅ COMPLETED</button>
       <button class="dash-filter-btn f-yellow" onclick="setDashFilter('issues',this)">🟡 MACHINIST REQ</button>
+      <button class="dash-filter-btn f-red" onclick="setDashFilter('inspections',this)">🔴 INSPECTIONS</button>
     </div>
 
     <div id="dash-machine-filters" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
@@ -6581,5 +6595,259 @@ window.plannerSetView = function(view) {
     </div>
   </div>
 </div>
+<!-- ═══════════════════════════════════════════════════════════
+     INSPECTIONS DATABASE PAGE
+════════════════════════════════════════════════════════════ -->
+<style>
+.insp-stat-card { background:#0d1f35; border-radius:12px; padding:14px; text-align:center; border:1px solid rgba(239,68,68,0.25); }
+.insp-stat-num  { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#f87171; line-height:1; }
+.insp-stat-lbl  { font-size:10px; color:#475569; letter-spacing:1.5px; text-transform:uppercase; margin-top:4px; }
+.insp-row { background:#0d1f35; border:1px solid rgba(239,68,68,0.15); border-left:4px solid #ef4444; border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+.insp-row.resolved { border-left-color:#22c55e; opacity:.75; }
+.insp-row-top { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+.insp-machine { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:1.5px; color:#f5d050; }
+.insp-wo { font-family:'Bebas Neue',sans-serif; font-size:15px; color:#f87171; letter-spacing:1px; }
+.insp-time { font-size:11px; color:#334155; margin-left:auto; white-space:nowrap; }
+.insp-detail { font-size:12px; color:#94a3b8; margin-top:3px; }
+.insp-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; letter-spacing:1px; }
+.insp-badge.open     { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+.insp-badge.resolved { background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); }
+.insp-resolve-btn { font-size:11px; padding:4px 12px; border-radius:6px; border:1px solid rgba(34,197,94,0.4); background:rgba(34,197,94,0.1); color:#4ade80; cursor:pointer; font-weight:700; margin-left:auto; white-space:nowrap; }
+.insp-filter-btn { padding:6px 14px; border-radius:20px; border:1px solid #1a4a8c; background:rgba(255,255,255,0.04); color:#64748b; font-size:12px; font-weight:700; letter-spacing:1px; cursor:pointer; white-space:nowrap; transition:all .2s; }
+.insp-filter-btn.active { background:rgba(239,68,68,0.15); border-color:#ef4444; color:#f87171; }
+.insp-filter-btn.active-green { background:rgba(34,197,94,0.15); border-color:#22c55e; color:#4ade80; }
+.insp-filter-btn.active-all { background:rgba(245,158,11,0.15); border-color:#f59e0b; color:#f59e0b; }
+</style>
+
+<div id="page-inspections" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
+  <div style="padding:14px;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f87171;">🔴 INSPECTION LOG</div>
+      <div style="flex:1;"></div>
+      <button onclick="exportInspectionsCSV()" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;border-radius:8px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📥 EXPORT CSV</button>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;" id="insp-stats"></div>
+
+    <!-- Period filter -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+      <button class="insp-filter-btn active-all active" onclick="setInspPeriod('all',this)">ALL TIME</button>
+      <button class="insp-filter-btn" onclick="setInspPeriod('today',this)">TODAY</button>
+      <button class="insp-filter-btn" onclick="setInspPeriod('week',this)">THIS WEEK</button>
+      <button class="insp-filter-btn" onclick="setInspPeriod('month',this)">THIS MONTH</button>
+    </div>
+
+    <!-- Status + search filters -->
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+      <button class="insp-filter-btn active-all active" onclick="setInspStatus('all',this)" id="insp-f-all">ALL</button>
+      <button class="insp-filter-btn" onclick="setInspStatus('open',this)" id="insp-f-open">🔴 OPEN</button>
+      <button class="insp-filter-btn active-green" onclick="setInspStatus('resolved',this)" id="insp-f-resolved" style="background:transparent;border-color:#1a4a8c;color:#64748b;">✅ RESOLVED</button>
+      <div style="flex:1;"></div>
+      <input id="insp-search" type="text" placeholder="Search machine, WO, operator…"
+        oninput="renderInspections()"
+        style="background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:8px;padding:7px 12px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:13px;outline:none;min-width:180px;color-scheme:dark;">
+    </div>
+
+    <!-- Machine filter -->
+    <div id="insp-machine-filters" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;"></div>
+
+    <!-- Records list -->
+    <div id="insp-list"></div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  var inspRecords  = [];
+  var inspPeriod   = 'all';
+  var inspStatus   = 'all';
+  var inspMachine  = 'all';
+  var inspLoaded   = false;
+
+  window.loadInspections = function() {
+    if(!window._db || !window._fbModules){ setTimeout(window.loadInspections, 800); return; }
+    var mods = window._fbModules, db2 = window._db;
+    // Load from both hillInspections (permanent archive) and hillRequests (red type)
+    Promise.all([
+      mods.getDocs(mods.query(mods.collection(db2,'hillInspections'), mods.orderBy('createdAt','desc'))),
+      mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('type','==','red'), mods.orderBy('createdAt','desc')))
+    ]).then(function(results){
+      var seen = new Set();
+      inspRecords = [];
+      // Merge both sources, deduplicate by WO+machine+timestamp
+      results.forEach(function(snap){
+        snap.forEach(function(d){
+          var r = d.data(); r.id = d.id;
+          // Dedup key: wo + machine + seconds
+          var dk = (r.wo||'') + '|' + (r.machine||'') + '|' + (r.createdAt ? r.createdAt.seconds : '');
+          if(!seen.has(dk)){ seen.add(dk); inspRecords.push(r); }
+        });
+      });
+      // Sort by date desc
+      inspRecords.sort(function(a,b){
+        var ta = a.createdAt ? a.createdAt.seconds : 0;
+        var tb = b.createdAt ? b.createdAt.seconds : 0;
+        return tb - ta;
+      });
+      inspLoaded = true;
+      renderInspections();
+      updateInspBadge();
+    }).catch(function(e){ console.warn('loadInspections:', e); });
+  };
+
+  function getInspPeriodStart() {
+    var now = new Date();
+    if(inspPeriod === 'today'){ var d=new Date(now); d.setHours(0,0,0,0); return d; }
+    if(inspPeriod === 'week') { var d=new Date(now); d.setDate(d.getDate()-d.getDay()); d.setHours(0,0,0,0); return d; }
+    if(inspPeriod === 'month'){ return new Date(now.getFullYear(), now.getMonth(), 1); }
+    return new Date(0);
+  }
+
+  window.setInspPeriod = function(p, btn) {
+    inspPeriod = p;
+    document.querySelectorAll('.insp-filter-btn').forEach(function(b){ b.classList.remove('active','active-all','active-green'); });
+    if(btn){ btn.classList.add('active','active-all'); }
+    renderInspections();
+  };
+  window.setInspStatus = function(s, btn) {
+    inspStatus = s;
+    ['insp-f-all','insp-f-open','insp-f-resolved'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el){ el.classList.remove('active','active-all','active-green'); el.style.background='transparent'; el.style.borderColor='#1a4a8c'; el.style.color='#64748b'; }
+    });
+    if(btn){
+      btn.style.background = s==='resolved'?'rgba(34,197,94,0.15)':s==='open'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)';
+      btn.style.borderColor= s==='resolved'?'#22c55e':s==='open'?'#ef4444':'#f59e0b';
+      btn.style.color      = s==='resolved'?'#4ade80':s==='open'?'#f87171':'#f59e0b';
+    }
+    renderInspections();
+  };
+  window.setInspMachine = function(m, btn) {
+    inspMachine = m;
+    document.querySelectorAll('.insp-mf-btn').forEach(function(b){ b.style.background='rgba(255,255,255,0.04)'; b.style.borderColor='#1a4a8c'; b.style.color='#64748b'; });
+    if(btn){ btn.style.background='rgba(239,68,68,0.15)'; btn.style.borderColor='#ef4444'; btn.style.color='#f87171'; }
+    renderInspections();
+  };
+
+  window.resolveInspection = function(id) {
+    var r = inspRecords.find(function(x){ return x.id===id; });
+    if(!r) return;
+    if(!window._db||!window._fbModules) return;
+    var mods=window._fbModules, db2=window._db;
+    var updates = { resolved: true, resolvedAt: mods.serverTimestamp(), resolvedBy: window.currentUser||'Admin' };
+    // Update in both collections
+    mods.updateDoc(mods.doc(db2,'hillInspections',id), updates).catch(function(){});
+    mods.updateDoc(mods.doc(db2,'hillRequests',id), updates).catch(function(){});
+    r.resolved = true; r.resolvedBy = window.currentUser||'Admin';
+    renderInspections();
+    if(window.showToast) showToast('green','Inspection resolved','WO '+r.wo+' on '+r.machine);
+  };
+
+  window.renderInspections = function() {
+    if(!inspLoaded) return;
+    var start   = getInspPeriodStart();
+    var search  = (document.getElementById('insp-search')||{}).value||'';
+    var sq      = search.toLowerCase();
+
+    var filtered = inspRecords.filter(function(r){
+      var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : new Date(0);
+      if(ts < start) return false;
+      if(inspStatus === 'open'     && r.resolved) return false;
+      if(inspStatus === 'resolved' && !r.resolved) return false;
+      if(inspMachine !== 'all' && r.machine !== inspMachine) return false;
+      if(sq && !( (r.machine||'').toLowerCase().includes(sq) || (r.wo||'').toLowerCase().includes(sq) || (r.operator||'').toLowerCase().includes(sq) || (r.detail||'').toLowerCase().includes(sq) )) return false;
+      return true;
+    });
+
+    // Stats
+    var total    = filtered.length;
+    var open     = filtered.filter(function(r){ return !r.resolved; }).length;
+    var resolved = filtered.filter(function(r){ return  r.resolved; }).length;
+    var machines = {};
+    filtered.forEach(function(r){ machines[r.machine||'?']=(machines[r.machine||'?']||0)+1; });
+    var topMachine = Object.entries(machines).sort(function(a,b){return b[1]-a[1];})[0];
+    var sb = document.getElementById('insp-stats');
+    if(sb) sb.innerHTML =
+      '<div class="insp-stat-card"><div class="insp-stat-num">'+total+'</div><div class="insp-stat-lbl">Total</div></div>'
+      +'<div class="insp-stat-card" style="border-color:rgba(239,68,68,0.4)"><div class="insp-stat-num" style="color:#f87171;">'+open+'</div><div class="insp-stat-lbl">🔴 Open</div></div>'
+      +'<div class="insp-stat-card" style="border-color:rgba(34,197,94,0.3)"><div class="insp-stat-num" style="color:#4ade80;">'+resolved+'</div><div class="insp-stat-lbl">✅ Resolved</div></div>'
+      +'<div class="insp-stat-card" style="border-color:rgba(245,158,11,0.3)"><div class="insp-stat-num" style="color:#f59e0b;font-size:18px;">'+(topMachine?topMachine[0]:'—')+'</div><div class="insp-stat-lbl">Most frequent</div></div>';
+
+    // Machine filters
+    var mf = document.getElementById('insp-machine-filters');
+    if(mf) {
+      var allMachines = {};
+      inspRecords.filter(function(r){ var ts=r.createdAt?new Date(r.createdAt.seconds*1000):new Date(0); return ts>=start; })
+        .forEach(function(r){ allMachines[r.machine||'?']=(allMachines[r.machine||'?']||0)+1; });
+      var html = '<button class="insp-filter-btn insp-mf-btn" onclick="setInspMachine(\'all\',this)" style="'+(inspMachine==='all'?'background:rgba(239,68,68,0.15);border-color:#ef4444;color:#f87171;':'')+'">ALL MACHINES</button>';
+      Object.entries(allMachines).sort(function(a,b){return b[1]-a[1];}).forEach(function(e){
+        html += '<button class="insp-filter-btn insp-mf-btn" onclick="setInspMachine(\''+e[0]+'\',this)" style="'+(inspMachine===e[0]?'background:rgba(239,68,68,0.15);border-color:#ef4444;color:#f87171;':'')+'">'+e[0]+' <span style="opacity:.5;font-size:10px;">('+e[1]+')</span></button>';
+      });
+      mf.innerHTML = html;
+    }
+
+    // Records list
+    var list = document.getElementById('insp-list');
+    if(!list) return;
+    if(filtered.length === 0){
+      list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#334155;font-size:13px;">No inspection records found for this filter.</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(function(r){
+      var ts  = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
+      var tStr= ts ? ts.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—';
+      var resTs = r.resolvedAt ? new Date(r.resolvedAt.seconds*1000) : null;
+      var resTStr = resTs ? resTs.toLocaleDateString([],{month:'short',day:'numeric'})+' '+resTs.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : null;
+      return '<div class="insp-row'+(r.resolved?' resolved':'')+'">'
+        +'<div class="insp-row-top">'
+          +'<div class="insp-machine">'+escHtml(r.machine||'—')+'</div>'
+          +'<div class="insp-wo">WO: '+escHtml(r.wo||'—')+'</div>'
+          +'<span class="insp-badge '+(r.resolved?'resolved':'open')+'">'+(r.resolved?'✅ RESOLVED':'🔴 OPEN')+'</span>'
+          +'<div class="insp-time">'+tStr+'</div>'
+        +'</div>'
+        +'<div class="insp-detail">'
+          +(r.cell?'<span style="color:#475569;">'+escHtml(r.cell)+'</span> · ':'')
+          +(r.operator?'👤 '+escHtml(r.operator)+' · ':'')
+          +(r.detail?escHtml(r.detail):'No notes')
+        +'</div>'
+        +(r.resolved && resTStr ? '<div style="font-size:10px;color:#4ade80;margin-top:4px;">Resolved '+resTStr+(r.resolvedBy?' by '+escHtml(r.resolvedBy):'')+'</div>' : '')
+        +(!r.resolved ? '<div style="margin-top:8px;"><button class="insp-resolve-btn" onclick="resolveInspection(\''+r.id+'\')">✅ MARK RESOLVED</button></div>' : '')
+        +'</div>';
+    }).join('');
+  };
+
+  // Update badge count on the tab
+  function updateInspBadge() {
+    var open = inspRecords.filter(function(r){ return !r.resolved; }).length;
+    var badge = document.getElementById('inspBadge');
+    if(badge){ badge.textContent = open; badge.style.display = open > 0 ? '' : 'none'; }
+  }
+
+  // CSV Export
+  window.exportInspectionsCSV = function() {
+    if(!inspRecords.length){ if(window.showToast) showToast('yellow','No records','Nothing to export.'); return; }
+    var rows = [['Date','Machine','Cell','WO#','Operator','Detail','Status','Resolved At','Resolved By']];
+    inspRecords.forEach(function(r){
+      var ts  = r.createdAt  ? new Date(r.createdAt.seconds*1000).toLocaleString()  : '';
+      var rts = r.resolvedAt ? new Date(r.resolvedAt.seconds*1000).toLocaleString() : '';
+      rows.push([ts, r.machine||'', r.cell||'', r.wo||'', r.operator||'', r.detail||'', r.resolved?'Resolved':'Open', rts, r.resolvedBy||'']);
+    });
+    var csv = rows.map(function(r){ return r.map(function(c){ return '"'+(c+'').replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+    var blob = new Blob([csv], {type:'text/csv'});
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = 'Hill_Inspections_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    if(window.showToast) showToast('green', inspRecords.length+' records exported', 'Saved as CSV');
+  };
+
+})();
+</script>
+
 </body>
 </html>
