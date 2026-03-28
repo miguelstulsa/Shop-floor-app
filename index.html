@@ -563,8 +563,9 @@
   .dnx-tile-status.green { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.4); }
   .dnx-tile-status.yellow { background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.4); }
   .dnx-tile-status.red { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.4); }
-  .dnx-tile-status.offline { background:rgba(71,85,105,0.15);color:#64748b;border:1px solid rgba(71,85,105,0.4); }
-  .dnx-tile-status.pending { background:rgba(26,74,140,0.15);color:#64748b;border:1px solid rgba(26,74,140,0.4); }
+  .dnx-tile-status.offline      { background:rgba(71,85,105,0.15);color:#64748b;border:1px solid rgba(71,85,105,0.4); }
+  .dnx-tile-status.pending      { background:rgba(26,74,140,0.15);color:#64748b;border:1px solid rgba(26,74,140,0.4); }
+  .dnx-tile-status.not-tracked  { background:rgba(15,25,40,0.6);color:#2a3a4a;border:1px solid rgba(26,40,60,0.4); }
   .dnx-tile-body { padding:12px 16px; }
   .dnx-tile-stat-row { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px; }
   .dnx-tile-stat { text-align:center; }
@@ -689,8 +690,9 @@
   .stv-pill.green  { background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.35); }
   .stv-pill.yellow { background:rgba(234,179,8,0.15);color:#fbbf24;border:1px solid rgba(234,179,8,0.35); }
   .stv-pill.red    { background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.35); }
-  .stv-pill.offline { background:rgba(71,85,105,0.15);color:#64748b;border:1px solid rgba(71,85,105,0.3); }
-  .stv-pill.pending { background:rgba(26,74,140,0.1);color:#475569;border:1px solid rgba(26,74,140,0.3); }
+  .stv-pill.offline     { background:rgba(71,85,105,0.15);color:#64748b;border:1px solid rgba(71,85,105,0.3); }
+  .stv-pill.pending     { background:rgba(26,74,140,0.1);color:#475569;border:1px solid rgba(26,74,140,0.3); }
+  .stv-pill.not-tracked { background:rgba(15,25,40,0.4);color:#1e2a38;border:1px solid rgba(20,30,45,0.3); }
   .stv-pill.hot  { background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.5); }
   .stv-pill.high { background:rgba(249,115,22,0.2);color:#fb923c;border:1px solid rgba(249,115,22,0.5); }
   .stv-pill.attn { background:rgba(245,197,0,0.2);color:#f5c500;border:1px solid rgba(245,197,0,0.5);animation:blink-yellow 1.2s step-end infinite; }
@@ -731,7 +733,9 @@
     transition: color 0.5s ease;
     text-shadow: 0 1px 3px rgba(0,0,0,0.6);
   }
-  .perf-bar.pending  { background: #1e3a5f; }
+  .perf-bar.pending      { background: #1e3a5f; }
+  .perf-bar.not-tracked  { background: #0f1f30; }
+  .perf-bar.not-tracked::after { color: #2a3a4a; content: 'NOT TRACKED'; }
   .perf-bar.green    { background: #22c55e; }
   .perf-bar.green::after  { color: #22c55e; }
   .perf-bar.yellow   { background: #eab308; }
@@ -1081,6 +1085,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
+  <div class="nav-tab" onclick="switchTab('livefeed')" id="tab-livefeed">📡 Live Feed</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📊 Dashboard</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Datanomix</div>
   <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv">📺 Shop TV</div>
@@ -2011,7 +2016,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','livefeed'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -2021,6 +2026,8 @@
     if (tab === 'dashboard') loadDashboard();
     var inspEl = document.getElementById('page-inspections'); if (inspEl) inspEl.style.display = tab === 'inspections' ? 'block' : 'none';
     if (tab === 'inspections') loadInspections();
+    var lfEl = document.getElementById('page-livefeed'); if (lfEl) lfEl.style.display = tab === 'livefeed' ? 'block' : 'none';
+    if (tab === 'livefeed') renderLiveFeed();
     var dnxEl = document.getElementById('page-datanomix'); if (dnxEl) dnxEl.style.display = tab === 'datanomix' ? 'block' : 'none';
     if (tab === 'datanomix') initDNXDisplay();
     var stvEl = document.getElementById('page-shoptv'); if (stvEl) stvEl.style.display = tab === 'shoptv' ? 'flex' : 'none';
@@ -2537,6 +2544,8 @@
       if (plannerTab) plannerTab.style.display = '';
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
+      var dnxTab = document.getElementById('tab-datanomix');
+      if (dnxTab) dnxTab.style.display = '';
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
       // Show QMI switch button for admin
@@ -2772,9 +2781,9 @@
   };
 
   // ── PASTE YOUR API KEY HERE WHEN YOU GET IT ──
-  var DNX_API_KEY = '';  // <-- e.g. 'Bearer eyJhbGc...'
-  var DNX_BASE_URL = 'https://api.datanomix.app/v1'; // confirm with Datanomix
-  var DNX_POLL_INTERVAL = 60000; // refresh every 60 seconds
+  var DNX_API_KEY  = '';
+  var DNX_BASE_URL = 'https://hillmanufacturing.datanomix.app/customer-api/v1/espresso';
+  var DNX_POLL_INTERVAL = 120000; // refresh every 2 minutes (uptime is near real-time)
   var dnxPollTimer = null;
   var dnxConnected = false;
   var dnxLastData = {};
@@ -2798,56 +2807,140 @@
   }
 
   // ── FETCH LIVE DATA FROM DATANOMIX API ──
-  async function fetchDatanomix() {
-    if (!DNX_API_KEY) {
-      runPerfDemo(); // no key = run demo
-      return;
-    }
+  // Endpoints:
+  //   espresso → daily production stats (OEE, parts, cycle time, utilization)
+  //   uptime   → live machine state (running, idle, offline, downtime)
+  window.fetchDatanomix = async function fetchDatanomix() {
+    if (!DNX_API_KEY) { runPerfDemo(); return; }
     try {
-      // Step 1: get all machine statuses
-      var resp = await fetch(DNX_BASE_URL + '/machines/status', {
-        headers: {
-          'Authorization': DNX_API_KEY,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      var data = await resp.json();
+      var headers  = { 'X-API-Key': DNX_API_KEY };
+      var base     = 'https://hillmanufacturing.datanomix.app/customer-api/v1';
+
+      // Fetch all 6 in parallel: espresso today+yesterday, uptime today+yesterday, downtime today+yesterday
+      var [respEspToday, respEspYest, respUpToday, respUpYest, respDtToday, respDtYest] = await Promise.all([
+        fetch(base + '/espresso?period=today&group_name=AllMachines',     { headers: headers }),
+        fetch(base + '/espresso?period=yesterday&group_name=AllMachines', { headers: headers }),
+        fetch(base + '/uptime?period=today&group_name=AllMachines',       { headers: headers }),
+        fetch(base + '/uptime?period=yesterday&group_name=AllMachines',   { headers: headers }),
+        fetch(base + '/downtime?period=today&group_name=AllMachines&group_by=none&shifts=all&include_days=false',      { headers: headers }),
+        fetch(base + '/downtime?period=yesterday&group_name=AllMachines&group_by=none&shifts=all&include_days=false',  { headers: headers })
+      ]);
+
+      var textEspToday = await respEspToday.text();
+      var textEspYest  = respEspYest.ok ? await respEspYest.text() : '{}';
+      var textUpToday  = respUpToday.ok ? await respUpToday.text() : '{}';
+      var textUpYest   = respUpYest.ok  ? await respUpYest.text()  : '{}';
+      var textDtToday  = respDtToday.ok ? await respDtToday.text() : '{}';
+      var textDtYest   = respDtYest.ok  ? await respDtYest.text()  : '{}';
+
+      console.log('[Datanomix] Espresso today:', textEspToday.slice(0, 800));
+      console.log('[Datanomix] Uptime today:',   textUpToday.slice(0, 800));
+      console.log('[Datanomix] Downtime today:',  textDtToday.slice(0, 800));
+
+      if (!respEspToday.ok) throw new Error('HTTP ' + respEspToday.status + ': ' + textEspToday.slice(0, 100));
+
+      var espToday = JSON.parse(textEspToday);
+      var espYest  = JSON.parse(textEspYest  || '{}');
+      var upToday  = JSON.parse(textUpToday  || '{}');
+      var upYest   = JSON.parse(textUpYest   || '{}');
+      var dtToday  = JSON.parse(textDtToday  || '{}');
+      var dtYest   = JSON.parse(textDtYest   || '{}');
+
       dnxConnected = true;
       updateDNXStatus(true);
+      var statusEl = document.getElementById('dnx-key-status');
+      if (statusEl) { statusEl.textContent = '✅ Connected — live Datanomix data active'; statusEl.style.color = '#4ade80'; }
 
-      // Step 2: apply to each machine
-      // Expected response shape: array of { machineId, status, actualCycleTime, targetCycleTime, partsToday, oee, operator }
-      // We map their machineId → our machine name
+      // Helper: extract machine array from any response shape
+      function extractMachines(d) {
+        return d.machines || d.data || d.results || d.groups || (Array.isArray(d) ? d : []);
+      }
+
+      // Build merged lookup by machineId
+      // Priority: espresso today > espresso yesterday (production stats)
+      //           uptime today > uptime yesterday (state/downtime)
+      //           downtime today > downtime yesterday (downtime events)
       var byId = {};
-      (data.machines || data.data || data || []).forEach(function(m) {
-        byId[m.machineId || m.id] = m;
+      [
+        extractMachines(espYest),
+        extractMachines(espToday),
+        extractMachines(upYest),
+        extractMachines(upToday),
+        extractMachines(dtYest),
+        extractMachines(dtToday),
+      ].forEach(function(arr) {
+        arr.forEach(function(m) {
+          var id = String(m.machineId || m.id || m.machine_id || '');
+          if (!id) return;
+          byId[id] = Object.assign(byId[id] || {}, m);
+        });
       });
 
+      // Also build downtime summary per machine — downtime endpoint may return event-level rows
+      // Sum total downtime minutes per machine ID
+      var downtimeByMachine = {};
+      [extractMachines(dtYest), extractMachines(dtToday)].forEach(function(arr){
+        arr.forEach(function(row){
+          var id = String(row.machineId || row.id || row.machine_id || '');
+          if (!id) return;
+          var mins = row.downtimeMinutes || row.downtime_minutes || row.duration || row.minutes || 0;
+          downtimeByMachine[id] = (downtimeByMachine[id] || 0) + parseFloat(mins || 0);
+        });
+      });
+      // Merge downtime totals into byId
+      Object.keys(downtimeByMachine).forEach(function(id){
+        if (!byId[id]) byId[id] = {};
+        byId[id]._totalDowntimeMinutes = downtimeByMachine[id];
+      });
+
+      // Store in dnxLiveData keyed by numeric ID
+      Object.keys(byId).forEach(function(id) {
+        dnxLiveData[parseInt(id)] = byId[id];
+      });
+
+      // Apply to each mapped machine
       Object.keys(DNX_MACHINES).forEach(function(machineName) {
         var dnxId = DNX_MACHINES[machineName];
-        if (!dnxId) return;
-        var m = byId[dnxId];
-        if (!m) { setPerfLight(machineName, 'offline', 'OFFLINE'); return; }
+        if (!dnxId) { setPerfLight(machineName, 'not-tracked', 'NOT TRACKED'); return; }
+
+        var m = byId[String(dnxId)];
+        if (!m) { setPerfLight(machineName, 'offline', 'NO DATA'); return; }
         dnxLastData[machineName] = m;
 
-        // Apply performance bar
-        applyPerfData(machineName, m.actualCycleTime || m.actual_cycle_time, m.targetCycleTime || m.target_cycle_time);
+        // Cycle time performance — try all known field name variants
+        var actual = m.actualCycleTime  || m.actual_cycle_time  || m.avgCycleTime   || m.avg_cycle_time;
+        var target = m.targetCycleTime  || m.target_cycle_time  || m.goalCycleTime  || m.goal_cycle_time || m.targetTime;
+        applyPerfData(machineName, actual, target);
 
-        // Update machine card with extra Datanomix data
+        // Uptime state → override perf light if machine is down/idle
+        var state = (m.state || m.machineState || m.status || '').toLowerCase();
+        if (state === 'idle' || state === 'waiting') {
+          setPerfLight(machineName, 'yellow', 'IDLE');
+        } else if (state === 'down' || state === 'alarm' || state === 'fault') {
+          setPerfLight(machineName, 'red', 'DOWN');
+        } else if (state === 'offline' || state === 'off') {
+          setPerfLight(machineName, 'offline', 'OFFLINE');
+        }
+
         updateMachineCard(machineName, m);
       });
 
-      // Update dashboard if open
       if (typeof renderDashboard === 'function') renderDashboard();
+      // Rebuild Shop TV if it's open
+      if (typeof buildDNXTvSlides === 'function' && document.getElementById('page-shoptv') && document.getElementById('page-shoptv').style.display !== 'none') {
+        buildDNXTvSlides();
+      }
 
     } catch(e) {
-      console.warn('Datanomix API error:', e.message);
       dnxConnected = false;
       updateDNXStatus(false);
-      runPerfDemo(); // fallback to demo on error
+      runPerfDemo();
+      var isNetwork = e.message && (e.message.indexOf('NetworkError') >= 0 || e.message.indexOf('Failed to fetch') >= 0);
+      if (!isNetwork) console.warn('[Datanomix] Error:', e.message);
+      var statusEl = document.getElementById('dnx-key-status');
+      if (statusEl) { statusEl.textContent = '❌ ' + (e.message || 'Connection failed'); statusEl.style.color = '#f87171'; }
     }
-  }
+  };
 
   // ── UPDATE MACHINE CARD WITH LIVE DATA ──
   function updateMachineCard(machineName, data) {
@@ -2882,13 +2975,21 @@
   }
 
   // ── START POLLING ──
-  function startDNXPolling() {
-    fetchDatanomix();
+  window.startDNXPolling = function startDNXPolling() {
+    if (!DNX_API_KEY) { runPerfDemo(); return; }
+    window.fetchDatanomix();
     if (dnxPollTimer) clearInterval(dnxPollTimer);
-    dnxPollTimer = setInterval(fetchDatanomix, DNX_POLL_INTERVAL);
-  }
+    dnxPollTimer = setInterval(window.fetchDatanomix, DNX_POLL_INTERVAL);
+  };
 
   // ── DEMO MODE (runs until API key is entered) ──
+  // Mark non-Datanomix machines as not tracked — runs once on startup
+  function markUntrackedMachines() {
+    Object.keys(DNX_MACHINES).forEach(function(m) {
+      if (!DNX_MACHINES[m]) setPerfLight(m, 'not-tracked', 'NOT TRACKED');
+    });
+  }
+
   function runPerfDemo() {
     if (DNX_API_KEY) return; // don't run demo if API key exists
     const machines = Object.keys(DNX_MACHINES);
@@ -2902,7 +3003,7 @@
       { status:'offline', label:'OFFLINE'   },
     ];
     machines.forEach(function(m) {
-      if (!DNX_MACHINES[m]) { setPerfLight(m, 'pending', '—'); return; }
+      if (!DNX_MACHINES[m]) { setPerfLight(m, 'not-tracked', 'NOT TRACKED'); return; }
       var s = statuses[Math.floor(Math.random() * statuses.length)];
       setPerfLight(m, s.status, s.label);
     });
@@ -2912,22 +3013,28 @@
   window.saveDNXApiKey = function(key) {
     key = (key || '').trim();
     DNX_API_KEY = key;
+    var statusEl = document.getElementById('dnx-key-status');
     if (key) {
       localStorage.setItem('hillDNXApiKey', key);
-      showToast('green', 'Datanomix API Key saved!', 'Connecting to live data...');
-      startDNXPolling();
+      if (statusEl) statusEl.textContent = '⏳ Connecting to Datanomix...';
+      if (statusEl) statusEl.style.color = '#f59e0b';
+      showToast('green', 'API Key saved', 'Connecting to Datanomix live data...');
+      window.startDNXPolling();
     } else {
       localStorage.removeItem('hillDNXApiKey');
+      if (statusEl) statusEl.textContent = 'Key cleared — running in demo mode';
+      if (statusEl) statusEl.style.color = '#64748b';
       showToast('blue', 'API Key cleared', 'Running in demo mode.');
       runPerfDemo();
     }
   };
 
   // ── LOAD SAVED KEY ON STARTUP ──
-  var _savedDNXKey = localStorage.getItem('hillDNXApiKey') || '';
+  var _savedDNXKey = localStorage.getItem('hillDNXApiKey') || 'dnx_live_5PHtuP2BBske-zHOnk4fUQTpSX_yE_ap849i3lHs';
+  markUntrackedMachines();
   if (_savedDNXKey) {
     DNX_API_KEY = _savedDNXKey;
-    setTimeout(startDNXPolling, 2000);
+    setTimeout(window.startDNXPolling, 2000);
   } else {
     setTimeout(runPerfDemo, 1200);
     setInterval(runPerfDemo, 45000);
@@ -3492,31 +3599,43 @@
   // ── BUILD INDIVIDUAL MACHINE CARD ──
   function buildStvCard(m) {
     var status = getMachinePerfStatus(m);
-    var bar = document.getElementById('perf-' + m.name);
-    var label = bar ? bar.getAttribute('data-label') : '—';
-    var liveD = dnxLiveData[m.id] || {};
-    var oee   = liveD.oee ? Math.round(liveD.oee)+'%' : (DNX_API_KEY?'—':Math.floor(Math.random()*30+65)+'%');
-    var parts = liveD.partsToday || (DNX_API_KEY?'—':Math.floor(Math.random()*40+10));
-    var util  = liveD.utilization ? Math.round(liveD.utilization)+'%' : (DNX_API_KEY?'—':Math.floor(Math.random()*40+50)+'%');
-    var state = dnxMachineState[m.name] || {};
-    var priority = state.priority || null;
+    var bar    = document.getElementById('perf-' + m.name);
+    var label  = bar ? bar.getAttribute('data-label') : '—';
+    var liveD  = dnxLiveData[m.id] || {};
+    var state  = dnxMachineState[m.name] || {};
+    var priority  = state.priority || null;
     var attention = state.attention || false;
-    var cycleBarPct = status==='green'?92:status==='yellow'?62:status==='red'?30:0;
-    var barColor = status==='green'?'#22c55e':status==='yellow'?'#eab308':status==='red'?'#ef4444':'#334155';
-    var statusLabel = label || (status==='offline'?'OFFLINE':status==='pending'?'—':'—');
-    var oeeColor = '#94a3b8';
-    if (typeof oee === 'string' && oee !== '—') {
-      var n = parseInt(oee); oeeColor = n>=75?'#22c55e':n>=50?'#eab308':'#ef4444';
+    var hasData = !!m.id && Object.keys(liveD).length > 0;
+    var isTracked = !!m.id;
+
+    // Stats — live or placeholder
+    var oee   = liveD.oee        ? Math.round(liveD.oee)+'%'        : (isTracked ? '—' : 'N/A');
+    var parts = liveD.partsToday !== undefined ? liveD.partsToday    : (isTracked ? '—' : 'N/A');
+    var util  = liveD.utilization ? Math.round(liveD.utilization)+'%' : (isTracked ? '—' : 'N/A');
+    var cycleActual = liveD.actualCycleTime ? formatTime(liveD.actualCycleTime) : '—';
+    var cycleTarget = liveD.targetCycleTime ? formatTime(liveD.targetCycleTime) : '—';
+    var jobName  = liveD.job || liveD.currentJob || liveD.jobName || '';
+    var operator = liveD.operator || liveD.currentOperator || '';
+
+    var cycleBarPct = 0;
+    if (liveD.actualCycleTime && liveD.targetCycleTime && liveD.targetCycleTime > 0) {
+      cycleBarPct = Math.min(100, Math.round((liveD.targetCycleTime / liveD.actualCycleTime) * 100));
+    } else {
+      cycleBarPct = status==='green'?92 : status==='yellow'?62 : status==='red'?30 : 0;
     }
+    var barColor = status==='green'?'#22c55e' : status==='yellow'?'#eab308' : status==='red'?'#ef4444' : '#334155';
+    var oeeColor = '#94a3b8';
+    if (oee !== '—' && oee !== 'N/A') { var n=parseInt(oee); oeeColor=n>=75?'#22c55e':n>=50?'#eab308':'#ef4444'; }
+    var statusLabel = label || (status==='offline'?'OFFLINE' : status==='not-tracked'?'MANUAL' : '—');
 
     var cardClass = 'stv-card s-'+status;
-    if (priority==='hot')  cardClass += ' p-hot';
-    if (priority==='high') cardClass += ' p-high';
-    if (attention)         cardClass += ' flagged';
+    if (priority==='hot')       cardClass += ' p-hot';
+    if (priority==='high')      cardClass += ' p-high';
+    if (attention)              cardClass += ' flagged';
 
-    var safeN = m.name.replace(/[^a-z0-9]/gi,'_');
     return [
       '<div class="'+cardClass+' stv-card-clickable" data-machine="'+m.name+'">',
+        // Header
         '<div class="stv-card-hdr">',
           '<div>',
             '<div class="stv-card-name">'+m.name+'</div>',
@@ -3524,19 +3643,32 @@
           '</div>',
           '<div class="stv-card-pills">',
             '<span class="stv-pill '+status+'">'+statusLabel+'</span>',
-            priority==='hot'  ? '<span class="stv-pill hot">🔴 HOT</span>' : '',
-            priority==='high' ? '<span class="stv-pill high">🟠 HIGH</span>' : '',
-            attention         ? '<span class="stv-pill attn">⚠ ATTN</span>' : '',
+            priority==='hot'  ? '<span class="stv-pill hot">🔴 HOT</span>'  : '',
+            priority==='high' ? '<span class="stv-pill high">🟠 HIGH</span>': '',
+            attention         ? '<span class="stv-pill attn">⚠</span>'      : '',
           '</div>',
         '</div>',
+
+        // Job + operator (if live data)
+        jobName ? '<div style="font-size:10px;color:#f5c500;padding:0 10px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:Barlow,sans-serif;">📋 '+jobName+'</div>' : '',
+        operator ? '<div style="font-size:10px;color:#64748b;padding:0 10px 4px;font-family:Barlow,sans-serif;">👤 '+operator+'</div>' : '',
+
+        // Stats row
         '<div class="stv-stats">',
           '<div class="stv-stat"><div class="stv-stat-val" style="color:#f5c500;">'+parts+'</div><div class="stv-stat-lbl">Parts</div></div>',
           '<div class="stv-stat"><div class="stv-stat-val" style="color:'+oeeColor+';">'+oee+'</div><div class="stv-stat-lbl">OEE</div></div>',
           '<div class="stv-stat"><div class="stv-stat-val" style="color:#60a5fa;">'+util+'</div><div class="stv-stat-lbl">Util</div></div>',
         '</div>',
-        '<div class="stv-bar-wrap">',
-          '<div class="stv-bar-bg"><div class="stv-bar-fill" style="width:'+cycleBarPct+'%;background:'+barColor+';"></div></div>',
-        '</div>',
+
+        // Cycle time
+        isTracked ? [
+          '<div style="padding:0 10px 4px;display:flex;justify-content:space-between;align-items:center;">',
+            '<span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;">Cycle: <span style="color:'+barColor+';">'+cycleActual+'</span></span>',
+            cycleTarget !== '—' ? '<span style="font-size:10px;color:#334155;font-family:Barlow,sans-serif;">Goal: '+cycleTarget+'</span>' : '',
+          '</div>',
+          '<div class="stv-bar-wrap"><div class="stv-bar-bg"><div class="stv-bar-fill" style="width:'+cycleBarPct+'%;background:'+barColor+';"></div></div></div>',
+        ].join('') : '<div style="padding:4px 10px;font-size:10px;color:#334155;font-family:Barlow,sans-serif;">Not connected to Datanomix</div>',
+
       '</div>'
     ].join('');
   }
@@ -3557,7 +3689,6 @@
 
   // ── MACHINE DETAIL MODAL ──
   function openStvMachineModal(machineName) {
-    // Pause TV cycling while modal is open
     var wasPaused = stv.paused;
     stv.paused = true;
 
@@ -3565,73 +3696,118 @@
     if (!m) return;
 
     var status = getMachinePerfStatus(m);
-    var bar = document.getElementById('perf-' + m.name);
-    var label = bar ? bar.getAttribute('data-label') : '—';
-    var liveD = dnxLiveData[m.id] || {};
-    var state = dnxMachineState[m.name] || {};
+    var bar    = document.getElementById('perf-' + m.name);
+    var label  = bar ? bar.getAttribute('data-label') : '—';
+    var liveD  = dnxLiveData[m.id] || {};
+    var state  = dnxMachineState[m.name] || {};
+    var isTracked = !!m.id;
 
-    var oee   = liveD.oee ? Math.round(liveD.oee)+'%' : (DNX_API_KEY?'No data':Math.floor(Math.random()*30+65)+'%');
-    var parts = liveD.partsToday !== undefined ? liveD.partsToday : (DNX_API_KEY?'No data':Math.floor(Math.random()*40+10));
-    var util  = liveD.utilization ? Math.round(liveD.utilization)+'%' : (DNX_API_KEY?'No data':Math.floor(Math.random()*40+50)+'%');
-    var cycleActual = liveD.actualCycleTime ? formatTime(liveD.actualCycleTime) : (DNX_API_KEY?'—':'53m 30s');
-    var cycleTarget = liveD.targetCycleTime ? formatTime(liveD.targetCycleTime) : (DNX_API_KEY?'—':'38m 25s');
-    var operator = liveD.operator || liveD.currentOperator || (DNX_API_KEY?'—':'Operator');
-    var jobName  = liveD.job || liveD.currentJob || (DNX_API_KEY?'No active job':'BCG1-113972 REV C1 OP50');
-    var cycleBarPct = status==='green'?92:status==='yellow'?62:status==='red'?30:0;
+    // Pull every field Datanomix might return
+    var oee          = liveD.oee        ? Math.round(liveD.oee)+'%'          : (isTracked?'—':'N/A');
+    var parts        = liveD.partsToday !== undefined ? liveD.partsToday      : (isTracked?'—':'N/A');
+    var util         = liveD.utilization ? Math.round(liveD.utilization)+'%'  : (isTracked?'—':'N/A');
+    var cycleActual  = liveD.actualCycleTime  ? formatTime(liveD.actualCycleTime)  : '—';
+    var cycleTarget  = liveD.targetCycleTime  ? formatTime(liveD.targetCycleTime)  : '—';
+    var cuttingTime  = liveD.cuttingTime      ? formatTime(liveD.cuttingTime)      : '—';
+    var prodHours    = liveD.productionHours  ? (Math.round(liveD.productionHours*10)/10)+'h' : '—';
+    var downtime = '—';
+    if (liveD._totalDowntimeMinutes !== undefined && liveD._totalDowntimeMinutes > 0) {
+      var dtMins = liveD._totalDowntimeMinutes;
+      downtime = dtMins >= 60 ? (Math.round(dtMins/60*10)/10) + 'h' : Math.round(dtMins) + 'm';
+    } else if (liveD.downtime || liveD.downtimeMinutes) {
+      var dtMins = parseFloat(liveD.downtime || liveD.downtimeMinutes || 0);
+      downtime = dtMins >= 60 ? (Math.round(dtMins/60*10)/10) + 'h' : Math.round(dtMins) + 'm';
+    }
+    var alarms       = liveD.alarms || liveD.alarmCount || '—';
+    var machineState = liveD.state || liveD.machineState || liveD.status || '—';
+    var spindle      = liveD.spindleRpm || liveD.spindle_rpm ? (liveD.spindleRpm||liveD.spindle_rpm)+' RPM' : '—';
+    var feedrate     = liveD.feedrate || liveD.feed_rate ? (liveD.feedrate||liveD.feed_rate)+' IPM' : '—';
+    var program      = liveD.program || liveD.programName || liveD.currentProgram || '—';
+    var operator     = liveD.operator || liveD.currentOperator || liveD.operatorName || '—';
+    var jobName      = liveD.job || liveD.currentJob || liveD.jobName || liveD.jobNumber || '—';
+    var partName     = liveD.part || liveD.partName || liveD.partNumber || '';
+
+    var cycleBarPct = 0;
+    if (liveD.actualCycleTime && liveD.targetCycleTime && liveD.targetCycleTime > 0) {
+      cycleBarPct = Math.min(100, Math.round((liveD.targetCycleTime / liveD.actualCycleTime) * 100));
+    } else {
+      cycleBarPct = status==='green'?92 : status==='yellow'?62 : status==='red'?30 : 0;
+    }
     var barColor = status==='green'?'#22c55e':status==='yellow'?'#eab308':status==='red'?'#ef4444':'#334155';
     var oeeColor = '#94a3b8';
-    if (typeof oee === 'string' && oee !== 'No data') { var n=parseInt(oee); oeeColor=n>=75?'#22c55e':n>=50?'#eab308':'#ef4444'; }
+    if (oee!=='—'&&oee!=='N/A'){var n=parseInt(oee);oeeColor=n>=75?'#22c55e':n>=50?'#eab308':'#ef4444';}
 
     document.getElementById('stvModalName').textContent = m.name;
-    document.getElementById('stvModalCell').textContent = m.cell;
-
-    var statusColors = { green:'#22c55e', yellow:'#eab308', red:'#ef4444', offline:'#475569', pending:'#475569' };
-    var sc = statusColors[status] || '#475569';
+    document.getElementById('stvModalCell').textContent = m.cell + (isTracked ? ' · Datanomix Connected' : ' · Manual Machine');
 
     var body = '';
 
-    // Status + flags row
+    // Status pills
     body += '<div class="stv-modal-flag-row">';
-    body += '<span class="stv-pill '+status+'" style="font-size:13px;padding:5px 14px;">'+label+'</span>';
+    body += '<span class="stv-pill '+status+'" style="font-size:13px;padding:5px 14px;">'+(label||status.toUpperCase())+'</span>';
     if (state.priority==='hot')  body += '<span class="stv-pill hot" style="font-size:13px;padding:5px 14px;">🔴 HOT JOB</span>';
     if (state.priority==='high') body += '<span class="stv-pill high" style="font-size:13px;padding:5px 14px;">🟠 HIGH PRIORITY</span>';
     if (state.attention)         body += '<span class="stv-pill attn" style="font-size:13px;padding:5px 14px;">⚠ NEEDS ATTENTION</span>';
     body += '</div>';
 
-    // Current job
-    body += '<div class="stv-modal-section">';
-    body += '<div class="stv-modal-section-title">CURRENT JOB</div>';
-    body += '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:1px;color:#f0f4f8;">'+jobName+'</div>';
-    if (operator !== '—') body += '<div style="font-size:13px;color:#64748b;margin-top:4px;">👤 Operator: <span style="color:#94a3b8;">'+operator+'</span></div>';
-    body += '</div>';
+    if (!isTracked) {
+      body += '<div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:16px;text-align:center;color:#334155;font-size:13px;">This machine is not connected to Datanomix.<br>Live data is not available.</div>';
+    } else {
 
-    // Stats
-    body += '<div class="stv-modal-stats">';
-    body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:#f5c500;">'+parts+'</div><div class="stv-modal-stat-lbl">Parts Today</div></div>';
-    body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:'+oeeColor+';">'+oee+'</div><div class="stv-modal-stat-lbl">OEE</div></div>';
-    body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:#60a5fa;">'+util+'</div><div class="stv-modal-stat-lbl">Utilization</div></div>';
-    body += '</div>';
+      // Current job & operator
+      body += '<div class="stv-modal-section">';
+      body += '<div class="stv-modal-section-title">CURRENT JOB</div>';
+      body += '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:1px;color:#f0f4f8;">'+(jobName!=='—'?jobName:'No active job')+'</div>';
+      if (partName) body += '<div style="font-size:13px;color:#60a5fa;margin-top:2px;">Part: '+partName+'</div>';
+      if (program!=='—') body += '<div style="font-size:12px;color:#475569;margin-top:2px;">Program: '+program+'</div>';
+      if (operator!=='—') body += '<div style="font-size:13px;color:#64748b;margin-top:4px;">👤 Operator: <span style="color:#94a3b8;">'+operator+'</span></div>';
+      if (machineState!=='—') body += '<div style="font-size:12px;color:#64748b;margin-top:4px;">State: <span style="color:#94a3b8;">'+machineState+'</span></div>';
+      body += '</div>';
 
-    // Cycle time breakdown
-    body += '<div class="stv-modal-section">';
-    body += '<div class="stv-modal-section-title">CYCLE TIME PERFORMANCE</div>';
-    body += '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">';
-    body += '<span style="font-family:Bebas Neue,sans-serif;font-size:28px;color:'+barColor+';">'+cycleActual+'</span>';
-    body += '<span style="font-size:12px;color:#475569;align-self:flex-end;padding-bottom:4px;">Goal: '+cycleTarget+'</span>';
-    body += '</div>';
-    body += '<div class="stv-modal-cycle-bg"><div class="stv-modal-cycle-fill" style="width:'+cycleBarPct+'%;background:'+barColor+';"></div></div>';
-    body += '<div style="font-size:12px;color:#475569;margin-top:4px;">'+label+'</div>';
-    body += '</div>';
+      // Key stats
+      body += '<div class="stv-modal-stats">';
+      body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:#f5c500;">'+parts+'</div><div class="stv-modal-stat-lbl">Parts Today</div></div>';
+      body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:'+oeeColor+';">'+oee+'</div><div class="stv-modal-stat-lbl">OEE</div></div>';
+      body += '<div class="stv-modal-stat"><div class="stv-modal-stat-val" style="color:#60a5fa;">'+util+'</div><div class="stv-modal-stat-lbl">Utilization</div></div>';
+      body += '</div>';
 
-    // Additional DNX data if connected
-    if (liveD.utilization) {
+      // Cycle time bar
+      body += '<div class="stv-modal-section">';
+      body += '<div class="stv-modal-section-title">CYCLE TIME PERFORMANCE</div>';
+      body += '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">';
+      body += '<span style="font-family:Bebas Neue,sans-serif;font-size:28px;color:'+barColor+';">'+cycleActual+'</span>';
+      body += '<span style="font-size:12px;color:#475569;align-self:flex-end;padding-bottom:4px;">Goal: '+cycleTarget+'</span>';
+      body += '</div>';
+      body += '<div class="stv-modal-cycle-bg"><div class="stv-modal-cycle-fill" style="width:'+cycleBarPct+'%;background:'+barColor+';"></div></div>';
+      body += '<div style="font-size:12px;color:#475569;margin-top:4px;">'+(label||'—')+'</div>';
+      body += '</div>';
+
+      // All extra Datanomix data
       body += '<div class="stv-modal-section">';
       body += '<div class="stv-modal-section-title">LIVE DATA FROM DATANOMIX</div>';
-      body += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">';
-      if (liveD.productionHours) body += '<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#f0f4f8;">'+formatTime(liveD.productionHours*3600)+'</div><div style="font-size:10px;color:#475569;letter-spacing:1.5px;margin-top:2px;">PRODUCTION HOURS</div></div>';
-      if (liveD.cuttingTime) body += '<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;"><div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#f0f4f8;">'+formatTime(liveD.cuttingTime)+'</div><div style="font-size:10px;color:#475569;letter-spacing:1.5px;margin-top:2px;">CUTTING TIME</div></div>';
+      body += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
+      var extra = [
+        {val:prodHours,  lbl:'Production Hours'},
+        {val:cuttingTime,lbl:'Cutting Time'},
+        {val:downtime,   lbl:'Downtime'},
+        {val:spindle,    lbl:'Spindle Speed'},
+        {val:feedrate,   lbl:'Feed Rate'},
+        {val:alarms,     lbl:'Alarms'},
+      ];
+      extra.forEach(function(e){
+        if(e.val==='—') return;
+        body += '<div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:10px;">';
+        body += '<div style="font-family:Bebas Neue,sans-serif;font-size:20px;color:#f0f4f8;">'+e.val+'</div>';
+        body += '<div style="font-size:10px;color:#475569;letter-spacing:1.5px;margin-top:2px;">'+e.lbl+'</div>';
+        body += '</div>';
+      });
+      // If NO extra fields, show a note
+      if (extra.every(function(e){return e.val==='—';})) {
+        body += '<div style="grid-column:1/-1;font-size:12px;color:#334155;padding:8px 0;">Waiting for live data from Datanomix...</div>';
+      }
       body += '</div></div>';
-    }
+
+    } // end isTracked
 
     // View Full HUD link
     if (m.hud) {
@@ -3640,8 +3816,6 @@
 
     document.getElementById('stvModalBody').innerHTML = body;
     document.getElementById('stvMachineModal').classList.add('open');
-
-    // Store paused state to restore on close
     document.getElementById('stvMachineModal').dataset.wasPaused = wasPaused;
   }
 
@@ -6849,5 +7023,305 @@ window.plannerSetView = function(view) {
 })();
 </script>
 
+<!-- ═══════════════════════════════════════════════════════════
+     LIVE FEED PAGE — visible to all employees
+════════════════════════════════════════════════════════════ -->
+<style>
+#page-livefeed { background:#00071a; overflow-y:auto; height:calc(100vh - 88px); }
+.lf-header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px 6px; flex-wrap:wrap; gap:8px; }
+.lf-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#f0f4f8; }
+.lf-updated { font-size:11px; color:#334155; letter-spacing:1px; }
+.lf-refresh-btn { background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; border-radius:7px; padding:5px 14px; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; }
+
+/* Shop summary strip */
+.lf-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:0 16px 14px; }
+.lf-sum-card { background:#0d1f35; border-radius:12px; padding:12px; text-align:center; border:1px solid #1e3a5f; }
+.lf-sum-num { font-family:'Bebas Neue',sans-serif; font-size:32px; line-height:1; }
+.lf-sum-lbl { font-size:10px; color:#475569; letter-spacing:1.5px; margin-top:3px; }
+
+/* Machine status grid */
+.lf-section-title { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2.5px; color:#475569; padding:0 16px 8px; }
+.lf-machine-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:8px; padding:0 16px 20px; }
+.lf-machine-card { background:#0d1f35; border-radius:10px; padding:10px 12px; border-left:4px solid #334155; transition:all .2s; cursor:pointer; }
+.lf-machine-card.running  { border-left-color:#22c55e; background:linear-gradient(135deg,#001a08,#0d1f35); }
+.lf-machine-card.idle     { border-left-color:#eab308; background:linear-gradient(135deg,#1a1200,#0d1f35); }
+.lf-machine-card.down     { border-left-color:#ef4444; background:linear-gradient(135deg,#1a0404,#0d1f35); }
+.lf-machine-card.offline  { border-left-color:#334155; opacity:.6; }
+.lf-machine-card.no-data  { border-left-color:#1e3a5f; opacity:.5; }
+.lf-mc-name { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:1.5px; color:#f5d050; }
+.lf-mc-cell { font-size:10px; color:#475569; margin-bottom:6px; }
+.lf-mc-status { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; letter-spacing:1px; margin-bottom:6px; }
+.lf-mc-status.running  { background:rgba(34,197,94,0.15);  color:#4ade80;  border:1px solid rgba(34,197,94,0.3); }
+.lf-mc-status.idle     { background:rgba(234,179,8,0.15);  color:#fbbf24;  border:1px solid rgba(234,179,8,0.3); }
+.lf-mc-status.down     { background:rgba(239,68,68,0.15);  color:#f87171;  border:1px solid rgba(239,68,68,0.3); }
+.lf-mc-status.offline  { background:rgba(71,85,105,0.15);  color:#64748b;  border:1px solid rgba(71,85,105,0.3); }
+.lf-mc-status.no-data  { background:rgba(30,58,95,0.3);    color:#334155;  border:1px solid rgba(30,58,95,0.3); }
+.lf-mc-stats { display:flex; gap:8px; flex-wrap:wrap; }
+.lf-mc-stat  { text-align:center; flex:1; min-width:36px; }
+.lf-mc-stat-val { font-family:'Bebas Neue',sans-serif; font-size:16px; line-height:1; }
+.lf-mc-stat-lbl { font-size:9px; color:#475569; letter-spacing:1px; margin-top:1px; }
+
+/* Downtime leaderboard */
+.lf-dt-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#0d1f35; border-radius:10px; margin-bottom:6px; border-left:4px solid #ef4444; }
+.lf-dt-rank { font-family:'Bebas Neue',sans-serif; font-size:20px; color:#334155; min-width:24px; }
+.lf-dt-name { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; color:#f5d050; flex:1; }
+.lf-dt-bar-wrap { flex:2; background:#1a3a5c; border-radius:4px; height:8px; overflow:hidden; }
+.lf-dt-bar-fill { height:100%; background:#ef4444; border-radius:4px; transition:width .5s; }
+.lf-dt-time { font-family:'Bebas Neue',sans-serif; font-size:16px; color:#f87171; min-width:48px; text-align:right; }
+
+/* OEE leaderboard */
+.lf-oee-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#0d1f35; border-radius:10px; margin-bottom:6px; }
+.lf-oee-name { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; color:#f5d050; flex:1; }
+.lf-oee-bar-wrap { flex:2; background:#1a3a5c; border-radius:4px; height:8px; overflow:hidden; }
+.lf-oee-bar-fill { height:100%; border-radius:4px; transition:width .5s; }
+.lf-oee-val { font-family:'Bebas Neue',sans-serif; font-size:16px; min-width:48px; text-align:right; }
+</style>
+
+<div id="page-livefeed" style="display:none;">
+
+  <!-- Header -->
+  <div class="lf-header">
+    <div>
+      <div class="lf-title">📡 LIVE SHOP FEED</div>
+      <div class="lf-updated" id="lf-updated">Powered by Datanomix · Tap any machine for details</div>
+    </div>
+    <button class="lf-refresh-btn" onclick="fetchDatanomix().then(renderLiveFeed)">↺ REFRESH</button>
+  </div>
+
+  <!-- Shop summary strip -->
+  <div class="lf-summary">
+    <div class="lf-sum-card" style="border-color:rgba(34,197,94,0.3);">
+      <div class="lf-sum-num" id="lf-count-running" style="color:#4ade80;">—</div>
+      <div class="lf-sum-lbl">RUNNING</div>
+    </div>
+    <div class="lf-sum-card" style="border-color:rgba(234,179,8,0.3);">
+      <div class="lf-sum-num" id="lf-count-idle" style="color:#fbbf24;">—</div>
+      <div class="lf-sum-lbl">IDLE</div>
+    </div>
+    <div class="lf-sum-card" style="border-color:rgba(239,68,68,0.3);">
+      <div class="lf-sum-num" id="lf-count-down" style="color:#f87171;">—</div>
+      <div class="lf-sum-lbl">DOWN</div>
+    </div>
+    <div class="lf-sum-card" style="border-color:rgba(245,158,11,0.3);">
+      <div class="lf-sum-num" id="lf-avg-oee" style="color:#f59e0b;">—</div>
+      <div class="lf-sum-lbl">AVG OEE</div>
+    </div>
+  </div>
+
+  <!-- Machine status grid -->
+  <div class="lf-section-title">⚡ ALL MACHINES — LIVE STATUS</div>
+  <div class="lf-machine-grid" id="lf-machine-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:30px;color:#334155;font-size:13px;">Loading Datanomix data...</div>
+  </div>
+
+  <!-- Downtime leaderboard -->
+  <div class="lf-section-title">⏱ DOWNTIME TODAY — MOST TO LEAST</div>
+  <div style="padding:0 16px 20px;" id="lf-downtime-list">
+    <div style="text-align:center;padding:20px;color:#334155;font-size:13px;">No downtime data yet</div>
+  </div>
+
+  <!-- OEE leaderboard -->
+  <div class="lf-section-title">📊 OEE LEADERBOARD — BEST TO WORST</div>
+  <div style="padding:0 16px 60px;" id="lf-oee-list">
+    <div style="text-align:center;padding:20px;color:#334155;font-size:13px;">No OEE data yet</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+
+  // Map machine name → Datanomix ID (same as DNX_MACHINES)
+  var LF_MACHINES = [
+    {name:'1050-B',cell:'Big Mill',    id:253},
+    {name:'7000',  cell:'Big Mill',    id:853},
+    {name:'VF-6',  cell:'Big Mill',    id:1253},
+    {name:'5100-B',cell:'5100 Cell',   id:753},
+    {name:'2500',  cell:'5100 Cell',   id:1603},
+    {name:'PUMA-3',cell:'5100 Cell',   id:1153},
+    {name:'ST35',  cell:'MPPI',        id:1903},
+    {name:'VF-3',  cell:'MPPI',        id:953},
+    {name:'VF-2',  cell:'MPPI',        id:1553},
+    {name:'PUMA-2',cell:'MPPI',        id:3},
+    {name:'403-A', cell:'403 Cell',    id:553},
+    {name:'403-B', cell:'403 Cell',    id:1003},
+    {name:'403-C', cell:'403 Cell',    id:1303},
+    {name:'5100-A',cell:'Mill/Lathe',  id:653},
+    {name:'3000-C',cell:'3000 Cell',   id:1803},
+    {name:'3000-A',cell:'3000 Cell',   id:1703},
+    {name:'2G',    cell:'Horizontal',  id:1973},
+    {name:'PUMA-1',cell:'Automation',  id:453},
+    {name:'303-B', cell:'Automation',  id:103},
+    {name:'TWIN',  cell:'Automation',  id:1403},
+    {name:'2500-Y',cell:'Automation',  id:1653},
+    // Manual machines
+    {name:'SHARP', cell:'Mill/Lathe',  id:null},
+    {name:'SH403', cell:'Mill/Lathe',  id:null},
+    {name:'5000',  cell:'Mill/Lathe',  id:null},
+    {name:'SYIL',  cell:'3000 Cell',   id:null},
+    {name:'EMCO',  cell:'Horizontal',  id:null},
+    {name:'SAW-1', cell:'Saws',        id:null},
+    {name:'SAW-2', cell:'Saws',        id:null},
+  ];
+
+  function getMachineStatus(m) {
+    if (!m.id) return 'no-data';
+    var liveD = (window.dnxLiveData || {})[m.id] || {};
+    var state = (liveD.state || liveD.machineState || liveD.status || liveD.machineStatus || '').toLowerCase();
+    if (!state && Object.keys(liveD).length === 0) return 'no-data';
+    if (state.indexOf('run') >= 0 || state.indexOf('cut') >= 0 || state.indexOf('active') >= 0) return 'running';
+    if (state.indexOf('idle') >= 0 || state.indexOf('wait') >= 0 || state.indexOf('ready') >= 0) return 'idle';
+    if (state.indexOf('down') >= 0 || state.indexOf('alarm') >= 0 || state.indexOf('fault') >= 0 || state.indexOf('off') >= 0) return 'down';
+    // Fall back to perf bar status
+    var bar = document.getElementById('perf-' + m.name);
+    if (bar) {
+      var cls = bar.className;
+      if (cls.indexOf('green') >= 0)  return 'running';
+      if (cls.indexOf('yellow') >= 0) return 'idle';
+      if (cls.indexOf('red') >= 0)    return 'down';
+      if (cls.indexOf('offline') >= 0)return 'offline';
+    }
+    return Object.keys(liveD).length > 0 ? 'running' : 'no-data';
+  }
+
+  function fmtTime(mins) {
+    if (!mins || mins <= 0) return '0m';
+    if (mins >= 60) return (Math.round(mins/60*10)/10) + 'h';
+    return Math.round(mins) + 'm';
+  }
+
+  window.renderLiveFeed = function() {
+    var liveData = window.dnxLiveData || {};
+    var now = new Date();
+    var updEl = document.getElementById('lf-updated');
+    if (updEl) updEl.textContent = 'Last updated: ' + now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + ' · Tap any machine for details';
+
+    // Count statuses
+    var counts = {running:0, idle:0, down:0, offline:0};
+    var oeeValues = [], downtimeData = [];
+
+    LF_MACHINES.forEach(function(m) {
+      if (!m.id) return;
+      var status = getMachineStatus(m);
+      if (counts[status] !== undefined) counts[status]++;
+
+      var d = liveData[m.id] || {};
+      if (d.oee) oeeValues.push(parseFloat(d.oee));
+
+      var dtMins = d._totalDowntimeMinutes || d.downtimeMinutes || d.downtime || 0;
+      if (dtMins > 0) downtimeData.push({name: m.name, cell: m.cell, mins: parseFloat(dtMins)});
+    });
+
+    // Update summary cards
+    var el;
+    if ((el=document.getElementById('lf-count-running'))) el.textContent = counts.running;
+    if ((el=document.getElementById('lf-count-idle')))    el.textContent = counts.idle;
+    if ((el=document.getElementById('lf-count-down')))    el.textContent = counts.down;
+    var avgOee = oeeValues.length ? Math.round(oeeValues.reduce(function(a,b){return a+b;},0)/oeeValues.length)+'%' : '—';
+    if ((el=document.getElementById('lf-avg-oee'))) el.textContent = avgOee;
+
+    // Machine grid
+    var grid = document.getElementById('lf-machine-grid');
+    if (grid) {
+      grid.innerHTML = LF_MACHINES.map(function(m) {
+        var status = getMachineStatus(m);
+        var d = m.id ? (liveData[m.id] || {}) : {};
+        var oee   = d.oee   ? Math.round(d.oee)+'%'   : '—';
+        var parts = d.partsToday !== undefined ? d.partsToday : '—';
+        var util  = d.utilization ? Math.round(d.utilization)+'%' : '—';
+        var oeeColor = '#94a3b8';
+        if (oee !== '—') { var n=parseInt(oee); oeeColor=n>=75?'#22c55e':n>=50?'#eab308':'#ef4444'; }
+        var statusLabels = {running:'RUNNING', idle:'IDLE', down:'DOWN', offline:'OFFLINE', 'no-data': m.id ? 'WAITING' : 'MANUAL'};
+        return '<div class="lf-machine-card '+status+'" onclick="openStvMachineModal(\''+m.name+'\');switchTab(\'shoptv\')">'
+          +'<div class="lf-mc-name">'+m.name+'</div>'
+          +'<div class="lf-mc-cell">'+m.cell+'</div>'
+          +'<span class="lf-mc-status '+status+'">'+statusLabels[status]+'</span>'
+          +'<div class="lf-mc-stats">'
+            +'<div class="lf-mc-stat"><div class="lf-mc-stat-val" style="color:#f5c500;">'+parts+'</div><div class="lf-mc-stat-lbl">PCS</div></div>'
+            +'<div class="lf-mc-stat"><div class="lf-mc-stat-val" style="color:'+oeeColor+';">'+oee+'</div><div class="lf-mc-stat-lbl">OEE</div></div>'
+            +'<div class="lf-mc-stat"><div class="lf-mc-stat-val" style="color:#60a5fa;">'+util+'</div><div class="lf-mc-stat-lbl">UTIL</div></div>'
+          +'</div>'
+          +'</div>';
+      }).join('');
+    }
+
+    // Downtime leaderboard
+    var dtList = document.getElementById('lf-downtime-list');
+    if (dtList) {
+      downtimeData.sort(function(a,b){return b.mins-a.mins;});
+      var maxDt = downtimeData.length ? downtimeData[0].mins : 1;
+      if (downtimeData.length === 0) {
+        dtList.innerHTML = '<div style="text-align:center;padding:20px;color:#334155;font-size:13px;">No downtime recorded today ✅</div>';
+      } else {
+        dtList.innerHTML = downtimeData.map(function(d, i) {
+          var pct = Math.round((d.mins/maxDt)*100);
+          var color = d.mins >= 120 ? '#ef4444' : d.mins >= 60 ? '#f59e0b' : '#eab308';
+          return '<div class="lf-dt-row" style="border-left-color:'+color+';">'
+            +'<div class="lf-dt-rank">'+(i+1)+'</div>'
+            +'<div>'
+              +'<div class="lf-dt-name">'+d.name+'</div>'
+              +'<div style="font-size:10px;color:#475569;">'+d.cell+'</div>'
+            +'</div>'
+            +'<div class="lf-dt-bar-wrap"><div class="lf-dt-bar-fill" style="width:'+pct+'%;background:'+color+';"></div></div>'
+            +'<div class="lf-dt-time" style="color:'+color+';">'+fmtTime(d.mins)+'</div>'
+            +'</div>';
+        }).join('');
+      }
+    }
+
+    // OEE leaderboard — only machines with data
+    var oeeList = document.getElementById('lf-oee-list');
+    if (oeeList) {
+      var oeeData = [];
+      LF_MACHINES.forEach(function(m) {
+        if (!m.id) return;
+        var d = liveData[m.id] || {};
+        if (d.oee !== undefined && d.oee !== null) {
+          oeeData.push({name:m.name, cell:m.cell, oee:parseFloat(d.oee)});
+        }
+      });
+      oeeData.sort(function(a,b){return b.oee-a.oee;});
+      if (oeeData.length === 0) {
+        oeeList.innerHTML = '<div style="text-align:center;padding:20px;color:#334155;font-size:13px;">Waiting for OEE data from Datanomix...</div>';
+      } else {
+        oeeList.innerHTML = oeeData.map(function(d, i) {
+          var color = d.oee >= 75 ? '#22c55e' : d.oee >= 50 ? '#eab308' : '#ef4444';
+          var medal = i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':'';
+          return '<div class="lf-oee-row">'
+            +'<div style="min-width:20px;font-size:13px;">'+medal+'</div>'
+            +'<div>'
+              +'<div class="lf-oee-name">'+d.name+'</div>'
+              +'<div style="font-size:10px;color:#475569;">'+d.cell+'</div>'
+            +'</div>'
+            +'<div class="lf-oee-bar-wrap"><div class="lf-oee-bar-fill" style="width:'+Math.round(d.oee)+'%;background:'+color+';"></div></div>'
+            +'<div class="lf-oee-val" style="color:'+color+';">'+Math.round(d.oee)+'%</div>'
+            +'</div>';
+        }).join('');
+      }
+    }
+  };
+
+  // Auto-refresh live feed every 2 minutes if it's open
+  setInterval(function() {
+    var lfEl = document.getElementById('page-livefeed');
+    if (lfEl && lfEl.style.display !== 'none') {
+      if (window.fetchDatanomix) window.fetchDatanomix().then(window.renderLiveFeed);
+    }
+  }, 120000);
+
+  // Also re-render whenever Datanomix data updates
+  var _origUpdate = window.updateMachineCard;
+  window.updateMachineCard = function(name, data) {
+    if (_origUpdate) _origUpdate(name, data);
+    // Debounce live feed re-render
+    if (window._lfRenderTimer) clearTimeout(window._lfRenderTimer);
+    window._lfRenderTimer = setTimeout(function() {
+      var lfEl = document.getElementById('page-livefeed');
+      if (lfEl && lfEl.style.display !== 'none') window.renderLiveFeed();
+    }, 500);
+  };
+
+})();
+</script>
 </body>
 </html>
