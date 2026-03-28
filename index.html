@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Hill Manufacturing — Shop Floor v26</title>
+<title>Hill Manufacturing — Shop Floor</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -838,7 +838,396 @@
     .video-hero-banner { flex-direction: column; align-items: flex-start; }
   }
 </style>
-</head>
+
+<!-- ═══════════════════ MODERN VISUAL OVERHAUL ═══════════════════ -->
+<style>
+/* ── DESIGN TOKENS ── */
+:root {
+  --gold:       #f5c842;
+  --gold-dim:   #c49a1a;
+  --gold-glow:  rgba(245,200,66,0.18);
+  --navy-0:     #00060f;
+  --navy-1:     #050d1a;
+  --navy-2:     #091525;
+  --navy-3:     #0d1e35;
+  --navy-4:     #132744;
+  --steel:      #1e3450;
+  --steel-lite: #2a4a6e;
+  --cyan:       #38bdf8;
+  --green:      #22c55e;
+  --red:        #ef4444;
+  --amber:      #f59e0b;
+  --text-hi:    #f0f6ff;
+  --text-mid:   #94a3b8;
+  --text-lo:    #3d5470;
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
+  --shadow-gold: 0 0 20px rgba(245,200,66,0.25);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&display=swap');
+
+/* ── BASE ── */
+* { box-sizing: border-box; }
+body { background: var(--navy-1); color: var(--text-hi); font-family: 'Barlow', sans-serif; }
+
+/* Subtle grid texture on all pages */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image: linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── HEADER ── */
+header {
+  background: linear-gradient(135deg, var(--navy-0) 0%, var(--navy-2) 100%) !important;
+  border-bottom: 2px solid var(--gold) !important;
+  box-shadow: 0 2px 30px rgba(0,0,0,0.7), 0 0 40px rgba(245,200,66,0.08) !important;
+  padding: 6px 16px !important;
+  position: relative;
+}
+header::after {
+  content:''; position:absolute; bottom:-1px; left:0; right:0; height:1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.logo h1 { color: var(--gold) !important; font-size: 26px !important; letter-spacing: 4px !important; text-shadow: 0 0 20px rgba(245,200,66,0.5); }
+.logo p  { color: var(--text-lo) !important; letter-spacing: 3px !important; }
+.logo-badge {
+  background: linear-gradient(135deg, #b8860b, var(--gold)) !important;
+  box-shadow: 0 0 20px rgba(245,200,66,0.45), 0 2px 8px rgba(0,0,0,0.5) !important;
+}
+.legend-item { color: var(--text-lo) !important; font-size: 10px !important; letter-spacing: 1px !important; }
+.notif-bell {
+  background: rgba(245,200,66,0.08) !important;
+  border: 1px solid rgba(245,200,66,0.2) !important;
+  border-radius: 10px !important;
+  color: var(--text-mid) !important;
+  font-size: 12px !important;
+  transition: all .2s !important;
+}
+.notif-bell:hover { background: rgba(245,200,66,0.14) !important; color: var(--gold) !important; }
+
+/* ── NAV TABS ── */
+.nav-tabs-wrap {
+  background: var(--navy-0) !important;
+  border-bottom: 1px solid var(--steel) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+.nav-tab {
+  font-family: 'Bebas Neue', sans-serif !important;
+  font-size: 15px !important;
+  letter-spacing: 2px !important;
+  color: var(--text-lo) !important;
+  padding: 9px 18px !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
+  transition: all .2s !important;
+  white-space: nowrap;
+  position: relative;
+}
+.nav-tab:hover { color: var(--text-mid) !important; background: rgba(255,255,255,0.03) !important; }
+.nav-tab.active {
+  color: var(--gold) !important;
+  border-bottom-color: var(--gold) !important;
+  background: linear-gradient(180deg, rgba(245,200,66,0.06) 0%, transparent 100%) !important;
+  text-shadow: 0 0 14px rgba(245,200,66,0.6) !important;
+  box-shadow: none !important;
+}
+.nav-tab.active::after {
+  content:''; position:absolute; bottom:0; left:20%; right:20%; height:3px;
+  background: var(--gold); border-radius:2px 2px 0 0;
+  box-shadow: 0 0 10px rgba(245,200,66,0.8);
+  display:none; /* handled by border-bottom */
+}
+.nav-scroll-btn { background: var(--navy-0) !important; color: var(--text-lo) !important; border-color: var(--steel) !important; }
+
+/* ── SHARED PAGE BACKGROUNDS ── */
+#page-dashboard, #page-board, #page-datanomix,
+#page-shoptv, #page-proshop, #page-planner,
+#page-mgmt, #page-inspections, #page-requests {
+  background: var(--navy-1) !important;
+}
+
+/* ── DASHBOARD ── */
+.dash-summary-card {
+  background: linear-gradient(145deg, var(--navy-2), var(--navy-3)) !important;
+  border: 1px solid var(--steel) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: transform .2s, box-shadow .2s !important;
+}
+.dash-summary-card:hover { transform: translateY(-2px) !important; box-shadow: var(--shadow-card), 0 8px 30px rgba(0,0,0,0.4) !important; }
+.dash-summary-num { font-family: 'Bebas Neue', sans-serif !important; font-size: 44px !important; line-height: 1 !important; }
+.dash-summary-label { font-size: 10px !important; letter-spacing: 2px !important; color: var(--text-lo) !important; text-transform: uppercase !important; }
+.dash-period-btn {
+  background: var(--navy-3) !important;
+  border: 1px solid var(--steel) !important;
+  color: var(--text-lo) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: 'Bebas Neue', sans-serif !important;
+  letter-spacing: 1.5px !important;
+  transition: all .2s !important;
+}
+.dash-period-btn.active { background: rgba(245,200,66,0.12) !important; border-color: var(--gold) !important; color: var(--gold) !important; }
+.dash-filter-btn {
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  transition: all .15s !important;
+}
+/* Dashboard request cards */
+.dash-request-card, [class*="dash-card"] {
+  background: linear-gradient(145deg, var(--navy-2), var(--navy-3)) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--steel) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* ── BULLETIN BOARD ── */
+#page-board {
+  background: linear-gradient(160deg, var(--navy-1) 0%, var(--navy-0) 100%) !important;
+}
+/* Board notes */
+[class*="note-card"], [class*="board-note"], .bulletin-note {
+  background: linear-gradient(145deg, var(--navy-3), var(--navy-4)) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--steel) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: transform .2s !important;
+}
+[class*="note-card"]:hover { transform: translateY(-2px) !important; }
+
+/* ── SHOP TV ── */
+.stv-card {
+  background: linear-gradient(145deg, var(--navy-2), var(--navy-3)) !important;
+  border: 1px solid var(--steel) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-card) !important;
+  transition: all .2s !important;
+}
+.stv-card.s-green  { border-left: 4px solid var(--green)  !important; background: linear-gradient(145deg, #001a08, var(--navy-3)) !important; }
+.stv-card.s-yellow { border-left: 4px solid var(--amber)  !important; background: linear-gradient(145deg, #1a1000, var(--navy-3)) !important; }
+.stv-card.s-red    { border-left: 4px solid var(--red)    !important; background: linear-gradient(145deg, #1a0404, var(--navy-3)) !important; }
+.stv-card:hover    { transform: translateY(-2px) !important; box-shadow: var(--shadow-card), 0 8px 24px rgba(0,0,0,0.4) !important; }
+.stv-card-name     { font-family: 'Bebas Neue', sans-serif !important; color: var(--gold) !important; font-size: 19px !important; letter-spacing: 1.5px !important; }
+.stv-card-cell     { color: var(--text-lo) !important; font-size: 10px !important; }
+.stv-stat-val      { font-family: 'Bebas Neue', sans-serif !important; font-size: 20px !important; }
+.stv-stat-lbl      { font-size: 9px !important; color: var(--text-lo) !important; letter-spacing: 1px !important; }
+.stv-section-hdr   { background: linear-gradient(90deg, var(--navy-0), var(--navy-2)) !important; border-bottom: 1px solid var(--steel) !important; }
+.stv-section-name  { font-family: 'Bebas Neue', sans-serif !important; font-size: 20px !important; letter-spacing: 3px !important; color: var(--gold) !important; }
+
+/* STV modal */
+.stv-modal-inner {
+  background: linear-gradient(160deg, var(--navy-0) 0%, var(--navy-2) 100%) !important;
+  border: 1px solid var(--steel-lite) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(245,200,66,0.08) !important;
+}
+.stv-modal-name { font-family: 'Bebas Neue', sans-serif !important; color: var(--gold) !important; font-size: 30px !important; letter-spacing: 2px !important; }
+.stv-modal-stat-val { font-family: 'Bebas Neue', sans-serif !important; font-size: 32px !important; }
+.stv-modal-section-title { color: var(--text-lo) !important; letter-spacing: 2px !important; font-size: 10px !important; font-weight: 700 !important; }
+.stv-modal-hud-btn {
+  background: linear-gradient(135deg, rgba(245,200,66,0.1), rgba(245,200,66,0.05)) !important;
+  border: 1px solid rgba(245,200,66,0.3) !important;
+  color: var(--gold) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: 'Bebas Neue', sans-serif !important;
+  letter-spacing: 2px !important;
+  transition: all .2s !important;
+}
+.stv-modal-hud-btn:hover { background: rgba(245,200,66,0.15) !important; }
+
+/* STV header bar */
+#page-shoptv > div:first-child {
+  background: linear-gradient(135deg, var(--navy-0), var(--navy-2)) !important;
+  border-bottom: 1px solid var(--steel) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+}
+
+/* ── DATANOMIX TAB ── */
+#page-datanomix { background: var(--navy-1) !important; }
+#page-datanomix > div:first-child {
+  background: linear-gradient(90deg, var(--navy-0), var(--navy-2)) !important;
+  border-bottom: 1px solid var(--steel) !important;
+}
+#dnx-cards > div[style*="border-left"] {
+  transition: transform .2s, box-shadow .2s !important;
+}
+#dnx-cards > div[style*="border-left"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+}
+
+/* ── PLANNER ── */
+#page-planner {
+  background: linear-gradient(160deg, var(--navy-1), var(--navy-0)) !important;
+}
+
+/* ── MANAGEMENT ── */
+#page-mgmt {
+  background: var(--navy-1) !important;
+}
+/* mgmt cards */
+[class*="mgmt-card"], [class*="manage-card"] {
+  background: linear-gradient(145deg, var(--navy-2), var(--navy-3)) !important;
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--steel) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* ── AUTH OVERLAY ── */
+.auth-box {
+  background: linear-gradient(160deg, var(--navy-0) 0%, var(--navy-2) 100%) !important;
+  border: 1px solid var(--steel-lite) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(245,200,66,0.06) !important;
+}
+.auth-logo { border-bottom: 1px solid var(--steel) !important; }
+.auth-tab.active { color: var(--gold) !important; border-bottom-color: var(--gold) !important; }
+.auth-field input, .auth-field textarea {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid var(--steel) !important;
+  border-radius: var(--radius-sm) !important;
+  color: var(--text-hi) !important;
+  transition: border-color .2s !important;
+}
+.auth-field input:focus { border-color: var(--gold) !important; outline: none !important; box-shadow: 0 0 0 3px rgba(245,200,66,0.1) !important; }
+.auth-submit {
+  background: linear-gradient(135deg, #b8860b, var(--gold)) !important;
+  color: var(--navy-0) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: 'Bebas Neue', sans-serif !important;
+  letter-spacing: 2px !important;
+  font-size: 16px !important;
+  box-shadow: 0 4px 16px rgba(245,200,66,0.3) !important;
+  transition: all .2s !important;
+  border: none !important;
+}
+.auth-submit:hover { box-shadow: 0 6px 24px rgba(245,200,66,0.45) !important; transform: translateY(-1px) !important; }
+
+/* ── MODAL ── */
+.modal {
+  background: linear-gradient(160deg, var(--navy-0) 0%, var(--navy-2) 100%) !important;
+  border: 1px solid var(--steel-lite) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.8) !important;
+}
+.modal-title { color: var(--gold) !important; font-family: 'Bebas Neue', sans-serif !important; letter-spacing: 3px !important; }
+.note-type-btn {
+  border-radius: var(--radius-sm) !important;
+  transition: all .15s !important;
+  border: 1px solid var(--steel) !important;
+  background: var(--navy-3) !important;
+}
+.note-type-btn:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important; }
+.note-type-btn.selected { border-color: var(--gold) !important; box-shadow: 0 0 0 2px rgba(245,200,66,0.2) !important; }
+.modal-form input, .modal-form textarea, .modal-form select {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid var(--steel) !important;
+  border-radius: var(--radius-sm) !important;
+}
+.modal-form input:focus, .modal-form textarea:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 3px rgba(245,200,66,0.08) !important;
+  outline: none !important;
+}
+.modal-submit {
+  background: linear-gradient(135deg, #b8860b, var(--gold)) !important;
+  color: var(--navy-0) !important;
+  font-family: 'Bebas Neue', sans-serif !important;
+  letter-spacing: 2px !important;
+  border-radius: var(--radius-sm) !important;
+  border: none !important;
+  box-shadow: 0 4px 16px rgba(245,200,66,0.25) !important;
+  transition: all .2s !important;
+}
+.modal-submit:hover { box-shadow: 0 6px 20px rgba(245,200,66,0.4) !important; transform: translateY(-1px) !important; }
+
+/* ── SHOP FLOOR machine glow upgrades ── */
+.machine { box-shadow: 0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05) !important; }
+.machine:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 14px rgba(245,200,66,0.12) !important; }
+.cell { border: 1px solid rgba(56,189,248,0.12) !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; }
+.cell-title { text-shadow: 0 0 12px rgba(125,211,252,0.8), 0 0 24px rgba(125,211,252,0.4) !important; }
+
+/* ── SCROLLBAR GLOBAL ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--navy-0); }
+::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--steel-lite); }
+
+/* ── TOAST NOTIFICATIONS ── */
+.toast { border-radius: var(--radius-md) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+
+/* ── PERF BAR ── */
+.perf-bar.green  { box-shadow: 0 0 8px rgba(34,197,94,0.5) !important; }
+.perf-bar.yellow { box-shadow: 0 0 8px rgba(234,179,8,0.5) !important; }
+.perf-bar.red    { box-shadow: 0 0 8px rgba(239,68,68,0.5) !important; }
+
+/* ── ADMIN PANEL ── */
+#adminPanel {
+  background: linear-gradient(160deg, var(--navy-0), var(--navy-2)) !important;
+  border-left: 1px solid var(--steel) !important;
+}
+#adminPanel h2 { font-family: 'Bebas Neue', sans-serif !important; letter-spacing: 3px !important; color: var(--gold) !important; }
+
+/* ── STATUS PILL UPGRADES ── */
+.stv-pill.running { background: rgba(34,197,94,0.15) !important; border: 1px solid rgba(34,197,94,0.35) !important; color: #4ade80 !important; }
+.stv-pill.offline, .stv-pill.pending { background: rgba(71,85,105,0.2) !important; border: 1px solid rgba(71,85,105,0.35) !important; }
+.stv-pill.hot   { background: rgba(239,68,68,0.15) !important; border: 1px solid rgba(239,68,68,0.35) !important; animation: pulse-red 1.5s ease-in-out infinite !important; }
+.stv-pill.high  { background: rgba(245,158,11,0.15) !important; border: 1px solid rgba(245,158,11,0.35) !important; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+/* Staggered card entrance on tab switch */
+#page-dashboard .dash-summary-card:nth-child(1) { animation: fadeSlideUp .4s ease both .05s; }
+#page-dashboard .dash-summary-card:nth-child(2) { animation: fadeSlideUp .4s ease both .1s; }
+#page-dashboard .dash-summary-card:nth-child(3) { animation: fadeSlideUp .4s ease both .15s; }
+#page-dashboard .dash-summary-card:nth-child(4) { animation: fadeSlideUp .4s ease both .2s; }
+#page-dashboard .dash-summary-card:nth-child(5) { animation: fadeSlideUp .4s ease both .25s; }
+#dnx-cards > * { animation: fadeSlideUp .35s ease both; }
+
+/* Gold shimmer on active nav tab text */
+.nav-tab.active {
+  background-image: linear-gradient(90deg, transparent 0%, rgba(245,200,66,0.15) 50%, transparent 100%) !important;
+  background-size: 200% !important;
+}
+
+/* ── PILL / BADGE GLOBAL ── */
+.tab-badge {
+  background: var(--red) !important;
+  box-shadow: 0 0 8px rgba(239,68,68,0.5) !important;
+  font-size: 9px !important;
+  padding: 1px 5px !important;
+}
+
+/* ── SECTION TITLES across all pages ── */
+[style*="letter-spacing:2.5px"][style*="color:#334155"],
+[style*="letter-spacing:2.5px"][style*="color:#475569"] {
+  color: var(--text-lo) !important;
+  font-size: 10px !important;
+  letter-spacing: 3px !important;
+  text-transform: uppercase !important;
+}
+
+/* ── RESPONSIVE: hide legend on small screens ── */
+@media (max-width: 640px) {
+  .legend { display: none !important; }
+  .logo p  { display: none !important; }
+  header   { padding: 5px 10px !important; }
+  .nav-tab { padding: 8px 12px !important; font-size: 13px !important; }
+}
+</style>
 <body>
 
 <!-- AUTH OVERLAY -->
