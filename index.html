@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Hill Manufacturing — Shop Floor</title>
+<title>Hill Manufacturing — Shop Floor v26</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -838,396 +838,7 @@
     .video-hero-banner { flex-direction: column; align-items: flex-start; }
   }
 </style>
-
-<!-- ═══════════════════ MODERN VISUAL OVERHAUL ═══════════════════ -->
-<style>
-/* ── DESIGN TOKENS ── */
-:root {
-  --gold:       #f5c842;
-  --gold-dim:   #c49a1a;
-  --gold-glow:  rgba(245,200,66,0.18);
-  --navy-0:     #00060f;
-  --navy-1:     #050d1a;
-  --navy-2:     #091525;
-  --navy-3:     #0d1e35;
-  --navy-4:     #132744;
-  --steel:      #1e3450;
-  --steel-lite: #2a4a6e;
-  --cyan:       #38bdf8;
-  --green:      #22c55e;
-  --red:        #ef4444;
-  --amber:      #f59e0b;
-  --text-hi:    #f0f6ff;
-  --text-mid:   #94a3b8;
-  --text-lo:    #3d5470;
-  --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  18px;
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.04) inset;
-  --shadow-gold: 0 0 20px rgba(245,200,66,0.25);
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&display=swap');
-
-/* ── BASE ── */
-* { box-sizing: border-box; }
-body { background: var(--navy-1); color: var(--text-hi); font-family: 'Barlow', sans-serif; }
-
-/* Subtle grid texture on all pages */
-body::before {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-  background-image: linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-/* ── HEADER ── */
-header {
-  background: linear-gradient(135deg, var(--navy-0) 0%, var(--navy-2) 100%) !important;
-  border-bottom: 2px solid var(--gold) !important;
-  box-shadow: 0 2px 30px rgba(0,0,0,0.7), 0 0 40px rgba(245,200,66,0.08) !important;
-  padding: 6px 16px !important;
-  position: relative;
-}
-header::after {
-  content:''; position:absolute; bottom:-1px; left:0; right:0; height:1px;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-}
-.logo h1 { color: var(--gold) !important; font-size: 26px !important; letter-spacing: 4px !important; text-shadow: 0 0 20px rgba(245,200,66,0.5); }
-.logo p  { color: var(--text-lo) !important; letter-spacing: 3px !important; }
-.logo-badge {
-  background: linear-gradient(135deg, #b8860b, var(--gold)) !important;
-  box-shadow: 0 0 20px rgba(245,200,66,0.45), 0 2px 8px rgba(0,0,0,0.5) !important;
-}
-.legend-item { color: var(--text-lo) !important; font-size: 10px !important; letter-spacing: 1px !important; }
-.notif-bell {
-  background: rgba(245,200,66,0.08) !important;
-  border: 1px solid rgba(245,200,66,0.2) !important;
-  border-radius: 10px !important;
-  color: var(--text-mid) !important;
-  font-size: 12px !important;
-  transition: all .2s !important;
-}
-.notif-bell:hover { background: rgba(245,200,66,0.14) !important; color: var(--gold) !important; }
-
-/* ── NAV TABS ── */
-.nav-tabs-wrap {
-  background: var(--navy-0) !important;
-  border-bottom: 1px solid var(--steel) !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
-}
-.nav-tab {
-  font-family: 'Bebas Neue', sans-serif !important;
-  font-size: 15px !important;
-  letter-spacing: 2px !important;
-  color: var(--text-lo) !important;
-  padding: 9px 18px !important;
-  border-bottom: 3px solid transparent !important;
-  border-radius: 0 !important;
-  transition: all .2s !important;
-  white-space: nowrap;
-  position: relative;
-}
-.nav-tab:hover { color: var(--text-mid) !important; background: rgba(255,255,255,0.03) !important; }
-.nav-tab.active {
-  color: var(--gold) !important;
-  border-bottom-color: var(--gold) !important;
-  background: linear-gradient(180deg, rgba(245,200,66,0.06) 0%, transparent 100%) !important;
-  text-shadow: 0 0 14px rgba(245,200,66,0.6) !important;
-  box-shadow: none !important;
-}
-.nav-tab.active::after {
-  content:''; position:absolute; bottom:0; left:20%; right:20%; height:3px;
-  background: var(--gold); border-radius:2px 2px 0 0;
-  box-shadow: 0 0 10px rgba(245,200,66,0.8);
-  display:none; /* handled by border-bottom */
-}
-.nav-scroll-btn { background: var(--navy-0) !important; color: var(--text-lo) !important; border-color: var(--steel) !important; }
-
-/* ── SHARED PAGE BACKGROUNDS ── */
-#page-dashboard, #page-board, #page-datanomix,
-#page-shoptv, #page-proshop, #page-planner,
-#page-mgmt, #page-inspections, #page-requests {
-  background: var(--navy-1) !important;
-}
-
-/* ── DASHBOARD ── */
-.dash-summary-card {
-  background: linear-gradient(145deg, var(--navy-2), var(--navy-3)) !important;
-  border: 1px solid var(--steel) !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-card) !important;
-  transition: transform .2s, box-shadow .2s !important;
-}
-.dash-summary-card:hover { transform: translateY(-2px) !important; box-shadow: var(--shadow-card), 0 8px 30px rgba(0,0,0,0.4) !important; }
-.dash-summary-num { font-family: 'Bebas Neue', sans-serif !important; font-size: 44px !important; line-height: 1 !important; }
-.dash-summary-label { font-size: 10px !important; letter-spacing: 2px !important; color: var(--text-lo) !important; text-transform: uppercase !important; }
-.dash-period-btn {
-  background: var(--navy-3) !important;
-  border: 1px solid var(--steel) !important;
-  color: var(--text-lo) !important;
-  border-radius: var(--radius-sm) !important;
-  font-family: 'Bebas Neue', sans-serif !important;
-  letter-spacing: 1.5px !important;
-  transition: all .2s !important;
-}
-.dash-period-btn.active { background: rgba(245,200,66,0.12) !important; border-color: var(--gold) !important; color: var(--gold) !important; }
-.dash-filter-btn {
-  border-radius: 999px !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  letter-spacing: 1px !important;
-  transition: all .15s !important;
-}
-/* Dashboard request cards */
-.dash-request-card, [class*="dash-card"] {
-  background: linear-gradient(145deg, var(--navy-2), var(--navy-3)) !important;
-  border-radius: var(--radius-md) !important;
-  border: 1px solid var(--steel) !important;
-  box-shadow: var(--shadow-card) !important;
-}
-
-/* ── BULLETIN BOARD ── */
-#page-board {
-  background: linear-gradient(160deg, var(--navy-1) 0%, var(--navy-0) 100%) !important;
-}
-/* Board notes */
-[class*="note-card"], [class*="board-note"], .bulletin-note {
-  background: linear-gradient(145deg, var(--navy-3), var(--navy-4)) !important;
-  border-radius: var(--radius-md) !important;
-  border: 1px solid var(--steel) !important;
-  box-shadow: var(--shadow-card) !important;
-  transition: transform .2s !important;
-}
-[class*="note-card"]:hover { transform: translateY(-2px) !important; }
-
-/* ── SHOP TV ── */
-.stv-card {
-  background: linear-gradient(145deg, var(--navy-2), var(--navy-3)) !important;
-  border: 1px solid var(--steel) !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-card) !important;
-  transition: all .2s !important;
-}
-.stv-card.s-green  { border-left: 4px solid var(--green)  !important; background: linear-gradient(145deg, #001a08, var(--navy-3)) !important; }
-.stv-card.s-yellow { border-left: 4px solid var(--amber)  !important; background: linear-gradient(145deg, #1a1000, var(--navy-3)) !important; }
-.stv-card.s-red    { border-left: 4px solid var(--red)    !important; background: linear-gradient(145deg, #1a0404, var(--navy-3)) !important; }
-.stv-card:hover    { transform: translateY(-2px) !important; box-shadow: var(--shadow-card), 0 8px 24px rgba(0,0,0,0.4) !important; }
-.stv-card-name     { font-family: 'Bebas Neue', sans-serif !important; color: var(--gold) !important; font-size: 19px !important; letter-spacing: 1.5px !important; }
-.stv-card-cell     { color: var(--text-lo) !important; font-size: 10px !important; }
-.stv-stat-val      { font-family: 'Bebas Neue', sans-serif !important; font-size: 20px !important; }
-.stv-stat-lbl      { font-size: 9px !important; color: var(--text-lo) !important; letter-spacing: 1px !important; }
-.stv-section-hdr   { background: linear-gradient(90deg, var(--navy-0), var(--navy-2)) !important; border-bottom: 1px solid var(--steel) !important; }
-.stv-section-name  { font-family: 'Bebas Neue', sans-serif !important; font-size: 20px !important; letter-spacing: 3px !important; color: var(--gold) !important; }
-
-/* STV modal */
-.stv-modal-inner {
-  background: linear-gradient(160deg, var(--navy-0) 0%, var(--navy-2) 100%) !important;
-  border: 1px solid var(--steel-lite) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(245,200,66,0.08) !important;
-}
-.stv-modal-name { font-family: 'Bebas Neue', sans-serif !important; color: var(--gold) !important; font-size: 30px !important; letter-spacing: 2px !important; }
-.stv-modal-stat-val { font-family: 'Bebas Neue', sans-serif !important; font-size: 32px !important; }
-.stv-modal-section-title { color: var(--text-lo) !important; letter-spacing: 2px !important; font-size: 10px !important; font-weight: 700 !important; }
-.stv-modal-hud-btn {
-  background: linear-gradient(135deg, rgba(245,200,66,0.1), rgba(245,200,66,0.05)) !important;
-  border: 1px solid rgba(245,200,66,0.3) !important;
-  color: var(--gold) !important;
-  border-radius: var(--radius-sm) !important;
-  font-family: 'Bebas Neue', sans-serif !important;
-  letter-spacing: 2px !important;
-  transition: all .2s !important;
-}
-.stv-modal-hud-btn:hover { background: rgba(245,200,66,0.15) !important; }
-
-/* STV header bar */
-#page-shoptv > div:first-child {
-  background: linear-gradient(135deg, var(--navy-0), var(--navy-2)) !important;
-  border-bottom: 1px solid var(--steel) !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
-}
-
-/* ── DATANOMIX TAB ── */
-#page-datanomix { background: var(--navy-1) !important; }
-#page-datanomix > div:first-child {
-  background: linear-gradient(90deg, var(--navy-0), var(--navy-2)) !important;
-  border-bottom: 1px solid var(--steel) !important;
-}
-#dnx-cards > div[style*="border-left"] {
-  transition: transform .2s, box-shadow .2s !important;
-}
-#dnx-cards > div[style*="border-left"]:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
-}
-
-/* ── PLANNER ── */
-#page-planner {
-  background: linear-gradient(160deg, var(--navy-1), var(--navy-0)) !important;
-}
-
-/* ── MANAGEMENT ── */
-#page-mgmt {
-  background: var(--navy-1) !important;
-}
-/* mgmt cards */
-[class*="mgmt-card"], [class*="manage-card"] {
-  background: linear-gradient(145deg, var(--navy-2), var(--navy-3)) !important;
-  border-radius: var(--radius-md) !important;
-  border: 1px solid var(--steel) !important;
-  box-shadow: var(--shadow-card) !important;
-}
-
-/* ── AUTH OVERLAY ── */
-.auth-box {
-  background: linear-gradient(160deg, var(--navy-0) 0%, var(--navy-2) 100%) !important;
-  border: 1px solid var(--steel-lite) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(245,200,66,0.06) !important;
-}
-.auth-logo { border-bottom: 1px solid var(--steel) !important; }
-.auth-tab.active { color: var(--gold) !important; border-bottom-color: var(--gold) !important; }
-.auth-field input, .auth-field textarea {
-  background: rgba(255,255,255,0.04) !important;
-  border: 1px solid var(--steel) !important;
-  border-radius: var(--radius-sm) !important;
-  color: var(--text-hi) !important;
-  transition: border-color .2s !important;
-}
-.auth-field input:focus { border-color: var(--gold) !important; outline: none !important; box-shadow: 0 0 0 3px rgba(245,200,66,0.1) !important; }
-.auth-submit {
-  background: linear-gradient(135deg, #b8860b, var(--gold)) !important;
-  color: var(--navy-0) !important;
-  border-radius: var(--radius-sm) !important;
-  font-family: 'Bebas Neue', sans-serif !important;
-  letter-spacing: 2px !important;
-  font-size: 16px !important;
-  box-shadow: 0 4px 16px rgba(245,200,66,0.3) !important;
-  transition: all .2s !important;
-  border: none !important;
-}
-.auth-submit:hover { box-shadow: 0 6px 24px rgba(245,200,66,0.45) !important; transform: translateY(-1px) !important; }
-
-/* ── MODAL ── */
-.modal {
-  background: linear-gradient(160deg, var(--navy-0) 0%, var(--navy-2) 100%) !important;
-  border: 1px solid var(--steel-lite) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.8) !important;
-}
-.modal-title { color: var(--gold) !important; font-family: 'Bebas Neue', sans-serif !important; letter-spacing: 3px !important; }
-.note-type-btn {
-  border-radius: var(--radius-sm) !important;
-  transition: all .15s !important;
-  border: 1px solid var(--steel) !important;
-  background: var(--navy-3) !important;
-}
-.note-type-btn:hover { transform: translateY(-1px) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important; }
-.note-type-btn.selected { border-color: var(--gold) !important; box-shadow: 0 0 0 2px rgba(245,200,66,0.2) !important; }
-.modal-form input, .modal-form textarea, .modal-form select {
-  background: rgba(255,255,255,0.04) !important;
-  border: 1px solid var(--steel) !important;
-  border-radius: var(--radius-sm) !important;
-}
-.modal-form input:focus, .modal-form textarea:focus {
-  border-color: var(--gold) !important;
-  box-shadow: 0 0 0 3px rgba(245,200,66,0.08) !important;
-  outline: none !important;
-}
-.modal-submit {
-  background: linear-gradient(135deg, #b8860b, var(--gold)) !important;
-  color: var(--navy-0) !important;
-  font-family: 'Bebas Neue', sans-serif !important;
-  letter-spacing: 2px !important;
-  border-radius: var(--radius-sm) !important;
-  border: none !important;
-  box-shadow: 0 4px 16px rgba(245,200,66,0.25) !important;
-  transition: all .2s !important;
-}
-.modal-submit:hover { box-shadow: 0 6px 20px rgba(245,200,66,0.4) !important; transform: translateY(-1px) !important; }
-
-/* ── SHOP FLOOR machine glow upgrades ── */
-.machine { box-shadow: 0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05) !important; }
-.machine:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 14px rgba(245,200,66,0.12) !important; }
-.cell { border: 1px solid rgba(56,189,248,0.12) !important; box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; }
-.cell-title { text-shadow: 0 0 12px rgba(125,211,252,0.8), 0 0 24px rgba(125,211,252,0.4) !important; }
-
-/* ── SCROLLBAR GLOBAL ── */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--navy-0); }
-::-webkit-scrollbar-thumb { background: var(--steel); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--steel-lite); }
-
-/* ── TOAST NOTIFICATIONS ── */
-.toast { border-radius: var(--radius-md) !important; box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
-
-/* ── PERF BAR ── */
-.perf-bar.green  { box-shadow: 0 0 8px rgba(34,197,94,0.5) !important; }
-.perf-bar.yellow { box-shadow: 0 0 8px rgba(234,179,8,0.5) !important; }
-.perf-bar.red    { box-shadow: 0 0 8px rgba(239,68,68,0.5) !important; }
-
-/* ── ADMIN PANEL ── */
-#adminPanel {
-  background: linear-gradient(160deg, var(--navy-0), var(--navy-2)) !important;
-  border-left: 1px solid var(--steel) !important;
-}
-#adminPanel h2 { font-family: 'Bebas Neue', sans-serif !important; letter-spacing: 3px !important; color: var(--gold) !important; }
-
-/* ── STATUS PILL UPGRADES ── */
-.stv-pill.running { background: rgba(34,197,94,0.15) !important; border: 1px solid rgba(34,197,94,0.35) !important; color: #4ade80 !important; }
-.stv-pill.offline, .stv-pill.pending { background: rgba(71,85,105,0.2) !important; border: 1px solid rgba(71,85,105,0.35) !important; }
-.stv-pill.hot   { background: rgba(239,68,68,0.15) !important; border: 1px solid rgba(239,68,68,0.35) !important; animation: pulse-red 1.5s ease-in-out infinite !important; }
-.stv-pill.high  { background: rgba(245,158,11,0.15) !important; border: 1px solid rgba(245,158,11,0.35) !important; }
-
-/* ── ANIMATIONS ── */
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-/* Staggered card entrance on tab switch */
-#page-dashboard .dash-summary-card:nth-child(1) { animation: fadeSlideUp .4s ease both .05s; }
-#page-dashboard .dash-summary-card:nth-child(2) { animation: fadeSlideUp .4s ease both .1s; }
-#page-dashboard .dash-summary-card:nth-child(3) { animation: fadeSlideUp .4s ease both .15s; }
-#page-dashboard .dash-summary-card:nth-child(4) { animation: fadeSlideUp .4s ease both .2s; }
-#page-dashboard .dash-summary-card:nth-child(5) { animation: fadeSlideUp .4s ease both .25s; }
-#dnx-cards > * { animation: fadeSlideUp .35s ease both; }
-
-/* Gold shimmer on active nav tab text */
-.nav-tab.active {
-  background-image: linear-gradient(90deg, transparent 0%, rgba(245,200,66,0.15) 50%, transparent 100%) !important;
-  background-size: 200% !important;
-}
-
-/* ── PILL / BADGE GLOBAL ── */
-.tab-badge {
-  background: var(--red) !important;
-  box-shadow: 0 0 8px rgba(239,68,68,0.5) !important;
-  font-size: 9px !important;
-  padding: 1px 5px !important;
-}
-
-/* ── SECTION TITLES across all pages ── */
-[style*="letter-spacing:2.5px"][style*="color:#334155"],
-[style*="letter-spacing:2.5px"][style*="color:#475569"] {
-  color: var(--text-lo) !important;
-  font-size: 10px !important;
-  letter-spacing: 3px !important;
-  text-transform: uppercase !important;
-}
-
-/* ── RESPONSIVE: hide legend on small screens ── */
-@media (max-width: 640px) {
-  .legend { display: none !important; }
-  .logo p  { display: none !important; }
-  header   { padding: 5px 10px !important; }
-  .nav-tab { padding: 8px 12px !important; font-size: 13px !important; }
-}
-</style>
+</head>
 <body>
 
 <!-- AUTH OVERLAY -->
@@ -1624,35 +1235,19 @@ header::after {
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
       <span id="dnx-last-updated" style="font-size:10px;color:#334155;letter-spacing:1px;"></span>
-      <button onclick="window.dnxLoadAll()" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 13px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">↺ REFRESH</button>
-      <!-- Period toggle -->
+      <button onclick="window.dnxLoadAll && window.dnxLoadAll()" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 13px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">↺ REFRESH</button>
       <button id="dnx-period-today" onclick="window.dnxSetPeriod('today')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">TODAY</button>
       <button id="dnx-period-yesterday" onclick="window.dnxSetPeriod('yesterday')" style="background:rgba(255,255,255,0.04);border:1px solid #1a4a8c;color:#64748b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">YESTERDAY</button>
     </div>
   </div>
 
-  <!-- Shop summary strip -->
+  <!-- Summary strip -->
   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:12px 14px 0;">
-    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(34,197,94,0.3);">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#4ade80;line-height:1;" id="dnx-s-running">—</div>
-      <div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">RUNNING</div>
-    </div>
-    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(234,179,8,0.3);">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fbbf24;line-height:1;" id="dnx-s-idle">—</div>
-      <div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">IDLE</div>
-    </div>
-    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(239,68,68,0.3);">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#f87171;line-height:1;" id="dnx-s-down">—</div>
-      <div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">DOWN</div>
-    </div>
-    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(245,158,11,0.3);">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#f59e0b;line-height:1;" id="dnx-s-oee">—</div>
-      <div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">AVG OEE</div>
-    </div>
-    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(96,165,250,0.3);">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#60a5fa;line-height:1;" id="dnx-s-parts">—</div>
-      <div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">TOTAL PARTS</div>
-    </div>
+    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(34,197,94,0.3);"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#4ade80;line-height:1;" id="dnx-s-running">—</div><div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">RUNNING</div></div>
+    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(234,179,8,0.3);"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fbbf24;line-height:1;" id="dnx-s-idle">—</div><div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">IDLE</div></div>
+    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(239,68,68,0.3);"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#f87171;line-height:1;" id="dnx-s-down">—</div><div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">DOWN</div></div>
+    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(245,158,11,0.3);"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#f59e0b;line-height:1;" id="dnx-s-oee">—</div><div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">AVG OEE</div></div>
+    <div style="background:#0d1f35;border-radius:11px;padding:11px;text-align:center;border:1px solid rgba(96,165,250,0.3);"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#60a5fa;line-height:1;" id="dnx-s-parts">—</div><div style="font-size:9px;color:#475569;letter-spacing:1.5px;margin-top:2px;">TOTAL PARTS</div></div>
   </div>
 
   <!-- Machine cards -->
@@ -1665,7 +1260,7 @@ header::after {
 
   <!-- OEE ranking -->
   <div style="padding:4px 14px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2.5px;color:#334155;">📊 OEE RANKING</div>
-  <div id="dnx-oee-list" style="padding:0 14px 60px;"></div>
+  <div id="dnx-oee-list" style="padding:0 14px 20px;"></div>
 
   <!-- Admin raw debug -->
   <div id="dnx-raw-wrap" style="display:none;margin:0 14px 20px;background:#060f1a;border:1px solid #1e3a5f;border-radius:10px;padding:12px;">
@@ -1674,311 +1269,6 @@ header::after {
   </div>
 
 </div>
-
-<script>
-(function(){
-  var DNX_KEY  = 'dnx_live_5PHtuP2BBske-zHOnk4fUQTpSX_yE_ap849i3lHs';
-  var DNX_BASE = 'https://hillmanufacturing.datanomix.app/customer-api/v1';
-  var DNX_MACHINES = [
-    {name:'1050-B', cell:'Big Mill',   id:253},  {name:'7000',   cell:'Big Mill',   id:853},
-    {name:'VF-6',   cell:'Big Mill',   id:1253}, {name:'5100-B', cell:'5100 Cell',  id:753},
-    {name:'2500',   cell:'5100 Cell',  id:1603}, {name:'PUMA-3', cell:'5100 Cell',  id:1153},
-    {name:'ST35',   cell:'MPPI',       id:1903}, {name:'VF-3',   cell:'MPPI',       id:953},
-    {name:'VF-2',   cell:'MPPI',       id:1553}, {name:'PUMA-2', cell:'MPPI',       id:3},
-    {name:'403-A',  cell:'403 Cell',   id:553},  {name:'403-B',  cell:'403 Cell',   id:1003},
-    {name:'403-C',  cell:'403 Cell',   id:1303}, {name:'5100-A', cell:'Mill/Lathe', id:653},
-    {name:'3000-C', cell:'3000 Cell',  id:1803}, {name:'3000-A', cell:'3000 Cell',  id:1703},
-    {name:'2G',     cell:'Horizontal', id:1973}, {name:'PUMA-1', cell:'Automation', id:453},
-    {name:'303-B',  cell:'Automation', id:103},  {name:'TWIN',   cell:'Automation', id:1403},
-    {name:'2500-Y', cell:'Automation', id:1653},
-  ];
-
-  var dnxData = {};      // machineId → merged espresso+uptime+downtime
-  var dnxPeriod = 'today';
-  var dnxPollTimer = null;
-
-  // ── FETCH ALL 3 ENDPOINTS ──
-  window.dnxLoadAll = async function() {
-    var h = {'X-API-Key': DNX_KEY};
-    var p = dnxPeriod;
-    var dtParams = 'group_by=none&shifts=all&include_days=false';
-    try {
-      var [re, ru, rd] = await Promise.all([
-        fetch(DNX_BASE+'/espresso?period='+p+'&group_name=AllMachines',    {headers:h}),
-        fetch(DNX_BASE+'/uptime?period='+p+'&group_name=AllMachines',      {headers:h}),
-        fetch(DNX_BASE+'/downtime?period='+p+'&group_name=AllMachines&'+dtParams, {headers:h}),
-      ]);
-      var te = await re.text(), tu = await ru.text(), td = await rd.text();
-
-      // Show raw to admin
-      var raw = document.getElementById('dnx-raw-text');
-      var rawWrap = document.getElementById('dnx-raw-wrap');
-      if (raw && window._isAdmin) {
-        rawWrap.style.display = 'block';
-        raw.textContent = '=== ESPRESSO ===\n'+te.slice(0,2000)+'\n\n=== UPTIME ===\n'+tu.slice(0,1000)+'\n\n=== DOWNTIME ===\n'+td.slice(0,1000);
-      }
-
-      var esp = safeJSON(te), upt = safeJSON(tu), dnt = safeJSON(td);
-
-      // Build lookup: id → merged object
-      dnxData = {};
-      function merge(arr) {
-        if (!arr) return;
-        arr.forEach(function(m) {
-          var id = String(m.machineId||m.id||m.machine_id||'');
-          if (!id) return;
-          dnxData[id] = Object.assign(dnxData[id]||{}, m);
-        });
-      }
-      merge(extract(esp)); merge(extract(upt));
-
-      // Downtime: may be event rows — sum per machine
-      var dtRows = extract(dnt);
-      dtRows.forEach(function(row){
-        var id = String(row.machineId||row.id||row.machine_id||'');
-        if (!id) return;
-        if (!dnxData[id]) dnxData[id] = {};
-        var mins = parseFloat(row.downtimeMinutes||row.downtime_minutes||row.duration||row.durationMinutes||row.minutes||0);
-        dnxData[id]._dtMins = (dnxData[id]._dtMins||0) + mins;
-      });
-
-      // Store into global dnxLiveData too (for Shop TV etc.)
-      window.dnxLiveData = window.dnxLiveData || {};
-      Object.keys(dnxData).forEach(function(k){ window.dnxLiveData[parseInt(k)] = dnxData[k]; });
-
-      // Update connection status
-      updateDNXStatus(true);
-      var upd = document.getElementById('dnx-last-updated');
-      if (upd) upd.textContent = 'Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-
-      renderDNXCards();
-
-    } catch(e) {
-      updateDNXStatus(false);
-      console.warn('[DNX]', e.message);
-    }
-  };
-
-  function safeJSON(t) {
-    try { return JSON.parse(t); } catch(e) { return {}; }
-  }
-  function extract(d) {
-    if (!d) return [];
-    if (Array.isArray(d)) return d;
-    return d.machines||d.data||d.results||d.groups||d.espresso||d.uptime||d.downtime||[];
-  }
-  function fmtMins(m) {
-    if (!m||m<=0) return '—';
-    if (m>=60) return (Math.round(m/6)/10)+'h';
-    return Math.round(m)+'m';
-  }
-  function fmtSecs(s) {
-    if (!s||s<=0) return '—';
-    var h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
-    if (h>0) return h+'h '+(m>0?m+'m':'');
-    return m+'m '+(s%60)+'s';
-  }
-
-  function getMachineStatus(d) {
-    // Try all known state field names from espresso/uptime
-    var state = (
-      d.state||d.machineState||d.status||d.machineStatus||
-      d.currentState||d.current_state||d.runState||''
-    ).toLowerCase();
-    if (state.match(/run|cut|active|machining|in.cycle/)) return 'running';
-    if (state.match(/idle|wait|ready|standby|no.part/))   return 'idle';
-    if (state.match(/down|alarm|fault|error|e.stop/))     return 'down';
-    // Fallback: if utilization > 0 they're running
-    var util = parseFloat(d.utilization||d.utilizationPct||d.utilization_pct||d.uptimePct||0);
-    if (util > 5) return 'running';
-    if (util > 0) return 'idle';
-    return 'waiting';
-  }
-
-  function renderDNXCards() {
-    // Summary counts
-    var counts={running:0,idle:0,down:0,waiting:0};
-    var oeeArr=[], partsTotal=0, dtArr=[], oeeRank=[];
-
-    DNX_MACHINES.forEach(function(m){
-      var d = dnxData[String(m.id)] || {};
-      var s = getMachineStatus(d);
-      counts[s] = (counts[s]||0)+1;
-
-      // OEE — try all known field names
-      var oee = d.oee||d.oeePct||d.oee_pct||d.oeePercent||d.oee_percent;
-      if (oee!=null) { oeeArr.push(parseFloat(oee)); oeeRank.push({name:m.name,cell:m.cell,oee:parseFloat(oee)}); }
-
-      // Parts — espresso shows "shiftParts" or "partsToday"
-      var parts = d.shiftParts||d.partsToday||d.parts_today||d.partCount||d.parts||0;
-      partsTotal += parseInt(parts)||0;
-
-      // Downtime
-      var dtMins = d._dtMins || parseFloat(d.downtimeMinutes||d.downtime_minutes||d.downtime||d.totalDowntime||0);
-      if (dtMins>0) dtArr.push({name:m.name,cell:m.cell,mins:dtMins});
-    });
-
-    var el;
-    if((el=document.getElementById('dnx-s-running'))) el.textContent=counts.running;
-    if((el=document.getElementById('dnx-s-idle')))    el.textContent=counts.idle;
-    if((el=document.getElementById('dnx-s-down')))    el.textContent=counts.down;
-    var avgOee=oeeArr.length?Math.round(oeeArr.reduce(function(a,b){return a+b;},0)/oeeArr.length)+'%':'—';
-    if((el=document.getElementById('dnx-s-oee')))   el.textContent=avgOee;
-    if((el=document.getElementById('dnx-s-parts'))) el.textContent=partsTotal||'—';
-
-    // Machine cards
-    var cards = document.getElementById('dnx-cards');
-    if (cards) {
-      var cells={}, cellOrder=[];
-      DNX_MACHINES.forEach(function(m){
-        if(!cells[m.cell]){cells[m.cell]=[];cellOrder.push(m.cell);}
-        cells[m.cell].push(m);
-      });
-      var html='';
-      cellOrder.forEach(function(cell){
-        html+='<div style="grid-column:1/-1;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:2px;color:#334155;padding:6px 0 3px;border-bottom:1px solid #0f1e30;margin-top:2px;">'+cell+'</div>';
-        cells[cell].forEach(function(m){
-          var d  = dnxData[String(m.id)] || {};
-          var s  = getMachineStatus(d);
-          var hasData = Object.keys(d).length > 0;
-          var sc = {running:'#22c55e',idle:'#eab308',down:'#ef4444',waiting:'#334155'}[s]||'#334155';
-          var sl = {running:'RUNNING',idle:'IDLE',down:'DOWN',waiting:'NO DATA'}[s]||'—';
-          var bgGrad = s==='running'?'linear-gradient(135deg,#001a08,#0d1f35)':s==='down'?'linear-gradient(135deg,#1a0404,#0d1f35)':s==='idle'?'linear-gradient(135deg,#1a1000,#0d1f35)':'#0d1f35';
-
-          // Pull every data field from screenshots
-          var oee   = d.oee||d.oeePct||d.oee_pct||d.oeePercent;
-          var parts = d.shiftParts||d.partsToday||d.parts_today||d.partCount||d.parts;
-          var util  = d.utilization||d.utilizationPct||d.utilization_pct||d.uptimePct;
-          var uptime= d.uptimeSeconds||d.uptime_seconds||d.uptimeMinutes;
-          var dtMins= d._dtMins||d.downtimeMinutes||d.downtime_minutes||d.downtime||d.totalDowntime||0;
-          var job   = d.jobName||d.job_name||d.job||d.currentJob||d.programName||d.program||'';
-          var firstActive = d.firstActive||d.first_active||d.firstActiveTime||'';
-          var lastActive  = d.lastActive||d.last_active||d.lastActiveTime||'';
-          var longStop    = d.longStop||d.long_stop||d.longestStop||'';
-          var breakBleed  = d.breakBleed||d.break_bleed||d.breakTime||'';
-
-          var oeeStr  = oee!=null  ? Math.round(parseFloat(oee))+'%' : '—';
-          var partsStr= parts!=null? parts : '—';
-          var utilStr = util!=null  ? Math.round(parseFloat(util))+'%' : '—';
-          var uptStr  = uptime!=null? (uptime>3600?fmtSecs(uptime):fmtMins(parseFloat(uptime))) : '—';
-          var dtStr   = parseFloat(dtMins)>0 ? fmtMins(parseFloat(dtMins)) : '—';
-          var oeeC    = oeeStr==='—'?'#94a3b8':(parseInt(oeeStr)>=75?'#22c55e':parseInt(oeeStr)>=50?'#eab308':'#ef4444');
-          var utilPct = util!=null?Math.min(100,Math.round(parseFloat(util))):s==='running'?70:s==='idle'?15:0;
-
-          html += '<div style="background:'+bgGrad+';border-radius:12px;border:1px solid #1e3a5f;border-left:4px solid '+sc+';padding:12px;">'
-            // Header
-            +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px;">'
-              +'<div>'
-                +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:19px;letter-spacing:1.5px;color:#f5d050;line-height:1;">'+m.name+'</div>'
-                +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:1px;">'+m.cell+'</div>'
-              +'</div>'
-              +'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;background:'+sc+'22;color:'+sc+';border:1px solid '+sc+'55;white-space:nowrap;">'+sl+'</span>'
-            +'</div>'
-            // Job name
-            +(job?'<div style="font-size:10px;color:#60a5fa;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📋 '+job+'</div>':'')
-            // Main stats — 3 big numbers
-            +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px;">'
-              +'<div style="text-align:center;background:rgba(0,0,0,0.25);border-radius:7px;padding:6px 4px;">'
-                +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#f5c500;line-height:1;">'+partsStr+'</div>'
-                +'<div style="font-size:8px;color:#475569;letter-spacing:1px;margin-top:1px;">PARTS</div>'
-              +'</div>'
-              +'<div style="text-align:center;background:rgba(0,0,0,0.25);border-radius:7px;padding:6px 4px;">'
-                +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:'+oeeC+';line-height:1;">'+oeeStr+'</div>'
-                +'<div style="font-size:8px;color:#475569;letter-spacing:1px;margin-top:1px;">OEE</div>'
-              +'</div>'
-              +'<div style="text-align:center;background:rgba(0,0,0,0.25);border-radius:7px;padding:6px 4px;">'
-                +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#60a5fa;line-height:1;">'+utilStr+'</div>'
-                +'<div style="font-size:8px;color:#475569;letter-spacing:1px;margin-top:1px;">UTIL</div>'
-              +'</div>'
-            +'</div>'
-            // Secondary stats row — mirrors exactly what Datanomix shows
-            +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:8px;">'
-              +'<div style="text-align:center;padding:3px 2px;"><div style="font-size:11px;color:#f0f4f8;font-weight:700;">'+uptStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:.5px;">UPTIME</div></div>'
-              +'<div style="text-align:center;padding:3px 2px;"><div style="font-size:11px;color:'+(dtStr!=='—'?'#f87171':'#475569')+';">'+dtStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:.5px;">DOWNTIME</div></div>'
-              +'<div style="text-align:center;padding:3px 2px;"><div style="font-size:11px;color:#94a3b8;">'+(firstActive||'—')+'</div><div style="font-size:8px;color:#475569;letter-spacing:.5px;">FIRST ACT</div></div>'
-              +'<div style="text-align:center;padding:3px 2px;"><div style="font-size:11px;color:#94a3b8;">'+(lastActive||'—')+'</div><div style="font-size:8px;color:#475569;letter-spacing:.5px;">LAST ACT</div></div>'
-            +'</div>'
-            // Utilization bar
-            +'<div style="background:#1a3a5c;border-radius:3px;height:6px;margin-bottom:8px;overflow:hidden;">'
-              +'<div style="height:100%;border-radius:3px;background:'+sc+';width:'+utilPct+'%;transition:width .6s;"></div>'
-            +'</div>'
-            // HUD link
-            +'<a href="https://hillmanufacturing.datanomix.app/machine-hud?machineId='+m.id+'" target="_blank" style="display:block;text-align:center;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);color:#60a5fa;border-radius:6px;padding:4px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:1px;text-decoration:none;">FULL HUD ↗</a>'
-          +'</div>';
-        });
-      });
-      cards.innerHTML = html;
-    }
-
-    // Downtime leaderboard
-    var dtEl = document.getElementById('dnx-dt-list');
-    if (dtEl) {
-      dtArr.sort(function(a,b){return b.mins-a.mins;});
-      var mx = dtArr.length ? dtArr[0].mins : 1;
-      dtEl.innerHTML = !dtArr.length
-        ? '<div style="text-align:center;padding:12px;color:#334155;font-size:12px;">No downtime recorded ✅</div>'
-        : dtArr.map(function(d,i){
-            var c=d.mins>=120?'#ef4444':d.mins>=60?'#f59e0b':'#eab308';
-            return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0d1f35;border-radius:10px;margin-bottom:5px;border-left:4px solid '+c+';">'
-              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;color:#334155;min-width:18px;">'+(i+1)+'</div>'
-              +'<div style="flex:1;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:#f5d050;">'+d.name+'</div><div style="font-size:9px;color:#475569;">'+d.cell+'</div></div>'
-              +'<div style="flex:2;background:#1a3a5c;border-radius:4px;height:7px;overflow:hidden;"><div style="height:100%;background:'+c+';width:'+Math.round(d.mins/mx*100)+'%;"></div></div>'
-              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;color:'+c+';min-width:40px;text-align:right;">'+fmtMins(d.mins)+'</div>'
-              +'</div>';
-          }).join('');
-    }
-
-    // OEE ranking
-    var oeeEl = document.getElementById('dnx-oee-list');
-    if (oeeEl) {
-      oeeRank.sort(function(a,b){return b.oee-a.oee;});
-      oeeEl.innerHTML = !oeeRank.length
-        ? '<div style="text-align:center;padding:12px;color:#334155;font-size:12px;">Waiting for OEE data...</div>'
-        : oeeRank.map(function(d,i){
-            var c=d.oee>=75?'#22c55e':d.oee>=50?'#eab308':'#ef4444';
-            var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-            return '<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0d1f35;border-radius:10px;margin-bottom:5px;">'
-              +'<div style="font-size:14px;min-width:22px;">'+medal+'</div>'
-              +'<div style="flex:1;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:#f5d050;">'+d.name+'</div><div style="font-size:9px;color:#475569;">'+d.cell+'</div></div>'
-              +'<div style="flex:2;background:#1a3a5c;border-radius:4px;height:7px;overflow:hidden;"><div style="height:100%;background:'+c+';width:'+Math.round(d.oee)+'%;"></div></div>'
-              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;color:'+c+';min-width:40px;text-align:right;">'+Math.round(d.oee)+'%</div>'
-              +'</div>';
-          }).join('');
-    }
-  }
-
-  window.dnxSetPeriod = function(p) {
-    dnxPeriod = p;
-    ['today','yesterday'].forEach(function(v){
-      var btn = document.getElementById('dnx-period-'+v);
-      if (!btn) return;
-      var a = v===p;
-      btn.style.background   = a?'rgba(245,158,11,0.15)':'rgba(255,255,255,0.04)';
-      btn.style.borderColor  = a?'#f59e0b':'#1a4a8c';
-      btn.style.color        = a?'#f59e0b':'#64748b';
-    });
-    window.dnxLoadAll();
-  };
-
-  // Override initDNXDisplay
-  window.initDNXDisplay = function() {
-    window.dnxLoadAll();
-    // Auto-refresh every 2 min while tab is open
-    if (dnxPollTimer) clearInterval(dnxPollTimer);
-    dnxPollTimer = setInterval(function(){
-      var pg = document.getElementById('page-datanomix');
-      if (pg && pg.style.display !== 'none') window.dnxLoadAll();
-    }, 120000);
-  };
-
-  // Kick off on first load if key already set
-  setTimeout(function(){
-    var pg = document.getElementById('page-datanomix');
-    if (pg && pg.style.display !== 'none') window.dnxLoadAll();
-  }, 1000);
-
-})();
-</script>
 
 <!-- MACHINE NOTE MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
@@ -2735,7 +2025,7 @@ header::after {
     if (tab === 'dashboard') loadDashboard();
     var inspEl = document.getElementById('page-inspections'); if (inspEl) inspEl.style.display = tab === 'inspections' ? 'block' : 'none';
     if (tab === 'inspections') loadInspections();
-    var dnxEl = document.getElementById('page-datanomix'); if (dnxEl) dnxEl.style.display = tab === 'datanomix' ? 'flex' : 'none';
+    var dnxEl = document.getElementById('page-datanomix'); if (dnxEl) dnxEl.style.display = tab === 'datanomix' ? 'block' : 'none';
     if (tab === 'datanomix') initDNXDisplay();
     var stvEl = document.getElementById('page-shoptv'); if (stvEl) stvEl.style.display = tab === 'shoptv' ? 'flex' : 'none';
     if (tab === 'shoptv') { initShopTV(); document.body.classList.remove('scrollable'); }
@@ -3161,7 +2451,7 @@ header::after {
 
   // ── AUTHENTICATION ──
   const ADMIN_USERNAME = 'hilladmin';
-  const ADMIN_PASSWORD = 'Hill2024!';
+  const ADMIN_PASSWORD = 'hill123';
   let currentUser = null;
 
   window.simpleHash = function(str) {
@@ -3178,6 +2468,7 @@ header::after {
     document.getElementById('loginMsg').textContent = '';
     document.getElementById('signupMsg').textContent = '';
   }
+  window.showAuthTab = showAuthTab;
   function setMsg(id, msg, type) { const el = document.getElementById(id); el.textContent = msg; el.className = 'auth-msg ' + type; }
 
   async function doLogin() {
@@ -3186,6 +2477,7 @@ header::after {
     const remember = document.getElementById('rememberMe').checked;
     if (!username || !password) { setMsg('loginMsg', 'Please fill in all fields.', 'error'); return; }
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) { loginSuccess({ username: ADMIN_USERNAME, name: 'Admin', role: 'admin' }, remember); return; }
+    if (username === ADMIN_USERNAME) { setMsg('loginMsg', 'Wrong password for admin account.', 'error'); return; }
     setMsg('loginMsg', 'Signing in...', '');
     try {
       if (!window.fbLogin) { setMsg('loginMsg', 'App still loading, please try again.', 'error'); return; }
@@ -3196,6 +2488,7 @@ header::after {
       loginSuccess(result.user, remember);
     } catch(e) { setMsg('loginMsg', 'Error connecting. Try again.', 'error'); console.error(e); }
   }
+  window.doLogin = doLogin;
 
   async function doSignup() {
     const name     = document.getElementById('signupName').value.trim();
@@ -3216,6 +2509,7 @@ header::after {
       document.getElementById('signupPass').value = '';
     } catch(e) { setMsg('signupMsg', 'Error submitting. Try again.', 'error'); console.error(e); }
   }
+  window.doSignup = doSignup;
 
   function loginSuccess(user, remember) {
     currentUser = user;
@@ -3489,7 +2783,7 @@ header::after {
 
   // ── PASTE YOUR API KEY HERE WHEN YOU GET IT ──
   var DNX_API_KEY  = '';
-  var DNX_BASE_URL = 'https://hillmanufacturing.datanomix.app/customer-api/v1/espresso';
+  var DNX_BASE_URL = 'https://hill-dnx-proxy.miguelstulsa.workers.dev/proxy';
   var DNX_POLL_INTERVAL = 120000; // refresh every 2 minutes (uptime is near real-time)
   var dnxPollTimer = null;
   var dnxConnected = false;
@@ -3520,8 +2814,8 @@ header::after {
   window.fetchDatanomix = async function fetchDatanomix() {
     if (!DNX_API_KEY) { runPerfDemo(); return; }
     try {
-      var headers  = { 'X-API-Key': DNX_API_KEY };
-      var base     = 'https://hillmanufacturing.datanomix.app/customer-api/v1';
+      var headers  = {}; // proxy handles auth
+      var base     = 'https://hill-dnx-proxy.miguelstulsa.workers.dev/proxy';
 
       // Fetch all 6 in parallel: espresso today+yesterday, uptime today+yesterday, downtime today+yesterday
       var [respEspToday, respEspYest, respUpToday, respUpYest, respDtToday, respDtYest] = await Promise.all([
@@ -3543,6 +2837,17 @@ header::after {
       console.log('[Datanomix] Espresso today:', textEspToday.slice(0, 800));
       console.log('[Datanomix] Uptime today:',   textUpToday.slice(0, 800));
       console.log('[Datanomix] Downtime today:',  textDtToday.slice(0, 800));
+
+      // Show raw response in Live Feed debug panel (admin only)
+      var debugEl = document.getElementById('lf-debug');
+      var debugText = document.getElementById('lf-debug-text');
+      if (debugEl && debugText && window._isAdmin) {
+        debugEl.style.display = 'block';
+        debugText.textContent =
+          '=== ESPRESSO (today) ===\n' + textEspToday.slice(0,1200) +
+          '\n\n=== UPTIME (today) ===\n' + textUpToday.slice(0,800) +
+          '\n\n=== DOWNTIME (today) ===\n' + textDtToday.slice(0,800);
+      }
 
       if (!respEspToday.ok) throw new Error('HTTP ' + respEspToday.status + ': ' + textEspToday.slice(0, 100));
 
@@ -3737,7 +3042,7 @@ header::after {
   };
 
   // ── LOAD SAVED KEY ON STARTUP ──
-  var _savedDNXKey = localStorage.getItem('hillDNXApiKey') || 'dnx_live_5PHtuP2BBske-zHOnk4fUQTpSX_yE_ap849i3lHs';
+  var _savedDNXKey = localStorage.getItem('hillDNXApiKey') || 'dnx_live_4LjcI5AjF8JO8gJyNXkH1Mf7MUmSqlY7WxbwkfVQ';
   markUntrackedMachines();
   if (_savedDNXKey) {
     DNX_API_KEY = _savedDNXKey;
@@ -4029,17 +3334,8 @@ header::after {
     }
   };
 
-  updateDNXDisplayStatus();
-    var el = document.getElementById('dnx-display-status');
-    if (!el) return;
-    if (!DNX_API_KEY) {
-      el.textContent = 'Demo mode — enter API key in Admin panel to see live data';
-    } else if (dnxConnected) {
-      el.textContent = 'Live — updating every 60s · Last refresh: ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    } else {
-      el.textContent = 'Connecting...';
-    }
-  }
+  // Trigger initial status update
+  if (typeof updateDNXDisplayStatus === 'function') updateDNXDisplayStatus();
 
   function getMachinePerfStatus(m) {
     // Use actual data if connected, otherwise use perf bar state
@@ -6118,5 +5414,2029 @@ header::after {
       '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
       '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;">Print / Save as PDF</button>'
     ].join('');
-    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+body+'</body>
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+body+'</body></html>';
+    // Build chart bars for print report
+    var chartRows = '';
+    var machines2 = {};
+    periodAll.forEach(function(r){ var m=r.machine||'Unknown'; machines2[m]=(machines2[m]||0)+1; });
+    var machList = Object.entries(machines2).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+    var maxM = machList.length > 0 ? machList[0][1] : 1;
+    machList.forEach(function(e) {
+      var pct = Math.round(e[1]/maxM*100);
+      var issC = 0;
+      periodAll.forEach(function(r){ if(r.machine===e[0]&&getJobStatus(r)==='issue') issC++; });
+      chartRows += '<tr><td style="padding:6px 10px;font-weight:700;">'+(issC>=3?'⚠ ':'')+e[0]+'</td>';
+      chartRows += '<td style="padding:6px 10px;"><div style="background:#eee;border-radius:4px;height:14px;"><div style="background:'+(issC>=3?'#ef4444':'#f59e0b')+';width:'+pct+'%;height:14px;border-radius:4px;"></div></div></td>';
+      chartRows += '<td style="padding:6px 10px;">'+e[1]+'</td>';
+      chartRows += '<td style="padding:6px 10px;color:#666;">'+(issC>=3?issC+' issues':'')+'</td></tr>';
+    });
+
+    // Status counts
+    var pending2=0,running2=0,completed2=0,issues2=0;
+    periodAll.forEach(function(r){
+      var s=getJobStatus(r);
+      if(s==='completed')completed2++;else if(s==='running')running2++;else if(s==='pending')pending2++;else issues2++;
+    });
+
+    var newBody = [
+      '<h1>Hill Manufacturing - Production Report</h1>',
+      '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
+      '<div class="sg">',
+        '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+pending2+'</div><div class="l">Pending</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+running2+'</div><div class="l">Running</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #16a34a;"><div class="n" style="color:#16a34a;">'+completed2+'</div><div class="l">Completed</div></div>',
+        '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+issues2+'</div><div class="l">Issues</div></div>',
+      '</div>',
+      '<h2>Machine Activity Chart</h2>',
+      '<table><thead><tr><th>Machine</th><th>Volume</th><th>Requests</th><th>Flags</th></tr></thead><tbody>'+chartRows+'</tbody></table>',
+      '<h2>Full Request Log ('+periodAll.length+' records)</h2>',
+      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+      '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;margin-right:10px;">Print / Save as PDF</button>'
+    ].join('');
+
+    var newHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+newBody+'</body></html>';
+
+    // iOS-safe: open new window and write directly
+    var w = window.open('', '_blank');
+    if (w) {
+      w.document.open();
+      w.document.write(newHtml);
+      w.document.close();
+    } else {
+      // Fallback: blob download
+      var blob = new Blob([newHtml], {type:'text/html'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'hill-report-'+label.replace(/ /g,'-')+'.html';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    }
+  }
+</script>
+
+<!-- REQUEST DASHBOARD PAGE -->
+<div id="page-dashboard" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
+  <div style="padding:16px;">
+
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="dash-period-btn active" onclick="setDashPeriod('today',this)">TODAY</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('week',this)">THIS WEEK</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('month',this)">THIS MONTH</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('all',this)">ALL TIME</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
+      <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Waiting to run</div></div>
+      <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;margin-right:4px;"></span> Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
+      <div class="dash-summary-card" style="border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffffff;box-shadow:0 0 6px rgba(255,255,255,0.6);flex-shrink:0;"></span>Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
+      <div class="dash-summary-card yellow"><div class="dash-summary-label">🟡 Machinist Req</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Machinist requests</div></div>
+      <div class="dash-summary-card" style="grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted</div></div>
+    </div>
+
+    <div id="dash-summary-block"></div>
+    <div id="dash-chart-block" style="margin-bottom:14px;"></div>
+
+    <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+      <button class="dash-filter-btn f-all active" onclick="setDashFilter('all',this)">ALL</button>
+      <button class="dash-filter-btn f-blue" onclick="setDashFilter('pending',this)">🔵 PENDING</button>
+      <button class="dash-filter-btn f-green" onclick="setDashFilter('running',this)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> RUNNING</button>
+      <button class="dash-filter-btn f-green" onclick="setDashFilter('completed',this)">✅ COMPLETED</button>
+      <button class="dash-filter-btn f-yellow" onclick="setDashFilter('issues',this)">🟡 MACHINIST REQ</button>
+      <button class="dash-filter-btn f-red" onclick="setDashFilter('inspections',this)">🔴 INSPECTIONS</button>
+    </div>
+
+    <div id="dash-machine-filters" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;"></div>
+
+    <!-- PROSHOP SECTION -->
+    <div id="ps-section" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#475569;">
+          <span style="color:#60a5fa;">PROSHOP</span> — WORK ORDERS
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="document.getElementById('ps-file-input').click()" style="background:rgba(59,130,186,0.1);border:1px solid rgba(59,130,186,0.3);color:#60a5fa;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">📥 IMPORT CSV</button>
+          <button onclick="openProShop()" style="background:rgba(59,130,186,0.1);border:1px solid rgba(59,130,186,0.3);color:#60a5fa;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">🔗 OPEN PROSHOP</button>
+          <button onclick="clearProShopData()" id="ps-clear-btn" style="display:none;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:7px;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:12px;cursor:pointer;">✕ CLEAR</button>
+        </div>
+      </div>
+      <input type="file" id="ps-file-input" accept=".csv,.txt" onchange="importProShopCSV(this)">
+      <div id="ps-wo-list">
+        <div class="ps-import-zone" onclick="document.getElementById('ps-file-input').click()" id="ps-drop-zone">
+          <div style="font-size:28px;margin-bottom:8px;">📋</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:#475569;margin-bottom:4px;">IMPORT PROSHOP WORK ORDERS</div>
+          <div style="font-size:12px;color:#334155;line-height:1.6;">In ProShop → Work Orders → Export CSV<br>Then tap here or drag & drop the file</div>
+          <div style="margin-top:10px;font-size:11px;color:#1a4a8c;">Reads: WO#, Part, Due Date, Status, Machine, Qty</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#475569;margin-bottom:8px;">REQUEST LOG</div>
+    <div id="dash-req-list"></div>
+
+    <div id="dash-clear-wrap"></div>
+  </div>
+</div>
+
+<!-- PROSHOP HUB PAGE -->
+<div id="page-proshop" style="display:none;flex-direction:column;height:calc(100vh - 88px);background:#00071a;overflow-y:auto;">
+
+  <!-- Header bar -->
+  <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:#0b1c2e;border-bottom:2px solid #1e3a5f;flex-shrink:0;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#60a5fa;">🔗 PROSHOP</div>
+    <div style="flex:1;font-size:11px;color:#334155;letter-spacing:1px;">hill.adionsystems.com</div>
+    <button onclick="switchTab('planner')" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📅 PLANNER</button>
+  </div>
+
+  <div style="padding:16px;max-width:700px;margin:0 auto;width:100%;">
+
+    <!-- Can't embed notice -->
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:center;gap:12px;">
+      <div style="font-size:24px;flex-shrink:0;">ℹ️</div>
+      <div>
+        <div style="font-size:13px;color:#94a3b8;line-height:1.6;">ProShop blocks embedding for security — tap any link below to open directly in your browser. Use <strong style="color:#f59e0b;">↗ OPEN PROSHOP</strong> to log in, then come back and import your CSV into the Planner.</div>
+      </div>
+    </div>
+
+    <!-- Big open button -->
+    <button onclick="window.open('https://hill.adionsystems.com/procnc','_blank')"
+      style="width:100%;padding:18px;background:linear-gradient(135deg,#1e4976,#2a6ab5);border:2px solid #3b82f6;border-radius:14px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 4px 20px rgba(59,130,246,0.2);">
+      <span style="font-size:26px;">🔗</span> OPEN PROSHOP IN BROWSER
+    </button>
+
+    <!-- Quick links grid -->
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#475569;margin-bottom:10px;">QUICK LINKS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;">
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">📅</span>
+        <span>SCHEDULE</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">View shop schedule</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/workorders','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">📋</span>
+        <span>WORK ORDERS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Export CSV from here</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/parts','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🔩</span>
+        <span>PARTS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Part library</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/customers','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🏢</span>
+        <span>CUSTOMERS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Customer list</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/tools','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🔧</span>
+        <span>TOOLS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Tool library</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/purchaseorders','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🛒</span>
+        <span>PURCHASE ORDERS</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">PO management</span>
+      </button>
+
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/fixtures','_blank')"
+        style="padding:14px 12px;background:#0d1f35;border:1px solid #2a5a8c;border-radius:12px;color:#f0f4f8;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:4px;">
+        <span style="font-size:22px;">🗜️</span>
+        <span>FIXTURES</span>
+        <span style="font-size:10px;color:#475569;font-family:Barlow,sans-serif;font-weight:400;letter-spacing:0;">Fixture library</span>
+      </button>
+
+    </div>
+
+    <!-- Import CSV section -->
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#475569;margin-bottom:10px;">IMPORT INTO PLANNER</div>
+    <div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:14px;padding:18px;">
+      <div style="font-size:13px;color:#94a3b8;line-height:1.8;margin-bottom:14px;">
+        <strong style="color:#f0f4f8;">How to export from ProShop:</strong><br>
+        1. Open <strong style="color:#60a5fa;">Work Orders</strong> in ProShop<br>
+        2. Click <strong style="color:#60a5fa;">Reports</strong> → <em>Active WOs by Must Leave By</em><br>
+        3. Hit <strong style="color:#60a5fa;">Export CSV</strong> and save the file<br>
+        4. Tap the button below to import it
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="document.getElementById('ps-hub-csv').click()"
+          style="flex:1;min-width:160px;padding:13px;background:#f59e0b;border:none;color:#0f2338;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;font-weight:900;">
+          📥 IMPORT CSV → PLANNER
+        </button>
+        <button onclick="switchTab('planner');setTimeout(function(){plannerSetView('hill');},100);"
+          style="flex:1;min-width:140px;padding:13px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;">
+          📅 GO TO PLANNER
+        </button>
+      </div>
+      <input type="file" id="ps-hub-csv" accept=".csv,.txt" style="display:none" onchange="plannerImportCSV(this);switchTab('planner');setTimeout(function(){plannerSetView('hill');},200);">
+      <div id="ps-hub-import-status" style="margin-top:10px;font-size:12px;color:#4ade80;display:none;"></div>
+    </div>
+
+    <!-- WO summary pulled from planner data -->
+    <div style="margin-top:20px;" id="ps-hub-summary"></div>
+  </div>
+</div>
+
+<script>
+// ProShop hub summary — hooks into switchTab without wrapping it
+// Uses a delegated approach: check on every tab switch via a passive observer
+(function(){
+  // Patch the existing switchTab to add proshop summary update inline
+  var _origST = window.switchTab;
+  window.switchTab = function(tab) {
+    _origST(tab);
+    if(tab === 'proshop') {
+      setTimeout(function(){
+        var el = document.getElementById('ps-hub-summary');
+        if(!el || !window._plannerGetWOs) return;
+        var wos = window._plannerGetWOs() || [];
+        if(!wos.length){ el.innerHTML=''; return; }
+        var unassigned = wos.filter(function(w){return !w.machine||!w.scheduledDate;}).length;
+        var hot  = wos.filter(function(w){return w.priority==='hot';}).length;
+        var done = wos.filter(function(w){return w.priority==='done';}).length;
+        el.innerHTML = '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:2px;color:#475569;margin-bottom:10px;">PLANNER STATUS</div>'
+          +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">'
+          +'<div style="background:#0d1f35;border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#f87171;">'+hot+'</div><div style="font-size:10px;color:#475569;letter-spacing:1px;">🔴 HOT</div></div>'
+          +'<div style="background:#0d1f35;border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#60a5fa;">'+unassigned+'</div><div style="font-size:10px;color:#475569;letter-spacing:1px;">UNASSIGNED</div></div>'
+          +'<div style="background:#0d1f35;border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#4ade80;">'+done+'</div><div style="font-size:10px;color:#475569;letter-spacing:1px;">✅ DONE</div></div>'
+          +'</div>';
+      }, 50);
+    }
+  };
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCHEDULE PLANNER PAGE
+════════════════════════════════════════════════════════════ -->
+<style>
+/* ── PLANNER LAYOUT ── */
+#page-planner { background:#00071a; flex-direction:column; overflow:hidden; height:calc(100vh - 88px); }
+.pl-toolbar { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#0b1c2e; border-bottom:2px solid #1e3a5f; flex-shrink:0; flex-wrap:wrap; }
+.pl-toolbar-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; color:#f59e0b; white-space:nowrap; }
+.pl-week-nav { display:flex; align-items:center; gap:6px; }
+.pl-week-btn { background:rgba(255,255,255,0.06); border:1px solid #2a5a8c; color:#94a3b8; border-radius:7px; padding:5px 12px; font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:1px; cursor:pointer; transition:all .2s; }
+.pl-week-btn:hover { border-color:#f59e0b; color:#f59e0b; }
+.pl-week-label { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; color:#60a5fa; white-space:nowrap; min-width:160px; text-align:center; }
+.pl-spacer { flex:1; }
+.pl-action-btn { background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.35); color:#60a5fa; border-radius:7px; padding:5px 14px; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:1px; cursor:pointer; white-space:nowrap; transition:all .2s; }
+.pl-action-btn:hover { background:rgba(59,130,246,0.22); }
+.pl-action-btn.amber { background:rgba(245,158,11,0.12); border-color:rgba(245,158,11,0.35); color:#f59e0b; }
+.pl-action-btn.amber:hover { background:rgba(245,158,11,0.22); }
+.pl-action-btn.green { background:rgba(34,197,94,0.12); border-color:rgba(34,197,94,0.35); color:#4ade80; }
+
+/* ── CALENDAR GRID ── */
+.pl-body { flex:1; overflow:auto; position:relative; }
+.pl-grid { display:grid; min-width:700px; }
+/* header row */
+.pl-head { display:contents; }
+.pl-corner { position:sticky; left:0; z-index:20; background:#0b1c2e; border-right:2px solid #1e3a5f; border-bottom:2px solid #1e3a5f; padding:8px 10px; min-width:110px; }
+.pl-day-head { background:#0b1c2e; border-bottom:2px solid #1e3a5f; border-right:1px solid #1a3a5c; padding:8px 6px; text-align:center; position:sticky; top:0; z-index:10; }
+.pl-day-name { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; color:#64748b; }
+.pl-day-date { font-family:'Bebas Neue',sans-serif; font-size:20px; color:#f0f4f8; line-height:1; }
+.pl-day-head.today .pl-day-name { color:#f59e0b; }
+.pl-day-head.today .pl-day-date { color:#f59e0b; text-shadow:0 0 12px rgba(245,158,11,0.6); }
+/* machine rows */
+.pl-machine-label { position:sticky; left:0; z-index:5; background:#0d1f35; border-right:2px solid #1e3a5f; border-bottom:1px solid #1a3a5c; padding:6px 10px; min-width:110px; }
+.pl-machine-name { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1.5px; color:#f5d050; white-space:nowrap; }
+.pl-machine-cell { font-size:10px; color:#475569; letter-spacing:1px; margin-top:1px; }
+.pl-cell { border-right:1px solid #1a3a5c; border-bottom:1px solid #1a3a5c; padding:4px; min-height:72px; vertical-align:top; position:relative; cursor:pointer; transition:background .15s; }
+.pl-cell:hover { background:rgba(245,158,11,0.04); }
+.pl-cell.drop-over { background:rgba(245,158,11,0.12); outline:2px dashed #f59e0b; }
+/* WO chips */
+.pl-wo { border-radius:6px; padding:4px 7px; margin-bottom:3px; cursor:pointer; font-size:11px; line-height:1.35; position:relative; transition:transform .15s, box-shadow .15s; user-select:none; }
+.pl-wo:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.4); }
+.pl-wo:active { transform:scale(.97); }
+.pl-wo.pri-hot    { background:rgba(239,68,68,0.25);   border-left:3px solid #ef4444; }
+.pl-wo.pri-high   { background:rgba(245,158,11,0.2);   border-left:3px solid #f59e0b; }
+.pl-wo.pri-normal { background:rgba(59,130,246,0.18);  border-left:3px solid #3b82f6; }
+.pl-wo.pri-done   { background:rgba(34,197,94,0.12);   border-left:3px solid #22c55e; opacity:.7; }
+.pl-wo-num  { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:1px; color:#f5c500; }
+.pl-wo-part { color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+.pl-wo-meta { color:#64748b; font-size:10px; margin-top:1px; }
+.pl-wo-del  { position:absolute; top:3px; right:4px; background:none; border:none; color:#334155; cursor:pointer; font-size:12px; padding:0; line-height:1; display:none; }
+.pl-wo:hover .pl-wo-del { display:block; }
+.pl-wo-del:hover { color:#ef4444; }
+/* unassigned pool */
+.pl-pool { border-top:2px solid #1e3a5f; flex-shrink:0; background:#080f1d; }
+.pl-pool-header { display:flex; align-items:center; gap:10px; padding:6px 14px; cursor:pointer; border-bottom:1px solid #1a3a5c; }
+.pl-pool-title { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; color:#475569; flex:1; }
+.pl-pool-count { background:rgba(239,68,68,0.2); color:#f87171; border-radius:999px; font-size:11px; font-weight:700; padding:1px 8px; }
+.pl-pool-toggle { color:#475569; font-size:13px; transition:transform .2s; }
+.pl-pool-body { padding:8px 12px; display:flex; gap:8px; flex-wrap:wrap; max-height:130px; overflow-y:auto; }
+.pl-pool-wo { border-radius:7px; padding:5px 10px; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); cursor:grab; user-select:none; transition:all .15s; }
+.pl-pool-wo:hover { background:rgba(59,130,246,0.25); transform:translateY(-1px); }
+.pl-pool-wo.late { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.3); }
+.pl-pool-wo-num  { font-family:'Bebas Neue',sans-serif; font-size:13px; color:#f5c500; letter-spacing:1px; }
+.pl-pool-wo-part { font-size:11px; color:#94a3b8; white-space:nowrap; max-width:130px; overflow:hidden; text-overflow:ellipsis; }
+.pl-pool-wo-due  { font-size:10px; color:#64748b; margin-top:1px; }
+/* Modal */
+.pl-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:3000; display:none; align-items:center; justify-content:center; padding:16px; }
+.pl-modal-overlay.open { display:flex; }
+.pl-modal { background:#0f2338; border:1px solid #2a5a8c; border-radius:16px; padding:24px; width:100%; max-width:460px; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(0,0,0,0.7); }
+.pl-modal-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#f59e0b; margin-bottom:16px; }
+.pl-field-label { font-size:11px; color:#64748b; letter-spacing:1px; margin-bottom:4px; text-transform:uppercase; }
+.pl-input { width:100%; background:rgba(255,255,255,0.06); border:1px solid #2a5a8c; border-radius:8px; padding:9px 12px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; outline:none; box-sizing:border-box; color-scheme:dark; transition:border-color .2s; }
+.pl-input:focus { border-color:#f59e0b; }
+.pl-pri-btns { display:flex; gap:8px; flex-wrap:wrap; }
+.pl-pri-btn { padding:7px 16px; border-radius:20px; border:1px solid #2a5a8c; background:transparent; color:#64748b; font-size:12px; font-weight:700; cursor:pointer; transition:all .2s; letter-spacing:.5px; }
+.pl-pri-btn.sel-hot    { border-color:#ef4444; background:rgba(239,68,68,0.2);   color:#f87171; }
+.pl-pri-btn.sel-high   { border-color:#f59e0b; background:rgba(245,158,11,0.2);  color:#f59e0b; }
+.pl-pri-btn.sel-normal { border-color:#3b82f6; background:rgba(59,130,246,0.2);  color:#60a5fa; }
+.pl-machine-select { width:100%; background:rgba(255,255,255,0.06); border:1px solid #2a5a8c; border-radius:8px; padding:9px 12px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; outline:none; box-sizing:border-box; color-scheme:dark; }
+.pl-btn-row { display:flex; gap:10px; margin-top:20px; }
+.pl-save-btn { flex:2; padding:13px; background:#f59e0b; border:none; color:#0f2338; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; cursor:pointer; font-weight:900; }
+.pl-cancel-btn { flex:1; padding:13px; background:rgba(255,255,255,0.06); border:1px solid #2a5a8c; color:#94a3b8; border-radius:10px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:2px; cursor:pointer; }
+</style>
+
+<!-- PLANNER PAGE -->
+<div id="page-planner" style="display:none;flex-direction:column;height:calc(100vh - 88px);background:#00071a;">
+
+  <!-- Unified Toolbar -->
+  <div class="pl-toolbar" style="gap:6px;">
+
+    <!-- VIEW TOGGLE — ProShop Schedule vs Hill Planner -->
+    <div style="display:flex;background:#0a1422;border:1px solid #1e3a5f;border-radius:9px;overflow:hidden;flex-shrink:0;">
+      <button id="pl-view-ps-btn" onclick="plannerSetView('proshop')"
+        style="padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;border:none;cursor:pointer;transition:all .2s;background:#f59e0b;color:#0f2338;">
+        🔗 PROSHOP SCHEDULE
+      </button>
+      <button id="pl-view-hill-btn" onclick="plannerSetView('hill')"
+        style="padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;border:none;cursor:pointer;transition:all .2s;background:transparent;color:#475569;">
+        📅 HILL PLANNER
+      </button>
+    </div>
+
+    <!-- Week nav — only shown in Hill Planner view -->
+    <div class="pl-week-nav" id="pl-week-nav-wrap">
+      <button class="pl-week-btn" onclick="plannerShiftWeek(-1)">&#8249;</button>
+      <div class="pl-week-label" id="pl-week-label">—</div>
+      <button class="pl-week-btn" onclick="plannerShiftWeek(1)">&#8250;</button>
+      <button class="pl-week-btn" onclick="plannerGoToday()" style="font-size:11px;padding:5px 10px;">TODAY</button>
+    </div>
+
+    <!-- ProShop reload — only shown in ProShop view -->
+    <button id="pl-ps-reload-btn" onclick="document.getElementById('pl-ps-frame').src='https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule'"
+      style="display:none;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">
+      ↺ RELOAD
+    </button>
+    <button id="pl-ps-browser-btn" onclick="window.open('https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule','_blank')"
+      style="display:none;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;color:#64748b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">
+      ↗ BROWSER
+    </button>
+
+    <div class="pl-spacer"></div>
+
+    <!-- Hill Planner actions — only shown in Hill view -->
+    <div id="pl-hill-actions" style="display:flex;gap:6px;align-items:center;">
+      <button class="pl-action-btn amber" onclick="document.getElementById('pl-csv-input').click()">📥 IMPORT CSV</button>
+      <input type="file" id="pl-csv-input" accept=".csv,.txt" style="display:none" onchange="plannerImportCSV(this)">
+      <button class="pl-action-btn green" onclick="plannerOpenAddModal()">＋ ADD WO</button>
+      <button class="pl-action-btn" onclick="plannerClearAll()" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.3);color:#f87171;">🗑</button>
+    </div>
+  </div>
+
+  <!-- ── PROSHOP SCHEDULE IFRAME VIEW ── -->
+  <div id="pl-ps-view" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <iframe id="pl-ps-frame" src="" style="flex:1;width:100%;border:none;background:#fff;" loading="lazy"></iframe>
+    <!-- Blocked fallback -->
+    <div id="pl-ps-blocked" style="display:none;position:absolute;inset:88px 0 0;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;padding:40px;pointer-events:none;">
+      <div style="font-size:44px;">🔗</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#f59e0b;">PROSHOP SCHEDULE</div>
+      <div style="font-size:13px;color:#64748b;max-width:340px;line-height:1.7;">
+        ProShop may block embedding for security.<br>
+        Tap <strong style="color:#f0f4f8;">↗ BROWSER</strong> to open it full screen,<br>
+        then use <strong style="color:#f59e0b;">📅 HILL PLANNER</strong> to manage assignments here.
+      </div>
+      <button onclick="window.open('https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule','_blank')" style="pointer-events:all;background:#f59e0b;border:none;color:#0f2338;border-radius:10px;padding:12px 28px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;">↗ OPEN PROSHOP SCHEDULE</button>
+    </div>
+  </div>
+
+  <!-- ── HILL PLANNER VIEW ── -->
+  <div id="pl-hill-view" style="flex:1;display:none;flex-direction:column;overflow:hidden;">
+
+    <!-- Selection banner — shown when a WO is selected -->
+    <div id="pl-select-banner" style="display:none;align-items:center;gap:10px;padding:8px 14px;background:rgba(245,158,11,0.15);border-bottom:2px solid #f59e0b;flex-shrink:0;">
+      <div id="pl-select-label" style="flex:1;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:2px;color:#f59e0b;"></div>
+      <button onclick="plannerDeselectWO()" style="background:rgba(0,0,0,0.3);border:1px solid #f59e0b;color:#f59e0b;border-radius:7px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">✕ CANCEL</button>
+    </div>
+
+    <!-- Calendar scroll body -->
+    <div class="pl-body" id="pl-body">
+      <div id="pl-grid-wrap"></div>
+    </div>
+
+    <!-- Unassigned pool — full quick-assign panel -->
+    <div class="pl-pool" id="pl-pool">
+      <div class="pl-pool-header" onclick="plannerTogglePool()">
+        <div class="pl-pool-title">⬛ UNASSIGNED WORK ORDERS</div>
+        <div class="pl-pool-count" id="pl-pool-count">0</div>
+        <div style="font-size:10px;color:#334155;letter-spacing:1px;flex:1;padding-left:8px;" id="pl-pool-hint"></div>
+        <div class="pl-pool-toggle" id="pl-pool-toggle">▲</div>
+      </div>
+      <!-- Quick-assign grid -->
+      <div id="pl-pool-body" style="overflow-y:auto;max-height:55vh;padding:8px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Planner view switcher ──
+var _plannerView = 'hill'; // default to Hill Planner
+window.plannerSetView = function(view) {
+  _plannerView = view;
+  var psView    = document.getElementById('pl-ps-view');
+  var hillView  = document.getElementById('pl-hill-view');
+  var psBtn     = document.getElementById('pl-view-ps-btn');
+  var hillBtn   = document.getElementById('pl-view-hill-btn');
+  var weekNav   = document.getElementById('pl-week-nav-wrap');
+  var hillAct   = document.getElementById('pl-hill-actions');
+  var psReload  = document.getElementById('pl-ps-reload-btn');
+  var psBrowser = document.getElementById('pl-ps-browser-btn');
+
+  if (view === 'proshop') {
+    if(psView)   psView.style.display   = 'flex';
+    if(hillView) hillView.style.display = 'none';
+    if(psBtn)  { psBtn.style.background  = '#f59e0b';  psBtn.style.color  = '#0f2338'; }
+    if(hillBtn){ hillBtn.style.background = 'transparent'; hillBtn.style.color = '#475569'; }
+    if(weekNav)   weekNav.style.display   = 'none';
+    if(hillAct)   hillAct.style.display   = 'none';
+    if(psReload)  psReload.style.display  = '';
+    if(psBrowser) psBrowser.style.display = '';
+    // Lazy-load the frame the first time
+    var frame = document.getElementById('pl-ps-frame');
+    if (frame && !frame.src) frame.src = 'https://hill.adionsystems.com/procnc/procncAdmin/viewSchedule';
+    // Show blocked notice after 4s if frame is still blank (X-Frame-Options)
+    setTimeout(function() {
+      try {
+        var blocked = document.getElementById('pl-ps-blocked');
+        if (blocked && frame && (!frame.contentDocument || !frame.contentDocument.body || frame.contentDocument.body.innerHTML === '')) {
+          blocked.style.display = 'flex';
+        }
+      } catch(e) {
+        // Cross-origin — means it loaded fine, just can't read it
+      }
+    }, 4000);
+  } else {
+    // ── HILL PLANNER view ──
+    if(psView)   psView.style.display    = 'none';
+    if(hillView) hillView.style.display  = 'flex';
+    if(psBtn)  { psBtn.style.background  = 'transparent'; psBtn.style.color  = '#475569'; }
+    if(hillBtn){ hillBtn.style.background = '#f59e0b';    hillBtn.style.color = '#0f2338'; }
+    if(weekNav)   weekNav.style.display   = 'flex';
+    if(hillAct)   hillAct.style.display   = 'flex';
+    if(psReload)  psReload.style.display  = 'none';
+    if(psBrowser) psBrowser.style.display = 'none';
+    // Directly call the real render functions — deferred so the IIFE has always run by this point
+    setTimeout(function(){
+      if(window._plannerDoInit) window._plannerDoInit();
+    }, 0);
+  }
+};
+</script>
+
+<!-- ADD/EDIT WO MODAL -->
+<div class="pl-modal-overlay" id="pl-modal" onclick="if(event.target===this)plannerCloseModal()">
+  <div class="pl-modal">
+    <div class="pl-modal-title" id="pl-modal-title">NEW WORK ORDER</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div>
+        <div class="pl-field-label">WO #</div>
+        <input class="pl-input" id="pl-f-wo" placeholder="e.g. 10452" maxlength="30">
+      </div>
+      <div>
+        <div class="pl-field-label">Qty</div>
+        <input class="pl-input" id="pl-f-qty" placeholder="e.g. 12" maxlength="10">
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Part / Description</div>
+      <input class="pl-input" id="pl-f-part" placeholder="Part name or number" maxlength="80">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div>
+        <div class="pl-field-label">Due Date</div>
+        <input class="pl-input" id="pl-f-due" type="date">
+      </div>
+      <div>
+        <div class="pl-field-label">Est. Run Time</div>
+        <input class="pl-input" id="pl-f-runtime" placeholder="e.g. 4h, 2 days">
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Assign to Machine</div>
+      <select class="pl-machine-select" id="pl-f-machine">
+        <option value="">— Unassigned —</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Scheduled Date</div>
+      <input class="pl-input" id="pl-f-date" type="date">
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Operator</div>
+      <input class="pl-input" id="pl-f-operator" placeholder="Operator name" maxlength="40">
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div class="pl-field-label">Priority</div>
+      <div class="pl-pri-btns" id="pl-pri-btns">
+        <button class="pl-pri-btn sel-normal" data-pri="normal"  onclick="plannerSelPri('normal')">NORMAL</button>
+        <button class="pl-pri-btn"            data-pri="high"    onclick="plannerSelPri('high')">🟠 HIGH</button>
+        <button class="pl-pri-btn"            data-pri="hot"     onclick="plannerSelPri('hot')">🔴 HOT</button>
+        <button class="pl-pri-btn"            data-pri="done"    onclick="plannerSelPri('done')">✅ DONE</button>
+      </div>
+    </div>
+
+    <div style="margin-bottom:4px;">
+      <div class="pl-field-label">Notes</div>
+      <textarea class="pl-input" id="pl-f-notes" rows="2" placeholder="Special instructions, tooling notes…" style="resize:none;"></textarea>
+    </div>
+
+    <div class="pl-btn-row">
+      <button class="pl-cancel-btn" onclick="plannerCloseModal()">CANCEL</button>
+      <button class="pl-save-btn" onclick="plannerSaveWO()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// SCHEDULE PLANNER
+// ══════════════════════════════════════════════════
+(function(){
+
+  // ── State ──
+  var PLANNER_KEY = 'hillPlannerWOs_v2';
+  var plannerWOs  = [];
+  var plannerWeekOffset = 0;
+  var plannerPoolOpen = true;  // always open by default
+
+  // Store edit state directly on window — no proxy, no scope issues
+  window._plannerEditId  = null;
+  window._plannerPri     = 'normal';
+
+  // Give hub summary access to WO list
+  window._plannerGetWOs = function(){ return plannerWOs; };
+
+  function plannerMakeId(){
+    return 'wo'+(Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/[^a-z0-9]/gi,'');
+  }
+  var PLANNER_MACHINES = [
+    {name:'1050-B',cell:'Big Mill'},{name:'7000',cell:'Big Mill'},{name:'VF-6',cell:'Big Mill'},
+    {name:'5100-B',cell:'5100 Cell'},{name:'2500',cell:'5100 Cell'},{name:'PUMA-3',cell:'5100 Cell'},
+    {name:'ST35',cell:'MPPI'},{name:'VF-3',cell:'MPPI'},{name:'VF-2',cell:'MPPI'},{name:'PUMA-2',cell:'MPPI'},
+    {name:'403-A',cell:'403 Cell'},{name:'403-B',cell:'403 Cell'},{name:'403-C',cell:'403 Cell'},
+    {name:'5100-A',cell:'Mill/Lathe'},{name:'SHARP',cell:'Mill/Lathe'},{name:'SH403',cell:'Mill/Lathe'},{name:'5000',cell:'Mill/Lathe'},
+    {name:'3000-C',cell:'3000 Cell'},{name:'SYIL',cell:'3000 Cell'},{name:'3000-A',cell:'3000 Cell'},
+    {name:'EMCO',cell:'Horizontal'},{name:'2G',cell:'Horizontal'},
+    {name:'PUMA-1',cell:'Automation'},{name:'303-B',cell:'Automation'},{name:'TWIN',cell:'Automation'},{name:'2500-Y',cell:'Automation'},
+    {name:'SAW-1',cell:'Saws'},{name:'SAW-2',cell:'Saws'}
+  ];
+
+  // ── Persistence ──
+  function plannerLoad() {
+    try {
+      var s=localStorage.getItem(PLANNER_KEY);
+      if(s){ var parsed=JSON.parse(s); if(Array.isArray(parsed)&&parsed.length>0) plannerWOs=parsed; }
+    } catch(e){ console.warn('plannerLoad:',e); }
+  }
+  function plannerSave() {
+    // Strip bulky fields before storing to avoid 5MB localStorage limit
+    var slim=plannerWOs.map(function(w){
+      return {
+        id:w.id, wo:w.wo, part:w.part, qty:w.qty, due:w.due,
+        machine:w.machine, scheduledDate:w.scheduledDate,
+        priority:w.priority, operator:w.operator, runtime:w.runtime,
+        notes:w.notes, customer:w.customer, planner:w.planner, material:w.material
+      };
+    });
+    try { localStorage.setItem(PLANNER_KEY, JSON.stringify(slim)); } catch(e){ console.warn('plannerSave localStorage full:',e); }
+    // Firebase sync — full data
+    if(window._db && window._fbModules){
+      var mods=window._fbModules, db2=window._db;
+      mods.setDoc(mods.doc(db2,'hillPlanner','wos'),
+        {data: JSON.stringify(slim), updatedAt: mods.serverTimestamp()}
+      ).catch(function(e){ console.warn('plannerSave Firebase:',e); });
+    }
+  }
+
+  // ── Week helpers ──
+  function plannerWeekStart(offset) {
+    var d = new Date();
+    d.setHours(0,0,0,0);
+    var day = d.getDay(); // 0=Sun
+    d.setDate(d.getDate() - day + (offset * 7));
+    return d;
+  }
+  function plannerWeekDays(offset) {
+    var start = plannerWeekStart(offset);
+    var days = [];
+    for(var i=0;i<7;i++){
+      var d2 = new Date(start);
+      d2.setDate(start.getDate()+i);
+      days.push(d2);
+    }
+    return days;
+  }
+  function plannerDateKey(d) {
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function plannerToday() { var d=new Date(); d.setHours(0,0,0,0); return plannerDateKey(d); }
+
+  // ── Init / render ──
+  var _plannerInited = false;
+  window._plannerDoInit = function() {
+    if(!_plannerInited) {
+      _plannerInited = true;
+      plannerLoad();
+      plannerPopulateMachineSelect();
+      // One-time Firebase sync — only if localStorage was empty
+      if(plannerWOs.length === 0 && window._db && window._fbModules){
+        var mods=window._fbModules, db2=window._db;
+        mods.getDoc(mods.doc(db2,'hillPlanner','wos')).then(function(snap){
+          if(snap.exists()){
+            try{
+              var d=JSON.parse(snap.data().data||'[]');
+              if(d.length>0){ plannerWOs=d; plannerSave(); plannerRender(); }
+            }catch(e){}
+          }
+        }).catch(function(){});
+      }
+    }
+    plannerRender();
+  };
+  window.plannerInit = function() {
+    plannerSetView(_plannerView || 'hill');
+  };
+
+  function plannerPopulateMachineSelect(){
+    var sel=document.getElementById('pl-f-machine');
+    if(!sel||sel.options.length>1) return;
+    var lastCell='';
+    PLANNER_MACHINES.forEach(function(m){
+      if(m.cell!==lastCell){
+        var og=document.createElement('optgroup');
+        og.label='── '+m.cell+' ──';
+        sel.appendChild(og);
+        lastCell=m.cell;
+      }
+      var op=document.createElement('option');
+      op.value=m.name; op.textContent=m.name+' ('+m.cell+')';
+      sel.appendChild(op);
+    });
+  }
+
+  function plannerRender(){
+    // Force reflow so Safari/iOS actually repaints after innerHTML changes
+    var wrap = document.getElementById('pl-grid-wrap');
+    var pool = document.getElementById('pl-pool-body');
+    if(wrap) wrap.style.display='none';
+    if(pool) pool.style.display='none';
+    // Reading offsetHeight forces the browser to flush layout
+    if(wrap) void wrap.offsetHeight;
+    if(pool) void pool.offsetHeight;
+    if(wrap) wrap.style.display='';
+    if(pool) pool.style.display='';
+
+    plannerRenderGrid();
+    plannerRenderPool();
+    var wlEl = document.getElementById('pl-week-label');
+    if(wlEl) {
+      var days=plannerWeekDays(plannerWeekOffset);
+      var opts={month:'short',day:'numeric'};
+      wlEl.textContent = days[0].toLocaleDateString([],opts)+' – '+days[6].toLocaleDateString([],opts);
+    }
+  }
+
+  function plannerRenderGrid(){
+    var days=plannerWeekDays(plannerWeekOffset);
+    var todayKey=plannerToday();
+    var wrap=document.getElementById('pl-grid-wrap');
+    if(!wrap) return;
+
+    var cols=1+7; // machine col + 7 days
+    var html='<div style="display:grid;grid-template-columns:110px repeat(7,minmax(120px,1fr));width:100%;">';
+
+    // Header row
+    html+='<div class="pl-corner"><div style="font-size:10px;color:#334155;letter-spacing:1px;">MACHINE</div></div>';
+    var dayNames=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    days.forEach(function(d,i){
+      var isToday=plannerDateKey(d)===todayKey;
+      html+='<div class="pl-day-head'+(isToday?' today':'')+'">'
+        +'<div class="pl-day-name">'+dayNames[i]+'</div>'
+        +'<div class="pl-day-date">'+d.getDate()+'</div>'
+        +'</div>';
+    });
+
+    // Machine rows
+    PLANNER_MACHINES.forEach(function(m){
+      html+='<div class="pl-machine-label">'
+        +'<div class="pl-machine-name">'+m.name+'</div>'
+        +'<div class="pl-machine-cell">'+m.cell+'</div>'
+        +'</div>';
+      days.forEach(function(d){
+        var dk=plannerDateKey(d);
+        var cellWOs=plannerWOs.filter(function(w){return w.machine===m.name && w.scheduledDate===dk;});
+        html+='<div class="pl-cell" data-machine="'+m.name+'" data-date="'+dk+'" onclick="plannerCellClick(this,event)"'
+          +' ondragover="plannerDragOver(event,this)" ondragleave="plannerDragLeave(this)" ondrop="plannerDrop(event,this)"'
+          +(window._selectedId?' style="background:rgba(245,158,11,0.08);cursor:crosshair;"':'')+'>';
+        cellWOs.forEach(function(w){
+          html+=plannerWOChip(w);
+        });
+        html+='</div>';
+      });
+    });
+    html+='</div>';
+    wrap.innerHTML=html;
+  }
+
+  function plannerWOChip(w){
+    var priClass='pri-'+(w.priority||'normal');
+    var daysLeft='';
+    if(w.due){
+      var dl=Math.ceil((new Date(w.due+'T12:00')-new Date())/(1000*60*60*24));
+      daysLeft=dl<0?'<span style="color:#f87171;font-weight:700;">'+Math.abs(dl)+'d LATE</span>':dl===0?'<span style="color:#f87171;">DUE TODAY</span>':'<span style="color:'+(dl<=3?'#f87171':dl<=7?'#fbbf24':'#64748b')+';">'+dl+'d</span>';
+    }
+    return '<div class="pl-wo '+priClass+'" draggable="true"'
+      +' ondragstart="plannerDragStart(event,\''+w.id+'\')"'
+      +' onclick="event.stopPropagation();plannerChipTap(\''+w.id+'\')">'
+      +'<div class="pl-wo-num">'+escHtml(w.wo||'WO')+(w.qty?' <span style="font-size:10px;color:#94a3b8;font-family:Barlow,sans-serif;">×'+escHtml(w.qty)+'</span>':'')+'</div>'
+      +'<div class="pl-wo-part">'+escHtml(w.part||'')+'</div>'
+      +(w.customer?'<div style="font-size:10px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">'+escHtml(w.customer)+'</div>':'')
+      +'<div class="pl-wo-meta">'+(w.operator?'👤 '+escHtml(w.operator)+' ':'')+(daysLeft?'📅 '+daysLeft:'')+(w.runtime?' ⏱ '+escHtml(w.runtime):'')+'</div>'
+      +'</div>';
+  }
+
+  // Tap a scheduled chip → show action sheet
+  window._chipWO = null; // store the current WO for the action sheet buttons to reference
+  window.plannerChipTap = function(id) {
+    var w = plannerWOs.find(function(x){ return x.id===id; });
+    if(!w) return;
+    window._chipWO = w;
+    var overlay = document.getElementById('pl-chip-overlay');
+    var title   = document.getElementById('pl-chip-title');
+    var sub     = document.getElementById('pl-chip-sub');
+    if(!overlay){ alert('overlay missing'); return; }
+    if(title) title.textContent = (w.wo||'WO') + (w.part ? ' — ' + w.part : '');
+    if(sub)   sub.textContent   = (w.machine||'') + (w.scheduledDate ? ' · ' + new Date(w.scheduledDate+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}) : '');
+    overlay.classList.add('open');
+  };
+  window.plannerCloseChip = function(){
+    var overlay = document.getElementById('pl-chip-overlay');
+    if(overlay) overlay.classList.remove('open');
+    window._chipWO = null;
+  };
+  window.plannerChipUnschedule = function(){
+    var w = window._chipWO; if(!w) return;
+    w.machine=''; w.scheduledDate='';
+    plannerSave();
+    plannerCloseChip();
+    plannerRender();
+    if(window.showToast) showToast('blue', 'Moved back to pool', (w.wo||'WO')+' is now unassigned');
+  };
+  window.plannerChipEdit = function(){
+    var w = window._chipWO; if(!w) return;
+    var id = w.id;
+    plannerCloseChip();
+    plannerEditWO(id);
+  };
+  window.plannerChipDelete = function(){
+    var w = window._chipWO; if(!w) return;
+    if(!confirm('Delete WO '+(w.wo||'')+'? This removes it from your database.')) return;
+    plannerWOs = plannerWOs.filter(function(x){ return x.id !== w.id; });
+    plannerSave();
+    plannerCloseChip();
+    plannerRender();
+    if(window.showToast) showToast('red', 'WO '+(w.wo||'')+' deleted', 'Removed from database');
+  };
+
+  function plannerRenderPool(){
+    var unassigned=plannerWOs.filter(function(w){return !w.machine||!w.scheduledDate;});
+    var count=unassigned.length;
+    var el=document.getElementById('pl-pool-count');
+    if(el) el.textContent=count;
+    var hint=document.getElementById('pl-pool-hint');
+    if(hint) hint.textContent=count>0?'Tap a card to select → tap a calendar cell to place it. Tap card again to deselect.':'';
+    var body=document.getElementById('pl-pool-body');
+    if(!body) return;
+    if(!plannerPoolOpen){body.style.display='none';return;}
+    body.style.display='grid';
+    if(count===0){
+      body.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:20px;font-size:13px;color:#334155;">All WOs assigned ✅ — Import a CSV or tap + ADD WO to add more.</div>';
+      return;
+    }
+
+    // Sort: hot first, then by due date
+    var sorted=unassigned.slice().sort(function(a,b){
+      var priOrder={hot:0,high:1,normal:2,done:3};
+      var pa=priOrder[a.priority||'normal']||2, pb=priOrder[b.priority||'normal']||2;
+      if(pa!==pb) return pa-pb;
+      return (a.due||'9999')-(b.due||'9999');
+    });
+
+    // Build machine options once
+    var machOpts='<option value="">— Pick machine —</option>';
+    var lastCell='';
+    PLANNER_MACHINES.forEach(function(m){
+      if(m.cell!==lastCell){ machOpts+='<optgroup label="'+m.cell+'">'; lastCell=m.cell; }
+      machOpts+='<option value="'+m.name+'">'+m.name+'</option>';
+    });
+
+    // Today as default date
+    var todayStr=plannerDateKey(new Date());
+
+    body.innerHTML=sorted.map(function(w){
+      var isLate=w.due&&new Date(w.due+'T23:59')<new Date();
+      var isHot=w.priority==='hot';
+      var priColor=isHot?'#ef4444':w.priority==='high'?'#f59e0b':'#3b82f6';
+      var dueLabel=w.due?new Date(w.due+'T12:00').toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}):'No due date';
+      var daysLeft='';
+      if(w.due){
+        var dl=Math.ceil((new Date(w.due+'T12:00')-new Date())/(1000*60*60*24));
+        daysLeft=dl<0?'⚠ '+Math.abs(dl)+'d LATE':dl===0?'DUE TODAY':dl+'d left';
+      }
+      return '<div class="pl-pool-card" data-woid="'+w.id+'" onclick="plannerSelectWO(\''+w.id+'\')"'
+        +' style="background:#0d1f35;border:1px solid '+(isHot?'rgba(239,68,68,0.4)':'rgba(26,74,140,0.5)')+';border-left:4px solid '+priColor+';border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;user-select:none;">'
+        // Top: WO# + days left
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:1px;color:#f5c500;">'+escHtml(w.wo||'WO')+(w.qty?' <span style="font-size:11px;color:#64748b;font-family:Barlow,sans-serif;">×'+escHtml(w.qty)+'</span>':'')+'</div>'
+          +(daysLeft?'<div style="font-size:10px;font-weight:700;color:'+(isLate?'#f87171':w.priority==='high'?'#fbbf24':'#64748b')+';">'+daysLeft+'</div>':'')
+        +'</div>'
+        // Part
+        +'<div style="font-size:12px;color:#cbd5e1;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(w.part||'—')+'</div>'
+        // Customer
+        +(w.customer?'<div style="font-size:10px;color:#475569;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+escHtml(w.customer)+'</div>':'<div style="margin-bottom:6px;"></div>')
+        // Tap hint
+        +'<div style="font-size:10px;color:#334155;letter-spacing:1px;border-top:1px solid #1a3a5c;padding-top:6px;margin-top:2px;">👆 TAP TO SELECT → THEN TAP A CELL</div>'
+        +'</div>';
+    }).join('');
+  }
+
+  // Quick-assign from pool card
+  window.plannerQuickAssign=function(id){
+    var machine=(document.getElementById('qa-m-'+id)||{}).value||'';
+    var date=(document.getElementById('qa-d-'+id)||{}).value||'';
+    if(!machine){if(window.showToast)showToast('yellow','Pick a machine','Select a machine from the dropdown.');return;}
+    if(!date){if(window.showToast)showToast('yellow','Pick a date','Select a scheduled date.');return;}
+    var wo=plannerWOs.find(function(w){return w.id===id;});
+    if(!wo) return;
+    wo.machine=machine; wo.scheduledDate=date;
+    plannerSave(); plannerRender();
+    if(window.showToast) showToast('green','WO '+wo.wo+' assigned','→ '+machine+' · '+new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
+    // Jump calendar to the week of the assigned date
+    var assigned=new Date(date+'T12:00');
+    var today=new Date(); today.setHours(0,0,0,0);
+    var diffDays=Math.round((assigned-today)/(1000*60*60*24));
+    plannerWeekOffset=Math.floor((diffDays+(today.getDay()))/7);
+    plannerRender();
+  };
+
+  // ── Navigation ──
+  window.plannerShiftWeek=function(dir){ plannerWeekOffset+=dir; plannerRender(); };
+  window.plannerGoToday=function(){ plannerWeekOffset=0; plannerRender(); };
+  window.plannerTogglePool=function(){
+    plannerPoolOpen=!plannerPoolOpen;
+    document.getElementById('pl-pool-toggle').textContent=plannerPoolOpen?'▲':'▼';
+    plannerRenderPool();
+  };
+
+  // ── Tap-to-select → tap-cell-to-place ──
+  window._selectedId = null;
+
+  window.plannerSelectWO = function(id) {
+    // Toggle off if tapping same card again
+    if(window._selectedId === id) {
+      window.plannerDeselectWO();
+      return;
+    }
+    window._selectedId = id;
+    var wo = plannerWOs.find(function(w){ return w.id===id; });
+    if(!wo) return;
+
+    // Collapse pool so calendar is fully visible
+    plannerPoolOpen = false;
+    var tog = document.getElementById('pl-pool-toggle');
+    if(tog) tog.textContent = '▼';
+    var body = document.getElementById('pl-pool-body');
+    if(body) body.style.display = 'none';
+
+    // Show cancel banner
+    var banner = document.getElementById('pl-select-banner');
+    if(banner){
+      banner.style.display = 'flex';
+      var lbl = document.getElementById('pl-select-label');
+      if(lbl) lbl.textContent = '📌 ' + (wo.wo||'WO') + ' selected — tap any cell to place it';
+    }
+
+    // Highlight cells
+    plannerRenderGrid();
+    if(window.showToast) showToast('blue', wo.wo+' selected', 'Tap a machine cell on the calendar above');
+  };
+
+  window.plannerDeselectWO = function() {
+    window._selectedId = null;
+    var banner = document.getElementById('pl-select-banner');
+    if(banner) banner.style.display = 'none';
+    plannerPoolOpen = true;
+    var tog = document.getElementById('pl-pool-toggle');
+    if(tog) tog.textContent = '▲';
+    plannerRender();
+  };
+
+  // ── Cell click — place selected WO, or open add modal ──
+  window.plannerCellClick = function(el, e) {
+    if(e && e.target && e.target.closest && e.target.closest('.pl-wo')) return;
+    if(window._selectedId) {
+      var wo = plannerWOs.find(function(w){ return w.id===window._selectedId; });
+      var machine = el.dataset.machine;
+      var date    = el.dataset.date;
+      if(wo && machine && date) {
+        wo.machine       = machine;
+        wo.scheduledDate = date;
+        window._selectedId = null;
+        plannerPoolOpen = true;
+        // Hide banner instantly
+        var banner = document.getElementById('pl-select-banner');
+        if(banner) banner.style.display = 'none';
+        var tog = document.getElementById('pl-pool-toggle');
+        if(tog) tog.textContent = '▲';
+        // Save + jump week
+        plannerSave();
+        var d = new Date(date+'T12:00');
+        var today = new Date(); today.setHours(0,0,0,0);
+        plannerWeekOffset = Math.floor((Math.round((d-today)/(864e5)) + today.getDay()) / 7);
+        // Render immediately
+        plannerRender();
+        if(window.showToast) showToast('green', wo.wo + ' → ' + machine,
+          new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
+      } else {
+        window.plannerDeselectWO();
+      }
+    } else {
+      plannerOpenAddModal(el.dataset.machine, el.dataset.date);
+    }
+  };
+
+  // ── Keep HTML5 drag for desktop ──
+  var _dragId=null;
+  window.plannerDragStart=function(e,id){ _dragId=id; e.dataTransfer.effectAllowed='move'; };
+  window.plannerDragOver=function(e,el){ e.preventDefault(); e.dataTransfer.dropEffect='move'; el.classList.add('drop-over'); };
+  window.plannerDragLeave=function(el){ el.classList.remove('drop-over'); };
+  window.plannerDrop=function(e,el){
+    e.preventDefault(); el.classList.remove('drop-over');
+    var machine=el.dataset.machine, date=el.dataset.date;
+    if(!_dragId||!machine||!date) return;
+    var wo=plannerWOs.find(function(w){return w.id===_dragId;});
+    if(!wo) return;
+    wo.machine=machine; wo.scheduledDate=date;
+    plannerSave(); plannerRender();
+    if(window.showToast) showToast('green','WO '+wo.wo+' assigned','→ '+machine+' on '+new Date(date+'T12:00').toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}));
+    _dragId=null;
+  };
+
+  // ── Modal ──
+  window.plannerOpenAddModal=function(machine,date){
+    window._plannerEditId=null;
+    document.getElementById('pl-modal-title').textContent='NEW WORK ORDER';
+    document.getElementById('pl-f-wo').value='';
+    document.getElementById('pl-f-part').value='';
+    document.getElementById('pl-f-qty').value='';
+    document.getElementById('pl-f-due').value='';
+    document.getElementById('pl-f-runtime').value='';
+    document.getElementById('pl-f-operator').value='';
+    document.getElementById('pl-f-notes').value='';
+    document.getElementById('pl-f-machine').value=machine||'';
+    document.getElementById('pl-f-date').value=date||'';
+    window.plannerSelPri('normal');
+    document.getElementById('pl-modal').classList.add('open');
+  };
+  window.plannerEditWO=function(id){
+    var w=plannerWOs.find(function(x){return x.id===id;});
+    if(!w) return;
+    window._plannerEditId=id;
+    document.getElementById('pl-modal-title').textContent='ASSIGN / EDIT WO';
+    document.getElementById('pl-f-wo').value=w.wo||'';
+    document.getElementById('pl-f-part').value=w.part||'';
+    document.getElementById('pl-f-qty').value=w.qty||'';
+    document.getElementById('pl-f-due').value=w.due||'';
+    document.getElementById('pl-f-runtime').value=w.runtime||'';
+    document.getElementById('pl-f-operator').value=w.operator||'';
+    document.getElementById('pl-f-notes').value=w.notes||'';
+    document.getElementById('pl-f-machine').value=w.machine||'';
+    document.getElementById('pl-f-date').value=w.scheduledDate||'';
+    window.plannerSelPri(w.priority||'normal');
+    document.getElementById('pl-modal').classList.add('open');
+    // Scroll machine select into view on mobile
+    setTimeout(function(){ var el=document.getElementById('pl-f-machine'); if(el) el.focus(); },200);
+  };
+  window.plannerCloseModal=function(){
+    document.getElementById('pl-modal').classList.remove('open');
+  };
+  window.plannerSelPri=function(pri){
+    window._plannerPri=pri;
+    document.querySelectorAll('.pl-pri-btn').forEach(function(b){
+      var bPri=b.getAttribute('data-pri');
+      b.className='pl-pri-btn'+(bPri===pri?' sel-'+pri:'');
+    });
+  };
+  window.plannerSaveWO=function(){
+    var wo=(document.getElementById('pl-f-wo').value||'').trim();
+    var part=(document.getElementById('pl-f-part').value||'').trim();
+    if(!wo&&!part){if(window.showToast)showToast('yellow','Missing info','Need a WO# or part name.');return;}
+    var machine=(document.getElementById('pl-f-machine').value||'').trim();
+    var schedDate=(document.getElementById('pl-f-date').value||'').trim();
+    // Warn but don't block if no machine selected — goes to unassigned pool
+    var editId=window._plannerEditId;
+    var obj={
+      id: editId||plannerMakeId(),
+      wo:wo, part:part,
+      qty:(document.getElementById('pl-f-qty').value||'').trim(),
+      due:(document.getElementById('pl-f-due').value||''),
+      runtime:(document.getElementById('pl-f-runtime').value||'').trim(),
+      operator:(document.getElementById('pl-f-operator').value||'').trim(),
+      notes:(document.getElementById('pl-f-notes').value||'').trim(),
+      machine: machine,
+      scheduledDate: schedDate,
+      priority: window._plannerPri||'normal',
+      // preserve ProShop fields if editing existing
+      customer: (plannerWOs.find(function(x){return x.id===editId;})||{}).customer||'',
+      planner:  (plannerWOs.find(function(x){return x.id===editId;})||{}).planner||'',
+      material: (plannerWOs.find(function(x){return x.id===editId;})||{}).material||''
+    };
+    if(editId){
+      var idx=plannerWOs.findIndex(function(x){return x.id===editId;});
+      if(idx>=0){ plannerWOs[idx]=obj; }
+      else { plannerWOs.push(obj); }
+    } else {
+      plannerWOs.push(obj);
+    }
+    plannerSave();
+    plannerCloseModal();
+    plannerRender();
+    var dest=machine?'→ '+machine+(schedDate?' on '+new Date(schedDate+'T12:00').toLocaleDateString([],{month:'short',day:'numeric'}):''):'→ Unassigned pool';
+    if(window.showToast) showToast('green',(editId?'Updated':'Saved')+' WO '+wo, dest);
+  };
+  window.plannerDeleteWO=function(id){
+    plannerWOs=plannerWOs.filter(function(w){return w.id!==id;});
+    plannerSave();
+    plannerRender();
+  };
+  window.plannerClearAll=function(){
+    if(!confirm('Clear ALL scheduled work orders? This cannot be undone.')) return;
+    plannerWOs=[];
+    plannerSave(); plannerRender();
+    if(window.showToast) showToast('blue','Planner cleared','');
+  };
+
+  // ── CSV Import — mapped to ProShop's exact export columns ──
+  // Columns: "Work Order #","Part #","QtyOrdered","Customer","PartRev",
+  //          "WO Must Leave By","Cust. Due","Cust. PO #","Project Manager","Planner","Status","Material","Grade"
+  window.plannerImportCSV=function(input){
+    var file=input.files[0]; if(!file) return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      var text=ev.target.result;
+
+      // Split lines, skip empty
+      var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
+      if(lines.length<2){if(window.showToast)showToast('yellow','Empty CSV','No data rows found.');return;}
+
+      // Parse a quoted CSV line properly
+      function parseCSVLine(line){
+        var result=[],cur='',inQ=false;
+        for(var i=0;i<line.length;i++){
+          var c=line[i];
+          if(c==='"'){inQ=!inQ;}
+          else if(c===','&&!inQ){result.push(cur.trim());cur='';}
+          else cur+=c;
+        }
+        result.push(cur.trim());
+        return result;
+      }
+
+      // Map header names to indexes
+      var header=parseCSVLine(lines[0]).map(function(h){return h.toLowerCase();});
+      function col(name){ return header.indexOf(name); }
+
+      var iWo    = col('work order #');
+      var iPart  = col('part #');
+      var iQty   = col('qtyordered');
+      var iCust  = col('customer');
+      var iLeave = col('wo must leave by');   // "Must Leave By" = hard ship deadline
+      var iDue   = col('cust. due');
+      var iPO    = col('cust. po #');
+      var iPM    = col('project manager');
+      var iPlnr  = col('planner');
+      var iStat  = col('status');
+      var iMat   = col('material');
+
+      var today=new Date(); today.setHours(0,0,0,0);
+      var added=0, skipped=0, updated=0;
+
+      lines.slice(1).forEach(function(line){
+        var c=parseCSVLine(line);
+
+        var wo   = iWo>=0   ? c[iWo]||''   : '';
+        var part = iPart>=0 ? c[iPart]||'' : '';
+
+        // Skip totals row and blank rows
+        if(!wo && !part) return;
+        if(wo.toUpperCase()==='TOTALS') return;
+
+        var status = iStat>=0 ? c[iStat]||'' : '';
+
+        // Parse "WO Must Leave By" as the primary due date (hardest deadline)
+        var leaveRaw = iLeave>=0 ? c[iLeave]||'' : '';
+        var dueRaw   = iDue>=0  ? c[iDue]||''  : '';
+        var dueDateStr='', leaveDate=null;
+        if(leaveRaw){ var dp=new Date(leaveRaw); if(!isNaN(dp)){leaveDate=dp; dueDateStr=plannerDateKey(dp);} }
+        else if(dueRaw){ var dp=new Date(dueRaw); if(!isNaN(dp)){leaveDate=dp; dueDateStr=plannerDateKey(dp);} }
+
+        // Auto-set priority based on "Must Leave By" date
+        var pri='normal';
+        if(leaveDate){
+          var daysLeft=Math.ceil((leaveDate-today)/(1000*60*60*24));
+          if(daysLeft<0)         pri='hot';    // already past due → HOT
+          else if(daysLeft<=3)   pri='hot';    // due within 3 days → HOT
+          else if(daysLeft<=7)   pri='high';   // due within a week → HIGH
+        }
+        if(status.toLowerCase().indexOf('complet')>=0) pri='done';
+
+        var planner = iPlnr>=0 ? c[iPlnr]||'' : '';
+        var pm      = iPM>=0   ? c[iPM]||''   : '';
+        var customer= iCust>=0 ? c[iCust]||'' : '';
+        var material= iMat>=0  ? c[iMat]||''  : '';
+        var po      = iPO>=0   ? c[iPO]||''   : '';
+
+        // If WO already exists — update priority & due date but keep assignment
+        var existing=plannerWOs.find(function(w){return w.wo&&w.wo===wo;});
+        if(existing){
+          existing.part=part||existing.part;
+          existing.due=dueDateStr||existing.due;
+          existing.priority=existing.priority==='hot'?'hot':pri; // don't downgrade a manually-set HOT
+          existing.customer=customer; existing.planner=planner; existing.pm=pm;
+          existing.material=material; existing.po=po;
+          existing.qty=iQty>=0?c[iQty]||existing.qty:existing.qty;
+          existing.status=status;
+          updated++;
+          return;
+        }
+
+        plannerWOs.push({
+          id: plannerMakeId(),
+          wo: wo, part: part,
+          qty: iQty>=0 ? c[iQty]||'' : '',
+          due: dueDateStr,
+          customer: customer,
+          planner: planner,
+          pm: pm,
+          material: material,
+          po: po,
+          status: status,
+          machine: '',
+          scheduledDate: '',
+          operator: planner, // default operator to Planner field
+          runtime: '',
+          notes: material ? 'Material: '+material : '',
+          priority: pri
+        });
+        added++;
+      });
+
+      // Force pool open so WOs are visible immediately
+      plannerPoolOpen = true;
+      var tog = document.getElementById('pl-pool-toggle');
+      if(tog) tog.textContent = '▲';
+
+      plannerSave(); plannerRender();
+
+      // Scroll pool into view after render
+      setTimeout(function(){
+        var pool = document.getElementById('pl-pool');
+        if(pool) pool.scrollIntoView({behavior:'smooth', block:'start'});
+      }, 150);
+
+      var msg = added + ' WOs loaded';
+      if(updated) msg += ', ' + updated + ' updated';
+      var hotCount = plannerWOs.filter(function(w){return w.priority==='hot';}).length;
+      var highCount = plannerWOs.filter(function(w){return w.priority==='high';}).length;
+      if(window.showToast){
+        showToast('green', msg, '🔴 '+hotCount+' HOT  🟠 '+highCount+' HIGH — assign from pool below');
+      }
+    };
+    reader.readAsText(file);
+    input.value='';
+  };
+
+  // Load on startup
+  plannerLoad();
+})();
+</script>
+
+<!-- CHIP TAP ACTION SHEET -->
+<style>
+#pl-chip-overlay { position:fixed;inset:0;z-index:4000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.6);padding-bottom:env(safe-area-inset-bottom,0px); }
+#pl-chip-overlay.open { display:flex; }
+.pl-chip-sheet { background:#0f2338;border:1px solid #2a5a8c;border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px 20px 32px;box-shadow:0 -8px 40px rgba(0,0,0,0.6); }
+.pl-chip-handle { width:40px;height:4px;background:#2a5a8c;border-radius:2px;margin:0 auto 16px; }
+.pl-chip-wo { font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:#f5c500;margin-bottom:2px; }
+.pl-chip-info { font-size:12px;color:#475569;letter-spacing:1px;margin-bottom:6px; }
+.pl-chip-hint { font-size:11px;color:#334155;margin-bottom:20px;line-height:1.5; }
+.pl-chip-actions { display:flex;flex-direction:column;gap:10px; }
+.pl-chip-btn { width:100%;padding:15px;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;border:none;text-align:center;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px; }
+.pl-chip-btn.unschedule { background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60a5fa; }
+.pl-chip-btn.unschedule:active { background:rgba(59,130,246,0.3); }
+.pl-chip-btn.edit { background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#f59e0b; }
+.pl-chip-btn.edit:active { background:rgba(245,158,11,0.3); }
+.pl-chip-btn.del { background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.2);color:#475569;font-size:13px;padding:10px; }
+.pl-chip-btn.del:active { background:rgba(239,68,68,0.18);color:#f87171; }
+.pl-chip-btn.cancel { background:rgba(255,255,255,0.05);border:1px solid #1e3a5f;color:#475569;margin-top:4px; }
+.pl-chip-divider { border:none;border-top:1px solid #1e3a5f;margin:4px 0; }
+</style>
+<div id="pl-chip-overlay" onclick="if(event.target===this)plannerCloseChip()">
+  <div class="pl-chip-sheet">
+    <div class="pl-chip-handle"></div>
+    <div class="pl-chip-wo" id="pl-chip-title">—</div>
+    <div class="pl-chip-info" id="pl-chip-sub">—</div>
+    <div class="pl-chip-hint">Moving to another machine? Use <strong style="color:#60a5fa;">Move to Pool</strong> — the job stays in your database and can be reassigned anytime.</div>
+    <div class="pl-chip-actions">
+      <button class="pl-chip-btn unschedule" id="pl-chip-unschedule" onclick="plannerChipUnschedule()">
+        <span>↩</span> MOVE TO POOL — REASSIGN LATER
+      </button>
+      <button class="pl-chip-btn edit" id="pl-chip-edit" onclick="plannerChipEdit()">
+        <span>✏️</span> EDIT / CHANGE MACHINE OR DATE
+      </button>
+      <hr class="pl-chip-divider">
+      <button class="pl-chip-btn del" id="pl-chip-delete" onclick="plannerChipDelete()">
+        🗑 Remove permanently from database
+      </button>
+      <button class="pl-chip-btn cancel" onclick="plannerCloseChip()">CANCEL</button>
+    </div>
+  </div>
+</div>
+<div id="page-shoptv" style="display:none;position:fixed;inset:0;z-index:8000;background:#00050f;flex-direction:column;overflow:hidden;">
+  <div class="stv-header">
+    <div style="display:flex;align-items:center;">
+      <div class="stv-logo-bar"></div>
+      <div>
+        <div class="stv-company">Hill Manufacturing · Powered by Datanomix</div>
+        <div class="stv-title">Shop Floor — Live Status</div>
+      </div>
+    </div>
+    <div class="stv-header-center">
+      <div class="stv-slide-label" id="stvSlideLabel">—</div>
+      <div class="stv-dots" id="stvDots"></div>
+    </div>
+    <div>
+      <div class="stv-clock" id="stvClock">--:--</div>
+      <div class="stv-date" id="stvDate"></div>
+    </div>
+  </div>
+  <div class="stv-controls">
+    <span class="stv-ctrl-lbl">VIEW:</span>
+    <button class="stv-ctrl-btn active" id="stv-view-cell" onclick="setStvView('cell',this)">BY CELL</button>
+    <button class="stv-ctrl-btn" id="stv-view-priority" onclick="setStvView('priority',this)">PRIORITY FIRST</button>
+    <button class="stv-ctrl-btn" id="stv-view-all" onclick="setStvView('all',this)">ALL MACHINES</button>
+    <div style="width:1px;height:18px;background:#1a4a8c;margin:0 2px;"></div>
+    <span class="stv-ctrl-lbl">SPEED:</span>
+    <input type="range" class="stv-speed-range" id="stvSpeed" min="5" max="30" value="12" oninput="setStvSpeed(this.value)">
+    <span class="stv-speed-val" id="stvSpeedVal">12s</span>
+    <div class="stv-prog-bar"><div class="stv-prog-fill" id="stvProg"></div></div>
+    <button class="stv-pause-btn" id="stvPauseBtn" onclick="toggleStvPause()">⏸ PAUSE</button>
+    <div style="display:flex;align-items:center;gap:5px;background:rgba(245,197,0,0.06);border:1px solid rgba(245,197,0,0.15);border-radius:6px;padding:3px 8px;">
+      <div class="stv-dnx-dot" id="stvDnxDot"></div>
+      <span style="font-size:10px;color:#64748b;letter-spacing:1px;font-family:'Bebas Neue',sans-serif;">DATANOMIX</span>
+    </div>
+    <button class="stv-exit-btn" onclick="switchTab('shop')">✕ EXIT</button>
+  </div>
+  <div class="stv-stage" id="stvStage"></div>
+</div>
+
+<!-- STV MACHINE DETAIL MODAL -->
+<div class="stv-modal-overlay" id="stvMachineModal" onclick="closeStvModal(event)">
+  <div class="stv-modal" id="stvMachineModalContent">
+    <div class="stv-modal-header">
+      <div>
+        <div class="stv-modal-name" id="stvModalName">—</div>
+        <div class="stv-modal-cell" id="stvModalCell">—</div>
+      </div>
+      <button class="stv-modal-close" onclick="closeStvModal()">&times;</button>
+    </div>
+    <div class="stv-modal-body" id="stvModalBody"></div>
+  </div>
+</div>
+
+<!-- MANAGEMENT PAGE -->
+<div id="page-mgmt" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:500;background:#080f1d;flex-direction:column;overflow:hidden;">
+
+  <!-- Sub-tabs — sits right at the top of the panel, which is positioned below app nav via JS -->
+  <div id="mgmt-tabs" style="display:flex;background:#0a1525;border-bottom:2px solid #1e3a5f;flex-shrink:0;">
+    <button id="mgmt-tab-group" onclick="mgmtView('group')"
+      style="flex:1;padding:14px 4px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;border:none;border-bottom:3px solid #f59e0b;background:rgba(245,158,11,0.12);color:#f59e0b;cursor:pointer;">
+      &#x1F4AC; GROUP
+    </button>
+    <button id="mgmt-tab-dms" onclick="mgmtView('dms')"
+      style="flex:1;padding:14px 4px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;border:none;border-bottom:3px solid transparent;background:transparent;color:#64748b;cursor:pointer;border-left:1px solid #1e3a5f;">
+      &#x2709; MESSAGES
+    </button>
+    <button id="mgmt-tab-video" onclick="mgmtView('video')"
+      style="flex:1;padding:14px 4px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;border:none;border-bottom:3px solid transparent;background:transparent;color:#64748b;cursor:pointer;border-left:1px solid #1e3a5f;">
+      &#x1F4F9; VIDEO
+    </button>
+    <button id="mgmt-tab-schedule" onclick="mgmtView('schedule')"
+      style="flex:1;padding:14px 4px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;border:none;border-bottom:3px solid transparent;background:transparent;color:#64748b;cursor:pointer;border-left:1px solid #1e3a5f;">
+      &#x1F4C5; SCHEDULE
+    </button>
+  </div>
+
+  <!-- GROUP CHAT panel -->
+  <div id="mgmt-group" style="display:flex;flex-direction:column;position:absolute;left:0;right:0;bottom:0;">
+    <div id="mgmt-messages" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 16px;display:flex;flex-direction:column;gap:6px;">
+      <div style="text-align:center;color:#334155;font-size:12px;padding:24px 0;font-family:Barlow,sans-serif;">&#x1F512; Group chat — managers only</div>
+    </div>
+    <div id="mgmt-photo-preview" style="display:none;padding:6px 16px;background:#0a1525;">
+      <div style="position:relative;display:inline-block;">
+        <img id="mgmt-preview-img" style="max-height:80px;border-radius:8px;" />
+        <button onclick="clearMgmtPhoto()" style="position:absolute;top:-6px;right:-6px;background:#ef4444;border:none;color:#fff;border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;line-height:1;">&#x2715;</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;padding:10px 14px;background:#0a1525;border-top:1px solid #1e3a5f;flex-shrink:0;align-items:flex-end;">
+      <label style="cursor:pointer;color:#64748b;font-size:22px;flex-shrink:0;padding-bottom:3px;">
+        &#x1F4F7;<input type="file" id="mgmt-photo-input" accept="image/*" style="display:none;" onchange="mgmtPhotoSelected(this)">
+      </label>
+      <textarea id="mgmt-msg-input" placeholder="Message the group..." rows="1"
+        style="flex:1;background:#1e3a5f;border:1px solid #2a5a8c;color:#f0f4f8;border-radius:14px;padding:10px 14px;font-family:Barlow,sans-serif;font-size:14px;resize:none;outline:none;max-height:100px;overflow-y:auto;"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px';"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMgmtMessage();}"></textarea>
+      <button onclick="sendMgmtMessage()" style="background:#f59e0b;border:none;color:#0f2338;border-radius:50%;width:42px;height:42px;font-size:20px;cursor:pointer;flex-shrink:0;">&#x27A4;</button>
+    </div>
+  </div>
+
+  <!-- MESSAGES / DMs panel -->
+  <div id="mgmt-dms" style="display:none;flex-direction:column;position:absolute;left:0;right:0;bottom:0;">
+    <!-- Person list -->
+    <div id="mgmt-dm-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#475569;margin-bottom:14px;">SELECT SOMEONE TO MESSAGE</div>
+      <div id="mgmt-managers-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+    <!-- DM thread (slides over list) -->
+    <div id="mgmt-dm-thread" style="display:none;flex-direction:column;position:absolute;top:0;left:0;right:0;bottom:0;background:#080f1d;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#0a1525;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+        <button onclick="closeDmThread()" style="background:none;border:none;color:#f59e0b;font-size:28px;cursor:pointer;padding:0;line-height:1;">&#x2039;</button>
+        <div style="flex:1;">
+          <div id="mgmt-dm-name" style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:#f0f4f8;"></div>
+          <div id="mgmt-dm-role" style="font-size:11px;color:#64748b;"></div>
+        </div>
+        <button onclick="callCurrentDmUser()" style="background:#15502a;border:1px solid #22c55e;color:#4ade80;border-radius:10px;padding:8px 14px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">&#x1F4F9; CALL</button>
+      </div>
+      <div id="mgmt-dm-messages" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px;display:flex;flex-direction:column;gap:4px;"></div>
+      <div style="display:flex;gap:8px;padding:10px 14px;background:#0a1525;border-top:1px solid #1e3a5f;flex-shrink:0;align-items:flex-end;">
+        <textarea id="mgmt-dm-input" placeholder="Direct message..." rows="1"
+          style="flex:1;background:#1e3a5f;border:1px solid #2a5a8c;color:#f0f4f8;border-radius:14px;padding:10px 14px;font-family:Barlow,sans-serif;font-size:14px;resize:none;outline:none;max-height:100px;"
+          oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px';"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendDmMessage();}"></textarea>
+        <button onclick="sendDmMessage()" style="background:#f59e0b;border:none;color:#0f2338;border-radius:50%;width:42px;height:42px;font-size:20px;cursor:pointer;flex-shrink:0;">&#x27A4;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIDEO panel -->
+  <div id="mgmt-video" style="display:none;flex-direction:column;position:absolute;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <div id="mgmt-video-start" style="padding:20px 16px;">
+      <!-- Group call -->
+      <div style="background:linear-gradient(135deg,#0d2a1a,#15502a);border:1px solid #22c55e;border-radius:14px;padding:18px;margin-bottom:18px;display:flex;align-items:center;gap:14px;">
+        <div style="width:50px;height:50px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">&#x1F465;</div>
+        <div style="flex:1;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:#4ade80;">GROUP CALL</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">Open call — anyone can join</div>
+        </div>
+        <button onclick="startGroupVideoCall()" style="background:#22c55e;border:none;color:#fff;border-radius:10px;padding:12px 16px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;flex-shrink:0;">START</button>
+      </div>
+      <!-- Individual list -->
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#475569;margin-bottom:12px;">CALL AN INDIVIDUAL</div>
+      <div id="mgmt-call-picker" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="color:#475569;font-size:13px;font-family:Barlow,sans-serif;padding:10px 0;">Loading contacts...</div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- SCHEDULE / CALENDAR panel -->
+  <div id="mgmt-schedule" style="display:none;flex-direction:column;position:absolute;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+
+    <!-- Month header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:#0a1525;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+      <button onclick="scheduleChangeMonth(-1)" style="background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;color:#f0f4f8;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;">&#8249;</button>
+      <div id="schedule-month-label" style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f59e0b;"></div>
+      <button onclick="scheduleChangeMonth(1)" style="background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;color:#f0f4f8;border-radius:8px;width:36px;height:36px;font-size:18px;cursor:pointer;">&#8250;</button>
+    </div>
+
+    <!-- Day-of-week headers -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#0a1525;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+      <div style="text-align:center;padding:6px 0;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:#475569;">SUN</div>
+      <div style="text-align:center;padding:6px 0;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:#475569;">MON</div>
+      <div style="text-align:center;padding:6px 0;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:#475569;">TUE</div>
+      <div style="text-align:center;padding:6px 0;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:#475569;">WED</div>
+      <div style="text-align:center;padding:6px 0;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:#475569;">THU</div>
+      <div style="text-align:center;padding:6px 0;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:#475569;">FRI</div>
+      <div style="text-align:center;padding:6px 0;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:#475569;">SAT</div>
+    </div>
+
+    <!-- Calendar grid -->
+    <div id="schedule-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:#1e3a5f;flex-shrink:0;"></div>
+
+    <!-- Upcoming events list -->
+    <div style="padding:16px 16px 8px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#475569;">UPCOMING EVENTS</div>
+    <div id="schedule-events-list" style="padding:0 16px 80px;display:flex;flex-direction:column;gap:8px;"></div>
+
+    <!-- Add event FAB -->
+    <button onclick="openScheduleModal()" style="position:fixed;bottom:24px;right:20px;background:#f59e0b;border:none;color:#0f2338;border-radius:50%;width:56px;height:56px;font-size:26px;cursor:pointer;box-shadow:0 4px 20px rgba(245,158,11,0.5);z-index:600;display:none;" id="schedule-fab">+</button>
+  </div>
+
+  <!-- ADD EVENT MODAL -->
+  <div id="schedule-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeScheduleModal()">
+    <div style="background:#0f2338;border:1px solid #2a5a8c;border-radius:16px;padding:24px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.7);">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f59e0b;margin-bottom:4px;">&#x1F4C5; NEW EVENT</div>
+      <div style="font-size:12px;color:#475569;margin-bottom:20px;letter-spacing:1px;">Saved to all managers · Pushover alert sent</div>
+
+      <!-- Event type -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        <button class="sched-type-btn" onclick="selectSchedType(this,'meeting')"    data-type="meeting"    style="padding:10px;border-radius:10px;border:2px solid #3b82f6;background:rgba(59,130,246,0.15);color:#93c5fd;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">&#x1F91D; MEETING</button>
+        <button class="sched-type-btn" onclick="selectSchedType(this,'reminder')"   data-type="reminder"   style="padding:10px;border-radius:10px;border:2px solid #f59e0b;background:rgba(245,158,11,0.08);color:#fbbf24;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">&#x23F0; REMINDER</button>
+        <button class="sched-type-btn" onclick="selectSchedType(this,'training')"   data-type="training"   style="padding:10px;border-radius:10px;border:2px solid #22c55e;background:rgba(34,197,94,0.08);color:#4ade80;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">&#x1F4DA; TRAINING</button>
+        <button class="sched-type-btn" onclick="selectSchedType(this,'deadline')"   data-type="deadline"   style="padding:10px;border-radius:10px;border:2px solid #ef4444;background:rgba(239,68,68,0.08);color:#f87171;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">&#x26A0; DEADLINE</button>
+      </div>
+
+      <input id="sched-title" placeholder="Event title (e.g. Monday Team Meeting)" maxlength="80"
+        style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;border-radius:8px;padding:10px 14px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:14px;margin-bottom:10px;outline:none;box-sizing:border-box;">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <div style="font-size:11px;color:#64748b;letter-spacing:1px;margin-bottom:4px;">DATE</div>
+          <input id="sched-date" type="date"
+            style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:14px;outline:none;box-sizing:border-box;color-scheme:dark;">
+        </div>
+        <div>
+          <div style="font-size:11px;color:#64748b;letter-spacing:1px;margin-bottom:4px;">TIME</div>
+          <input id="sched-time" type="time"
+            style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:14px;outline:none;box-sizing:border-box;color-scheme:dark;">
+        </div>
+      </div>
+
+      <textarea id="sched-notes" rows="3" placeholder="Notes or agenda (optional)"
+        style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;border-radius:8px;padding:10px 14px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:13px;resize:none;outline:none;margin-bottom:16px;box-sizing:border-box;"></textarea>
+
+      <!-- Notify options -->
+      <div style="font-size:11px;color:#64748b;letter-spacing:1px;margin-bottom:8px;">PUSHOVER REMINDER</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;" id="sched-remind-btns">
+        <button class="sched-remind-btn active-remind" onclick="selectRemind(this,'0')"   data-val="0"   style="padding:7px 12px;border-radius:20px;border:1px solid #f59e0b;background:rgba(245,158,11,0.15);color:#f59e0b;font-size:11px;font-weight:700;cursor:pointer;">AT TIME</button>
+        <button class="sched-remind-btn"               onclick="selectRemind(this,'15')"  data-val="15"  style="padding:7px 12px;border-radius:20px;border:1px solid #2a5a8c;background:transparent;color:#64748b;font-size:11px;font-weight:700;cursor:pointer;">15 MIN</button>
+        <button class="sched-remind-btn"               onclick="selectRemind(this,'30')"  data-val="30"  style="padding:7px 12px;border-radius:20px;border:1px solid #2a5a8c;background:transparent;color:#64748b;font-size:11px;font-weight:700;cursor:pointer;">30 MIN</button>
+        <button class="sched-remind-btn"               onclick="selectRemind(this,'60')"  data-val="60"  style="padding:7px 12px;border-radius:20px;border:1px solid #2a5a8c;background:transparent;color:#64748b;font-size:11px;font-weight:700;cursor:pointer;">1 HR</button>
+        <button class="sched-remind-btn"               onclick="selectRemind(this,'1440')" data-val="1440" style="padding:7px 12px;border-radius:20px;border:1px solid #2a5a8c;background:transparent;color:#64748b;font-size:11px;font-weight:700;cursor:pointer;">1 DAY</button>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button onclick="closeScheduleModal()" style="flex:1;padding:13px;background:rgba(255,255,255,0.06);border:1px solid #2a5a8c;color:#94a3b8;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;">CANCEL</button>
+        <button onclick="saveScheduleEvent()" style="flex:2;padding:13px;background:#f59e0b;border:none;color:#0f2338;border-radius:10px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;font-weight:900;">SAVE &amp; NOTIFY</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ═══════════════════════════════════════════════════════════
+     INSPECTIONS DATABASE PAGE
+════════════════════════════════════════════════════════════ -->
+<style>
+.insp-stat-card { background:#0d1f35; border-radius:12px; padding:14px; text-align:center; border:1px solid rgba(239,68,68,0.25); }
+.insp-stat-num  { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#f87171; line-height:1; }
+.insp-stat-lbl  { font-size:10px; color:#475569; letter-spacing:1.5px; text-transform:uppercase; margin-top:4px; }
+.insp-row { background:#0d1f35; border:1px solid rgba(239,68,68,0.15); border-left:4px solid #ef4444; border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+.insp-row.resolved { border-left-color:#22c55e; opacity:.75; }
+.insp-row-top { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+.insp-machine { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:1.5px; color:#f5d050; }
+.insp-wo { font-family:'Bebas Neue',sans-serif; font-size:15px; color:#f87171; letter-spacing:1px; }
+.insp-time { font-size:11px; color:#334155; margin-left:auto; white-space:nowrap; }
+.insp-detail { font-size:12px; color:#94a3b8; margin-top:3px; }
+.insp-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; letter-spacing:1px; }
+.insp-badge.open     { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+.insp-badge.resolved { background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); }
+.insp-resolve-btn { font-size:11px; padding:4px 12px; border-radius:6px; border:1px solid rgba(34,197,94,0.4); background:rgba(34,197,94,0.1); color:#4ade80; cursor:pointer; font-weight:700; margin-left:auto; white-space:nowrap; }
+.insp-filter-btn { padding:6px 14px; border-radius:20px; border:1px solid #1a4a8c; background:rgba(255,255,255,0.04); color:#64748b; font-size:12px; font-weight:700; letter-spacing:1px; cursor:pointer; white-space:nowrap; transition:all .2s; }
+.insp-filter-btn.active { background:rgba(239,68,68,0.15); border-color:#ef4444; color:#f87171; }
+.insp-filter-btn.active-green { background:rgba(34,197,94,0.15); border-color:#22c55e; color:#4ade80; }
+.insp-filter-btn.active-all { background:rgba(245,158,11,0.15); border-color:#f59e0b; color:#f59e0b; }
+</style>
+
+<div id="page-inspections" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
+  <div style="padding:14px;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f87171;">🔴 INSPECTION LOG</div>
+      <div style="flex:1;"></div>
+      <button onclick="exportInspectionsCSV()" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:#4ade80;border-radius:8px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📥 EXPORT CSV</button>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;" id="insp-stats"></div>
+
+    <!-- Period filter -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+      <button class="insp-filter-btn active-all active" onclick="setInspPeriod('all',this)">ALL TIME</button>
+      <button class="insp-filter-btn" onclick="setInspPeriod('today',this)">TODAY</button>
+      <button class="insp-filter-btn" onclick="setInspPeriod('week',this)">THIS WEEK</button>
+      <button class="insp-filter-btn" onclick="setInspPeriod('month',this)">THIS MONTH</button>
+    </div>
+
+    <!-- Status + search filters -->
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+      <button class="insp-filter-btn active-all active" onclick="setInspStatus('all',this)" id="insp-f-all">ALL</button>
+      <button class="insp-filter-btn" onclick="setInspStatus('open',this)" id="insp-f-open">🔴 OPEN</button>
+      <button class="insp-filter-btn active-green" onclick="setInspStatus('resolved',this)" id="insp-f-resolved" style="background:transparent;border-color:#1a4a8c;color:#64748b;">✅ RESOLVED</button>
+      <div style="flex:1;"></div>
+      <input id="insp-search" type="text" placeholder="Search machine, WO, operator…"
+        oninput="renderInspections()"
+        style="background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:8px;padding:7px 12px;color:#f0f4f8;font-family:Barlow,sans-serif;font-size:13px;outline:none;min-width:180px;color-scheme:dark;">
+    </div>
+
+    <!-- Machine filter -->
+    <div id="insp-machine-filters" style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;"></div>
+
+    <!-- Records list -->
+    <div id="insp-list"></div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  var inspRecords  = [];
+  var inspPeriod   = 'all';
+  var inspStatus   = 'all';
+  var inspMachine  = 'all';
+  var inspLoaded   = false;
+
+  window.loadInspections = function() {
+    if(!window._db || !window._fbModules){ setTimeout(window.loadInspections, 800); return; }
+    var mods = window._fbModules, db2 = window._db;
+    // Load from both hillInspections (permanent archive) and hillRequests (red type)
+    Promise.all([
+      mods.getDocs(mods.query(mods.collection(db2,'hillInspections'), mods.orderBy('createdAt','desc'))),
+      mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('type','==','red'), mods.orderBy('createdAt','desc')))
+    ]).then(function(results){
+      var seen = new Set();
+      inspRecords = [];
+      // Merge both sources, deduplicate by WO+machine+timestamp
+      results.forEach(function(snap){
+        snap.forEach(function(d){
+          var r = d.data(); r.id = d.id;
+          // Dedup key: wo + machine + seconds
+          var dk = (r.wo||'') + '|' + (r.machine||'') + '|' + (r.createdAt ? r.createdAt.seconds : '');
+          if(!seen.has(dk)){ seen.add(dk); inspRecords.push(r); }
+        });
+      });
+      // Sort by date desc
+      inspRecords.sort(function(a,b){
+        var ta = a.createdAt ? a.createdAt.seconds : 0;
+        var tb = b.createdAt ? b.createdAt.seconds : 0;
+        return tb - ta;
+      });
+      inspLoaded = true;
+      renderInspections();
+      updateInspBadge();
+    }).catch(function(e){ console.warn('loadInspections:', e); });
+  };
+
+  function getInspPeriodStart() {
+    var now = new Date();
+    if(inspPeriod === 'today'){ var d=new Date(now); d.setHours(0,0,0,0); return d; }
+    if(inspPeriod === 'week') { var d=new Date(now); d.setDate(d.getDate()-d.getDay()); d.setHours(0,0,0,0); return d; }
+    if(inspPeriod === 'month'){ return new Date(now.getFullYear(), now.getMonth(), 1); }
+    return new Date(0);
+  }
+
+  window.setInspPeriod = function(p, btn) {
+    inspPeriod = p;
+    document.querySelectorAll('.insp-filter-btn').forEach(function(b){ b.classList.remove('active','active-all','active-green'); });
+    if(btn){ btn.classList.add('active','active-all'); }
+    renderInspections();
+  };
+  window.setInspStatus = function(s, btn) {
+    inspStatus = s;
+    ['insp-f-all','insp-f-open','insp-f-resolved'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el){ el.classList.remove('active','active-all','active-green'); el.style.background='transparent'; el.style.borderColor='#1a4a8c'; el.style.color='#64748b'; }
+    });
+    if(btn){
+      btn.style.background = s==='resolved'?'rgba(34,197,94,0.15)':s==='open'?'rgba(239,68,68,0.15)':'rgba(245,158,11,0.15)';
+      btn.style.borderColor= s==='resolved'?'#22c55e':s==='open'?'#ef4444':'#f59e0b';
+      btn.style.color      = s==='resolved'?'#4ade80':s==='open'?'#f87171':'#f59e0b';
+    }
+    renderInspections();
+  };
+  window.setInspMachine = function(m, btn) {
+    inspMachine = m;
+    document.querySelectorAll('.insp-mf-btn').forEach(function(b){ b.style.background='rgba(255,255,255,0.04)'; b.style.borderColor='#1a4a8c'; b.style.color='#64748b'; });
+    if(btn){ btn.style.background='rgba(239,68,68,0.15)'; btn.style.borderColor='#ef4444'; btn.style.color='#f87171'; }
+    renderInspections();
+  };
+
+  window.resolveInspection = function(id) {
+    var r = inspRecords.find(function(x){ return x.id===id; });
+    if(!r) return;
+    if(!window._db||!window._fbModules) return;
+    var mods=window._fbModules, db2=window._db;
+    var updates = { resolved: true, resolvedAt: mods.serverTimestamp(), resolvedBy: window.currentUser||'Admin' };
+    // Update in both collections
+    mods.updateDoc(mods.doc(db2,'hillInspections',id), updates).catch(function(){});
+    mods.updateDoc(mods.doc(db2,'hillRequests',id), updates).catch(function(){});
+    r.resolved = true; r.resolvedBy = window.currentUser||'Admin';
+    renderInspections();
+    if(window.showToast) showToast('green','Inspection resolved','WO '+r.wo+' on '+r.machine);
+  };
+
+  window.renderInspections = function() {
+    if(!inspLoaded) return;
+    var start   = getInspPeriodStart();
+    var search  = (document.getElementById('insp-search')||{}).value||'';
+    var sq      = search.toLowerCase();
+
+    var filtered = inspRecords.filter(function(r){
+      var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : new Date(0);
+      if(ts < start) return false;
+      if(inspStatus === 'open'     && r.resolved) return false;
+      if(inspStatus === 'resolved' && !r.resolved) return false;
+      if(inspMachine !== 'all' && r.machine !== inspMachine) return false;
+      if(sq && !( (r.machine||'').toLowerCase().includes(sq) || (r.wo||'').toLowerCase().includes(sq) || (r.operator||'').toLowerCase().includes(sq) || (r.detail||'').toLowerCase().includes(sq) )) return false;
+      return true;
+    });
+
+    // Stats
+    var total    = filtered.length;
+    var open     = filtered.filter(function(r){ return !r.resolved; }).length;
+    var resolved = filtered.filter(function(r){ return  r.resolved; }).length;
+    var machines = {};
+    filtered.forEach(function(r){ machines[r.machine||'?']=(machines[r.machine||'?']||0)+1; });
+    var topMachine = Object.entries(machines).sort(function(a,b){return b[1]-a[1];})[0];
+    var sb = document.getElementById('insp-stats');
+    if(sb) sb.innerHTML =
+      '<div class="insp-stat-card"><div class="insp-stat-num">'+total+'</div><div class="insp-stat-lbl">Total</div></div>'
+      +'<div class="insp-stat-card" style="border-color:rgba(239,68,68,0.4)"><div class="insp-stat-num" style="color:#f87171;">'+open+'</div><div class="insp-stat-lbl">🔴 Open</div></div>'
+      +'<div class="insp-stat-card" style="border-color:rgba(34,197,94,0.3)"><div class="insp-stat-num" style="color:#4ade80;">'+resolved+'</div><div class="insp-stat-lbl">✅ Resolved</div></div>'
+      +'<div class="insp-stat-card" style="border-color:rgba(245,158,11,0.3)"><div class="insp-stat-num" style="color:#f59e0b;font-size:18px;">'+(topMachine?topMachine[0]:'—')+'</div><div class="insp-stat-lbl">Most frequent</div></div>';
+
+    // Machine filters
+    var mf = document.getElementById('insp-machine-filters');
+    if(mf) {
+      var allMachines = {};
+      inspRecords.filter(function(r){ var ts=r.createdAt?new Date(r.createdAt.seconds*1000):new Date(0); return ts>=start; })
+        .forEach(function(r){ allMachines[r.machine||'?']=(allMachines[r.machine||'?']||0)+1; });
+      var html = '<button class="insp-filter-btn insp-mf-btn" onclick="setInspMachine(\'all\',this)" style="'+(inspMachine==='all'?'background:rgba(239,68,68,0.15);border-color:#ef4444;color:#f87171;':'')+'">ALL MACHINES</button>';
+      Object.entries(allMachines).sort(function(a,b){return b[1]-a[1];}).forEach(function(e){
+        html += '<button class="insp-filter-btn insp-mf-btn" onclick="setInspMachine(\''+e[0]+'\',this)" style="'+(inspMachine===e[0]?'background:rgba(239,68,68,0.15);border-color:#ef4444;color:#f87171;':'')+'">'+e[0]+' <span style="opacity:.5;font-size:10px;">('+e[1]+')</span></button>';
+      });
+      mf.innerHTML = html;
+    }
+
+    // Records list
+    var list = document.getElementById('insp-list');
+    if(!list) return;
+    if(filtered.length === 0){
+      list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#334155;font-size:13px;">No inspection records found for this filter.</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(function(r){
+      var ts  = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
+      var tStr= ts ? ts.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—';
+      var resTs = r.resolvedAt ? new Date(r.resolvedAt.seconds*1000) : null;
+      var resTStr = resTs ? resTs.toLocaleDateString([],{month:'short',day:'numeric'})+' '+resTs.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : null;
+      return '<div class="insp-row'+(r.resolved?' resolved':'')+'">'
+        +'<div class="insp-row-top">'
+          +'<div class="insp-machine">'+escHtml(r.machine||'—')+'</div>'
+          +'<div class="insp-wo">WO: '+escHtml(r.wo||'—')+'</div>'
+          +'<span class="insp-badge '+(r.resolved?'resolved':'open')+'">'+(r.resolved?'✅ RESOLVED':'🔴 OPEN')+'</span>'
+          +'<div class="insp-time">'+tStr+'</div>'
+        +'</div>'
+        +'<div class="insp-detail">'
+          +(r.cell?'<span style="color:#475569;">'+escHtml(r.cell)+'</span> · ':'')
+          +(r.operator?'👤 '+escHtml(r.operator)+' · ':'')
+          +(r.detail?escHtml(r.detail):'No notes')
+        +'</div>'
+        +(r.resolved && resTStr ? '<div style="font-size:10px;color:#4ade80;margin-top:4px;">Resolved '+resTStr+(r.resolvedBy?' by '+escHtml(r.resolvedBy):'')+'</div>' : '')
+        +(!r.resolved ? '<div style="margin-top:8px;"><button class="insp-resolve-btn" onclick="resolveInspection(\''+r.id+'\')">✅ MARK RESOLVED</button></div>' : '')
+        +'</div>';
+    }).join('');
+  };
+
+  // Update badge count on the tab
+  function updateInspBadge() {
+    var open = inspRecords.filter(function(r){ return !r.resolved; }).length;
+    var badge = document.getElementById('inspBadge');
+    if(badge){ badge.textContent = open; badge.style.display = open > 0 ? '' : 'none'; }
+  }
+
+  // CSV Export
+  window.exportInspectionsCSV = function() {
+    if(!inspRecords.length){ if(window.showToast) showToast('yellow','No records','Nothing to export.'); return; }
+    var rows = [['Date','Machine','Cell','WO#','Operator','Detail','Status','Resolved At','Resolved By']];
+    inspRecords.forEach(function(r){
+      var ts  = r.createdAt  ? new Date(r.createdAt.seconds*1000).toLocaleString()  : '';
+      var rts = r.resolvedAt ? new Date(r.resolvedAt.seconds*1000).toLocaleString() : '';
+      rows.push([ts, r.machine||'', r.cell||'', r.wo||'', r.operator||'', r.detail||'', r.resolved?'Resolved':'Open', rts, r.resolvedBy||'']);
+    });
+    var csv = rows.map(function(r){ return r.map(function(c){ return '"'+(c+'').replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+    var blob = new Blob([csv], {type:'text/csv'});
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url; a.download = 'Hill_Inspections_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    if(window.showToast) showToast('green', inspRecords.length+' records exported', 'Saved as CSV');
+  };
+
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LIVE FEED PAGE — visible to all employees
+════════════════════════════════════════════════════════════ -->
+<style>
+
+
+/* Downtime leaderboard */
+.lf-dt-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#0d1f35; border-radius:10px; margin-bottom:6px; border-left:4px solid #ef4444; }
+.lf-dt-rank { font-family:'Bebas Neue',sans-serif; font-size:20px; color:#334155; min-width:24px; }
+.lf-dt-name { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; color:#f5d050; flex:1; }
+.lf-dt-bar-wrap { flex:2; background:#1a3a5c; border-radius:4px; height:8px; overflow:hidden; }
+.lf-dt-bar-fill { height:100%; background:#ef4444; border-radius:4px; transition:width .5s; }
+.lf-dt-time { font-family:'Bebas Neue',sans-serif; font-size:16px; color:#f87171; min-width:48px; text-align:right; }
+
+/* OEE leaderboard */
+.lf-oee-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#0d1f35; border-radius:10px; margin-bottom:6px; }
+.lf-oee-name { font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; color:#f5d050; flex:1; }
+.lf-oee-bar-wrap { flex:2; background:#1a3a5c; border-radius:4px; height:8px; overflow:hidden; }
+.lf-oee-bar-fill { height:100%; border-radius:4px; transition:width .5s; }
+.lf-oee-val { font-family:'Bebas Neue',sans-serif; font-size:16px; min-width:48px; text-align:right; }
+</style>
+
+<!-- ═══ DATANOMIX LIVE DASHBOARD SCRIPT ═══ -->
+<script>
+(function(){
+  var DNX_KEY  = 'dnx_live_4LjcI5AjF8JO8gJyNXkH1Mf7MUmSqlY7WxbwkfVQ';
+  var DNX_BASE = 'https://hill-dnx-proxy.miguelstulsa.workers.dev/proxy';
+  var DNX_MACHINES = [
+    {name:'1050-B',cell:'Big Mill',id:253},{name:'7000',cell:'Big Mill',id:853},{name:'VF-6',cell:'Big Mill',id:1253},
+    {name:'5100-B',cell:'5100 Cell',id:753},{name:'2500',cell:'5100 Cell',id:1603},{name:'PUMA-3',cell:'5100 Cell',id:1153},
+    {name:'ST35',cell:'MPPI',id:1903},{name:'VF-3',cell:'MPPI',id:953},{name:'VF-2',cell:'MPPI',id:1553},{name:'PUMA-2',cell:'MPPI',id:3},
+    {name:'403-A',cell:'403 Cell',id:553},{name:'403-B',cell:'403 Cell',id:1003},{name:'403-C',cell:'403 Cell',id:1303},
+    {name:'5100-A',cell:'Mill/Lathe',id:653},{name:'3000-C',cell:'3000 Cell',id:1803},{name:'3000-A',cell:'3000 Cell',id:1703},
+    {name:'2G',cell:'Horizontal',id:1973},{name:'PUMA-1',cell:'Automation',id:453},{name:'303-B',cell:'Automation',id:103},
+    {name:'TWIN',cell:'Automation',id:1403},{name:'2500-Y',cell:'Automation',id:1653},
+  ];
+  var dnxData={}, dnxPeriod='today', dnxPollTimer=null;
+
+  window.dnxLoadAll = async function() {
+    var h={}, p=dnxPeriod, dt='group_by=none&shifts=all&include_days=false';
+    try {
+      var [re,ru,rd] = await Promise.all([
+        fetch(DNX_BASE+'/espresso?period='+p+'&group_name=AllMachines',{headers:h}),
+        fetch(DNX_BASE+'/uptime?period='+p+'&group_name=AllMachines',{headers:h}),
+        fetch(DNX_BASE+'/downtime?period='+p+'&group_name=AllMachines&'+dt,{headers:h}),
+      ]);
+      var te=await re.text(), tu=await ru.text(), td=await rd.text();
+      var esp=sJ(te), upt=sJ(tu), dnt=sJ(td);
+      dnxData={};
+      function merge(arr){ (arr||[]).forEach(function(m){ var id=String(m.machineId||m.id||m.machine_id||''); if(!id)return; dnxData[id]=Object.assign(dnxData[id]||{},m); }); }
+      merge(ex(esp)); merge(ex(upt));
+      ex(dnt).forEach(function(row){ var id=String(row.machineId||row.id||row.machine_id||''); if(!id)return; if(!dnxData[id])dnxData[id]={}; var m=parseFloat(row.downtimeMinutes||row.downtime_minutes||row.duration||row.minutes||0); dnxData[id]._dtMins=(dnxData[id]._dtMins||0)+m; });
+      window.dnxLiveData=window.dnxLiveData||{};
+      Object.keys(dnxData).forEach(function(k){ window.dnxLiveData[parseInt(k)]=dnxData[k]; });
+      updateDNXStatus(true);
+      var upd=document.getElementById('dnx-last-updated');
+      if(upd) upd.textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      // Show raw to admin
+      var rw=document.getElementById('dnx-raw-wrap'), rt=document.getElementById('dnx-raw-text');
+      if(rw&&rt&&window._isAdmin){ rw.style.display='block'; rt.textContent='=== ESPRESSO ===\n'+te.slice(0,2000)+'\n\n=== UPTIME ===\n'+tu.slice(0,1000)+'\n\n=== DOWNTIME ===\n'+td.slice(0,1000); }
+      renderDNXCards();
+    } catch(e){ updateDNXStatus(false); console.warn('[DNX]',e.message); }
+  };
+
+  function sJ(t){ try{return JSON.parse(t);}catch(e){return{};} }
+  function ex(d){ if(!d)return[]; if(Array.isArray(d))return d; return d.machines||d.data||d.results||d.groups||d.espresso||d.uptime||d.downtime||[]; }
+  function fmtM(m){ if(!m||m<=0)return'—'; return m>=60?(Math.round(m/6)/10)+'h':Math.round(m)+'m'; }
+  function fmtS(s){ if(!s||s<=0)return'—'; var h=Math.floor(s/3600),m=Math.floor((s%3600)/60); return h>0?h+'h '+(m>0?m+'m':''):m+'m'; }
+
+  function getStatus(id){
+    var d=(window.dnxLiveData||{})[id]||{};
+    var st=(d.state||d.machineState||d.status||d.machineStatus||d.currentState||'').toLowerCase();
+    if(st.match(/run|cut|active|machining/))return'running';
+    if(st.match(/idle|wait|ready|standby/)) return'idle';
+    if(st.match(/down|alarm|fault|error/))  return'down';
+    var util=parseFloat(d.utilization||d.utilizationPct||0);
+    if(util>5)return'running'; if(util>0)return'idle';
+    var bar=document.getElementById('perf-'+(DNX_MACHINES.find(function(m){return m.id===id;})||{}).name);
+    if(bar){ var c=bar.className; if(c.indexOf('green')>=0)return'running'; if(c.indexOf('yellow')>=0)return'idle'; if(c.indexOf('red')>=0)return'down'; }
+    return Object.keys(d).length?'running':'waiting';
+  }
+
+  function renderDNXCards(){
+    var live=window.dnxLiveData||{};
+    var counts={running:0,idle:0,down:0,waiting:0}, oeeArr=[], partsTotal=0, dtArr=[], oeeRank=[];
+    DNX_MACHINES.forEach(function(m){
+      var d=live[m.id]||{}, s=getStatus(m.id);
+      counts[s]=(counts[s]||0)+1;
+      var oee=d.oee||d.oeePct||d.oee_pct||d.oeePercent;
+      if(oee!=null){oeeArr.push(parseFloat(oee));oeeRank.push({name:m.name,cell:m.cell,oee:parseFloat(oee)});}
+      var parts=d.shiftParts||d.partsToday||d.parts_today||d.partCount||d.parts||0;
+      partsTotal+=parseInt(parts)||0;
+      var dt=parseFloat(d._dtMins||d.downtimeMinutes||d.downtime_minutes||d.downtime||0);
+      if(dt>0)dtArr.push({name:m.name,cell:m.cell,mins:dt});
+    });
+    var el;
+    if((el=document.getElementById('dnx-s-running')))el.textContent=counts.running;
+    if((el=document.getElementById('dnx-s-idle')))   el.textContent=counts.idle;
+    if((el=document.getElementById('dnx-s-down')))   el.textContent=counts.down;
+    var avgOee=oeeArr.length?Math.round(oeeArr.reduce(function(a,b){return a+b;},0)/oeeArr.length)+'%':'—';
+    if((el=document.getElementById('dnx-s-oee')))   el.textContent=avgOee;
+    if((el=document.getElementById('dnx-s-parts'))) el.textContent=partsTotal||'—';
+
+    // Machine cards
+    var cards=document.getElementById('dnx-cards');
+    if(cards){
+      var cells={},cellOrder=[];
+      DNX_MACHINES.forEach(function(m){if(!cells[m.cell]){cells[m.cell]=[];cellOrder.push(m.cell);}cells[m.cell].push(m);});
+      var html='';
+      cellOrder.forEach(function(cell){
+        html+='<div style="grid-column:1/-1;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:2px;color:#334155;padding:6px 0 3px;border-bottom:1px solid #0f1e30;margin-top:4px;">'+cell+'</div>';
+        cells[cell].forEach(function(m){
+          var d=live[m.id]||{}, s=getStatus(m.id), hasData=Object.keys(d).length>0;
+          var sc={running:'#22c55e',idle:'#eab308',down:'#ef4444',waiting:'#334155'}[s]||'#334155';
+          var sl={running:'RUNNING',idle:'IDLE',down:'DOWN',waiting:'NO DATA'}[s]||'—';
+          var bg=s==='running'?'linear-gradient(135deg,#001808,#0d1f35)':s==='down'?'linear-gradient(135deg,#1a0404,#0d1f35)':s==='idle'?'linear-gradient(135deg,#1a1000,#0d1f35)':'#0d1f35';
+          var oee=d.oee||d.oeePct||d.oee_pct; var oeeStr=oee!=null?Math.round(oee)+'%':'—';
+          var parts=d.shiftParts||d.partsToday||d.parts_today||d.partCount||d.parts; var partsStr=parts!=null?parts:'—';
+          var util=d.utilization||d.utilizationPct||d.utilization_pct; var utilStr=util!=null?Math.round(util)+'%':'—';
+          var uptime=d.uptimeSeconds||d.uptime_seconds||d.uptimeMinutes;
+          var uptStr=uptime!=null?(uptime>3600?fmtS(uptime):fmtM(parseFloat(uptime))):'—';
+          var dt=parseFloat(d._dtMins||d.downtimeMinutes||d.downtime||0);
+          var oeeC=oeeStr==='—'?'#94a3b8':(parseInt(oeeStr)>=75?'#22c55e':parseInt(oeeStr)>=50?'#eab308':'#ef4444');
+          var utilPct=util!=null?Math.min(100,Math.round(parseFloat(util))):s==='running'?70:s==='idle'?15:0;
+          var bar=document.getElementById('perf-'+m.name);
+          var perfLabel=bar?bar.getAttribute('data-label')||'':'';
+          var job=d.jobName||d.job_name||d.job||d.currentJob||d.programName||'';
+          html+='<div style="background:'+bg+';border-radius:12px;border:1px solid #1e3a5f;border-left:4px solid '+sc+';padding:12px;transition:transform .2s,box-shadow .2s;" onmouseenter="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'0 8px 28px rgba(0,0,0,.5)\'" onmouseleave="this.style.transform=\'\';this.style.boxShadow=\'\'">'
+            +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">'
+              +'<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:19px;letter-spacing:1.5px;color:#f5d050;line-height:1;">'+m.name+'</div>'
+              +'<div style="font-size:9px;color:#475569;">'+m.cell+'</div></div>'
+              +'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;background:'+sc+'22;color:'+sc+';border:1px solid '+sc+'55;">'+sl+'</span>'
+            +'</div>'
+            +(hasData&&perfLabel?'<div style="font-size:11px;color:'+sc+';font-weight:700;margin-bottom:5px;">'+perfLabel+'</div>':'')
+            +(job?'<div style="font-size:10px;color:#60a5fa;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📋 '+job+'</div>':'')
+            +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px;">'
+              +'<div style="text-align:center;background:rgba(0,0,0,.25);border-radius:7px;padding:6px 4px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:19px;color:#f5c500;line-height:1;">'+partsStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">PARTS</div></div>'
+              +'<div style="text-align:center;background:rgba(0,0,0,.25);border-radius:7px;padding:6px 4px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:19px;color:'+oeeC+';line-height:1;">'+oeeStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">OEE</div></div>'
+              +'<div style="text-align:center;background:rgba(0,0,0,.25);border-radius:7px;padding:6px 4px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:19px;color:#60a5fa;line-height:1;">'+utilStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">UTIL</div></div>'
+            +'</div>'
+            +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:7px;">'
+              +'<div style="text-align:center;padding:3px;"><div style="font-size:11px;color:#f0f4f8;">'+uptStr+'</div><div style="font-size:8px;color:#475569;">UPTIME</div></div>'
+              +'<div style="text-align:center;padding:3px;"><div style="font-size:11px;color:'+(dt>0?'#f87171':'#475569')+';">'+fmtM(dt)+'</div><div style="font-size:8px;color:#475569;">DOWNTIME</div></div>'
+            +'</div>'
+            +'<div style="background:#1a3a5c;border-radius:3px;height:5px;margin-bottom:8px;overflow:hidden;"><div style="height:100%;border-radius:3px;background:'+sc+';width:'+utilPct+'%;transition:width .6s;"></div></div>'
+            +'<a href="https://hillmanufacturing.datanomix.app/machine-hud?machineId='+m.id+'" target="_blank" style="display:block;text-align:center;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:#60a5fa;border-radius:6px;padding:4px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:1px;text-decoration:none;">FULL HUD ↗</a>'
+          +'</div>';
+        });
+      });
+      cards.innerHTML=html;
+    }
+
+    // Downtime leaderboard
+    var dtEl=document.getElementById('dnx-dt-list');
+    if(dtEl){
+      dtArr.sort(function(a,b){return b.mins-a.mins;});
+      var mx=dtArr.length?dtArr[0].mins:1;
+      dtEl.innerHTML=!dtArr.length
+        ?'<div style="text-align:center;padding:12px;color:#334155;font-size:12px;">No downtime recorded today ✅</div>'
+        :dtArr.map(function(d,i){
+          var c=d.mins>=120?'#ef4444':d.mins>=60?'#f59e0b':'#eab308';
+          return'<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0d1f35;border-radius:10px;margin-bottom:6px;border-left:4px solid '+c+';">'
+            +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;color:#334155;min-width:18px;">'+(i+1)+'</div>'
+            +'<div style="flex:1;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:#f5d050;">'+d.name+'</div><div style="font-size:9px;color:#475569;">'+d.cell+'</div></div>'
+            +'<div style="flex:2;background:#1a3a5c;border-radius:4px;height:7px;overflow:hidden;"><div style="height:100%;background:'+c+';width:'+Math.round(d.mins/mx*100)+'%;"></div></div>'
+            +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;color:'+c+';min-width:40px;text-align:right;">'+fmtM(d.mins)+'</div>'
+            +'</div>';
+        }).join('');
+    }
+
+    // OEE ranking
+    var oeeEl=document.getElementById('dnx-oee-list');
+    if(oeeEl){
+      oeeRank.sort(function(a,b){return b.oee-a.oee;});
+      oeeEl.innerHTML=!oeeRank.length
+        ?'<div style="text-align:center;padding:12px;color:#334155;font-size:12px;">Waiting for OEE data from Datanomix...</div>'
+        :oeeRank.map(function(d,i){
+          var c=d.oee>=75?'#22c55e':d.oee>=50?'#eab308':'#ef4444';
+          var medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+          return'<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:#0d1f35;border-radius:10px;margin-bottom:6px;">'
+            +'<div style="font-size:14px;min-width:22px;">'+medal+'</div>'
+            +'<div style="flex:1;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:#f5d050;">'+d.name+'</div><div style="font-size:9px;color:#475569;">'+d.cell+'</div></div>'
+            +'<div style="flex:2;background:#1a3a5c;border-radius:4px;height:7px;overflow:hidden;"><div style="height:100%;background:'+c+';width:'+Math.round(d.oee)+'%;"></div></div>'
+            +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:16px;color:'+c+';min-width:40px;text-align:right;">'+Math.round(d.oee)+'%</div>'
+            +'</div>';
+        }).join('');
+    }
+  }
+
+  window.dnxSetPeriod = function(p){
+    dnxPeriod=p;
+    ['today','yesterday'].forEach(function(v){
+      var btn=document.getElementById('dnx-period-'+v); if(!btn)return;
+      var a=v===p;
+      btn.style.background=a?'rgba(245,158,11,0.15)':'rgba(255,255,255,0.04)';
+      btn.style.borderColor=a?'#f59e0b':'#1a4a8c'; btn.style.color=a?'#f59e0b':'#64748b';
+    });
+    window.dnxLoadAll();
+  };
+
+  // Override initDNXDisplay so switching to tab triggers a fresh fetch
+  window.initDNXDisplay = function(){
+    window.dnxLoadAll();
+    if(dnxPollTimer)clearInterval(dnxPollTimer);
+    dnxPollTimer=setInterval(function(){ var pg=document.getElementById('page-datanomix'); if(pg&&pg.style.display!=='none')window.dnxLoadAll(); },120000);
+  };
+})();
+</script>
+
+<!-- ═══ MODERN VISUAL OVERHAUL ═══ -->
+<style>
+:root{--gold:#f5c842;--navy-0:#00060f;--navy-1:#050d1a;--navy-2:#091525;--navy-3:#0d1e35;--steel:#1e3450;--steel-lite:#2a4a6e;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(56,189,248,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.025) 1px,transparent 1px);background-size:40px 40px;}
+header{background:linear-gradient(135deg,var(--navy-0) 0%,var(--navy-2) 100%)!important;border-bottom:2px solid var(--gold)!important;box-shadow:0 2px 30px rgba(0,0,0,.7),0 0 40px rgba(245,200,66,.06)!important;}
+header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);pointer-events:none;}
+.logo h1{color:var(--gold)!important;text-shadow:0 0 20px rgba(245,200,66,.4);}
+.logo-badge{background:linear-gradient(135deg,#b8860b,var(--gold))!important;box-shadow:0 0 20px rgba(245,200,66,.4),0 2px 8px rgba(0,0,0,.5)!important;}
+.nav-tabs-wrap{background:var(--navy-0)!important;border-bottom:1px solid var(--steel)!important;box-shadow:0 4px 20px rgba(0,0,0,.5)!important;}
+.nav-tab{font-family:'Bebas Neue',sans-serif!important;font-size:15px!important;letter-spacing:2px!important;color:#3d5470!important;border-bottom:3px solid transparent!important;border-radius:0!important;transition:all .2s!important;}
+.nav-tab:hover{color:#64748b!important;background:rgba(255,255,255,.03)!important;}
+.nav-tab.active{color:var(--gold)!important;border-bottom-color:var(--gold)!important;background:linear-gradient(180deg,rgba(245,200,66,.06) 0%,transparent 100%)!important;text-shadow:0 0 14px rgba(245,200,66,.5)!important;box-shadow:none!important;}
+.nav-scroll-btn{background:var(--navy-0)!important;color:#3d5470!important;border-color:var(--steel)!important;}
+.dash-summary-card{background:linear-gradient(145deg,var(--navy-2),var(--navy-3))!important;border:1px solid var(--steel)!important;border-radius:12px!important;transition:transform .2s,box-shadow .2s!important;}
+.dash-summary-card:hover{transform:translateY(-2px)!important;}
+.dash-period-btn{background:var(--navy-3)!important;border:1px solid var(--steel)!important;color:#3d5470!important;border-radius:8px!important;}
+.dash-period-btn.active{background:rgba(245,200,66,.12)!important;border-color:var(--gold)!important;color:var(--gold)!important;}
+.dash-filter-btn{border-radius:999px!important;transition:all .15s!important;}
+.stv-card{background:linear-gradient(145deg,var(--navy-2),var(--navy-3))!important;border:1px solid var(--steel)!important;border-radius:12px!important;transition:all .2s!important;}
+.stv-card.s-green{border-left:4px solid #22c55e!important;background:linear-gradient(145deg,#001a08,var(--navy-3))!important;}
+.stv-card.s-yellow{border-left:4px solid #eab308!important;background:linear-gradient(145deg,#1a1000,var(--navy-3))!important;}
+.stv-card.s-red{border-left:4px solid #ef4444!important;background:linear-gradient(145deg,#1a0404,var(--navy-3))!important;}
+.stv-card:hover{transform:translateY(-2px)!important;}
+.stv-card-name{font-family:'Bebas Neue',sans-serif!important;color:var(--gold)!important;font-size:19px!important;letter-spacing:1.5px!important;}
+.auth-box{background:linear-gradient(160deg,var(--navy-0) 0%,var(--navy-2) 100%)!important;border:1px solid var(--steel-lite)!important;border-radius:18px!important;box-shadow:0 32px 80px rgba(0,0,0,.8)!important;}
+.auth-tab.active{background:var(--gold)!important;color:var(--navy-0)!important;}
+.auth-field input,.auth-field textarea{background:rgba(255,255,255,.04)!important;border:1px solid var(--steel)!important;border-radius:8px!important;transition:border-color .2s!important;}
+.auth-field input:focus{border-color:var(--gold)!important;outline:none!important;box-shadow:0 0 0 3px rgba(245,200,66,.1)!important;}
+.auth-btn{background:linear-gradient(135deg,#b8860b,var(--gold))!important;color:var(--navy-0)!important;border-radius:10px!important;font-family:'Bebas Neue',sans-serif!important;letter-spacing:2px!important;box-shadow:0 4px 16px rgba(245,200,66,.3)!important;transition:all .2s!important;border:none!important;}
+.auth-btn:hover{box-shadow:0 6px 24px rgba(245,200,66,.45)!important;transform:translateY(-1px)!important;}
+.auth-btn.secondary{background:rgba(255,255,255,.06)!important;color:#94a3b8!important;box-shadow:none!important;}
+.modal{background:linear-gradient(160deg,var(--navy-0) 0%,var(--navy-2) 100%)!important;border:1px solid var(--steel-lite)!important;border-radius:18px!important;box-shadow:0 24px 80px rgba(0,0,0,.8)!important;}
+.modal-title{color:var(--gold)!important;}
+.modal-submit{background:linear-gradient(135deg,#b8860b,var(--gold))!important;color:var(--navy-0)!important;border:none!important;box-shadow:0 4px 16px rgba(245,200,66,.25)!important;transition:all .2s!important;}
+.modal-submit:hover{box-shadow:0 6px 20px rgba(245,200,66,.4)!important;transform:translateY(-1px)!important;}
+.stv-modal-inner{background:linear-gradient(160deg,var(--navy-0) 0%,var(--navy-2) 100%)!important;border:1px solid var(--steel-lite)!important;border-radius:18px!important;box-shadow:0 24px 80px rgba(0,0,0,.7)!important;}
+.stv-modal-name{font-family:'Bebas Neue',sans-serif!important;color:var(--gold)!important;}
+.stv-modal-hud-btn{background:rgba(245,200,66,.1)!important;border:1px solid rgba(245,200,66,.3)!important;color:var(--gold)!important;font-family:'Bebas Neue',sans-serif!important;letter-spacing:2px!important;border-radius:8px!important;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--navy-0);}
+::-webkit-scrollbar-thumb{background:var(--steel);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--steel-lite);}
+.perf-bar.green{box-shadow:0 0 8px rgba(34,197,94,.5)!important;}
+.perf-bar.yellow{box-shadow:0 0 8px rgba(234,179,8,.5)!important;}
+.perf-bar.red{box-shadow:0 0 8px rgba(239,68,68,.5)!important;}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+#page-dashboard .dash-summary-card{animation:fadeSlideUp .35s ease both;}
+#page-dashboard .dash-summary-card:nth-child(2){animation-delay:.06s;}
+#page-dashboard .dash-summary-card:nth-child(3){animation-delay:.12s;}
+#page-dashboard .dash-summary-card:nth-child(4){animation-delay:.18s;}
+#page-dashboard .dash-summary-card:nth-child(5){animation-delay:.24s;}
+@media(max-width:640px){.legend{display:none!important;}.logo p{display:none!important;}}
+</style>
+</body>
 </html>
