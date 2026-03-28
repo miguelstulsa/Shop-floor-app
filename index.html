@@ -1236,8 +1236,10 @@
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
       <span id="dnx-last-updated" style="font-size:10px;color:#334155;letter-spacing:1px;"></span>
       <button onclick="window.dnxLoadAll && window.dnxLoadAll()" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 13px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">↺ REFRESH</button>
-      <button id="dnx-period-today" onclick="window.dnxSetPeriod('today')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">TODAY</button>
+      <button id="dnx-period-this_week" onclick="window.dnxSetPeriod('this_week')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">THIS WEEK</button>
       <button id="dnx-period-yesterday" onclick="window.dnxSetPeriod('yesterday')" style="background:rgba(255,255,255,0.04);border:1px solid #1a4a8c;color:#64748b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">YESTERDAY</button>
+      <button id="dnx-period-last_week" onclick="window.dnxSetPeriod('last_week')" style="background:rgba(255,255,255,0.04);border:1px solid #1a4a8c;color:#64748b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">LAST WEEK</button>
+      <button id="dnx-period-this_month" onclick="window.dnxSetPeriod('this_month')" style="background:rgba(255,255,255,0.04);border:1px solid #1a4a8c;color:#64748b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">THIS MONTH</button>
     </div>
   </div>
 
@@ -2783,7 +2785,7 @@
 
   // ── PASTE YOUR API KEY HERE WHEN YOU GET IT ──
   var DNX_API_KEY  = '';
-  var DNX_BASE_URL = 'https://hill-dnx-proxy.miguelstulsa.workers.dev/proxy';
+  var DNX_BASE_URL = 'https://api.mrsanchez.app/proxy';
   var DNX_POLL_INTERVAL = 120000; // refresh every 2 minutes (uptime is near real-time)
   var dnxPollTimer = null;
   var dnxConnected = false;
@@ -2815,15 +2817,15 @@
     if (!DNX_API_KEY) { runPerfDemo(); return; }
     try {
       var headers  = {}; // proxy handles auth
-      var base     = 'https://hill-dnx-proxy.miguelstulsa.workers.dev/proxy';
+      var base     = 'https://api.mrsanchez.app/proxy';
 
       // Fetch all 6 in parallel: espresso today+yesterday, uptime today+yesterday, downtime today+yesterday
       var [respEspToday, respEspYest, respUpToday, respUpYest, respDtToday, respDtYest] = await Promise.all([
-        fetch(base + '/espresso?period=today&group_name=AllMachines',     { headers: headers }),
+        fetch(base + '/espresso?period=this_week&group_name=AllMachines',     { headers: headers }),
         fetch(base + '/espresso?period=yesterday&group_name=AllMachines', { headers: headers }),
-        fetch(base + '/uptime?period=today&group_name=AllMachines',       { headers: headers }),
+        fetch(base + '/uptime?period=this_week&group_name=AllMachines',       { headers: headers }),
         fetch(base + '/uptime?period=yesterday&group_name=AllMachines',   { headers: headers }),
-        fetch(base + '/downtime?period=today&group_name=AllMachines&group_by=none&shifts=all&include_days=false',      { headers: headers }),
+        fetch(base + '/downtime?period=this_week&group_name=AllMachines&group_by=none&shifts=all&include_days=false',      { headers: headers }),
         fetch(base + '/downtime?period=yesterday&group_name=AllMachines&group_by=none&shifts=all&include_days=false',  { headers: headers })
       ]);
 
@@ -7202,7 +7204,7 @@ window.plannerSetView = function(view) {
 <script>
 (function(){
   var DNX_KEY  = 'dnx_live_4LjcI5AjF8JO8gJyNXkH1Mf7MUmSqlY7WxbwkfVQ';
-  var DNX_BASE = 'https://hill-dnx-proxy.miguelstulsa.workers.dev/proxy';
+  var DNX_BASE = 'https://api.mrsanchez.app/proxy';
   var DNX_MACHINES = [
     {name:'1050-B',cell:'Big Mill',id:253},{name:'7000',cell:'Big Mill',id:853},{name:'VF-6',cell:'Big Mill',id:1253},
     {name:'5100-B',cell:'5100 Cell',id:753},{name:'2500',cell:'5100 Cell',id:1603},{name:'PUMA-3',cell:'5100 Cell',id:1153},
@@ -7212,29 +7214,31 @@ window.plannerSetView = function(view) {
     {name:'2G',cell:'Horizontal',id:1973},{name:'PUMA-1',cell:'Automation',id:453},{name:'303-B',cell:'Automation',id:103},
     {name:'TWIN',cell:'Automation',id:1403},{name:'2500-Y',cell:'Automation',id:1653},
   ];
-  var dnxData={}, dnxPeriod='today', dnxPollTimer=null;
+  var dnxData={}, dnxPeriod='this_week', dnxPollTimer=null;
 
   window.dnxLoadAll = async function() {
-    var p=dnxPeriod, dt='group_by=none&shifts=all&include_days=false';
+    var h={}, p=dnxPeriod, dt='group_by=none&shifts=all&include_days=false';
     var upd=document.getElementById('dnx-last-updated');
-    if(upd) upd.textContent='Connecting to Datanomix...';
+    if(upd) upd.textContent='Fetching from Datanomix...';
     try {
-      // Simple GET with no custom headers — avoids CORS preflight entirely
+      // Try espresso first alone to diagnose
+      var testUrl = DNX_BASE+'/espresso?period='+p+'&group_name=AllMachines';
       var [re,ru,rd] = await Promise.all([
-        fetch(DNX_BASE+'/espresso?period='+p+'&group_name=AllMachines'),
+        fetch(testUrl),
         fetch(DNX_BASE+'/uptime?period='+p+'&group_name=AllMachines'),
         fetch(DNX_BASE+'/downtime?period='+p+'&group_name=AllMachines&'+dt),
       ]);
       var te=await re.text(), tu=await ru.text(), td=await rd.text();
 
-      // Show raw response to admin for field mapping
+      // Always show raw to admin so we can see what came back
       var rw=document.getElementById('dnx-raw-wrap'), rt=document.getElementById('dnx-raw-text');
       if(rw&&rt&&window._isAdmin){
         rw.style.display='block';
-        rt.textContent='Espresso HTTP '+re.status+'\nUptime HTTP '+ru.status+'\nDowntime HTTP '+rd.status+'\n\n=== ESPRESSO ===\n'+te.slice(0,3000)+'\n\n=== UPTIME ===\n'+tu.slice(0,1500)+'\n\n=== DOWNTIME ===\n'+td.slice(0,1500);
+        rt.textContent='URL: '+testUrl+'\nStatus: '+re.status+'\n\n=== ESPRESSO ===\n'+te.slice(0,3000)+'\n\n=== UPTIME ('+ru.status+') ===\n'+tu.slice(0,1000)+'\n\n=== DOWNTIME ('+rd.status+') ===\n'+td.slice(0,1000);
       }
 
-      if(!re.ok) throw new Error('HTTP '+re.status+' — '+te.slice(0,120));
+      if(!re.ok) throw new Error('Espresso HTTP '+re.status+': '+te.slice(0,100));
+
       var esp=sJ(te), upt=sJ(tu), dnt=sJ(td);
       dnxData={};
       function merge(arr){ (arr||[]).forEach(function(m){ var id=String(m.machineId||m.id||m.machine_id||''); if(!id)return; dnxData[id]=Object.assign(dnxData[id]||{},m); }); }
@@ -7385,7 +7389,7 @@ window.plannerSetView = function(view) {
 
   window.dnxSetPeriod = function(p){
     dnxPeriod=p;
-    ['today','yesterday'].forEach(function(v){
+    ['this_week','yesterday','last_week','this_month','last_month'].forEach(function(v){
       var btn=document.getElementById('dnx-period-'+v); if(!btn)return;
       var a=v===p;
       btn.style.background=a?'rgba(245,158,11,0.15)':'rgba(255,255,255,0.04)';
