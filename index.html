@@ -7424,17 +7424,11 @@ window.plannerSetView = function(view) {
 
   // Override initDNXDisplay so switching to tab triggers a fresh fetch
   window.initDNXDisplay = function(){
-    // Datanomix live fetch disabled — data delivered via Pushover alerts
     updateDNXStatus(false);
     var upd = document.getElementById('dnx-last-updated');
-    if(upd) upd.textContent = 'Data delivered via Pushover alerts every hour';
-    var cards = document.getElementById('dnx-cards');
-    if(cards) cards.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:#334155;">'
-      +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;color:#f5c500;margin-bottom:12px;">⚡ ALERTS ACTIVE</div>'
-      +'<div style="font-size:14px;color:#475569;line-height:1.8;">Your Datanomix alerts are running automatically.<br>'
-      +'Check your Pushover app for hourly machine reports.<br><br>'
-      +'<span style="color:#60a5fa;font-size:12px;">7am · 9am · 11am · 1pm · 3pm · 5pm · Mon–Fri</span></div>'
-      +'</div>';
+    if(upd) upd.textContent = 'Loading from Firebase...';
+    // Load from Firebase — no CORS issues
+    loadDNXFromFirebase();
   };
 })();
 </script>
@@ -7638,6 +7632,143 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
     window.fbFirestore = firestoreFns;
   };
 })();
+</script>
+<!-- ═══ DATANOMIX FIREBASE READER ═══ -->
+<script>
+function loadDNXFromFirebase() {
+  var upd   = document.getElementById('dnx-last-updated');
+  var cards = document.getElementById('dnx-cards');
+
+  // Wait for Firestore to be ready then read dnxLive document
+  var attempts = 0;
+  var tryLoad = setInterval(function(){
+    attempts++;
+    if(attempts > 20){ clearInterval(tryLoad); return; }
+    if(!window.fbDb || !window.fbFirestore) return;
+    clearInterval(tryLoad);
+
+    var { doc, getDoc } = window.fbFirestore;
+    getDoc(doc(window.fbDb, 'dnxLive', 'snapshot'))
+      .then(function(snap){
+        if(!snap.exists || !snap.exists()){
+          if(cards) cards.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;">'
+            +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#f5c500;margin-bottom:12px;">⚡ ALERTS ACTIVE</div>'
+            +'<div style="font-size:13px;color:#475569;line-height:1.8;">No shift data yet today.<br>First update arrives at 9am when the hourly check runs.<br><br>'
+            +'<span style="color:#60a5fa;font-size:12px;">9am · 11am · 1pm · 3pm · 5pm · Mon–Fri</span></div>'
+            +'</div>';
+          if(upd) upd.textContent = 'No data yet today — check back at 9am';
+          return;
+        }
+        renderDNXFromData(snap.data());
+      })
+      .catch(function(e){
+        console.warn('Firestore DNX read error:', e.message);
+        if(cards) cards.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:#334155;font-size:13px;">Unable to load machine data</div>';
+      });
+  }, 500);
+}
+function renderDNXFromData(data) {
+  var upd   = document.getElementById('dnx-last-updated');
+  var cards = document.getElementById('dnx-cards');
+      if(!data || !data.machines){
+        if(cards) cards.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;">'
+          +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#f5c500;margin-bottom:12px;">⚡ ALERTS ACTIVE</div>'
+          +'<div style="font-size:13px;color:#475569;line-height:1.8;">No shift data yet today.<br>First update arrives at 9am when the hourly check runs.<br><br>'
+          +'<span style="color:#60a5fa;font-size:12px;">9am · 11am · 1pm · 3pm · 5pm · Mon–Fri</span></div>'
+          +'</div>';
+        return;
+      }
+
+      var machines = Object.values(data.machines);
+      var running  = machines.filter(function(m){ return m.running; });
+      var winning  = running.filter(function(m){ return m.win; });
+      var losing   = running.filter(function(m){ return !m.win; });
+      var totalParts = running.reduce(function(a,m){ return a + (m.parts||0); }, 0);
+
+      // Update summary strip
+      var el;
+      if((el=document.getElementById('dnx-s-running'))) el.textContent = running.length;
+      if((el=document.getElementById('dnx-s-idle')))    el.textContent = machines.length - running.length;
+      if((el=document.getElementById('dnx-s-down')))    el.textContent = losing.length;
+      if((el=document.getElementById('dnx-s-oee')))     el.textContent = winning.length + '/' + running.length;
+      if((el=document.getElementById('dnx-s-parts')))   el.textContent = totalParts || '—';
+
+      // Update status dot
+      updateDNXStatus(true);
+
+      // Updated time
+      if(upd && data.updatedAt) {
+        var d = new Date(data.updatedAt);
+        upd.textContent = 'Last updated: ' + d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + ' · ' + running.length + ' running';
+      }
+
+      // Render machine cards
+      if(!cards) return;
+      var DNX_CELLS = {
+        '1050-B':'Big Mill','7000':'Big Mill','VF-6':'Big Mill',
+        '5100-B':'5100 Cell','2500':'5100 Cell','PUMA-3':'5100 Cell',
+        'ST35':'MPPI','VF-3':'MPPI','VF-2':'MPPI','PUMA-2':'MPPI',
+        '403-A':'403 Cell','403-B':'403 Cell','403-C':'403 Cell',
+        '5100-A':'Mill/Lathe','3000-C':'3000 Cell','3000-A':'3000 Cell',
+        '2G':'Horizontal','PUMA-1':'Automation','303-B':'Automation',
+        'TWIN':'Automation','2500-Y':'Automation'
+      };
+
+      // Group by cell
+      var cells = {}, cellOrder = [];
+      machines.forEach(function(m){
+        var cell = DNX_CELLS[m.name] || 'Other';
+        if(!cells[cell]){ cells[cell]=[]; cellOrder.push(cell); }
+        cells[cell].push(m);
+      });
+
+      var html = '';
+      cellOrder.forEach(function(cell){
+        html += '<div style="grid-column:1/-1;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:2px;color:#334155;padding:6px 0 3px;border-bottom:1px solid #0f1e30;margin-top:4px;">'+cell+'</div>';
+        cells[cell].forEach(function(m){
+          var sc  = m.running ? (m.win ? '#22c55e' : '#f59e0b') : '#334155';
+          var sl  = m.running ? (m.win ? 'WINNING' : 'LOSING') : 'IDLE';
+          var bg  = m.running ? (m.win ? 'linear-gradient(135deg,#001808,#0d1f35)' : 'linear-gradient(135deg,#1a1000,#0d1f35)') : '#0d1f35';
+          var oeeStr  = m.oee != null && m.oee >= 0 ? Math.round(m.oee)+'%' : '—';
+          var oeeC    = m.oee > 100 ? '#22c55e' : m.oee > 50 ? '#eab308' : m.oee >= 0 ? '#ef4444' : '#334155';
+          var utilPct = Math.min(100, m.util || 0);
+          var taktStr = m.taktPct >= 0 ? Math.round(m.taktPct * 100)+'%' : '—';
+          var taktC   = m.taktPct >= 1 ? '#22c55e' : m.taktPct >= 0.75 ? '#eab308' : '#ef4444';
+
+          html += '<div style="background:'+bg+';border-radius:12px;border:1px solid #1e3a5f;border-left:4px solid '+sc+';padding:12px;transition:transform .2s;" onmouseenter="this.style.transform=\'translateY(-2px)\'" onmouseleave="this.style.transform=\'\'">'
+            // Header
+            +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">'
+              +'<div>'
+                +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:19px;letter-spacing:1.5px;color:#f5d050;line-height:1;">'+m.name+'</div>'
+                +'<div style="font-size:9px;color:#475569;letter-spacing:1px;">'+(DNX_CELLS[m.name]||'')+'</div>'
+              +'</div>'
+              +'<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;background:'+sc+'22;color:'+sc+';border:1px solid '+sc+'55;">'+sl+'</span>'
+            +'</div>'
+            // Program name
+            +(m.program ? '<div style="font-size:10px;color:#60a5fa;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📋 '+m.program+'</div>' : '')
+            // Stats
+            +(m.running ? '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:6px;">'
+              +'<div style="text-align:center;background:rgba(0,0,0,.25);border-radius:7px;padding:6px 4px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#f5c500;line-height:1;">'+(m.parts||0)+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">PARTS</div></div>'
+              +'<div style="text-align:center;background:rgba(0,0,0,.25);border-radius:7px;padding:6px 4px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:'+oeeC+';line-height:1;">'+oeeStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">OEE</div></div>'
+              +'<div style="text-align:center;background:rgba(0,0,0,.25);border-radius:7px;padding:6px 4px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:'+taktC+';line-height:1;">'+taktStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">PACE</div></div>'
+              +'</div>'
+              +'<div style="background:#1a3a5c;border-radius:3px;height:5px;margin-bottom:8px;overflow:hidden;"><div style="height:100%;border-radius:3px;background:'+sc+';width:'+utilPct+'%;transition:width .6s;"></div></div>'
+            : '<div style="font-size:11px;color:#334155;margin-bottom:8px;padding:4px 0;">Not running this shift</div>')
+            // HUD link
+            +'<a href="https://hillmanufacturing.datanomix.app/machine-hud?machineId='+(window._DNX_UUID_MAP&&window._DNX_UUID_MAP[m.name]||'')+'" target="_blank" style="display:block;text-align:center;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:#60a5fa;border-radius:6px;padding:4px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:1px;text-decoration:none;">FULL HUD ↗</a>'
+          +'</div>';
+        });
+      });
+      cards.innerHTML = html;
+
+      // Store UUID map for HUD links
+      window._DNX_UUID_MAP = {
+        '1050-B':253,'7000':853,'VF-6':1253,'5100-B':753,'2500':1603,
+        'PUMA-3':1153,'ST35':1903,'VF-3':953,'VF-2':1553,'PUMA-2':3,
+        '403-A':553,'403-B':1003,'403-C':1303,'5100-A':653,'3000-C':1803,
+        '3000-A':1703,'2G':1973,'PUMA-1':453,'303-B':103,'TWIN':1403,'2500-Y':1653
+      };
+}
 </script>
 </body>
 </html>
