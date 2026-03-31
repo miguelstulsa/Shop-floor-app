@@ -2787,7 +2787,7 @@
 
   // ── PASTE YOUR API KEY HERE WHEN YOU GET IT ──
   var DNX_API_KEY  = '';
-  var DNX_BASE_URL = 'https://api.mrsanchez.app/proxy';
+  var DNX_BASE_URL = '';
   var DNX_POLL_INTERVAL = 120000; // refresh every 2 minutes (uptime is near real-time)
   var dnxPollTimer = null;
   var dnxConnected = false;
@@ -2819,7 +2819,7 @@
     if (!DNX_API_KEY) { runPerfDemo(); return; }
     try {
       var headers  = {}; // proxy handles auth
-      var base     = 'https://api.mrsanchez.app/proxy';
+      var base     = ''; return Promise.resolve(); //
 
       // Fetch all 6 in parallel: espresso today+yesterday, uptime today+yesterday, downtime today+yesterday
       var [respEspToday, respEspYest, respUpToday, respUpYest, respDtToday, respDtYest] = await Promise.all([
@@ -2995,7 +2995,7 @@
     if (!DNX_API_KEY) { runPerfDemo(); return; }
     window.fetchDatanomix();
     if (dnxPollTimer) clearInterval(dnxPollTimer);
-    dnxPollTimer = setInterval(window.fetchDatanomix, DNX_POLL_INTERVAL);
+    // dnxPollTimer disabled
   };
 
   // ── DEMO MODE (runs until API key is entered) ──
@@ -3185,7 +3185,7 @@
 
   function initDNXDisplay() {
     if(window.renderDNXCards) window.renderDNXCards();
-    if (window.fetchDatanomix) {
+    if (false && window.fetchDatanomix) {
       window.fetchDatanomix().then(function(){
         if(window.renderDNXCards) window.renderDNXCards();
       });
@@ -7098,7 +7098,7 @@ window.plannerSetView = function(view) {
 (function(){
   var DNX_KEY  = 'dnx_live_4LjcI5AjF8JO8gJyNXkH1Mf7MUmSqlY7WxbwkfVQ';
   var DNX_BASES = [
-    'https://api.mrsanchez.app/proxy',
+    '',
     'https://hill-dnx-proxy.miguelstulsa.workers.dev/proxy'
   ];
   var DNX_BASE = DNX_BASES[0];
