@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Hill Manufacturing — Shop Floor v67</title>
+<title>Hill Manufacturing — Shop Floor v71</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1235,7 +1235,7 @@
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
       <span id="dnx-last-updated" style="font-size:10px;color:#334155;letter-spacing:1px;"></span>
-      <button onclick="window.dnxLoadAll && window.dnxLoadAll()" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 13px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">↺ REFRESH</button>
+      <button onclick="loadDNXFromFirebase && loadDNXFromFirebase()" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;border-radius:7px;padding:5px 13px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">↺ REFRESH</button>
       <button id="dnx-period-this_week" onclick="window.dnxSetPeriod('this_week')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">THIS WEEK</button>
       <button id="dnx-period-yesterday" onclick="window.dnxSetPeriod('yesterday')" style="background:rgba(255,255,255,0.04);border:1px solid #1a4a8c;color:#64748b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">YESTERDAY</button>
       <button id="dnx-period-last_week" onclick="window.dnxSetPeriod('last_week')" style="background:rgba(255,255,255,0.04);border:1px solid #1a4a8c;color:#64748b;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">LAST WEEK</button>
@@ -7114,76 +7114,7 @@ window.plannerSetView = function(view) {
   ];
   var dnxData={}, dnxPeriod='this_week', dnxPollTimer=null;
 
-  window.dnxLoadAll = async function() {
-    var p=dnxPeriod, dt='group_by=none&shifts=all&include_days=false';
-    var upd=document.getElementById('dnx-last-updated');
-    if(upd) upd.textContent='Fetching from Datanomix...';
-    var fetchOpts = { method:'GET', mode:'cors', cache:'no-store' };
-
-    // Try each proxy URL until one works
-    var lastErr = '';
-    for(var bi=0; bi<DNX_BASES.length; bi++){
-      var base = DNX_BASES[bi];
-      try {
-        var [re,ru,rd] = await Promise.all([
-          fetch(base+'/espresso?period='+p+'&group_name=AllMachines', fetchOpts),
-          fetch(base+'/uptime?period='+p+'&group_name=AllMachines', fetchOpts),
-          fetch(base+'/downtime?period='+p+'&group_name=AllMachines&'+dt, fetchOpts),
-        ]);
-        DNX_BASE = base; // remember working URL
-        var te=await re.text(), tu=await ru.text(), td=await rd.text();
-
-        // Show raw response in admin debug panel
-        var rw=document.getElementById('dnx-raw-wrap'), rt=document.getElementById('dnx-raw-text');
-        if(rw&&rt&&window._isAdmin){
-          rw.style.display='block';
-          rt.textContent='URL: '+base+'\nStatus: '+re.status+'\n\n=== ESPRESSO ===\n'+te.slice(0,3000)+'\n\n=== UPTIME ('+ru.status+') ===\n'+tu.slice(0,1500)+'\n\n=== DOWNTIME ('+rd.status+') ===\n'+td.slice(0,1000);
-        }
-
-        if(!re.ok) throw new Error('HTTP '+re.status+': '+te.slice(0,200));
-
-        var esp=sJ(te), upt=sJ(tu), dnt=sJ(td);
-        dnxData={};
-        merge(esp); merge(upt);
-
-        ex(dnt).forEach(function(row){
-          if(!row||typeof row!=='object') return;
-          var id=String(row.machineId||row.id||row.machine_id||'');
-          if(!id) return;
-          if(!dnxData[id]) dnxData[id]={};
-          var m=parseFloat(row.downtimeMinutes||row.downtime_minutes||row.duration||row.minutes||0);
-          dnxData[id]._dtMins=(dnxData[id]._dtMins||0)+m;
-        });
-
-        window.dnxLiveData=window.dnxLiveData||{};
-        Object.keys(dnxData).forEach(function(k){ window.dnxLiveData[k]=dnxData[k]; });
-        updateDNXStatus(true);
-        if(upd) upd.textContent='Updated '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})+' · '+Object.keys(dnxData).length+' machines';
-        renderDNXCards();
-        return; // success — stop trying
-
-      } catch(e){
-        lastErr = '['+base+'] '+e.message;
-        console.warn('[DNX] Error at '+base+':', e.message);
-        // Show error immediately in admin panel
-        var rw2=document.getElementById('dnx-raw-wrap'), rt2=document.getElementById('dnx-raw-text');
-        if(rw2&&rt2&&window._isAdmin){
-          rw2.style.display='block';
-          rt2.textContent='ERROR at: '+base+'\n\n'+e.message+(e.stack?'\n\nStack:\n'+e.stack.slice(0,500):'');
-        }
-      }
-    }
-
-    // All URLs failed
-    updateDNXStatus(false);
-    console.warn('[DNX] All proxies failed:', lastErr);
-    if(upd) upd.textContent='❌ Cannot reach Datanomix proxy';
-    var rw=document.getElementById('dnx-raw-wrap'), rt=document.getElementById('dnx-raw-text');
-    if(rw&&rt&&window._isAdmin){
-      rw.style.display='block';
-      rt.textContent='ALL PROXIES FAILED\n\n'+lastErr+'\n\nTried:\n'+DNX_BASES.join('\n');
-    }
-  };
+  window.dnxLoadAll = async function() { loadDNXFromFirebase(); };
   function sJ(t){ try{return JSON.parse(t);}catch(e){return null;} }
 
   // Extract machines array from Datanomix espresso response
