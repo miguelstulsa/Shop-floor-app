@@ -7412,10 +7412,11 @@ window.plannerSetView = function(view) {
               if(hasJob){
                 return '<div style="background:rgba(0,0,0,.3);border-radius:7px;padding:7px 9px;margin-bottom:7px;border-left:3px solid #f5c500;">'
                   +editBtn
-                  +(job.wo       ? '<div style="font-size:10px;color:#f5c500;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">WO: '+job.wo+'</div>' : '')
+                  +(job.wo       ? '<div style="font-size:10px;color:#f5c500;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">WO: '+job.wo+(job.dueDate?' · DUE: '+job.dueDate:'')+'</div>' : '')
                   +(job.part     ? '<div style="font-size:11px;color:#f0f4f8;font-weight:600;margin:2px 0;">'+job.part+'</div>' : '')
                   +(job.customer ? '<div style="font-size:10px;color:#60a5fa;">'+job.customer+'</div>' : '')
                   +((job.program||job.op) ? '<div style="font-size:10px;color:#475569;margin-top:2px;">'+(job.program?'PGM: '+job.program:'')+(job.program&&job.op?' · ':'')+(job.op?'OP: '+job.op:'')+'</div>' : '')
+                  +(job.plannedQty ? '<div style="font-size:10px;color:#334155;margin-top:3px;">TARGET: '+job.plannedQty+' parts'+(job.cycleTime?' @ '+job.cycleTime+'min/pc':'')+'</div>' : '')
                   +'</div>';
               } else if(adminEdit) {
                 return '<button onclick="window.openJobModal(\''+m.name+'\')" style="width:100%;background:rgba(245,200,66,.05);border:1px dashed rgba(245,200,66,.2);color:#475569;border-radius:7px;padding:5px;font-size:10px;cursor:pointer;margin-bottom:7px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">+ ADD JOB INFO</button>';
@@ -7569,6 +7570,25 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
           <input id="jobOp" placeholder="e.g. OP-10" style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
         </div>
       </div>
+      <!-- ProShop delivery track fields -->
+      <div style="border-top:1px solid #1e3a5f;padding-top:12px;margin-top:4px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:#f5c500;margin-bottom:10px;">📊 DELIVERY TRACK — FROM PROSHOP</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div>
+            <label style="font-size:10px;color:#475569;letter-spacing:1px;font-family:'Bebas Neue',sans-serif;">PLANNED QTY</label>
+            <input id="jobPlannedParts" type="number" placeholder="e.g. 100" style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:10px;color:#475569;letter-spacing:1px;font-family:'Bebas Neue',sans-serif;">CYCLE TIME (min)</label>
+            <input id="jobCycleTime" type="number" step="0.1" placeholder="e.g. 5.5" style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:10px;color:#475569;letter-spacing:1px;font-family:'Bebas Neue',sans-serif;">DUE DATE</label>
+            <input id="jobDueDate" type="date" style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="font-size:10px;color:#334155;margin-top:6px;">This sends the job to Datanomix delivery-track for automatic progress monitoring</div>
+      </div>
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px;">
@@ -7603,11 +7623,14 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
     _jobMachine = machineName;
     document.getElementById('jobModalTitle').textContent = machineName;
     var job = window.dnxJobData[machineName] || {};
-    document.getElementById('jobWO').value       = job.wo       || '';
-    document.getElementById('jobPart').value     = job.part     || '';
-    document.getElementById('jobCustomer').value = job.customer || '';
-    document.getElementById('jobProgram').value  = job.program  || '';
-    document.getElementById('jobOp').value       = job.op       || '';
+    document.getElementById('jobWO').value           = job.wo           || '';
+    document.getElementById('jobPart').value         = job.part         || '';
+    document.getElementById('jobCustomer').value     = job.customer     || '';
+    document.getElementById('jobProgram').value      = job.program      || '';
+    document.getElementById('jobOp').value           = job.op           || '';
+    document.getElementById('jobPlannedParts').value = job.plannedParts || '';
+    document.getElementById('jobCycleTime').value    = job.cycleTime    || '';
+    document.getElementById('jobDueDate').value      = job.dueDate      || '';
     var modal = document.getElementById('jobInfoModal');
     modal.style.display = 'flex';
   };
@@ -7619,14 +7642,43 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
   window.saveJobInfo = function() {
     if(!_jobMachine) return;
     var jobData = {
-      wo:       document.getElementById('jobWO').value.trim(),
-      part:     document.getElementById('jobPart').value.trim(),
-      customer: document.getElementById('jobCustomer').value.trim(),
-      program:  document.getElementById('jobProgram').value.trim(),
-      op:       document.getElementById('jobOp').value.trim(),
-      updatedBy: (window.currentUser && window.currentUser.name) || 'Admin',
-      updatedAt: new Date().toISOString(),
+      wo:           document.getElementById('jobWO').value.trim(),
+      part:         document.getElementById('jobPart').value.trim(),
+      customer:     document.getElementById('jobCustomer').value.trim(),
+      program:      document.getElementById('jobProgram').value.trim(),
+      op:           document.getElementById('jobOp').value.trim(),
+      plannedParts: parseInt(document.getElementById('jobPlannedParts').value) || 0,
+      cycleTime:    parseFloat(document.getElementById('jobCycleTime').value) || 0,
+      dueDate:      document.getElementById('jobDueDate').value || '',
+      machine:      _jobMachine,
+      updatedBy:    (window.currentUser && window.currentUser.name) || 'Admin',
+      updatedAt:    new Date().toISOString(),
     };
+
+    // POST to Datanomix delivery-track if we have the required fields
+    if(jobData.wo && jobData.plannedParts > 0 && jobData.cycleTime > 0 && jobData.dueDate) {
+      var dnxPayload = {
+        unit: 'MINUTES',
+        data: [{
+          machine:         _jobMachine,
+          part_number:     jobData.part || jobData.wo,
+          targetCycleTime: jobData.cycleTime,
+          workOrder:       jobData.wo,
+          plannedParts:    jobData.plannedParts,
+          plannedStart:    new Date().toISOString().split('T')[0],
+          plannedEnd:      jobData.dueDate,
+          jobId:           jobData.wo + '-' + _jobMachine
+        }]
+      };
+      fetch('https://api.mrsanchez.app/proxy/delivery-track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dnxPayload)
+      }).then(function(r){ return r.json(); })
+        .then(function(r){ console.log('[DNX delivery-track]', r); })
+        .catch(function(e){ console.warn('[DNX delivery-track error]', e.message); });
+    }
+
     // Save to Firebase
     if(window.fbDb) {
       try {
@@ -7638,7 +7690,6 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
         }
       } catch(e){ console.warn('Save error:', e.message); }
     } else {
-      // Fallback — save to memory only
       window.dnxJobData[_jobMachine] = jobData;
       if(window.renderDNXCards) window.renderDNXCards();
     }
