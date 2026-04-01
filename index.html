@@ -3547,10 +3547,127 @@
 
   function setStvView(view, btn) {
     stv.view = view;
-    document.querySelectorAll('#stv-view-cell,#stv-view-priority,#stv-view-all').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('#stv-view-cell,#stv-view-priority,#stv-view-all,#stv-view-dnx').forEach(function(b){ b.classList.remove('active'); });
     if (btn) btn.classList.add('active');
-    buildStvSlides();
-    startStvTimer();
+    if (view === 'dnx') {
+      buildStvDNXSlide();
+    } else {
+      buildStvSlides();
+      startStvTimer();
+    }
+  }
+
+  // ── DNX LIVE VIEW FOR SHOP TV ──
+  function buildStvDNXSlide() {
+    if (stv.timer)     { clearInterval(stv.timer);     stv.timer = null; }
+    if (stv.progTimer) { clearInterval(stv.progTimer); stv.progTimer = null; }
+
+    var stage = document.getElementById('stvStage');
+    if (!stage) return;
+
+    function renderDNXTV() {
+      var data = window._dnxTVData || {};
+      var machines = Object.values(data.machines || {});
+      var running  = machines.filter(function(m){ return m.running; });
+
+      if (!running.length) {
+        stage.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:16px;">'
+          +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:48px;color:#f5c500;letter-spacing:4px;">⚡ DATANOMIX LIVE</div>'
+          +'<div style="font-size:18px;color:#334155;letter-spacing:2px;">No machines running — checking every 5 minutes</div>'
+          +'</div>';
+        return;
+      }
+
+      var winning = running.filter(function(m){ return m.win; });
+      var losing  = running.filter(function(m){ return !m.win; });
+
+      var html = '<div style="padding:16px;height:100%;box-sizing:border-box;overflow:hidden;">';
+
+      // Summary bar
+      html += '<div style="display:flex;gap:16px;margin-bottom:16px;align-items:center;">'
+        +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#f5c500;letter-spacing:3px;">⚡ LIVE — '+ running.length +' MACHINES RUNNING</div>'
+        +'<div style="margin-left:auto;display:flex;gap:12px;">'
+        +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:#22c55e;letter-spacing:2px;">✅ WINNING: '+winning.length+'</span>'
+        +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:#ef4444;letter-spacing:2px;">❌ LOSING: '+losing.length+'</span>'
+        +'<span style="font-size:12px;color:#334155;align-self:center;">'+(data.updatedAt ? 'Updated '+new Date(data.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '')+'</span>'
+        +'</div>'
+        +'</div>';
+
+      // Machine cards grid
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">';
+
+      // Losing machines first (need attention)
+      var sorted = losing.concat(winning);
+
+      sorted.forEach(function(m) {
+        var sc      = m.win ? '#22c55e' : '#ef4444';
+        var bg      = m.win ? 'linear-gradient(135deg,#001808,#001428)' : 'linear-gradient(135deg,#1a0404,#001428)';
+        var status  = m.win ? '✅ WINNING' : '❌ LOSING';
+        var oeeStr  = m.oee > 0 ? Math.round(m.oee)+'%' : '—';
+        var oeeC    = m.oee > 100 ? '#22c55e' : m.oee > 50 ? '#eab308' : '#ef4444';
+        var paceStr = m.taktPct > 0 ? Math.round(m.taktPct*100)+'%' : '—';
+        var paceC   = m.taktPct >= 1 ? '#22c55e' : m.taktPct >= 0.75 ? '#eab308' : '#ef4444';
+
+        html += '<div style="background:'+bg+';border-radius:14px;border:1px solid #1e3a5f;border-left:5px solid '+sc+';padding:16px;">'
+          // Machine name + status
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+            +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:32px;color:#f5d050;letter-spacing:2px;line-height:1;">'+m.name+'</div>'
+            +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;padding:4px 12px;border-radius:999px;background:'+sc+'22;color:'+sc+';border:1px solid '+sc+'55;">'+status+'</span>'
+          +'</div>'
+          // Program name
+          +(m.program ? '<div style="font-size:12px;color:#60a5fa;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📋 '+m.program+'</div>' : '')
+          // Stats row
+          +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">'
+            +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:8px;padding:8px 4px;">'
+              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:#f5c500;line-height:1;">'+(m.parts||0)+'</div>'
+              +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:2px;">PARTS</div>'
+            +'</div>'
+            +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:8px;padding:8px 4px;">'
+              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:'+paceC+';line-height:1;">'+paceStr+'</div>'
+              +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:2px;">PACE</div>'
+            +'</div>'
+            +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:8px;padding:8px 4px;">'
+              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:'+oeeC+';line-height:1;">'+oeeStr+'</div>'
+              +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:2px;">OEE</div>'
+            +'</div>'
+            +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:8px;padding:8px 4px;">'
+              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:'+(m.win?'#22c55e':'#ef4444')+';line-height:1;">'+(m.win?'▲':'▼')+'</div>'
+              +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:2px;">STATUS</div>'
+            +'</div>'
+          +'</div>'
+          // Pace bar
+          +'<div style="margin-top:8px;background:#1a3a5c;border-radius:3px;height:4px;overflow:hidden;">'
+            +'<div style="height:100%;border-radius:3px;background:'+paceC+';width:'+Math.min(100,Math.round((m.taktPct||0)*100))+'%;transition:width .6s;"></div>'
+          +'</div>'
+        +'</div>';
+      });
+
+      html += '</div></div>';
+      stage.innerHTML = html;
+    }
+
+    // Load from Firestore and render
+    function loadAndRender() {
+      if (!window.fbDb || !window.fbFirestore || !window.fbFirestore.getDoc) {
+        // Fallback: use cached data if available
+        renderDNXTV();
+        return;
+      }
+      var { getDoc, doc } = window.fbFirestore;
+      getDoc(doc(window.fbDb, 'dnxLive', 'snapshot'))
+        .then(function(snap) {
+          if (snap.exists()) {
+            window._dnxTVData = snap.data();
+          }
+          renderDNXTV();
+        })
+        .catch(function() { renderDNXTV(); });
+    }
+
+    loadAndRender();
+
+    // Auto-refresh every 5 minutes
+    stv.timer = setInterval(loadAndRender, 300000);
   }
 
   function setStvSpeed(val) {
@@ -6610,6 +6727,7 @@ window.plannerSetView = function(view) {
     <button class="stv-ctrl-btn active" id="stv-view-cell" onclick="setStvView('cell',this)">BY CELL</button>
     <button class="stv-ctrl-btn" id="stv-view-priority" onclick="setStvView('priority',this)">PRIORITY FIRST</button>
     <button class="stv-ctrl-btn" id="stv-view-all" onclick="setStvView('all',this)">ALL MACHINES</button>
+    <button class="stv-ctrl-btn" id="stv-view-dnx" onclick="setStvView('dnx',this)" style="background:rgba(245,197,0,0.08);border-color:rgba(245,197,0,0.3);color:#f5c500;">⚡ DNX LIVE</button>
     <div style="width:1px;height:18px;background:#1a4a8c;margin:0 2px;"></div>
     <span class="stv-ctrl-lbl">SPEED:</span>
     <input type="range" class="stv-speed-range" id="stvSpeed" min="5" max="30" value="12" oninput="setStvSpeed(this.value)">
@@ -7599,6 +7717,8 @@ function loadDNXFromFirebase() {
   }, 500);
 }
 function renderDNXFromData(data) {
+  // Store for Shop TV use
+  window._dnxTVData = data;
   var upd   = document.getElementById('dnx-last-updated');
   var cards = document.getElementById('dnx-cards');
       if(!data || !data.machines){
