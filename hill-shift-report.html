@@ -133,8 +133,9 @@
 </div>
 
 <script>
-const DNX_BASE = 'https://hillmanufacturing.datanomix.app/customer-api/v1';
-const DNX_KEY  = 'dnx_live_5PHtuP2BBske-zHOnk4fUQTpSX_yE_ap849i3lHs';
+const DNX_BASE   = 'https://api.mrsanchez.app/proxy';
+const WORKER_URL = 'https://hill-dnx-alerts.miguelstulsa.workers.dev';
+const DNX_KEY    = 'dnx_live_5PHtuP2BBske-zHOnk4fUQTpSX_yE_ap849i3lHs';
 
 const MACHINE_MAP = {
   'TC_403_B':'403-B','TC_403_A':'403-A','TC_403_C':'403-C',
@@ -158,9 +159,17 @@ function setPeriod(p, btn) {
 }
 
 async function dnxGet(endpoint, params='') {
-  const r = await fetch(`${DNX_BASE}/${endpoint}?group_name=AllMachines${params?'&'+params:''}`, {
-    headers: { 'X-API-Key': DNX_KEY, 'Accept': 'application/json' }
-  });
+  const periodMatch = params.match(/period=([^&]+)/);
+  const period = periodMatch ? periodMatch[1] : 'yesterday';
+
+  // Route everything through the Cloudflare worker
+  let workerUrl;
+  if (endpoint === 'espresso')       workerUrl = `${WORKER_URL}/raw-espresso?period=${period}`;
+  else if (endpoint === 'downtime')  workerUrl = `${WORKER_URL}/raw-downtime?period=${period}`;
+  else if (endpoint === 'delivery-track') workerUrl = `${WORKER_URL}/raw-delivery`;
+  else throw new Error(`Unknown endpoint: ${endpoint}`);
+
+  const r = await fetch(workerUrl);
   if (!r.ok) throw new Error(`${endpoint} HTTP ${r.status}`);
   return r.json();
 }
@@ -193,18 +202,25 @@ async function loadReport() {
 
     // Parse espresso machines
     const machArr = espresso?.data?.machines || espresso?.machines || [];
-    const machines = machArr.map(m => ({
-      name: MACHINE_MAP[String(m.machineUuid||'')] || m.machineName || String(m.machineUuid||''),
-      util: Math.min(100, parseFloat(m.utilizationPercentage ?? m.utilization ?? 0)),
-      parts: parseFloat(m.parts || 0),
-      cutting: parseFloat(m.cuttingTime || 0),
-      prod: parseFloat(m.productionTime || 0),
-      longStop: parseFloat(m.longStopDuration || 0),
-      bleed: parseFloat(m.breakBleed || 0),
-      lateStart: parseFloat(m.timeToFirstActive || 0),
-    })).filter(m => m.name);
+    const machines = machArr.map(m => {
+      const uuid = String(m.machineUuid || m.machine_uuid || '');
+      const name = MACHINE_MAP[uuid] || m.machineName || m.machine_name || uuid;
+      const util = m.utilizationPercentage !== null && m.utilizationPercentage !== undefined
+        ? Math.min(100, parseFloat(m.utilizationPercentage))
+        : (m.utilization !== null && m.utilization !== undefined ? Math.min(100, parseFloat(m.utilization)) : 0);
+      return {
+        name,
+        util: isNaN(util) ? 0 : util,
+        parts: parseFloat(m.parts || 0),
+        cutting: parseFloat(m.cuttingTime || 0),
+        prod: parseFloat(m.productionTime || 0),
+        longStop: parseFloat(m.longStopDuration || 0),
+        bleed: parseFloat(m.breakBleed || 0),
+        lateStart: parseFloat(m.timeToFirstActive || 0),
+      };
+    }).filter(m => m.name);
 
-    const active   = machines.filter(m => m.util > 0);
+    const active   = machines.filter(m => m.util > 0 || m.prod > 0);
     const winning  = machines.filter(m => m.util >= 70);
     const losing   = machines.filter(m => m.util > 0 && m.util < 70);
     const idle     = machines.filter(m => m.util === 0);
