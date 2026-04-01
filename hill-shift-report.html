@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hill Manufacturing — Shift Report</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background:#f0f4f8; color:#1a2332; }
+
+  /* Screen controls */
+  .controls {
+    background:#1a2332; color:#fff; padding:14px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:100;
+  }
+  .controls h1 { font-size:18px; font-weight:700; color:#f5c500; letter-spacing:2px; }
+  .ctrl-group { display:flex; gap:10px; align-items:center; }
+  .ctrl-btn {
+    padding:8px 18px; border-radius:7px; border:none; cursor:pointer;
+    font-size:13px; font-weight:600; letter-spacing:1px;
+  }
+  .btn-period { background:rgba(255,255,255,.1); color:#94a3b8; }
+  .btn-period.active { background:#f5c500; color:#1a2332; }
+  .btn-print { background:#22c55e; color:#fff; }
+  .btn-pdf { background:#3b82f6; color:#fff; }
+  select { background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.2); border-radius:7px; padding:7px 12px; font-size:13px; cursor:pointer; }
+
+  /* Report page */
+  .report { max-width:1100px; margin:24px auto; padding:0 20px 40px; }
+
+  /* Header */
+  .report-header {
+    background:linear-gradient(135deg,#1a2332,#0d1f35);
+    color:#fff; border-radius:14px; padding:24px 30px;
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:20px;
+  }
+  .report-header-left h2 { font-size:28px; color:#f5c500; letter-spacing:3px; font-weight:800; }
+  .report-header-left p { font-size:13px; color:#64748b; margin-top:4px; letter-spacing:1px; }
+  .report-header-right { text-align:right; }
+  .report-header-right .big-date { font-size:22px; font-weight:700; color:#f0f4f8; }
+  .report-header-right .sub-date { font-size:12px; color:#64748b; margin-top:4px; }
+
+  /* Summary cards */
+  .summary-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:20px; }
+  .summary-card {
+    background:#fff; border-radius:12px; padding:18px 14px; text-align:center;
+    border-top:4px solid #e2e8f0; box-shadow:0 1px 4px rgba(0,0,0,.06);
+  }
+  .summary-card.green { border-top-color:#22c55e; }
+  .summary-card.red   { border-top-color:#ef4444; }
+  .summary-card.gold  { border-top-color:#f5c500; }
+  .summary-card.blue  { border-top-color:#3b82f6; }
+  .summary-card.purple{ border-top-color:#a78bfa; }
+  .summary-val { font-size:36px; font-weight:800; color:#1a2332; line-height:1; }
+  .summary-lbl { font-size:11px; color:#64748b; letter-spacing:2px; margin-top:6px; text-transform:uppercase; }
+
+  /* Section */
+  .section { background:#fff; border-radius:14px; padding:22px 24px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .section-title { font-size:13px; font-weight:700; letter-spacing:2px; color:#475569; text-transform:uppercase; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+
+  /* Charts row */
+  .charts-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .chart-box { background:#fff; border-radius:14px; padding:22px 24px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  .chart-title { font-size:13px; font-weight:700; letter-spacing:2px; color:#475569; text-transform:uppercase; margin-bottom:14px; }
+  .chart-wrap { position:relative; height:220px; }
+
+  /* Machine table */
+  .machine-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .machine-table th { text-align:left; padding:8px 12px; background:#f8fafc; color:#64748b; font-size:11px; letter-spacing:1px; text-transform:uppercase; border-bottom:2px solid #e2e8f0; }
+  .machine-table td { padding:9px 12px; border-bottom:1px solid #f1f5f9; }
+  .machine-table tr:last-child td { border-bottom:none; }
+  .machine-table tr:hover td { background:#f8fafc; }
+  .status-pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:1px; }
+  .pill-win  { background:#dcfce7; color:#166534; }
+  .pill-lose { background:#fee2e2; color:#991b1b; }
+  .pill-idle { background:#f1f5f9; color:#64748b; }
+  .bar-cell { width:120px; }
+  .bar-bg { background:#f1f5f9; border-radius:4px; height:8px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:4px; transition:width .4s; }
+
+  /* Job table */
+  .job-row { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px; margin-bottom:6px; }
+  .job-row.over { background:#fff5f5; border-left:4px solid #ef4444; }
+  .job-row.under { background:#f0fdf4; border-left:4px solid #22c55e; }
+  .job-row.normal { background:#f8fafc; border-left:4px solid #e2e8f0; }
+
+  /* Week trend */
+  .week-chart-wrap { position:relative; height:180px; }
+
+  /* Loading */
+  .loading { text-align:center; padding:60px; color:#94a3b8; font-size:15px; }
+  .loading-spinner { display:inline-block; width:32px; height:32px; border:3px solid #e2e8f0; border-top-color:#f5c500; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:12px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Print styles */
+  @media print {
+    body { background:#fff; }
+    .controls { display:none !important; }
+    .report { margin:0; padding:0; max-width:100%; }
+    .report-header { border-radius:0; }
+    .section, .chart-box { box-shadow:none; break-inside:avoid; }
+    .charts-row { break-inside:avoid; }
+    .summary-grid { break-inside:avoid; }
+    @page { margin:15mm; size:A4 landscape; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Controls bar (hidden on print) -->
+<div class="controls">
+  <h1>⚡ HILL MFG — SHIFT REPORT</h1>
+  <div class="ctrl-group">
+    <button class="ctrl-btn btn-period active" onclick="setPeriod('yesterday',this)">YESTERDAY</button>
+    <button class="ctrl-btn btn-period" onclick="setPeriod('this_week',this)">THIS WEEK</button>
+    <button class="ctrl-btn btn-period" onclick="setPeriod('last_week',this)">LAST WEEK</button>
+    <button class="ctrl-btn btn-period" onclick="setPeriod('this_month',this)">THIS MONTH</button>
+    <button class="ctrl-btn btn-period" onclick="setPeriod('last_month',this)">LAST MONTH</button>
+    <button class="ctrl-btn btn-print" onclick="window.print()">🖨️ PRINT</button>
+    <button class="ctrl-btn btn-pdf" onclick="savePDF()">⬇️ SAVE PDF</button>
+  </div>
+</div>
+
+<!-- Report content -->
+<div class="report" id="report-root">
+  <div class="loading">
+    <div class="loading-spinner"></div>
+    <div>Loading Datanomix data...</div>
+  </div>
+</div>
+
+<script>
+const DNX_BASE = 'https://hillmanufacturing.datanomix.app/customer-api/v1';
+const DNX_KEY  = 'dnx_live_5PHtuP2BBske-zHOnk4fUQTpSX_yE_ap849i3lHs';
+
+const MACHINE_MAP = {
+  'TC_403_B':'403-B','TC_403_A':'403-A','TC_403_C':'403-C',
+  'Puma_3':'PUMA-3','Puma_2':'PUMA-2','Puma_1':'PUMA-1',
+  'VM_VF_6':'VF-6','VM_VF_3':'VF-3','VM_VF_2':'VF-2',
+  'VM_5100_A':'5100-A','VM_5100_B':'5100-B',
+  'VM_NVX_7000':'7000','HM_NHX_5000_2G':'2G',
+  '1050B':'1050-B','TC_2500':'2500','TC_2500_Y':'2500-Y',
+  'TC_3000_A':'3000-A','TC_3000_C':'3000-C',
+  'TC_HAAS_ST35':'ST35','The_Twin':'TWIN','TC_303_B':'303-B'
+};
+
+let currentPeriod = 'yesterday';
+let charts = {};
+
+function setPeriod(p, btn) {
+  currentPeriod = p;
+  document.querySelectorAll('.btn-period').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadReport();
+}
+
+async function dnxGet(endpoint, params='') {
+  const r = await fetch(`${DNX_BASE}/${endpoint}?group_name=AllMachines${params?'&'+params:''}`, {
+    headers: { 'X-API-Key': DNX_KEY, 'Accept': 'application/json' }
+  });
+  if (!r.ok) throw new Error(`${endpoint} HTTP ${r.status}`);
+  return r.json();
+}
+
+function fmtMins(m) {
+  if (!m || m <= 0) return '—';
+  return m >= 60 ? (Math.round(m/6)/10)+'h' : Math.round(m)+'m';
+}
+
+function periodLabel(p) {
+  const map = { yesterday:'Yesterday', this_week:'This Week', last_week:'Last Week', this_month:'This Month', last_month:'Last Month' };
+  return map[p] || p;
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  charts = {};
+}
+
+async function loadReport() {
+  document.getElementById('report-root').innerHTML = '<div class="loading"><div class="loading-spinner"></div><div>Loading Datanomix data...</div></div>';
+  destroyCharts();
+
+  try {
+    const [espresso, downtime, delivery] = await Promise.all([
+      dnxGet('espresso', `period=${currentPeriod}`),
+      dnxGet('downtime', `period=${currentPeriod}&group_by=none&shifts=all&include_days=false`),
+      dnxGet('delivery-track', '').catch(() => ({ jobs: [] }))
+    ]);
+
+    // Parse espresso machines
+    const machArr = espresso?.data?.machines || espresso?.machines || [];
+    const machines = machArr.map(m => ({
+      name: MACHINE_MAP[String(m.machineUuid||'')] || m.machineName || String(m.machineUuid||''),
+      util: Math.min(100, parseFloat(m.utilizationPercentage ?? m.utilization ?? 0)),
+      parts: parseFloat(m.parts || 0),
+      cutting: parseFloat(m.cuttingTime || 0),
+      prod: parseFloat(m.productionTime || 0),
+      longStop: parseFloat(m.longStopDuration || 0),
+      bleed: parseFloat(m.breakBleed || 0),
+      lateStart: parseFloat(m.timeToFirstActive || 0),
+    })).filter(m => m.name);
+
+    const active   = machines.filter(m => m.util > 0);
+    const winning  = machines.filter(m => m.util >= 70);
+    const losing   = machines.filter(m => m.util > 0 && m.util < 70);
+    const idle     = machines.filter(m => m.util === 0);
+    const totalParts = Math.round(machines.reduce((a,m) => a+m.parts, 0));
+    const avgUtil  = active.length ? Math.round(active.reduce((a,m) => a+m.util, 0)/active.length) : 0;
+
+    // Parse downtime
+    const byType   = downtime?.data?.summary?.by_type || [];
+    const dtTotal  = Math.round((downtime?.data?.summary?.total_duration_seconds||0)/60);
+    const dtAlarm  = byType.find(t => t.type==='alarm');
+    const dtSetup  = byType.find(t => t.type==='setup');
+    const dtAdi    = byType.find(t => t.type==='adi');
+    const dtUnspec = byType.find(t => t.type==='unspecified');
+
+    // Parse delivery track
+    const jobs = delivery?.jobs || [];
+    const byMachine = {};
+    jobs.forEach(j => {
+      const name = MACHINE_MAP[j.machineName] || j.machineName;
+      if (!byMachine[name]) byMachine[name] = [];
+      byMachine[name].push(j);
+    });
+
+    // Sort machines by utilization
+    const sorted = [...machines].sort((a,b) => b.util - a.util);
+    const top5   = sorted.filter(m => m.util > 0).slice(0,5);
+    const bot5   = sorted.filter(m => m.util > 0).slice(-5).reverse();
+
+    renderReport({ machines, active, winning, losing, idle, totalParts, avgUtil,
+      sorted, top5, bot5, byType, dtTotal, dtAlarm, dtSetup, dtAdi, dtUnspec,
+      jobs, byMachine });
+
+  } catch(e) {
+    document.getElementById('report-root').innerHTML =
+      `<div class="loading" style="color:#ef4444;">Failed to load: ${e.message}<br><br><button onclick="loadReport()" style="margin-top:12px;padding:8px 20px;background:#f5c500;border:none;border-radius:7px;cursor:pointer;font-weight:700;">RETRY</button></div>`;
+  }
+}
+
+function renderReport(d) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+  const html = `
+    <!-- Header -->
+    <div class="report-header">
+      <div class="report-header-left">
+        <h2>⚡ HILL MANUFACTURING</h2>
+        <p>SHOP FLOOR PERFORMANCE REPORT · ${periodLabel(currentPeriod).toUpperCase()}</p>
+      </div>
+      <div class="report-header-right">
+        <div class="big-date">${periodLabel(currentPeriod)}</div>
+        <div class="sub-date">Generated ${dateStr}</div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+      <div class="summary-card gold">
+        <div class="summary-val">${d.totalParts.toLocaleString()}</div>
+        <div class="summary-lbl">Total Parts</div>
+      </div>
+      <div class="summary-card blue">
+        <div class="summary-val">${d.active.length}</div>
+        <div class="summary-lbl">Machines Ran</div>
+      </div>
+      <div class="summary-card green">
+        <div class="summary-val">${d.winning.length}</div>
+        <div class="summary-lbl">Winning (≥70%)</div>
+      </div>
+      <div class="summary-card red">
+        <div class="summary-val">${d.losing.length}</div>
+        <div class="summary-lbl">Losing (<70%)</div>
+      </div>
+      <div class="summary-card purple">
+        <div class="summary-val">${d.avgUtil}%</div>
+        <div class="summary-lbl">Avg Utilization</div>
+      </div>
+    </div>
+
+    <!-- Charts row 1: Utilization bar + Downtime pie -->
+    <div class="charts-row">
+      <div class="chart-box">
+        <div class="chart-title">📊 Machine Utilization Ranking</div>
+        <div class="chart-wrap"><canvas id="chart-util"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">⏱ Downtime Breakdown</div>
+        <div class="chart-wrap"><canvas id="chart-dt"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Charts row 2: Top vs Bottom + Cycle time -->
+    <div class="charts-row">
+      <div class="chart-box">
+        <div class="chart-title">🏆 Top vs Bottom Performers</div>
+        <div class="chart-wrap"><canvas id="chart-perf"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">🔄 Cycle Time vs Target (Active Jobs)</div>
+        <div class="chart-wrap"><canvas id="chart-cycle"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Full machine table -->
+    <div class="section">
+      <div class="section-title">🏭 All Machine Performance</div>
+      <table class="machine-table">
+        <thead>
+          <tr>
+            <th>Machine</th>
+            <th>Status</th>
+            <th>Parts</th>
+            <th>Utilization</th>
+            <th style="width:140px;">Util Bar</th>
+            <th>Cut Time</th>
+            <th>Long Stop</th>
+            <th>Late Start</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${d.sorted.map(m => {
+            const utilColor = m.util >= 70 ? '#22c55e' : m.util >= 40 ? '#f59e0b' : m.util > 0 ? '#ef4444' : '#94a3b8';
+            const status = m.util === 0 ? '<span class="status-pill pill-idle">IDLE</span>'
+              : m.util >= 70 ? '<span class="status-pill pill-win">WINNING</span>'
+              : '<span class="status-pill pill-lose">LOSING</span>';
+            return `<tr>
+              <td><strong>${m.name}</strong></td>
+              <td>${status}</td>
+              <td><strong>${Math.round(m.parts)}</strong></td>
+              <td style="color:${utilColor};font-weight:700;">${m.util > 0 ? Math.round(m.util)+'%' : '—'}</td>
+              <td class="bar-cell">
+                <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(100,m.util)}%;background:${utilColor};"></div></div>
+              </td>
+              <td>${fmtMins(m.cutting)}</td>
+              <td style="color:${m.longStop>30?'#ef4444':'inherit'}">${fmtMins(m.longStop)}</td>
+              <td style="color:${m.lateStart>60?'#f59e0b':'inherit'}">${fmtMins(m.lateStart)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Cycle time vs target -->
+    <div class="section">
+      <div class="section-title">🔄 Cycle Time vs Target — Active Jobs</div>
+      ${d.jobs.length === 0
+        ? '<div style="color:#94a3b8;text-align:center;padding:20px;">No delivery-track jobs found. Add jobs via the Datanomix tab in the app.</div>'
+        : d.jobs.slice(0,15).map(j => {
+            const name = MACHINE_MAP[j.machineName] || j.machineName;
+            const cycle = parseFloat(j.cycleTime || 0);
+            const target = parseFloat(j.targetCycleTime || 0);
+            const over = cycle > 0 && target > 0 && cycle > target * 1.1;
+            const under = cycle > 0 && target > 0 && cycle <= target * 0.95;
+            const cls = over ? 'over' : under ? 'under' : 'normal';
+            const pct = cycle > 0 && target > 0 ? Math.round((cycle/target-1)*100) : null;
+            const pctStr = pct !== null ? (pct > 0 ? `<span style="color:#ef4444;">+${pct}% over</span>` : `<span style="color:#22c55e;">${Math.abs(pct)}% under</span>`) : '';
+            return `<div class="job-row ${cls}">
+              <div style="font-weight:700;min-width:80px;">${name}</div>
+              <div style="flex:1;font-size:13px;color:#475569;">${(j.partNumber||'').slice(0,40)}</div>
+              <div style="font-size:13px;color:#1a2332;font-weight:600;">${cycle>0?Math.round(cycle)+'m':' —'} / ${target>0?Math.round(target)+'m':'—'}</div>
+              <div style="min-width:100px;text-align:right;font-size:13px;">${pctStr}</div>
+              <div style="min-width:60px;text-align:right;font-weight:700;">${Math.round(j.actualParts||0)} parts</div>
+            </div>`;
+          }).join('')
+      }
+    </div>
+
+    <!-- Downtime details -->
+    <div class="section">
+      <div class="section-title">⏱ Downtime Detail — ${fmtMins(d.dtTotal)} Total</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        ${[
+          { t:d.dtAlarm,  label:'Alarms',      color:'#ef4444', icon:'🚨' },
+          { t:d.dtSetup,  label:'Setups',      color:'#f59e0b', icon:'🔧' },
+          { t:d.dtAdi,    label:'Load/Unload', color:'#3b82f6', icon:'🔄' },
+          { t:d.dtUnspec, label:'Unspecified', color:'#94a3b8', icon:'❓' },
+        ].map(({ t, label, color, icon }) => {
+          if (!t) return `<div style="background:#f8fafc;border-radius:10px;padding:16px;border-top:4px solid #e2e8f0;"><div style="font-size:22px;margin-bottom:6px;">${icon}</div><div style="font-weight:700;font-size:14px;color:#475569;">${label}</div><div style="font-size:24px;font-weight:800;color:#e2e8f0;margin:6px 0;">—</div></div>`;
+          const mins = Math.round(t.duration_seconds/60);
+          const topReasons = (t.reasons||[]).slice(0,3).map(r =>
+            `<div style="font-size:11px;color:#64748b;margin-top:3px;">• ${r.reason.slice(0,30)} (${fmtMins(Math.round(r.duration_seconds/60))})</div>`
+          ).join('');
+          return `<div style="background:#f8fafc;border-radius:10px;padding:16px;border-top:4px solid ${color};">
+            <div style="font-size:22px;margin-bottom:6px;">${icon}</div>
+            <div style="font-weight:700;font-size:14px;color:#475569;">${label}</div>
+            <div style="font-size:28px;font-weight:800;color:${color};margin:4px 0;">${fmtMins(mins)}</div>
+            <div style="font-size:11px;color:#94a3b8;">${Math.round(t.percentage||0)}% of total</div>
+            ${topReasons}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;padding:20px;color:#94a3b8;font-size:12px;letter-spacing:1px;">
+      HILL MANUFACTURING · POWERED BY DATANOMIX · GENERATED ${new Date().toLocaleString()}
+    </div>
+  `;
+
+  document.getElementById('report-root').innerHTML = html;
+
+  // Render charts after DOM update
+  setTimeout(() => renderCharts(d), 50);
+}
+
+function renderCharts(d) {
+  // 1. Utilization bar chart — all active machines
+  const active = d.sorted.filter(m => m.util > 0);
+  if (active.length && document.getElementById('chart-util')) {
+    charts.util = new Chart(document.getElementById('chart-util'), {
+      type: 'bar',
+      data: {
+        labels: active.map(m => m.name),
+        datasets: [{
+          label: 'Utilization %',
+          data: active.map(m => Math.round(m.util)),
+          backgroundColor: active.map(m => m.util>=70?'#22c55e':m.util>=40?'#f59e0b':'#ef4444'),
+          borderRadius: 5,
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false} },
+        scales:{
+          y:{ min:0, max:100, ticks:{callback:v=>v+'%'}, grid:{color:'#f1f5f9'} },
+          x:{ ticks:{font:{size:10}}, grid:{display:false} }
+        }
+      }
+    });
+  }
+
+  // 2. Downtime pie chart
+  const dtData = d.byType.filter(t => t.duration_seconds > 0);
+  if (dtData.length && document.getElementById('chart-dt')) {
+    const dtColors = { alarm:'#ef4444', setup:'#f59e0b', adi:'#3b82f6', unspecified:'#94a3b8', changeover:'#a78bfa' };
+    charts.dt = new Chart(document.getElementById('chart-dt'), {
+      type: 'doughnut',
+      data: {
+        labels: dtData.map(t => t.type.charAt(0).toUpperCase()+t.type.slice(1)),
+        datasets: [{
+          data: dtData.map(t => Math.round(t.duration_seconds/60)),
+          backgroundColor: dtData.map(t => dtColors[t.type]||'#64748b'),
+          borderWidth: 2, borderColor: '#fff',
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{ position:'right', labels:{ font:{size:11}, padding:12 } },
+          tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${fmtMins(ctx.parsed)}` } }
+        }
+      }
+    });
+  }
+
+  // 3. Top vs bottom bar chart
+  const perfData = [...d.top5, ...d.bot5.filter(m => !d.top5.find(t=>t.name===m.name))];
+  if (perfData.length && document.getElementById('chart-perf')) {
+    charts.perf = new Chart(document.getElementById('chart-perf'), {
+      type: 'horizontalBar',
+      data: {
+        labels: perfData.map(m => m.name),
+        datasets: [{
+          label: 'Utilization %',
+          data: perfData.map(m => Math.round(m.util)),
+          backgroundColor: perfData.map(m => m.util>=70?'rgba(34,197,94,.7)':m.util>=40?'rgba(245,158,11,.7)':'rgba(239,68,68,.7)'),
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false} },
+        scales:{
+          x:{ min:0,max:100, ticks:{callback:v=>v+'%'}, grid:{color:'#f1f5f9'} },
+          y:{ ticks:{font:{size:11}}, grid:{display:false} }
+        }
+      }
+    });
+  }
+
+  // 4. Cycle time vs target chart
+  const jobsWithCycle = d.jobs.filter(j => parseFloat(j.cycleTime)>0 && parseFloat(j.targetCycleTime)>0).slice(0,10);
+  if (jobsWithCycle.length && document.getElementById('chart-cycle')) {
+    charts.cycle = new Chart(document.getElementById('chart-cycle'), {
+      type: 'bar',
+      data: {
+        labels: jobsWithCycle.map(j => (MACHINE_MAP[j.machineName]||j.machineName) + '\n' + (j.partNumber||'').slice(0,15)),
+        datasets: [
+          { label:'Actual Cycle', data: jobsWithCycle.map(j=>Math.round(parseFloat(j.cycleTime))),
+            backgroundColor: jobsWithCycle.map(j => parseFloat(j.cycleTime)>parseFloat(j.targetCycleTime)*1.1?'rgba(239,68,68,.7)':'rgba(34,197,94,.7)'),
+            borderRadius:4 },
+          { label:'Target Cycle', data: jobsWithCycle.map(j=>Math.round(parseFloat(j.targetCycleTime))),
+            backgroundColor:'rgba(148,163,184,.4)', borderRadius:4 }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{position:'bottom', labels:{font:{size:11}}} },
+        scales:{
+          y:{ ticks:{callback:v=>v+'m'}, grid:{color:'#f1f5f9'} },
+          x:{ ticks:{font:{size:9}}, grid:{display:false} }
+        }
+      }
+    });
+  }
+}
+
+function savePDF() {
+  window.print();
+}
+
+// Load on startup
+loadReport();
+</script>
+</body>
+</html>
