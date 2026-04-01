@@ -480,9 +480,9 @@ function renderCharts(d) {
   const perfData = [...d.top5, ...d.bot5.filter(m => !d.top5.find(t=>t.name===m.name))];
   if (perfData.length && document.getElementById('chart-perf')) {
     charts.perf = new Chart(document.getElementById('chart-perf'), {
-      type: 'horizontalBar',
+      type: 'bar',
       data: {
-        labels: perfData.map(m => m.name),
+        labels: perfData.map(m => MACHINE_MAP[m.name] || m.name),
         datasets: [{
           label: 'Utilization %',
           data: perfData.map(m => Math.round(m.util)),
@@ -494,20 +494,24 @@ function renderCharts(d) {
         indexAxis:'y', responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false} },
         scales:{
-          x:{ min:0,max:100, ticks:{callback:v=>v+'%'}, grid:{color:'#f1f5f9'} },
-          y:{ ticks:{font:{size:11}}, grid:{display:false} }
+          x:{ min:0, max:100, ticks:{callback:v=>v+'%'}, grid:{color:'#f1f5f9'} },
+          y:{ ticks:{font:{size:10}, maxRotation:0}, grid:{display:false} }
         }
       }
     });
   }
 
   // 4. Cycle time vs target chart
-  const jobsWithCycle = d.jobs.filter(j => parseFloat(j.cycleTime)>0 && parseFloat(j.targetCycleTime)>0).slice(0,10);
+  const jobsWithCycle = d.jobs.filter(j => parseFloat(j.cycleTime||0)>0 && parseFloat(j.targetCycleTime||0)>0).slice(0,10);
   if (jobsWithCycle.length && document.getElementById('chart-cycle')) {
     charts.cycle = new Chart(document.getElementById('chart-cycle'), {
       type: 'bar',
       data: {
-        labels: jobsWithCycle.map(j => (MACHINE_MAP[j.machineName]||j.machineName) + '\n' + (j.partNumber||'').slice(0,15)),
+        labels: jobsWithCycle.map(j => {
+          const name = MACHINE_MAP[j.machineName] || j.machineName;
+          const part = (j.partNumber||'').slice(0,12);
+          return name + ' · ' + part;
+        }),
         datasets: [
           { label:'Actual Cycle', data: jobsWithCycle.map(j=>Math.round(parseFloat(j.cycleTime))),
             backgroundColor: jobsWithCycle.map(j => parseFloat(j.cycleTime)>parseFloat(j.targetCycleTime)*1.1?'rgba(239,68,68,.7)':'rgba(34,197,94,.7)'),
