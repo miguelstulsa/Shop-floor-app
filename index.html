@@ -1381,7 +1381,7 @@
 <!-- FIREBASE MODULE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, getDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, getDoc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyD8lZqvva1twE8MBD38bFmk8zw1QQ5smpI",
@@ -1394,7 +1394,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   window.fbDb = db;
-  window.fbFirestore = { collection, doc, setDoc, deleteDoc: deleteDoc, onSnapshot, query, where, getDocs, addDoc, serverTimestamp };
+  window.fbFirestore = { collection, doc, setDoc, deleteDoc, getDoc, onSnapshot, query, where, getDocs, addDoc, serverTimestamp };
   window._db = db;
   window._fbModules = { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, getDoc, where, getDocs, addDoc, collection, query, orderBy, onSnapshot };
 
