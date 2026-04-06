@@ -1146,7 +1146,7 @@
       <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div>Machinist Req</div>
       <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>Floor Support</div>
       <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Running WO</div>
-      <div class="legend-item" style="margin-left:8px;border-left:1px solid #2a5a8c;padding-left:8px;"><div style="width:18px;height:4px;background:#22c55e;border-radius:2px;"></div>DNX Perf</div>
+      <div class="legend-item" style="margin-left:8px;border-left:1px solid #2a5a8c;padding-left:8px;"><div style="width:18px;height:4px;background:#f5c500;border-radius:2px;"></div>Last Shift</div>
     </div>
     <div class="notif-bell" onclick="scrollToSidebar()">
       <span>🔔</span><span>Alerts</span>
@@ -1162,7 +1162,7 @@
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board"><span class="tab-icon">📌</span><span class="tab-label">Bulletin</span><span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video"><span class="tab-icon">🎬</span><span class="tab-label">Hill TV</span></div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;"><span class="tab-icon">📊</span><span class="tab-label">Dashboard</span></div>
-  <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;"><span class="tab-icon">⚡</span><span class="tab-label">Datanomix</span></div>
+  <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;"><span class="tab-icon">⚡</span><span class="tab-label">Last Shift</span></div>
   <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv"><span class="tab-icon">📺</span><span class="tab-label">Shop TV</span></div>
   <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop" style="display:none;"><span class="tab-icon">🔗</span><span class="tab-label">ProShop</span></div>
   <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;"><span class="tab-icon">📅</span><span class="tab-label">Planner</span></div>
@@ -1348,9 +1348,10 @@
   <!-- Sticky header -->
   <div style="background:#060f1c;border-bottom:1px solid #1e3a5f;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:20;">
     <div style="display:flex;align-items:center;gap:10px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:3px;color:#f0f4f8;">⚡ DATANOMIX LIVE</div>
-      <span id="dnx-status-dot" style="width:9px;height:9px;border-radius:50%;background:#334155;display:inline-block;"></span>
-      <span id="dnx-status-text" style="font-size:11px;color:#475569;font-weight:700;letter-spacing:1px;">CONNECTING...</span>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:3px;color:#f0f4f8;">⚡ DATANOMIX — LAST SHIFT</div>
+      <div style="font-size:10px;color:#475569;letter-spacing:1px;margin-top:2px;">End of shift data · Updates after shift closes</div>
+      <span id="dnx-status-dot" style="width:9px;height:9px;border-radius:50%;background:#f5c500;display:inline-block;"></span>
+      <span id="dnx-status-text" style="font-size:11px;color:#475569;font-weight:700;letter-spacing:1px;">LAST SHIFT DATA</span>
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
       <span id="dnx-last-updated" style="font-size:10px;color:#334155;letter-spacing:1px;"></span>
@@ -3821,7 +3822,7 @@ window.renderVideos = function() {
 
       // Header + filter buttons
       html += '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;flex-shrink:0;background:rgba(0,0,0,.3);border-bottom:1px solid #1e3a5f;">'
-        +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#f5c500;letter-spacing:3px;">⚡ DATANOMIX LIVE</div>'
+        +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#f5c500;letter-spacing:3px;">⚡ DATANOMIX — LAST SHIFT</div>'
         +'<div style="display:flex;gap:6px;margin-left:8px;">'
           +'<button onclick="window._dnxFilter(\'all\')" id="dnx-f-all" style="font-family:\'Bebas Neue\',sans-serif;font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #f5c500;background:rgba(245,200,66,.2);color:#f5c500;cursor:pointer;letter-spacing:1px;">ALL ('+machines.length+')</button>'
           +'<button onclick="window._dnxFilter(\'running\')" id="dnx-f-run" style="font-family:\'Bebas Neue\',sans-serif;font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #334155;background:transparent;color:#60a5fa;cursor:pointer;letter-spacing:1px;">RUNNING ('+running.length+')</button>'
@@ -3868,7 +3869,7 @@ window.renderVideos = function() {
               +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:6px;padding:6px 2px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:'+(m.win?'#22c55e':'#ef4444')+';line-height:1;">'+(m.win?'▲':'▼')+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">STATUS</div></div>'
             +'</div>'
             +'<div style="margin-top:6px;background:#1a3a5c;border-radius:3px;height:3px;overflow:hidden;"><div style="height:100%;border-radius:3px;background:'+sc+';width:'+Math.min(100,Math.round((m.taktPct||0)*100))+'%;"></div></div>'
-            : '<div style="font-size:11px;color:#334155;padding:4px 0;">Not running this shift</div>'
+            : '<div style="font-size:11px;color:#334155;padding:4px 0;">No data this shift yet</div>'
           )
         +'</div>';
       });
@@ -7095,7 +7096,7 @@ window.plannerSetView = function(view) {
     <button class="stv-ctrl-btn active" id="stv-view-cell" onclick="setStvView('cell',this)">BY CELL</button>
     <button class="stv-ctrl-btn" id="stv-view-priority" onclick="setStvView('priority',this)">PRIORITY FIRST</button>
     <button class="stv-ctrl-btn" id="stv-view-all" onclick="setStvView('all',this)">ALL MACHINES</button>
-    <button class="stv-ctrl-btn" id="stv-view-dnx" onclick="setStvView('dnx',this)" style="background:rgba(245,197,0,0.08);border-color:rgba(245,197,0,0.3);color:#f5c500;">⚡ DNX LIVE</button>
+    <button class="stv-ctrl-btn" id="stv-view-dnx" onclick="setStvView('dnx',this)" style="background:rgba(245,197,0,0.08);border-color:rgba(245,197,0,0.3);color:#f5c500;">⚡ DNX LAST SHIFT</button>
     <div style="width:1px;height:18px;background:#1a4a8c;margin:0 2px;"></div>
     <span class="stv-ctrl-lbl">SPEED:</span>
     <input type="range" class="stv-speed-range" id="stvSpeed" min="5" max="30" value="12" oninput="setStvSpeed(this.value)">
@@ -7136,7 +7137,7 @@ window.plannerSetView = function(view) {
     </div>
     <div style="display:flex;gap:8px;">
       <button onclick="slRefresh()" style="background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.3);color:#f5c500;border-radius:8px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">↺ REFRESH</button>
-      <button onclick="slSendCheck()" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:#60a5fa;border-radius:8px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📱 HOURLY CHECK</button>
+      <button onclick="slSendMorning()" style="background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:#60a5fa;border-radius:8px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">🌅 MORNING REPORT</button>
       <button onclick="slSendScorecard()" style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e;border-radius:8px;padding:6px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📊 SCORECARD</button>
     </div>
   </div>
@@ -7221,7 +7222,7 @@ window.plannerSetView = function(view) {
         <button onclick="window.switchTab&&switchTab('inspection')" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#f87171;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">🔴 INSPECTION REQUEST</button>
         <button onclick="window.switchTab&&switchTab('machinist')" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#fbbf24;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">🟡 MACHINIST REQUEST</button>
         <button onclick="filterRequests('orange');window.switchTab&&switchTab('shop')" style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);color:#fb923c;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">🟠 FLOOR SUPPORT</button>
-        <button onclick="slSendCheck()" style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);color:#60a5fa;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">📱 PUSH HOURLY ALERT</button>
+        <button onclick="slSendMorning()" style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);color:#60a5fa;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">🌅 MORNING REPORT</button>
         <button onclick="slSendScorecard()" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:#22c55e;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">📊 PUSH SCORECARD</button>
         <button onclick="window.open('hill-shift-report.html','_blank')" style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25);color:#c084fc;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">📄 SHIFT REPORT</button>
         <button onclick="window.open('hill-shift-report.html?period=this_week','_blank')" style="background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.25);color:#f5c500;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">📈 WEEKLY REPORT</button>
@@ -7438,6 +7439,18 @@ window.plannerSetView = function(view) {
         if(st) st.textContent = '✅ Scorecard sent! ' + d.parts + ' total parts today';
       })
       .catch(function(){ if(st) st.textContent = '❌ Failed to reach worker'; });
+  };
+
+  // Send morning report manually
+  window.slSendMorning = function() {
+    var st = el('sl-action-status');
+    if(st) st.textContent = 'Sending morning report...';
+    fetch(WORKER_URL + '/run?type=morning')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(st) st.textContent = '\u2705 Morning report sent! Check Pushover.';
+      })
+      .catch(function(){ if(st) st.textContent = '\u274C Failed to reach worker'; });
   };
 
   // Auto-load when tab opens
@@ -8390,8 +8403,8 @@ function loadDNXFromFirebase() {
         if(!snap.exists || !snap.exists()){
           if(cards) cards.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;">'
             +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#f5c500;margin-bottom:12px;">⚡ ALERTS ACTIVE</div>'
-            +'<div style="font-size:13px;color:#475569;line-height:1.8;">No shift data yet today.<br>First update arrives at 9am when the hourly check runs.<br><br>'
-            +'<span style="color:#60a5fa;font-size:12px;">9am · 11am · 1pm · 3pm · 5pm · Mon–Fri</span></div>'
+            +'<div style="font-size:13px;color:#475569;line-height:1.8;">Last shift data loads after end of shift.<br>Morning report arrives at 7am with full breakdown.<br><br>'
+            +'<span style="color:#60a5fa;font-size:12px;">Morning report arrives at 7am · End of shift at 5pm</span></div>'
             +'</div>';
           if(upd) upd.textContent = 'No data yet today — check back at 9am';
           return;
@@ -8470,8 +8483,8 @@ function renderDNXFromData(data) {
       if(!data || !data.machines){
         if(cards) cards.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;">'
           +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#f5c500;margin-bottom:12px;">⚡ ALERTS ACTIVE</div>'
-          +'<div style="font-size:13px;color:#475569;line-height:1.8;">No shift data yet today.<br>First update arrives at 9am when the hourly check runs.<br><br>'
-          +'<span style="color:#60a5fa;font-size:12px;">9am · 11am · 1pm · 3pm · 5pm · Mon–Fri</span></div>'
+          +'<div style="font-size:13px;color:#475569;line-height:1.8;">Last shift data loads after end of shift.<br>Morning report arrives at 7am with full breakdown.<br><br>'
+          +'<span style="color:#60a5fa;font-size:12px;">Morning report arrives at 7am · End of shift at 5pm</span></div>'
           +'</div>';
         return;
       }
@@ -8550,7 +8563,7 @@ function renderDNXFromData(data) {
               +'<div style="text-align:center;background:rgba(0,0,0,.25);border-radius:7px;padding:6px 4px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:'+taktC+';line-height:1;">'+taktStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">PACE</div></div>'
               +'</div>'
               +'<div style="background:#1a3a5c;border-radius:3px;height:5px;margin-bottom:8px;overflow:hidden;"><div style="height:100%;border-radius:3px;background:'+sc+';width:'+utilPct+'%;transition:width .6s;"></div></div>'
-            : '<div style="font-size:11px;color:#334155;margin-bottom:8px;padding:4px 0;">Not running this shift</div>')
+            : '<div style="font-size:11px;color:#334155;margin-bottom:8px;padding:4px 0;">No data this shift yet</div>')
             // HUD link
             +'<a href="https://hillmanufacturing.datanomix.app/machine-hud?machineId='+(window._DNX_UUID_MAP&&window._DNX_UUID_MAP[m.name]||'')+'" target="_blank" style="display:block;text-align:center;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:#60a5fa;border-radius:6px;padding:4px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:1px;text-decoration:none;">FULL HUD ↗</a>'
           +'</div>';
