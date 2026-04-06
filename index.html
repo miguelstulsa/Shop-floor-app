@@ -19,7 +19,7 @@
   body.scrollable { overflow-y: auto; overflow-x: hidden; }
 
   /* HEADER */
-  header { background: linear-gradient(135deg, #0f2338 0%, #1a3a5c 100%); border-bottom: 3px solid #f59e0b; padding: 6px 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+  header { background: linear-gradient(135deg, #070f1a 0%, #0d2035 50%, #0a1a2e 100%); border-bottom: 2px solid #c9a227; padding: 6px 12px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,0.5); min-height: 0; overflow: hidden; }
   .logo { display: flex; align-items: center; gap: 12px; }
   .logo-badge { width: 36px; height: 36px; background: #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #0f2338; font-weight: 900; box-shadow: 0 0 15px rgba(245,158,11,0.4); }
   .header-logo-img { height: 44px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4)); }
@@ -36,17 +36,22 @@
   .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
 
   /* NAV TABS */
-  .nav-tabs-wrap { position: sticky; top: 0; z-index: 200; background: #0b1c2e; border-bottom: 2px solid #2a5a8c; display: flex; align-items: stretch; }
+  .nav-tabs-wrap { position: sticky; top: 0; z-index: 200; background: linear-gradient(180deg, #0d1f33 0%, #0b1827 100%); border-bottom: 2px solid #1e3a5c; display: flex; align-items: stretch; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
   .nav-tabs { background: transparent; display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; scroll-behavior: smooth; flex: 1; padding: 0; }
   .nav-tabs::-webkit-scrollbar { display: none; }
   .nav-scroll-btn { background: rgba(0,0,0,0.5); border: none; color: #64748b; width: 32px; flex-shrink: 0; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 1; }
   .nav-scroll-btn:active { background: rgba(245,158,11,0.2); color: #f59e0b; }
   .nav-scroll-btn.left { border-right: 1px solid #1a4a8c; }
   .nav-scroll-btn.right { border-left: 1px solid #1a4a8c; }
-  .nav-tab { padding: 7px 16px; font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 2.5px; color: #475569; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.25s ease; display: flex; align-items: center; gap: 8px; border-radius: 8px 8px 0 0; }
+  .nav-tab { padding: 0 4px; font-family: 'Bebas Neue', sans-serif; font-size: 11px; letter-spacing: 1.5px; color: #475569; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s ease; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 8px 8px 0 0; min-width: 58px; padding: 6px 10px 4px; }
+  .nav-tab .tab-icon { font-size: 18px; line-height: 1; transition: transform 0.2s; }
+  .nav-tab .tab-label { font-size: 9px; letter-spacing: 1px; line-height: 1; white-space: nowrap; }
   .nav-tab:hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
-  .nav-tab.active { color: #f59e0b; border-bottom-color: #f59e0b; background: rgba(245,158,11,0.12); box-shadow: 0 0 18px rgba(245,158,11,0.35), inset 0 1px 0 rgba(245,158,11,0.3); text-shadow: 0 0 12px rgba(245,158,11,0.8); }
-  .nav-tab .tab-badge { background: #ef4444; color: white; font-size: 10px; font-weight: 700; border-radius: 999px; padding: 1px 6px; font-family: 'Barlow', sans-serif; letter-spacing: 0; }
+  .nav-tab:hover .tab-icon { transform: scale(1.15); }
+  .nav-tab.active { color: #f5c500; border-bottom-color: #f5c500; background: rgba(245,197,0,0.1); box-shadow: 0 0 16px rgba(245,197,0,0.25), inset 0 1px 0 rgba(245,197,0,0.2); }
+  .nav-tab.active .tab-icon { filter: drop-shadow(0 0 6px rgba(245,197,0,0.8)); transform: scale(1.1); }
+  .nav-tab.active .tab-label { color: #f5c500; }
+  .nav-tab .tab-badge { background: #ef4444; color: white; font-size: 9px; font-weight: 700; border-radius: 999px; padding: 1px 5px; font-family: 'Barlow', sans-serif; letter-spacing: 0; position: absolute; top: 4px; right: 4px; }
 
   /* PAGE SECTIONS */
   .page { display: none; }
@@ -115,7 +120,7 @@
   .notif-item.blue   .notif-blink-dot { background: #3b82f6; box-shadow: 0 0 12px 4px #3b82f6; animation: blink-blue   1.6s step-end infinite; }
   .notif-item.green  .notif-blink-dot { background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: blink-green  2.0s step-end infinite; }
   .notif-type { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 3px; }
-  .notif-item.red .notif-type { color: #f87171; } .notif-item.yellow .notif-type { color: #fbbf24; }
+  .notif-item.red .notif-type { color: #f87171; } .notif-item.yellow .notif-type { color: #fbbf24; } .notif-item.orange .notif-type { color: #fb923c; }
   .notif-item.blue .notif-type { color: #60a5fa; } .notif-item.green .notif-type { color: #4ade80; }
   .notif-machine { font-size: 13px; font-weight: 700; color: #f0f4f8; margin-bottom: 2px; }
   .notif-detail { font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
@@ -139,10 +144,12 @@
   .note-type-btn.blue { border-color: #3b82f6; } .note-type-btn.blue.selected { background: rgba(59,130,246,0.15); }
   .note-type-btn.red { border-color: #ef4444; } .note-type-btn.red.selected { background: rgba(239,68,68,0.15); }
   .note-type-btn.yellow { border-color: #eab308; } .note-type-btn.yellow.selected { background: rgba(234,179,8,0.15); }
+  .note-type-btn.orange { border-color: #f97316; } .note-type-btn.orange.selected { background: rgba(249,115,22,0.15); }
   .note-type-btn.green { border-color: #22c55e; } .note-type-btn.green.selected { background: rgba(34,197,94,0.15); }
   .note-type-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
   .note-type-btn.blue .note-type-label { color: #60a5fa; } .note-type-btn.red .note-type-label { color: #f87171; }
   .note-type-btn.yellow .note-type-label { color: #fbbf24; } .note-type-btn.green .note-type-label { color: #4ade80; }
+  .note-type-btn.orange .note-type-label { color: #fb923c; }
   .note-type-desc { font-size: 11px; color: #94a3b8; line-height: 1.4; }
   .modal-form input, .modal-form textarea, .modal-form select { width: 100%; background: rgba(255,255,255,0.06); border: 1px solid #2a5a8c; border-radius: 8px; padding: 10px 14px; color: #f0f4f8; font-family: 'Barlow', sans-serif; font-size: 13px; margin-bottom: 10px; resize: none; -webkit-text-fill-color: #f0f4f8; caret-color: #f0f4f8; }
   .modal-form input:focus, .modal-form textarea:focus, .modal-form select:focus { outline: none; border-color: #f59e0b; }
@@ -204,6 +211,7 @@
   .dash-req-card::before { content:'';position:absolute;left:0;top:0;bottom:0;width:4px; }
   .dash-req-card.type-red::before    { background:#ef4444; }
   .dash-req-card.type-yellow::before { background:#eab308; }
+  .dash-req-card.type-orange::before { background:#f97316; }
   .dash-req-card.type-blue::before   { background:#3b82f6; }
   .dash-req-card.type-green::before  { background:#22c55e; }
   .dash-req-card.resolved { opacity:0.4; }
@@ -226,6 +234,7 @@
   .dash-req-type { font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;border-radius:999px; }
   .dash-req-type.red    { background:rgba(239,68,68,0.15);color:#f87171; }
   .dash-req-type.yellow { background:rgba(234,179,8,0.15);color:#fbbf24; }
+  .dash-req-type.orange { background:rgba(249,115,22,0.15);color:#fb923c; }
   .dash-req-type.blue   { background:rgba(59,130,246,0.15);color:#60a5fa; }
   .dash-req-type.green  { background:rgba(34,197,94,0.15);color:#4ade80; }
   .dash-req-time { font-size:11px;color:#475569; }
@@ -403,13 +412,14 @@
   .admin-delete { background: rgba(100,116,139,0.15); border: 1px solid rgba(100,116,139,0.4); color: #94a3b8; border-radius: 10px; padding: 12px 16px; font-size: 14px; cursor: pointer; min-height: 48px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   .admin-role-btn { border-radius: 10px; padding: 12px 16px; font-size: 14px; font-weight: 700; cursor: pointer; flex: 1; min-height: 48px; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: all 0.2s; border: none; }
   .admin-empty { text-align: center; padding: 20px; color: #475569; font-size: 13px; }
-  .user-greeting { display: none; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
+  .user-greeting { display: none; align-items: center; gap: 4px; font-size: 12px; color: #94a3b8; flex-shrink: 0; }
   .user-greeting.visible { display: flex; }
-  .greeting-name { color: #94a3b8; white-space: nowrap; }
+  .greeting-name { color: #94a3b8; white-space: nowrap; display: none; }
+  @media(min-width: 900px) { .greeting-name { display: inline; } }
   .greeting-name strong { color: #f0f4f8; }
-  .logout-btn { background: rgba(255,255,255,0.06); border: 1px solid #2a5a8c; border-radius: 7px; color: #94a3b8; font-size: 12px; padding: 5px 10px; cursor: pointer; transition: all 0.2s; }
+  .logout-btn { background: rgba(255,255,255,0.06); border: 1px solid #2a5a8c; border-radius: 7px; color: #94a3b8; font-size: 11px; padding: 4px 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .logout-btn:hover { border-color: #ef4444; color: #f87171; }
-  .admin-btn { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.5); border-radius: 7px; color: #f59e0b; font-size: 12px; font-weight: 700; padding: 5px 12px; cursor: pointer; display: none; }
+  .admin-btn { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.5); border-radius: 7px; color: #f59e0b; font-size: 11px; font-weight: 700; padding: 4px 8px; cursor: pointer; display: none; white-space: nowrap; }
   .admin-btn.visible { display: block; }
 
   /* HILL TV */
@@ -484,6 +494,7 @@
   .req-filter.yellow.active{ background: #eab308; border-color: #eab308; color: #0f2338; }
   .req-filter.blue.active  { background: #3b82f6; border-color: #3b82f6; color: white; }
   .req-filter.green.active { background: #22c55e; border-color: #22c55e; color: #0f2338; }
+  .req-filter.orange.active{ background: #f97316; border-color: #f97316; color: white; }
   .requests-list { flex: 1; overflow-y: auto; padding: 12px 16px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; align-content: start; }
   .req-card { display: flex; gap: 12px; background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px 14px 14px 14px; border-left: 5px solid transparent; position: relative; transition: transform 0.15s; }
   .req-card:hover { transform: translateY(-2px); }
@@ -823,7 +834,7 @@
     .status-label { display: none !important; }
     .admin-btn { padding: 3px 7px !important; font-size: 11px !important; }
     .logout-btn { padding: 3px 7px !important; font-size: 11px !important; }
-    .nav-tab { padding: 9px 14px !important; font-size: 13px !important; letter-spacing: 1.5px !important; gap: 5px !important; flex-direction: row !important; align-items: center !important; white-space: nowrap !important; flex-shrink: 0 !important; }
+    .nav-tab { padding: 6px 8px !important; min-width: 48px !important; flex-shrink: 0 !important; } .nav-tab .tab-icon { font-size: 16px !important; } .nav-tab .tab-label { font-size: 8px !important; }
     .nav-tabs { padding: 0 !important; gap: 0 !important; }
     .floor-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 8px; gap: 6px; }
     .machine-name { font-size: 9px !important; letter-spacing: 0.5px !important; }
@@ -838,6 +849,46 @@
     .video-hero-banner { flex-direction: column; align-items: flex-start; }
   }
 </style>
+  <!-- PWA Support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f5c500">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Shop Floor">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <script>
+    // Register service worker for PWA (Chrome/Android only — iOS Safari has domain restrictions)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js')
+          .then(function(reg) { console.log('SW registered'); })
+          .catch(function() {}); // Silently ignore on iOS Safari
+      });
+    }
+    // PWA install prompt
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      // Show install button if not already installed
+      var btn = document.getElementById('pwa-install-btn');
+      if (btn) btn.style.display = 'flex';
+    });
+    window.installPWA = function() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(result) {
+        deferredPrompt = null;
+        var btn = document.getElementById('pwa-install-btn');
+        if (btn) btn.style.display = 'none';
+      });
+    };
+    window.addEventListener('appinstalled', function() {
+      var btn = document.getElementById('pwa-install-btn');
+      if (btn) btn.style.display = 'none';
+    });
+  </script>
 </head>
 <body>
 
@@ -1062,7 +1113,8 @@
         <span class="greeting-name">👋 <strong id="greetingName"></strong></span>
         <button class="admin-btn" id="adminBtn" onclick="openAdminPanel()">👑 Admin</button>
         <a class="shop-switch-btn" id="shopSwitchBtn" href="#" target="_blank" title="Switch to QMI Shop Floor">🏭 QMI</a>
-        <a href="hill-shift-report.html" target="_blank" style="background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.4);color:#c084fc;border-radius:7px;padding:5px 11px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;text-decoration:none;white-space:nowrap;">📄 REPORT</a>
+        <a href="hill-shift-report.html" target="_blank" style="background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.4);color:#c084fc;border-radius:7px;padding:5px 11px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;text-decoration:none;white-space:nowrap;padding:4px 8px;">📄 REPORT</a>
+        <button id="pwa-install-btn" onclick="window.installPWA()" style="display:none;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.4);color:#22c55e;border-radius:7px;padding:5px 11px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;white-space:nowrap;align-items:center;gap:4px;">📲 INSTALL APP</button>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
     </div>
@@ -1070,6 +1122,7 @@
       <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Pending WO</div>
       <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Inspection</div>
       <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div>Machinist Req</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>Floor Support</div>
       <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Running WO</div>
       <div class="legend-item" style="margin-left:8px;border-left:1px solid #2a5a8c;padding-left:8px;"><div style="width:18px;height:4px;background:#22c55e;border-radius:2px;"></div>DNX Perf</div>
     </div>
@@ -1083,15 +1136,15 @@
 <div class="nav-tabs-wrap">
   <button class="nav-scroll-btn left" onclick="scrollTabs(-120)" aria-label="Scroll tabs left">&#8249;</button>
   <nav class="nav-tabs" id="navTabsEl">
-  <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
-  <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
-  <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
-  <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📊 Dashboard</div>
-  <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Datanomix</div>
-  <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv">📺 Shop TV</div>
-  <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop" style="display:none;">🔗 ProShop</div>
-  <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;">📅 Planner</div>
-  <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">🎯 Shift Leader</div>
+  <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop"><span class="tab-icon">🏭</span><span class="tab-label">Shop Floor</span></div>
+  <div class="nav-tab" onclick="switchTab('board')" id="tab-board"><span class="tab-icon">📌</span><span class="tab-label">Bulletin</span><span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
+  <div class="nav-tab" onclick="switchTab('video')" id="tab-video"><span class="tab-icon">🎬</span><span class="tab-label">Hill TV</span></div>
+  <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;"><span class="tab-icon">📊</span><span class="tab-label">Dashboard</span></div>
+  <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;"><span class="tab-icon">⚡</span><span class="tab-label">Datanomix</span></div>
+  <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv"><span class="tab-icon">📺</span><span class="tab-label">Shop TV</span></div>
+  <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop" style="display:none;"><span class="tab-icon">🔗</span><span class="tab-label">ProShop</span></div>
+  <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;"><span class="tab-icon">📅</span><span class="tab-label">Planner</span></div>
+  <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;"><span class="tab-icon">🎯</span><span class="tab-label">Shift Leader</span></div>
   </nav>
   <button class="nav-scroll-btn right" onclick="scrollTabs(120)" aria-label="Scroll tabs right">&#8250;</button>
 </div>
@@ -1165,6 +1218,7 @@
       <button class="req-filter active" onclick="filterRequests('all')">ALL</button>
       <button class="req-filter red"    onclick="filterRequests('red')">🔴 INSPECTION</button>
       <button class="req-filter yellow" onclick="filterRequests('yellow')">🟡 MACHINIST</button>
+      <button class="req-filter orange" onclick="filterRequests('orange')">🟠 FLOOR SUPPORT</button>
       <button class="req-filter blue"   onclick="filterRequests('blue')">🔵 PENDING WO</button>
       <button class="req-filter green"  onclick="filterRequests('green')">🟢 RUNNING WO</button>
     </div>
@@ -1208,20 +1262,62 @@
 <!-- HILL TV PAGE -->
 <div class="page" id="page-video" style="display:none;">
   <div class="video-page">
-    <div class="video-hero-banner">
-      <div class="vhb-left">
-        <div class="vhb-eyebrow">🎬 Official Shop Videos</div>
-        <h2 class="vhb-title">Hill TV</h2>
-        <p class="vhb-sub">Watch shop tours, machine demos, and team highlights.</p>
+    <!-- Cinematic hero banner -->
+    <div style="position:relative;background:linear-gradient(135deg,#060d1a 0%,#0d1f33 50%,#060d1a 100%);border-bottom:1px solid #1e3a5c;overflow:hidden;">
+      <div style="position:absolute;inset:0;background:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><defs><radialGradient id=%22g%22><stop offset=%220%25%22 stop-color=%22%23f5c500%22 stop-opacity=%220.08%22/><stop offset=%22100%25%22 stop-color=%22transparent%22/></radialGradient></defs><rect width=%22100%25%22 height=%22100%25%22 fill=%22url(%23g)%22/></svg>') center/cover;pointer-events:none;"></div>
+      <div style="position:relative;padding:20px 20px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:11px;color:#f5c500;letter-spacing:3px;font-family:'Bebas Neue',sans-serif;margin-bottom:4px;">🎬 HILL MANUFACTURING</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#f0f4f8;letter-spacing:4px;line-height:1;">HILL TV</div>
+          <div style="font-size:11px;color:#475569;margin-top:4px;">Shop tours · Machine demos · Team highlights</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:20px;padding:5px 12px;">
+            <div style="width:7px;height:7px;border-radius:50%;background:#ef4444;animation:pulse 2s infinite;"></div>
+            <span style="font-family:'Bebas Neue',sans-serif;font-size:11px;color:#ef4444;letter-spacing:2px;">LIVE CHANNEL</span>
+          </div>
+          <button class="add-video-btn" onclick="openAddVideoModal()" style="background:linear-gradient(135deg,#c9a227,#f5c500);border:none;color:#0f1e2e;border-radius:10px;padding:8px 16px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;font-weight:700;">➕ ADD VIDEO</button>
+        </div>
       </div>
-      <span class="vhb-badge">Live Channel</span>
     </div>
-    <div class="video-toolbar">
-      <div class="video-toolbar-title">📹 Video Library</div>
-      <button class="add-video-btn" onclick="openAddVideoModal()">➕ Add Video</button>
+
+    <!-- Category filter tabs -->
+    <div style="display:flex;gap:6px;padding:12px 16px 8px;overflow-x:auto;scrollbar-width:none;">
+      <button onclick="filterVideos('all')" id="vf-all" style="background:rgba(245,197,0,0.15);border:1px solid #f5c500;color:#f5c500;border-radius:20px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;cursor:pointer;white-space:nowrap;">ALL VIDEOS</button>
+      <button onclick="filterVideos('demo')" id="vf-demo" style="background:transparent;border:1px solid #334155;color:#64748b;border-radius:20px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;cursor:pointer;white-space:nowrap;">🏭 SHOP DEMOS</button>
+      <button onclick="filterVideos('training')" id="vf-training" style="background:transparent;border:1px solid #334155;color:#64748b;border-radius:20px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;cursor:pointer;white-space:nowrap;">📚 TRAINING</button>
+      <button onclick="filterVideos('highlights')" id="vf-highlights" style="background:transparent;border:1px solid #334155;color:#64748b;border-radius:20px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;cursor:pointer;white-space:nowrap;">⭐ HIGHLIGHTS</button>
+      <button onclick="filterVideos('safety')" id="vf-safety" style="background:transparent;border:1px solid #334155;color:#64748b;border-radius:20px;padding:5px 14px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;cursor:pointer;white-space:nowrap;">🦺 SAFETY</button>
     </div>
-    <div class="video-grid" id="videoGrid"><div class="video-empty"><div class="e-icon">🎬</div><p>No videos yet.<br>Click "Add Video" to get started!</p></div></div>
+
+    <!-- Video grid -->
+    <div class="video-grid" id="videoGrid"><div class="video-empty"><div class="e-icon" style="font-size:48px;">🎬</div><p style="color:#334155;margin-top:12px;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;">NO VIDEOS YET</p><p style="color:#1e3a5f;font-size:12px;margin-top:6px;">Click ADD VIDEO to get started</p></div></div>
   </div>
+
+  <script>
+  // Video filter function
+  window.filterVideos = function(cat) {
+    ['all','demo','training','highlights','safety'].forEach(function(c) {
+      var btn = document.getElementById('vf-'+c);
+      if (!btn) return;
+      if (c === cat) {
+        btn.style.background = 'rgba(245,197,0,0.15)';
+        btn.style.borderColor = '#f5c500';
+        btn.style.color = '#f5c500';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.borderColor = '#334155';
+        btn.style.color = '#64748b';
+      }
+    });
+    // Filter video cards
+    var cards = document.querySelectorAll('.video-card');
+    cards.forEach(function(card) {
+      var cardCat = card.getAttribute('data-category') || 'all';
+      card.style.display = (cat === 'all' || cardCat === cat) ? 'block' : 'none';
+    });
+  };
+  </script>
 </div>
 
 <!-- DATANOMIX PAGE -->
@@ -1282,11 +1378,23 @@
       <button class="note-type-btn blue" onclick="selectType('blue')"><div class="note-type-label">🔵 Pending WO</div><div class="note-type-desc">Work order pending</div></button>
       <button class="note-type-btn red" onclick="selectType('red')"><div class="note-type-label">🔴 Inspection</div><div class="note-type-desc">Quality check needed</div></button>
       <button class="note-type-btn yellow" onclick="selectType('yellow')"><div class="note-type-label">🟡 Machinist Req</div><div class="note-type-desc">Tool or fixture request</div></button>
+      <button class="note-type-btn orange" onclick="selectType('orange')"><div class="note-type-label">🟠 Floor Support</div><div class="note-type-desc">Material · Hopper · Supplies</div></button>
       <button class="note-type-btn green" onclick="selectType('green')"><div class="note-type-label">🟢 Running WO</div><div class="note-type-desc">Currently running</div></button>
     </div>
     <div class="modal-form">
       <input type="text" id="operatorName" placeholder="Your name (e.g. Miguel)" />
       <input type="text" id="woInput" placeholder="WO# / Operation (e.g. 12345-OP10)" />
+      <div id="floor-support-extras" style="display:none;">
+        <select id="floorSupportType" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;color:#f0f4f8;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:8px;">
+          <option value="">Select what's needed...</option>
+          <option value="Material Drop">📦 Material Drop</option>
+          <option value="Hopper Dump">🗑️ Hopper Dump</option>
+          <option value="Part Removal">🔩 Part Removal</option>
+          <option value="Supplies">🛒 Supplies Needed</option>
+          <option value="Chip Removal">♻️ Chip Removal</option>
+          <option value="Other">📋 Other</option>
+        </select>
+      </div>
       <textarea id="noteText" rows="3" placeholder="Additional details..."></textarea>
     </div>
     <div class="modal-actions">
@@ -1337,22 +1445,42 @@
 <!-- ADD VIDEO MODAL -->
 <div class="modal-overlay" id="addVideoOverlay" onclick="handleAddVideoOverlayClick(event)">
   <div class="modal add-video-modal">
-    <div class="modal-title">Add Video</div>
-    <div class="modal-machine">Paste a YouTube link to add it to Hill TV</div>
+    <div class="modal-title" style="font-size:20px;letter-spacing:3px;">🎬 ADD VIDEO TO HILL TV</div>
+    <div class="modal-machine" style="font-size:11px;color:#475569;">Paste a YouTube or Vimeo link</div>
     <div class="modal-form">
-      <input type="text" id="videoUrl" placeholder="YouTube URL or Video ID" oninput="previewVideo(this.value)" />
-      <div class="url-hint">Supports: youtube.com/watch?v=... · youtu.be/... · youtube.com/embed/...</div>
-      <div class="url-preview" id="urlPreview"><strong id="previewEmbedId"></strong><span>Video found! Fill in the details below.</span></div>
+      <input type="text" id="videoUrl" placeholder="YouTube or Vimeo URL" oninput="previewVideo(this.value)" style="font-size:13px;" />
+      <div class="url-hint" style="font-size:10px;color:#334155;">youtube.com/watch?v=... · youtu.be/... · vimeo.com/...</div>
+      <div class="url-preview" id="urlPreview"><strong id="previewEmbedId"></strong><span>✓ Video found! Fill in details below.</span></div>
       <input type="text" id="videoTitle" placeholder="Video title" maxlength="80" />
       <input type="text" id="videoDesc" placeholder="Short description (optional)" maxlength="120" />
-      <input type="text" id="videoTag" placeholder="Tag (e.g. Tour, Safety, Training)" maxlength="30" />
+      <div style="margin-top:8px;">
+        <label style="font-size:10px;color:#64748b;letter-spacing:1px;display:block;margin-bottom:6px;">CATEGORY</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" onclick="selectVideoCategory('demo',this)" class="vcat-btn vcat-active" data-cat="demo">🏭 Shop Demo</button>
+          <button type="button" onclick="selectVideoCategory('training',this)" class="vcat-btn" data-cat="training">📚 Training</button>
+          <button type="button" onclick="selectVideoCategory('highlights',this)" class="vcat-btn" data-cat="highlights">⭐ Highlights</button>
+          <button type="button" onclick="selectVideoCategory('safety',this)" class="vcat-btn" data-cat="safety">🦺 Safety</button>
+        </div>
+        <input type="hidden" id="videoCategory" value="demo" />
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeAddVideoModal()">Cancel</button>
-      <button class="btn btn-submit" onclick="submitVideo()">📌 Add to Hill TV</button>
+      <button class="btn btn-submit" onclick="submitVideo()">📌 ADD TO HILL TV</button>
     </div>
   </div>
 </div>
+<style>
+.vcat-btn { background:transparent; border:1px solid #334155; color:#64748b; border-radius:20px; padding:5px 12px; font-size:10px; font-family:'Bebas Neue',sans-serif; letter-spacing:1px; cursor:pointer; transition:all 0.15s; }
+.vcat-btn.vcat-active { background:rgba(245,197,0,0.15); border-color:#f5c500; color:#f5c500; }
+</style>
+<script>
+window.selectVideoCategory = function(cat, btn) {
+  document.querySelectorAll('.vcat-btn').forEach(function(b){ b.classList.remove('vcat-active'); });
+  btn.classList.add('vcat-active');
+  document.getElementById('videoCategory').value = cat;
+};
+</script>
 
 <!-- IMAGE LIGHTBOX -->
 <div class="img-lightbox" id="imgLightbox" onclick="closeImgLightbox()">
@@ -1401,8 +1529,8 @@
 
   let knownIds = new Set();
   let isFirstLoad = true;
-  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
+  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', orange: 'Floor Support', green: 'Running WO' };
+  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', orange: '🟠', green: '🟢' };
 
   // MACHINE NOTES
   const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
@@ -1436,11 +1564,11 @@
       const notesEl = document.getElementById('notes-' + mid);
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
-    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue');
+    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'orange' || n.type === 'blue');
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
-        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue')) {
+        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'orange' || n.type === 'blue')) {
           // Only browser notification from listener — Pushover fires from submit button only
           sendBrowserNotif(n);
           showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.cell + ' — ' + n.machine + ': ' + n.wo);
@@ -2075,8 +2203,8 @@
   // ── MACHINE NOTES ──
   let currentMachine = '', currentCell = '', selectedType = null;
   window.machineNotes = {}; window.currentMachine = '';
-  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
+  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', orange: 'Floor Support', green: 'Running WO' };
+  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', orange: '🟠', green: '🟢' };
 
   function openModal(machine, cell) {
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
@@ -2160,7 +2288,7 @@
 
   // Shop floor request notifications
   function sendPushover(type, cell, machine, wo, detail, operator) {
-    const titles = { red: '🔴 INSPECTION REQUEST', yellow: '🟡 MACHINIST REQUEST', blue: '🔵 PENDING WO' };
+    const titles = { red: '🔴 INSPECTION REQUEST', yellow: '🟡 MACHINIST REQUEST', orange: '🟠 FLOOR SUPPORT REQUEST', blue: '🔵 PENDING WO' };
     const sounds  = { red: 'siren', yellow: 'bugle', blue: 'pushover' };
     const parts = [cell + ' — ' + machine];
     if (operator) parts.push(operator);
@@ -2420,7 +2548,24 @@
       grid.appendChild(card);
     });
   }
-  window.renderVideos = renderVideos;
+  // Patch video cards to include category filter support
+var _origRenderVideos = renderVideos;
+window.renderVideos = function() {
+  _origRenderVideos();
+  // Add data-category to rendered cards based on tags
+  setTimeout(function() {
+    document.querySelectorAll('.video-card').forEach(function(card) {
+      var tag = (card.querySelector('.video-card-tag') || {}).textContent || '';
+      var cat = tag.toLowerCase();
+      if (cat.includes('demo') || cat.includes('tour') || cat.includes('shop')) cat = 'demo';
+      else if (cat.includes('train') || cat.includes('learn')) cat = 'training';
+      else if (cat.includes('highlight') || cat.includes('star')) cat = 'highlights';
+      else if (cat.includes('safety')) cat = 'safety';
+      else cat = 'all';
+      card.setAttribute('data-category', cat);
+    });
+  }, 100);
+};
 
   function openLightbox(embedId, title) {
     document.getElementById('lightboxTitle').textContent = title;
@@ -3566,91 +3711,100 @@
     var stage = document.getElementById('stvStage');
     if (!stage) return;
 
+    var dnxFilter = 'all'; // all | running | losing
+
     function renderDNXTV() {
-      var data = window._dnxTVData || {};
+      var data     = window._dnxTVData || {};
       var machines = Object.values(data.machines || {});
       var running  = machines.filter(function(m){ return m.running; });
+      var winning  = running.filter(function(m){ return m.win; });
+      var losing   = running.filter(function(m){ return !m.win; });
+      var idle     = machines.filter(function(m){ return !m.running; });
 
-      if (!running.length) {
-        stage.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:16px;">'
-          +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:48px;color:#f5c500;letter-spacing:4px;">⚡ DATANOMIX LIVE</div>'
-          +'<div style="font-size:18px;color:#334155;letter-spacing:2px;">No machines running — checking every 5 minutes</div>'
-          +'</div>';
-        return;
+      // Filter based on current selection
+      var display = dnxFilter === 'running' ? running
+                  : dnxFilter === 'losing'  ? losing
+                  : machines; // all
+
+      // Sort: losing first, then winning, then idle
+      display = display.slice().sort(function(a,b){
+        var scoreA = !a.running ? 2 : a.win ? 1 : 0;
+        var scoreB = !b.running ? 2 : b.win ? 1 : 0;
+        return scoreA - scoreB;
+      });
+
+      var updatedStr = data.updatedAt
+        ? 'Updated: '+new Date(data.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+        : '';
+
+      var html = '<div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">';
+
+      // Header + filter buttons
+      html += '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;flex-shrink:0;background:rgba(0,0,0,.3);border-bottom:1px solid #1e3a5f;">'
+        +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#f5c500;letter-spacing:3px;">⚡ DATANOMIX LIVE</div>'
+        +'<div style="display:flex;gap:6px;margin-left:8px;">'
+          +'<button onclick="window._dnxFilter(\'all\')" id="dnx-f-all" style="font-family:\'Bebas Neue\',sans-serif;font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #f5c500;background:rgba(245,200,66,.2);color:#f5c500;cursor:pointer;letter-spacing:1px;">ALL ('+machines.length+')</button>'
+          +'<button onclick="window._dnxFilter(\'running\')" id="dnx-f-run" style="font-family:\'Bebas Neue\',sans-serif;font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #334155;background:transparent;color:#60a5fa;cursor:pointer;letter-spacing:1px;">RUNNING ('+running.length+')</button>'
+          +'<button onclick="window._dnxFilter(\'losing\')" id="dnx-f-lose" style="font-family:\'Bebas Neue\',sans-serif;font-size:12px;padding:4px 12px;border-radius:6px;border:1px solid #334155;background:transparent;color:#ef4444;cursor:pointer;letter-spacing:1px;">LOSING ('+losing.length+')</button>'
+        +'</div>'
+        +'<div style="margin-left:auto;display:flex;gap:16px;align-items:center;">'
+          +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:#22c55e;">✅ '+winning.length+' WINNING</span>'
+          +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:#ef4444;">❌ '+losing.length+' LOSING</span>'
+          +'<span style="font-size:11px;color:#334155;">'+updatedStr+'</span>'
+        +'</div>'
+      +'</div>';
+
+      // Scrollable machine grid
+      html += '<div style="flex:1;overflow-y:auto;padding:14px;">'
+        +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">';
+
+      if (!display.length) {
+        html += '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#334155;font-family:\'Bebas Neue\',sans-serif;font-size:22px;letter-spacing:2px;">NO MACHINES IN THIS VIEW</div>';
       }
 
-      var winning = running.filter(function(m){ return m.win; });
-      var losing  = running.filter(function(m){ return !m.win; });
-
-      var html = '<div style="padding:16px;height:100%;box-sizing:border-box;overflow:hidden;">';
-
-      // Summary bar
-      html += '<div style="display:flex;gap:16px;margin-bottom:16px;align-items:center;">'
-        +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#f5c500;letter-spacing:3px;">⚡ LIVE — '+ running.length +' MACHINES RUNNING</div>'
-        +'<div style="margin-left:auto;display:flex;gap:12px;">'
-        +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:#22c55e;letter-spacing:2px;">✅ WINNING: '+winning.length+'</span>'
-        +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:18px;color:#ef4444;letter-spacing:2px;">❌ LOSING: '+losing.length+'</span>'
-        +'<span style="font-size:12px;color:#334155;align-self:center;">'+(data.updatedAt ? 'Updated '+new Date(data.updatedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '')+'</span>'
-        +'</div>'
-        +'</div>';
-
-      // Machine cards grid
-      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">';
-
-      // Losing machines first (need attention)
-      var sorted = losing.concat(winning);
-
-      sorted.forEach(function(m) {
-        var sc      = m.win ? '#22c55e' : '#ef4444';
-        var bg      = m.win ? 'linear-gradient(135deg,#001808,#001428)' : 'linear-gradient(135deg,#1a0404,#001428)';
-        var status  = m.win ? '✅ WINNING' : '❌ LOSING';
+      display.forEach(function(m) {
+        var sc     = !m.running ? '#334155' : m.win ? '#22c55e' : '#ef4444';
+        var bg     = !m.running ? '#0a1525'
+                   : m.win ? 'linear-gradient(135deg,#001808,#001428)'
+                   : 'linear-gradient(135deg,#1a0404,#001428)';
+        var status = !m.running ? 'IDLE'
+                   : m.win ? '✅ WINNING' : '❌ LOSING';
         var oeeStr  = m.oee > 0 ? Math.round(m.oee)+'%' : '—';
-        var oeeC    = m.oee > 100 ? '#22c55e' : m.oee > 50 ? '#eab308' : '#ef4444';
+        var oeeC    = m.oee > 100 ? '#22c55e' : m.oee > 50 ? '#eab308' : m.oee > 0 ? '#ef4444' : '#334155';
         var paceStr = m.taktPct > 0 ? Math.round(m.taktPct*100)+'%' : '—';
-        var paceC   = m.taktPct >= 1 ? '#22c55e' : m.taktPct >= 0.75 ? '#eab308' : '#ef4444';
+        var paceC   = m.taktPct >= 1 ? '#22c55e' : m.taktPct >= 0.75 ? '#eab308' : m.taktPct > 0 ? '#ef4444' : '#334155';
 
-        html += '<div style="background:'+bg+';border-radius:14px;border:1px solid #1e3a5f;border-left:5px solid '+sc+';padding:16px;">'
-          // Machine name + status
-          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
-            +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:32px;color:#f5d050;letter-spacing:2px;line-height:1;">'+m.name+'</div>'
-            +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;padding:4px 12px;border-radius:999px;background:'+sc+'22;color:'+sc+';border:1px solid '+sc+'55;">'+status+'</span>'
+        html += '<div style="background:'+bg+';border-radius:12px;border:1px solid #1e3a5f;border-left:4px solid '+sc+';padding:12px;">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+            +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:#f5d050;letter-spacing:2px;line-height:1;">'+m.name+'</div>'
+            +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:11px;padding:3px 10px;border-radius:999px;background:'+sc+'22;color:'+sc+';border:1px solid '+sc+'55;">'+status+'</span>'
           +'</div>'
-          // Program name
-          +(m.program ? '<div style="font-size:12px;color:#60a5fa;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📋 '+m.program+'</div>' : '')
-          // Stats row
-          +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">'
-            +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:8px;padding:8px 4px;">'
-              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:#f5c500;line-height:1;">'+(m.parts||0)+'</div>'
-              +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:2px;">PARTS</div>'
+          +(m.program ? '<div style="font-size:10px;color:#60a5fa;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">📋 '+m.program+'</div>' : '<div style="height:18px;margin-bottom:8px;"></div>')
+          +(m.running
+            ? '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;">'
+              +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:6px;padding:6px 2px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#f5c500;line-height:1;">'+(m.parts||0)+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">PARTS</div></div>'
+              +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:6px;padding:6px 2px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:'+paceC+';line-height:1;">'+paceStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">PACE</div></div>'
+              +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:6px;padding:6px 2px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:'+oeeC+';line-height:1;">'+oeeStr+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">OEE</div></div>'
+              +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:6px;padding:6px 2px;"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:'+(m.win?'#22c55e':'#ef4444')+';line-height:1;">'+(m.win?'▲':'▼')+'</div><div style="font-size:8px;color:#475569;letter-spacing:1px;">STATUS</div></div>'
             +'</div>'
-            +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:8px;padding:8px 4px;">'
-              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:'+paceC+';line-height:1;">'+paceStr+'</div>'
-              +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:2px;">PACE</div>'
-            +'</div>'
-            +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:8px;padding:8px 4px;">'
-              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:'+oeeC+';line-height:1;">'+oeeStr+'</div>'
-              +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:2px;">OEE</div>'
-            +'</div>'
-            +'<div style="text-align:center;background:rgba(0,0,0,.3);border-radius:8px;padding:8px 4px;">'
-              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:'+(m.win?'#22c55e':'#ef4444')+';line-height:1;">'+(m.win?'▲':'▼')+'</div>'
-              +'<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-top:2px;">STATUS</div>'
-            +'</div>'
-          +'</div>'
-          // Pace bar
-          +'<div style="margin-top:8px;background:#1a3a5c;border-radius:3px;height:4px;overflow:hidden;">'
-            +'<div style="height:100%;border-radius:3px;background:'+paceC+';width:'+Math.min(100,Math.round((m.taktPct||0)*100))+'%;transition:width .6s;"></div>'
-          +'</div>'
+            +'<div style="margin-top:6px;background:#1a3a5c;border-radius:3px;height:3px;overflow:hidden;"><div style="height:100%;border-radius:3px;background:'+sc+';width:'+Math.min(100,Math.round((m.taktPct||0)*100))+'%;"></div></div>'
+            : '<div style="font-size:11px;color:#334155;padding:4px 0;">Not running this shift</div>'
+          )
         +'</div>';
       });
 
-      html += '</div></div>';
+      html += '</div></div></div>';
       stage.innerHTML = html;
+
+      // Wire filter buttons
+      window._dnxFilter = function(f) {
+        dnxFilter = f;
+        renderDNXTV();
+      };
     }
 
-    // Load from Firestore and render
     function loadAndRender() {
       if (!window.fbDb || !window.fbFirestore || !window.fbFirestore.getDoc) {
-        // Fallback: use cached data if available
         renderDNXTV();
         return;
       }
@@ -3666,8 +3820,6 @@
     }
 
     loadAndRender();
-
-    // Auto-refresh every 5 minutes
     stv.timer = setInterval(loadAndRender, 300000);
   }
 
@@ -5057,7 +5209,7 @@
     if (!list) return;
     if (filtered.length === 0) { list.innerHTML='<div class="dash-empty">No records found for this filter.</div>'; return; }
 
-    var typeLabels = { red:'🔴 INSPECTION', yellow:'🟡 MACHINIST REQ', blue:'🔵 PENDING WO', green:'🟢 RUNNING WO' };
+    var typeLabels = { red:'🔴 INSPECTION', yellow:'🟡 MACHINIST REQ', orange:'🟠 FLOOR SUPPORT', blue:'🔵 PENDING WO', green:'🟢 RUNNING WO' };
     list.innerHTML = '';
 
     filtered.forEach(function(r) {
@@ -5507,6 +5659,55 @@
     </div>
 
     <div id="dash-summary-block"></div>
+
+    <!-- ── PRODUCTION CHARTS ── -->
+    <div id="dash-charts-section" style="margin-bottom:20px;">
+
+      <!-- Chart period selector -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:3px;color:#475569;">📈 PRODUCTION ANALYTICS</div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="setChartRange('7')" id="cr-7" style="background:rgba(245,197,0,0.15);border:1px solid #f5c500;color:#f5c500;border-radius:6px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;cursor:pointer;">7 DAYS</button>
+          <button onclick="setChartRange('14')" id="cr-14" style="background:transparent;border:1px solid #334155;color:#475569;border-radius:6px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;cursor:pointer;">14 DAYS</button>
+          <button onclick="setChartRange('30')" id="cr-30" style="background:transparent;border:1px solid #334155;color:#475569;border-radius:6px;padding:4px 10px;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;cursor:pointer;">30 DAYS</button>
+        </div>
+      </div>
+
+      <!-- BAR CHART — Jobs per day -->
+      <div style="background:linear-gradient(145deg,#0a1525,#0d1f35);border:1px solid #1e3a5c;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#475569;margin-bottom:12px;">📊 JOBS PER DAY — Pending · Running · Completed</div>
+        <div style="position:relative;height:160px;">
+          <canvas id="chart-bar-daily" style="width:100%;height:160px;"></canvas>
+        </div>
+      </div>
+
+      <!-- LINE CHART — Trends over time -->
+      <div style="background:linear-gradient(145deg,#0a1525,#0d1f35);border:1px solid #1e3a5c;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#475569;margin-bottom:12px;">📈 PRODUCTION TREND — Completed jobs over time</div>
+        <div style="position:relative;height:140px;">
+          <canvas id="chart-line-trend" style="width:100%;height:140px;"></canvas>
+        </div>
+      </div>
+
+      <!-- PIE CHART — Request type breakdown -->
+      <div style="background:linear-gradient(145deg,#0a1525,#0d1f35);border:1px solid #1e3a5c;border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#475569;margin-bottom:12px;">🥧 REQUEST BREAKDOWN — By type</div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="position:relative;width:140px;height:140px;flex-shrink:0;">
+            <canvas id="chart-pie-types" style="width:140px;height:140px;"></canvas>
+          </div>
+          <div id="chart-pie-legend" style="flex:1;min-width:140px;"></div>
+        </div>
+      </div>
+
+      <!-- MACHINE ACTIVITY — horizontal bar -->
+      <div style="background:linear-gradient(145deg,#0a1525,#0d1f35);border:1px solid #1e3a5c;border-radius:14px;padding:16px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:2px;color:#475569;margin-bottom:12px;">🏭 MACHINE ACTIVITY — Total requests per machine</div>
+        <div id="chart-machine-bars" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+
+    </div>
+
     <div id="dash-chart-block" style="margin-bottom:14px;"></div>
 
     <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
@@ -6853,6 +7054,7 @@ window.plannerSetView = function(view) {
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;">
         <button onclick="window.switchTab&&switchTab('inspection')" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);color:#f87171;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">🔴 INSPECTION REQUEST</button>
         <button onclick="window.switchTab&&switchTab('machinist')" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:#fbbf24;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">🟡 MACHINIST REQUEST</button>
+        <button onclick="filterRequests('orange');window.switchTab&&switchTab('shop')" style="background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.25);color:#fb923c;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">🟠 FLOOR SUPPORT</button>
         <button onclick="slSendCheck()" style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);color:#60a5fa;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">📱 PUSH HOURLY ALERT</button>
         <button onclick="slSendScorecard()" style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:#22c55e;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">📊 PUSH SCORECARD</button>
         <button onclick="window.open('hill-shift-report.html','_blank')" style="background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25);color:#c084fc;border-radius:10px;padding:14px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">📄 SHIFT REPORT</button>
@@ -7685,6 +7887,124 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 #page-dashboard .dash-summary-card:nth-child(4){animation-delay:.18s;}
 #page-dashboard .dash-summary-card:nth-child(5){animation-delay:.24s;}
 @media(max-width:640px){.legend{display:none!important;}.logo p{display:none!important;}}
+
+  /* ── ENHANCED VISUAL STYLES ── */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+  }
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(245,197,0,0.3); }
+    50% { box-shadow: 0 0 20px rgba(245,197,0,0.6); }
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Tab bar shimmer line */
+  .nav-tabs-wrap::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(245,197,0,0.4), transparent);
+    pointer-events: none;
+  }
+
+  /* Machine request cards — glowing borders */
+  .request-card { transition: transform 0.2s, box-shadow 0.2s; }
+  .request-card:hover { transform: translateY(-2px); }
+
+  /* DNX machine cards — enhanced */
+  .dnx-machine-card { transition: transform 0.2s, box-shadow 0.2s; }
+  .dnx-machine-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+
+  /* Video cards */
+  .video-card {
+    background: linear-gradient(145deg, #0d1f33, #0a1827);
+    border: 1px solid #1e3a5c;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    animation: slideIn 0.3s ease;
+  }
+  .video-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+    border-color: rgba(245,197,0,0.3);
+  }
+  .video-thumb {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    background: #060d1a;
+    position: relative;
+  }
+  .video-thumb-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: #060d1a;
+    overflow: hidden;
+  }
+  .video-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 52px;
+    height: 52px;
+    background: rgba(245,197,0,0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .video-card:hover .video-play-btn {
+    transform: translate(-50%, -50%) scale(1.1);
+    background: #f5c500;
+  }
+  .video-card-body { padding: 12px; }
+  .video-card-title { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #f0f4f8; letter-spacing: 1px; margin-bottom: 4px; }
+  .video-card-meta { font-size: 10px; color: #475569; display: flex; gap: 8px; align-items: center; }
+  .video-card-cat { background: rgba(245,197,0,0.1); border: 1px solid rgba(245,197,0,0.2); color: #f5c500; border-radius: 20px; padding: 2px 8px; font-size: 9px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+
+  /* Shift Leader quick action buttons — glow on hover */
+  .sl-action-btn { transition: all 0.2s; }
+  .sl-action-btn:hover { transform: translateY(-2px); filter: brightness(1.2); }
+
+  /* Summary stat cards — subtle pulse on new data */
+  .stat-card-glow { animation: glow 3s infinite; }
+
+  /* Better scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1e3a5c; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2a5a8c; }
+
+  /* Page transition */
+  .page { animation: slideIn 0.2s ease; }
+
+  /* Video grid responsive */
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 12px 16px 24px;
+  }
+  .video-empty {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #1e3a5f;
+  }
+
 </style>
 <!-- ═══ JOB INFO MODAL ═══ -->
 <div id="jobInfoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:20px;">
@@ -7920,6 +8240,57 @@ function loadDNXFromFirebase() {
 function renderDNXFromData(data) {
   // Store for Shop TV use
   window._dnxTVData = data;
+
+  // ── AUTO-TRANSITION: Pending WO → Running WO ──────────────────
+  // When Datanomix confirms a machine is running, flip blue → green automatically
+  try {
+    var dnxMachines = data && data.machines ? data.machines : {};
+    // Build a set of machine names that are currently RUNNING
+    var runningMachines = new Set();
+    Object.values(dnxMachines).forEach(function(m) {
+      if (m.running && m.name) runningMachines.add(m.name.toUpperCase());
+    });
+
+    // Check all notes in Firebase for blue (Pending WO) cards
+    if (window.fbDb && window.fbFirestore && runningMachines.size > 0) {
+      var { collection, getDocs, query, where, updateDoc, doc, serverTimestamp } = window.fbFirestore;
+      if (getDocs && query && where) {
+        getDocs(query(collection(window.fbDb, 'notes'), where('type', '==', 'blue'), where('resolved', '==', false)))
+          .then(function(snap) {
+            snap.forEach(function(docSnap) {
+              var note = docSnap.data();
+              var noteMachine = (note.machine || '').toUpperCase().replace(/[^A-Z0-9\-]/g,'');
+              // Check if this machine is now running in Datanomix
+              var matched = false;
+              runningMachines.forEach(function(rm) {
+                var rmClean = rm.replace(/[^A-Z0-9\-]/g,'');
+                if (rmClean === noteMachine || rmClean.includes(noteMachine) || noteMachine.includes(rmClean)) {
+                  matched = true;
+                }
+              });
+              if (matched) {
+                // Auto-transition: blue → green
+                updateDoc(doc(window.fbDb, 'notes', docSnap.id), {
+                  type: 'green',
+                  autoTransitioned: true,
+                  transitionedAt: serverTimestamp(),
+                  transitionReason: 'Datanomix confirmed machine running'
+                }).then(function() {
+                  console.log('[DNX Auto] Transitioned Pending WO → Running WO for machine:', note.machine);
+                  showToast('green',
+                    '🟢 ' + note.machine + ' is now RUNNING',
+                    (note.wo ? 'WO ' + note.wo + ' — ' : '') + 'Auto-updated from Datanomix'
+                  );
+                });
+              }
+            });
+          })
+          .catch(function(e) { console.warn('[DNX Auto-transition] Error:', e.message); });
+      }
+    }
+  } catch(e) { console.warn('[DNX Auto-transition] Skipped:', e.message); }
+  // ── END AUTO-TRANSITION ────────────────────────────────────────
+
   var upd   = document.getElementById('dnx-last-updated');
   var cards = document.getElementById('dnx-cards');
       if(!data || !data.machines){
@@ -8024,4 +8395,3 @@ function renderDNXFromData(data) {
 </script>
 </body>
 </html>
-  
