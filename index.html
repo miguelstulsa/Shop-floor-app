@@ -1074,6 +1074,26 @@
         <div style="font-size:11px;color:#64748b;line-height:1.6;">Every 🔴 <strong style="color:#f0f4f8;">Inspection Request</strong> fires a <strong style="color:#f87171;">siren alert</strong> to this key — directly to your Quality Manager's phone.</div>
       </div>
 
+      <!-- Floor Support key -->
+      <div style="margin-bottom:14px;padding:12px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.25);border-radius:10px;">
+        <label style="font-size:11px;color:#fb923c;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">🟠 Floor Support Key (Material · Hopper · Supplies Alerts)</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input id="floor-support-pushover-key" type="password"
+            placeholder="Floor Support person's Pushover User Key..."
+            style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
+            oninput="localStorage.setItem('hillFloorSupportPushoverKey',this.value.trim())"
+          />
+          <button onclick="testFloorSupportPushover()"
+            style="background:#f97316;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
+            TEST
+          </button>
+        </div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">Every 🟠 <strong style="color:#f0f4f8;">Floor Support Request</strong> fires directly to this person's phone — Material Drop, Hopper Dump, Supplies, etc. <strong style="color:#fb923c;">You also receive a copy.</strong></div>
+        <div style="margin-top:8px;padding:8px;background:rgba(249,115,22,0.08);border-radius:6px;font-size:11px;color:#94a3b8;line-height:1.6;">
+          <strong style="color:#fb923c;">How to set up:</strong> Have your Floor Support person download the free Pushover app → create an account → go to pushover.net → copy their User Key → paste it above.
+        </div>
+      </div>
+
       <div style="margin-bottom:10px;">
         <label style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Group Key (notifies ALL managers)</label>
         <div style="display:flex;gap:8px;">
@@ -2035,6 +2055,8 @@ window.selectVideoCategory = function(cat, btn) {
   var savedGroupKey = localStorage.getItem('hillPushoverGroupKey') || '';
   if (savedGroupKey) {
     var inp = document.getElementById('pushover-group-key');
+    var fsInp = document.getElementById('floor-support-pushover-key');
+    if (fsInp) { var fsK = localStorage.getItem('hillFloorSupportPushoverKey')||''; if(fsK) fsInp.value=fsK; }
     if (inp) inp.value = savedGroupKey;
   }
   // Load saved quality manager key (falls back to hardcoded default)
@@ -2118,6 +2140,32 @@ window.selectVideoCategory = function(cat, btn) {
     qualityPushover('🔴 TEST — Inspection Alert', 'Quality Manager alerts are working! You will receive this on every Inspection Request.');
     showToast('green', 'Test sent!', 'Check the Quality Manager\'s Pushover app.');
   }
+
+  // ── FLOOR SUPPORT PUSHOVER ────────────────────────────────────
+  function floorSupportPushover(title, message) {
+    var fsKey = localStorage.getItem('hillFloorSupportPushoverKey') || '';
+    if (!fsKey) return; // No key set — skip
+    var fd = new FormData();
+    fd.append('token',    PUSHOVER_TOKEN);
+    fd.append('user',     fsKey);
+    fd.append('title',    title   || '🟠 FLOOR SUPPORT REQUEST');
+    fd.append('message',  message || '');
+    fd.append('sound',    'magic');
+    fd.append('priority', '1'); // High priority — bypasses quiet hours
+    fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST', mode: 'no-cors', body: fd
+    }).catch(function(e){ console.warn('Floor Support Pushover:', e.message); });
+  }
+
+  function testFloorSupportPushover() {
+    var key = (document.getElementById('floor-support-pushover-key') || {}).value || '';
+    key = key.trim();
+    if (!key) { showToast('yellow', 'Enter a key first', 'Paste the Floor Support person\'s Pushover User Key above.'); return; }
+    localStorage.setItem('hillFloorSupportPushoverKey', key);
+    floorSupportPushover('🟠 TEST — Floor Support Alert', 'Floor Support alerts are working! You will receive this on every Floor Support request.');
+    showToast('green', 'Test sent!', 'Check the Floor Support person\'s Pushover app.');
+  }
+  // ── END FLOOR SUPPORT PUSHOVER ────────────────────────────────
   function safePushover(title, message, sound, priority) {
     var userKey = localStorage.getItem('hillPushoverGroupKey') || savedGroupKey || PUSHOVER_DEFAULT_USER;
     var fd = new FormData();
@@ -2310,6 +2358,11 @@ window.selectVideoCategory = function(cat, btn) {
       if (!hasQualityKey) {
         safePushover(titles.red, msgBody, 'siren', 1);
       }
+    } else if (type === 'orange') {
+      // Floor Support — notify BOTH admin AND floor support person
+      var fsMsg = '🟠 FLOOR SUPPORT NEEDED\n' + msgBody;
+      floorSupportPushover('🟠 FLOOR SUPPORT — ' + machine, fsMsg);
+      adminPushover('🟠 FLOOR SUPPORT — ' + machine, fsMsg, 'magic', 0);
     } else {
       safePushover(
         titles[type] || 'SHOP REQUEST',
