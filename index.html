@@ -8714,8 +8714,9 @@ window.disableDemoMode = function() {
 
 // Add demo toggle button to admin panel
 function injectDemoButton() {
-  var adminPanel = document.querySelector(".admin-panel") || document.getElementById("admin-section");
-  if (!adminPanel) { setTimeout(injectDemoButton, 1000); return; }
+  // Find the admin panel inner content div
+  var adminPanel = document.querySelector("#adminPanel > div");
+  if (!adminPanel) { setTimeout(injectDemoButton, 500); return; }
   if (document.getElementById("demo-mode-btn")) return;
 
   var btn = document.createElement("button");
