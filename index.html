@@ -8754,5 +8754,625 @@ if (document.readyState !== "loading") {
 }
 </script>
 
+
+<script>
+// ============================================================
+// HILL MANUFACTURING - DEMO REPORTS
+// Daily / Weekly / Monthly / Yearly performance reports
+// Uses real WO numbers and machine names
+// Shift: 6am-5pm, Mon-Fri
+// ============================================================
+
+var DEMO_REPORT_DATA = [{"date": "2026-03-23", "label": "Mon 03/23", "dayOfWeek": 0, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 82, "parts": 36, "cutting_mins": 541, "alarm_mins": 4, "setup_mins": 21, "idle_mins": 94, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 69, "parts": 38, "cutting_mins": 455, "alarm_mins": 12, "setup_mins": 45, "idle_mins": 148, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 91, "parts": 38, "cutting_mins": 601, "alarm_mins": 2, "setup_mins": 39, "idle_mins": 18, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 97, "parts": 128, "cutting_mins": 640, "alarm_mins": 5, "setup_mins": 43, "idle_mins": 0, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 83, "parts": 61, "cutting_mins": 548, "alarm_mins": 4, "setup_mins": 36, "idle_mins": 72, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 78, "parts": 86, "cutting_mins": 515, "alarm_mins": 11, "setup_mins": 43, "idle_mins": 91, "win": false, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 70, "parts": 116, "cutting_mins": 462, "alarm_mins": 8, "setup_mins": 34, "idle_mins": 156, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 99, "parts": 131, "cutting_mins": 653, "alarm_mins": 0, "setup_mins": 38, "idle_mins": 0, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 90, "parts": 198, "cutting_mins": 594, "alarm_mins": 1, "setup_mins": 32, "idle_mins": 33, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 89, "parts": 84, "cutting_mins": 587, "alarm_mins": 4, "setup_mins": 27, "idle_mins": 42, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 98, "parts": 92, "cutting_mins": 647, "alarm_mins": 5, "setup_mins": 22, "idle_mins": 0, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 83, "parts": 110, "cutting_mins": 548, "alarm_mins": 2, "setup_mins": 45, "idle_mins": 65, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 71, "parts": 156, "cutting_mins": 469, "alarm_mins": 9, "setup_mins": 36, "idle_mins": 146, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 75, "parts": 50, "cutting_mins": 495, "alarm_mins": 1, "setup_mins": 22, "idle_mins": 142, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 87, "parts": 41, "cutting_mins": 574, "alarm_mins": 3, "setup_mins": 20, "idle_mins": 63, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 73, "parts": 37, "cutting_mins": 482, "alarm_mins": 4, "setup_mins": 31, "idle_mins": 143, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 48, "parts": 45, "cutting_mins": 317, "alarm_mins": 12, "setup_mins": 20, "idle_mins": 311, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 70, "parts": 154, "cutting_mins": 462, "alarm_mins": 15, "setup_mins": 40, "idle_mins": 143, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 69, "parts": 65, "cutting_mins": 455, "alarm_mins": 5, "setup_mins": 29, "idle_mins": 171, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 83, "parts": 78, "cutting_mins": 548, "alarm_mins": 2, "setup_mins": 32, "idle_mins": 78, "win": true, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 71, "parts": 25, "cutting_mins": 469, "alarm_mins": 8, "setup_mins": 36, "idle_mins": 147, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1769, "avgUtil": 80, "running": 21, "winning": 11, "totalAlarmMins": 117, "totalSetupMins": 691, "totalIdleMins": 2063}, {"date": "2026-03-24", "label": "Tue 03/24", "dayOfWeek": 1, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 86, "parts": 63, "cutting_mins": 568, "alarm_mins": 2, "setup_mins": 11, "idle_mins": 79, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 80, "parts": 33, "cutting_mins": 528, "alarm_mins": 1, "setup_mins": 22, "idle_mins": 109, "win": true, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 96, "parts": 32, "cutting_mins": 634, "alarm_mins": 0, "setup_mins": 24, "idle_mins": 2, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 99, "parts": 109, "cutting_mins": 653, "alarm_mins": 4, "setup_mins": 14, "idle_mins": 0, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 86, "parts": 57, "cutting_mins": 568, "alarm_mins": 4, "setup_mins": 24, "idle_mins": 64, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 85, "parts": 187, "cutting_mins": 561, "alarm_mins": 0, "setup_mins": 19, "idle_mins": 80, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 73, "parts": 80, "cutting_mins": 482, "alarm_mins": 1, "setup_mins": 20, "idle_mins": 157, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 93, "parts": 88, "cutting_mins": 614, "alarm_mins": 2, "setup_mins": 11, "idle_mins": 33, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 93, "parts": 123, "cutting_mins": 614, "alarm_mins": 4, "setup_mins": 13, "idle_mins": 29, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 90, "parts": 148, "cutting_mins": 594, "alarm_mins": 0, "setup_mins": 19, "idle_mins": 47, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 94, "parts": 89, "cutting_mins": 620, "alarm_mins": 1, "setup_mins": 14, "idle_mins": 25, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 82, "parts": 108, "cutting_mins": 541, "alarm_mins": 3, "setup_mins": 20, "idle_mins": 96, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 69, "parts": 91, "cutting_mins": 455, "alarm_mins": 3, "setup_mins": 10, "idle_mins": 192, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 69, "parts": 57, "cutting_mins": 455, "alarm_mins": 5, "setup_mins": 14, "idle_mins": 186, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 85, "parts": 70, "cutting_mins": 561, "alarm_mins": 2, "setup_mins": 24, "idle_mins": 73, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 72, "parts": 28, "cutting_mins": 475, "alarm_mins": 10, "setup_mins": 19, "idle_mins": 156, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 54, "parts": 71, "cutting_mins": 356, "alarm_mins": 0, "setup_mins": 20, "idle_mins": 284, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 74, "parts": 163, "cutting_mins": 488, "alarm_mins": 9, "setup_mins": 15, "idle_mins": 148, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 64, "parts": 70, "cutting_mins": 422, "alarm_mins": 14, "setup_mins": 19, "idle_mins": 205, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 80, "parts": 88, "cutting_mins": 528, "alarm_mins": 5, "setup_mins": 12, "idle_mins": 115, "win": true, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 71, "parts": 31, "cutting_mins": 469, "alarm_mins": 13, "setup_mins": 18, "idle_mins": 160, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1786, "avgUtil": 81, "running": 21, "winning": 13, "totalAlarmMins": 83, "totalSetupMins": 362, "totalIdleMins": 2240}, {"date": "2026-03-25", "label": "Wed 03/25", "dayOfWeek": 2, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 74, "parts": 44, "cutting_mins": 488, "alarm_mins": 14, "setup_mins": 21, "idle_mins": 137, "win": false, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 75, "parts": 38, "cutting_mins": 495, "alarm_mins": 3, "setup_mins": 24, "idle_mins": 138, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 82, "parts": 60, "cutting_mins": 541, "alarm_mins": 3, "setup_mins": 17, "idle_mins": 99, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 93, "parts": 154, "cutting_mins": 614, "alarm_mins": 1, "setup_mins": 16, "idle_mins": 29, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 83, "parts": 68, "cutting_mins": 548, "alarm_mins": 4, "setup_mins": 15, "idle_mins": 93, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 82, "parts": 108, "cutting_mins": 541, "alarm_mins": 3, "setup_mins": 11, "idle_mins": 105, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 74, "parts": 163, "cutting_mins": 488, "alarm_mins": 2, "setup_mins": 22, "idle_mins": 148, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 96, "parts": 127, "cutting_mins": 634, "alarm_mins": 4, "setup_mins": 11, "idle_mins": 11, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 94, "parts": 89, "cutting_mins": 620, "alarm_mins": 2, "setup_mins": 25, "idle_mins": 13, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 77, "parts": 127, "cutting_mins": 508, "alarm_mins": 11, "setup_mins": 10, "idle_mins": 131, "win": false, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 86, "parts": 142, "cutting_mins": 568, "alarm_mins": 3, "setup_mins": 11, "idle_mins": 78, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 86, "parts": 189, "cutting_mins": 568, "alarm_mins": 4, "setup_mins": 24, "idle_mins": 64, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 67, "parts": 63, "cutting_mins": 442, "alarm_mins": 6, "setup_mins": 24, "idle_mins": 188, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 82, "parts": 54, "cutting_mins": 541, "alarm_mins": 2, "setup_mins": 10, "idle_mins": 107, "win": true, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 89, "parts": 59, "cutting_mins": 587, "alarm_mins": 5, "setup_mins": 25, "idle_mins": 43, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 72, "parts": 40, "cutting_mins": 475, "alarm_mins": 10, "setup_mins": 13, "idle_mins": 162, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 47, "parts": 62, "cutting_mins": 310, "alarm_mins": 1, "setup_mins": 25, "idle_mins": 324, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 64, "parts": 141, "cutting_mins": 422, "alarm_mins": 11, "setup_mins": 12, "idle_mins": 215, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 62, "parts": 58, "cutting_mins": 409, "alarm_mins": 0, "setup_mins": 11, "idle_mins": 240, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 70, "parts": 92, "cutting_mins": 462, "alarm_mins": 10, "setup_mins": 23, "idle_mins": 165, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 58, "parts": 32, "cutting_mins": 383, "alarm_mins": 3, "setup_mins": 10, "idle_mins": 264, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1910, "avgUtil": 77, "running": 21, "winning": 10, "totalAlarmMins": 102, "totalSetupMins": 360, "totalIdleMins": 2754}, {"date": "2026-03-26", "label": "Thu 03/26", "dayOfWeek": 3, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 76, "parts": 33, "cutting_mins": 502, "alarm_mins": 6, "setup_mins": 10, "idle_mins": 142, "win": false, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 68, "parts": 37, "cutting_mins": 449, "alarm_mins": 1, "setup_mins": 20, "idle_mins": 190, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 91, "parts": 60, "cutting_mins": 601, "alarm_mins": 1, "setup_mins": 20, "idle_mins": 38, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 91, "parts": 200, "cutting_mins": 601, "alarm_mins": 0, "setup_mins": 13, "idle_mins": 46, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 71, "parts": 39, "cutting_mins": 469, "alarm_mins": 0, "setup_mins": 10, "idle_mins": 181, "win": false, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 81, "parts": 134, "cutting_mins": 535, "alarm_mins": 1, "setup_mins": 20, "idle_mins": 104, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 85, "parts": 94, "cutting_mins": 561, "alarm_mins": 0, "setup_mins": 22, "idle_mins": 77, "win": true, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 91, "parts": 200, "cutting_mins": 601, "alarm_mins": 1, "setup_mins": 14, "idle_mins": 44, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 92, "parts": 121, "cutting_mins": 607, "alarm_mins": 0, "setup_mins": 20, "idle_mins": 33, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 85, "parts": 94, "cutting_mins": 561, "alarm_mins": 5, "setup_mins": 25, "idle_mins": 69, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 92, "parts": 152, "cutting_mins": 607, "alarm_mins": 3, "setup_mins": 13, "idle_mins": 37, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 82, "parts": 90, "cutting_mins": 541, "alarm_mins": 5, "setup_mins": 24, "idle_mins": 90, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 70, "parts": 116, "cutting_mins": 462, "alarm_mins": 1, "setup_mins": 15, "idle_mins": 182, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 75, "parts": 55, "cutting_mins": 495, "alarm_mins": 10, "setup_mins": 23, "idle_mins": 132, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 77, "parts": 46, "cutting_mins": 508, "alarm_mins": 3, "setup_mins": 14, "idle_mins": 135, "win": false, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 70, "parts": 24, "cutting_mins": 462, "alarm_mins": 3, "setup_mins": 24, "idle_mins": 171, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 48, "parts": 53, "cutting_mins": 317, "alarm_mins": 1, "setup_mins": 15, "idle_mins": 327, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 75, "parts": 82, "cutting_mins": 495, "alarm_mins": 1, "setup_mins": 10, "idle_mins": 154, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 53, "parts": 88, "cutting_mins": 350, "alarm_mins": 12, "setup_mins": 21, "idle_mins": 277, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 70, "parts": 116, "cutting_mins": 462, "alarm_mins": 13, "setup_mins": 12, "idle_mins": 173, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 58, "parts": 35, "cutting_mins": 383, "alarm_mins": 1, "setup_mins": 21, "idle_mins": 255, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1869, "avgUtil": 76, "running": 21, "winning": 9, "totalAlarmMins": 68, "totalSetupMins": 366, "totalIdleMins": 2857}, {"date": "2026-03-27", "label": "Fri 03/27", "dayOfWeek": 4, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 74, "parts": 35, "cutting_mins": 488, "alarm_mins": 3, "setup_mins": 12, "idle_mins": 157, "win": false, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 74, "parts": 26, "cutting_mins": 488, "alarm_mins": 7, "setup_mins": 11, "idle_mins": 154, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 91, "parts": 55, "cutting_mins": 601, "alarm_mins": 4, "setup_mins": 10, "idle_mins": 45, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 88, "parts": 145, "cutting_mins": 581, "alarm_mins": 1, "setup_mins": 15, "idle_mins": 63, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 86, "parts": 71, "cutting_mins": 568, "alarm_mins": 1, "setup_mins": 16, "idle_mins": 75, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 81, "parts": 76, "cutting_mins": 535, "alarm_mins": 3, "setup_mins": 18, "idle_mins": 104, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 83, "parts": 183, "cutting_mins": 548, "alarm_mins": 3, "setup_mins": 25, "idle_mins": 84, "win": true, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 88, "parts": 83, "cutting_mins": 581, "alarm_mins": 4, "setup_mins": 19, "idle_mins": 56, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 91, "parts": 86, "cutting_mins": 601, "alarm_mins": 0, "setup_mins": 18, "idle_mins": 41, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 87, "parts": 144, "cutting_mins": 574, "alarm_mins": 1, "setup_mins": 16, "idle_mins": 69, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 99, "parts": 218, "cutting_mins": 653, "alarm_mins": 0, "setup_mins": 16, "idle_mins": 0, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 83, "parts": 137, "cutting_mins": 548, "alarm_mins": 0, "setup_mins": 19, "idle_mins": 93, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 77, "parts": 102, "cutting_mins": 508, "alarm_mins": 13, "setup_mins": 21, "idle_mins": 118, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 68, "parts": 24, "cutting_mins": 449, "alarm_mins": 14, "setup_mins": 14, "idle_mins": 183, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 89, "parts": 49, "cutting_mins": 587, "alarm_mins": 5, "setup_mins": 20, "idle_mins": 48, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 66, "parts": 34, "cutting_mins": 436, "alarm_mins": 11, "setup_mins": 20, "idle_mins": 193, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 52, "parts": 57, "cutting_mins": 343, "alarm_mins": 9, "setup_mins": 15, "idle_mins": 293, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 74, "parts": 81, "cutting_mins": 488, "alarm_mins": 3, "setup_mins": 20, "idle_mins": 149, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 55, "parts": 73, "cutting_mins": 363, "alarm_mins": 6, "setup_mins": 11, "idle_mins": 280, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 70, "parts": 66, "cutting_mins": 462, "alarm_mins": 11, "setup_mins": 22, "idle_mins": 165, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 62, "parts": 24, "cutting_mins": 409, "alarm_mins": 14, "setup_mins": 23, "idle_mins": 214, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1769, "avgUtil": 78, "running": 21, "winning": 11, "totalAlarmMins": 113, "totalSetupMins": 361, "totalIdleMins": 2584}, {"date": "2026-03-30", "label": "Mon 03/30", "dayOfWeek": 0, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 90, "parts": 30, "cutting_mins": 594, "alarm_mins": 5, "setup_mins": 31, "idle_mins": 30, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 73, "parts": 27, "cutting_mins": 482, "alarm_mins": 11, "setup_mins": 45, "idle_mins": 122, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 90, "parts": 37, "cutting_mins": 594, "alarm_mins": 1, "setup_mins": 28, "idle_mins": 37, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 94, "parts": 124, "cutting_mins": 620, "alarm_mins": 2, "setup_mins": 37, "idle_mins": 1, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 74, "parts": 35, "cutting_mins": 488, "alarm_mins": 14, "setup_mins": 30, "idle_mins": 128, "win": false, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 91, "parts": 200, "cutting_mins": 601, "alarm_mins": 4, "setup_mins": 35, "idle_mins": 20, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 82, "parts": 135, "cutting_mins": 541, "alarm_mins": 2, "setup_mins": 31, "idle_mins": 86, "win": true, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 96, "parts": 158, "cutting_mins": 634, "alarm_mins": 4, "setup_mins": 21, "idle_mins": 1, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 91, "parts": 200, "cutting_mins": 601, "alarm_mins": 1, "setup_mins": 38, "idle_mins": 20, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 79, "parts": 87, "cutting_mins": 521, "alarm_mins": 9, "setup_mins": 33, "idle_mins": 97, "win": false, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 93, "parts": 123, "cutting_mins": 614, "alarm_mins": 1, "setup_mins": 40, "idle_mins": 5, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 83, "parts": 110, "cutting_mins": 548, "alarm_mins": 1, "setup_mins": 22, "idle_mins": 89, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 73, "parts": 120, "cutting_mins": 482, "alarm_mins": 5, "setup_mins": 35, "idle_mins": 138, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 77, "parts": 64, "cutting_mins": 508, "alarm_mins": 2, "setup_mins": 38, "idle_mins": 112, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 78, "parts": 30, "cutting_mins": 515, "alarm_mins": 14, "setup_mins": 41, "idle_mins": 90, "win": false, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 66, "parts": 44, "cutting_mins": 436, "alarm_mins": 1, "setup_mins": 30, "idle_mins": 193, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 59, "parts": 97, "cutting_mins": 389, "alarm_mins": 1, "setup_mins": 39, "idle_mins": 231, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 75, "parts": 124, "cutting_mins": 495, "alarm_mins": 3, "setup_mins": 39, "idle_mins": 123, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 56, "parts": 74, "cutting_mins": 370, "alarm_mins": 11, "setup_mins": 39, "idle_mins": 240, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 75, "parts": 99, "cutting_mins": 495, "alarm_mins": 14, "setup_mins": 34, "idle_mins": 117, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 68, "parts": 32, "cutting_mins": 449, "alarm_mins": 7, "setup_mins": 31, "idle_mins": 173, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1950, "avgUtil": 79, "running": 21, "winning": 9, "totalAlarmMins": 113, "totalSetupMins": 717, "totalIdleMins": 2053}, {"date": "2026-03-31", "label": "Tue 03/31", "dayOfWeek": 1, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 84, "parts": 35, "cutting_mins": 554, "alarm_mins": 5, "setup_mins": 19, "idle_mins": 82, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 70, "parts": 29, "cutting_mins": 462, "alarm_mins": 0, "setup_mins": 13, "idle_mins": 185, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 95, "parts": 48, "cutting_mins": 627, "alarm_mins": 4, "setup_mins": 10, "idle_mins": 19, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 94, "parts": 89, "cutting_mins": 620, "alarm_mins": 4, "setup_mins": 23, "idle_mins": 13, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 81, "parts": 36, "cutting_mins": 535, "alarm_mins": 4, "setup_mins": 16, "idle_mins": 105, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 90, "parts": 119, "cutting_mins": 594, "alarm_mins": 2, "setup_mins": 21, "idle_mins": 43, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 77, "parts": 169, "cutting_mins": 508, "alarm_mins": 11, "setup_mins": 13, "idle_mins": 128, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 90, "parts": 119, "cutting_mins": 594, "alarm_mins": 0, "setup_mins": 17, "idle_mins": 49, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 87, "parts": 82, "cutting_mins": 574, "alarm_mins": 0, "setup_mins": 17, "idle_mins": 69, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 82, "parts": 108, "cutting_mins": 541, "alarm_mins": 3, "setup_mins": 15, "idle_mins": 101, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 91, "parts": 200, "cutting_mins": 601, "alarm_mins": 0, "setup_mins": 22, "idle_mins": 37, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 90, "parts": 85, "cutting_mins": 594, "alarm_mins": 2, "setup_mins": 14, "idle_mins": 50, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 71, "parts": 78, "cutting_mins": 469, "alarm_mins": 2, "setup_mins": 18, "idle_mins": 171, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 70, "parts": 36, "cutting_mins": 462, "alarm_mins": 3, "setup_mins": 18, "idle_mins": 177, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 87, "parts": 52, "cutting_mins": 574, "alarm_mins": 4, "setup_mins": 23, "idle_mins": 59, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 75, "parts": 55, "cutting_mins": 495, "alarm_mins": 15, "setup_mins": 15, "idle_mins": 135, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 53, "parts": 58, "cutting_mins": 350, "alarm_mins": 13, "setup_mins": 21, "idle_mins": 276, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 75, "parts": 165, "cutting_mins": 495, "alarm_mins": 6, "setup_mins": 11, "idle_mins": 148, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 57, "parts": 94, "cutting_mins": 376, "alarm_mins": 12, "setup_mins": 10, "idle_mins": 262, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 70, "parts": 154, "cutting_mins": 462, "alarm_mins": 13, "setup_mins": 20, "idle_mins": 165, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 66, "parts": 34, "cutting_mins": 436, "alarm_mins": 5, "setup_mins": 18, "idle_mins": 201, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1845, "avgUtil": 79, "running": 21, "winning": 11, "totalAlarmMins": 108, "totalSetupMins": 354, "totalIdleMins": 2475}, {"date": "2026-04-01", "label": "Wed 04/01", "dayOfWeek": 2, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 75, "parts": 29, "cutting_mins": 495, "alarm_mins": 5, "setup_mins": 16, "idle_mins": 144, "win": false, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 70, "parts": 26, "cutting_mins": 462, "alarm_mins": 1, "setup_mins": 25, "idle_mins": 172, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 90, "parts": 35, "cutting_mins": 594, "alarm_mins": 2, "setup_mins": 23, "idle_mins": 41, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 90, "parts": 85, "cutting_mins": 594, "alarm_mins": 0, "setup_mins": 16, "idle_mins": 50, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 75, "parts": 28, "cutting_mins": 495, "alarm_mins": 7, "setup_mins": 16, "idle_mins": 142, "win": false, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 90, "parts": 119, "cutting_mins": 594, "alarm_mins": 0, "setup_mins": 17, "idle_mins": 49, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 70, "parts": 116, "cutting_mins": 462, "alarm_mins": 15, "setup_mins": 21, "idle_mins": 162, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 90, "parts": 198, "cutting_mins": 594, "alarm_mins": 3, "setup_mins": 19, "idle_mins": 44, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 90, "parts": 85, "cutting_mins": 594, "alarm_mins": 1, "setup_mins": 19, "idle_mins": 46, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 86, "parts": 95, "cutting_mins": 568, "alarm_mins": 3, "setup_mins": 13, "idle_mins": 76, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 95, "parts": 104, "cutting_mins": 627, "alarm_mins": 0, "setup_mins": 15, "idle_mins": 18, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 93, "parts": 154, "cutting_mins": 614, "alarm_mins": 4, "setup_mins": 15, "idle_mins": 27, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 76, "parts": 84, "cutting_mins": 502, "alarm_mins": 1, "setup_mins": 21, "idle_mins": 136, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 84, "parts": 55, "cutting_mins": 554, "alarm_mins": 4, "setup_mins": 18, "idle_mins": 84, "win": true, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 75, "parts": 45, "cutting_mins": 495, "alarm_mins": 1, "setup_mins": 13, "idle_mins": 151, "win": false, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 76, "parts": 33, "cutting_mins": 502, "alarm_mins": 13, "setup_mins": 25, "idle_mins": 120, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 57, "parts": 94, "cutting_mins": 376, "alarm_mins": 14, "setup_mins": 15, "idle_mins": 255, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 70, "parts": 77, "cutting_mins": 462, "alarm_mins": 12, "setup_mins": 17, "idle_mins": 169, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 61, "parts": 101, "cutting_mins": 403, "alarm_mins": 3, "setup_mins": 18, "idle_mins": 236, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 71, "parts": 117, "cutting_mins": 469, "alarm_mins": 6, "setup_mins": 13, "idle_mins": 172, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 63, "parts": 22, "cutting_mins": 416, "alarm_mins": 3, "setup_mins": 10, "idle_mins": 231, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1702, "avgUtil": 78, "running": 21, "winning": 9, "totalAlarmMins": 98, "totalSetupMins": 365, "totalIdleMins": 2525}, {"date": "2026-04-02", "label": "Thu 04/02", "dayOfWeek": 3, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 82, "parts": 27, "cutting_mins": 541, "alarm_mins": 4, "setup_mins": 20, "idle_mins": 95, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 74, "parts": 26, "cutting_mins": 488, "alarm_mins": 4, "setup_mins": 21, "idle_mins": 147, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 82, "parts": 49, "cutting_mins": 541, "alarm_mins": 5, "setup_mins": 15, "idle_mins": 99, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 99, "parts": 131, "cutting_mins": 653, "alarm_mins": 2, "setup_mins": 20, "idle_mins": 0, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 71, "parts": 31, "cutting_mins": 469, "alarm_mins": 3, "setup_mins": 16, "idle_mins": 172, "win": false, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 80, "parts": 75, "cutting_mins": 528, "alarm_mins": 4, "setup_mins": 14, "idle_mins": 114, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 73, "parts": 120, "cutting_mins": 482, "alarm_mins": 8, "setup_mins": 10, "idle_mins": 160, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 99, "parts": 163, "cutting_mins": 653, "alarm_mins": 0, "setup_mins": 22, "idle_mins": 0, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 86, "parts": 114, "cutting_mins": 568, "alarm_mins": 2, "setup_mins": 13, "idle_mins": 77, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 77, "parts": 127, "cutting_mins": 508, "alarm_mins": 4, "setup_mins": 24, "idle_mins": 124, "win": false, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 88, "parts": 83, "cutting_mins": 581, "alarm_mins": 3, "setup_mins": 13, "idle_mins": 63, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 86, "parts": 114, "cutting_mins": 568, "alarm_mins": 1, "setup_mins": 10, "idle_mins": 81, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 74, "parts": 81, "cutting_mins": 488, "alarm_mins": 12, "setup_mins": 10, "idle_mins": 150, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 79, "parts": 65, "cutting_mins": 521, "alarm_mins": 13, "setup_mins": 19, "idle_mins": 107, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 76, "parts": 63, "cutting_mins": 502, "alarm_mins": 13, "setup_mins": 12, "idle_mins": 133, "win": false, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 64, "parts": 38, "cutting_mins": 422, "alarm_mins": 11, "setup_mins": 25, "idle_mins": 202, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 56, "parts": 53, "cutting_mins": 370, "alarm_mins": 3, "setup_mins": 18, "idle_mins": 269, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 75, "parts": 165, "cutting_mins": 495, "alarm_mins": 12, "setup_mins": 21, "idle_mins": 132, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 65, "parts": 107, "cutting_mins": 429, "alarm_mins": 6, "setup_mins": 12, "idle_mins": 213, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 82, "parts": 135, "cutting_mins": 541, "alarm_mins": 1, "setup_mins": 14, "idle_mins": 104, "win": true, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 61, "parts": 29, "cutting_mins": 403, "alarm_mins": 8, "setup_mins": 25, "idle_mins": 224, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1796, "avgUtil": 78, "running": 21, "winning": 9, "totalAlarmMins": 119, "totalSetupMins": 354, "totalIdleMins": 2666}, {"date": "2026-04-03", "label": "Fri 04/03", "dayOfWeek": 4, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 90, "parts": 42, "cutting_mins": 594, "alarm_mins": 3, "setup_mins": 24, "idle_mins": 39, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 83, "parts": 68, "cutting_mins": 548, "alarm_mins": 0, "setup_mins": 14, "idle_mins": 98, "win": true, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 85, "parts": 47, "cutting_mins": 561, "alarm_mins": 4, "setup_mins": 23, "idle_mins": 72, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 86, "parts": 114, "cutting_mins": 568, "alarm_mins": 2, "setup_mins": 13, "idle_mins": 77, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 76, "parts": 63, "cutting_mins": 502, "alarm_mins": 14, "setup_mins": 15, "idle_mins": 129, "win": false, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 82, "parts": 180, "cutting_mins": 541, "alarm_mins": 1, "setup_mins": 23, "idle_mins": 95, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 72, "parts": 158, "cutting_mins": 475, "alarm_mins": 5, "setup_mins": 15, "idle_mins": 165, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 90, "parts": 198, "cutting_mins": 594, "alarm_mins": 2, "setup_mins": 23, "idle_mins": 41, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 84, "parts": 92, "cutting_mins": 554, "alarm_mins": 4, "setup_mins": 24, "idle_mins": 78, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 87, "parts": 115, "cutting_mins": 574, "alarm_mins": 5, "setup_mins": 17, "idle_mins": 64, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 91, "parts": 86, "cutting_mins": 601, "alarm_mins": 5, "setup_mins": 16, "idle_mins": 38, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 84, "parts": 111, "cutting_mins": 554, "alarm_mins": 3, "setup_mins": 19, "idle_mins": 84, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 69, "parts": 114, "cutting_mins": 455, "alarm_mins": 12, "setup_mins": 17, "idle_mins": 176, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 81, "parts": 59, "cutting_mins": 535, "alarm_mins": 1, "setup_mins": 17, "idle_mins": 107, "win": true, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 76, "parts": 63, "cutting_mins": 502, "alarm_mins": 8, "setup_mins": 13, "idle_mins": 137, "win": false, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 61, "parts": 40, "cutting_mins": 403, "alarm_mins": 12, "setup_mins": 13, "idle_mins": 232, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 52, "parts": 86, "cutting_mins": 343, "alarm_mins": 9, "setup_mins": 13, "idle_mins": 295, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 76, "parts": 126, "cutting_mins": 502, "alarm_mins": 9, "setup_mins": 19, "idle_mins": 130, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 60, "parts": 79, "cutting_mins": 396, "alarm_mins": 3, "setup_mins": 18, "idle_mins": 243, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 86, "parts": 81, "cutting_mins": 568, "alarm_mins": 2, "setup_mins": 17, "idle_mins": 73, "win": true, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 69, "parts": 35, "cutting_mins": 455, "alarm_mins": 14, "setup_mins": 12, "idle_mins": 179, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1957, "avgUtil": 78, "running": 21, "winning": 12, "totalAlarmMins": 118, "totalSetupMins": 365, "totalIdleMins": 2552}, {"date": "2026-04-06", "label": "Mon 04/06", "dayOfWeek": 0, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 75, "parts": 31, "cutting_mins": 495, "alarm_mins": 6, "setup_mins": 34, "idle_mins": 125, "win": false, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 82, "parts": 54, "cutting_mins": 541, "alarm_mins": 2, "setup_mins": 45, "idle_mins": 72, "win": true, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 85, "parts": 30, "cutting_mins": 561, "alarm_mins": 4, "setup_mins": 43, "idle_mins": 52, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 92, "parts": 152, "cutting_mins": 607, "alarm_mins": 3, "setup_mins": 28, "idle_mins": 22, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 86, "parts": 44, "cutting_mins": 568, "alarm_mins": 3, "setup_mins": 34, "idle_mins": 55, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 92, "parts": 121, "cutting_mins": 607, "alarm_mins": 3, "setup_mins": 22, "idle_mins": 28, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 70, "parts": 116, "cutting_mins": 462, "alarm_mins": 5, "setup_mins": 41, "idle_mins": 152, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 88, "parts": 194, "cutting_mins": 581, "alarm_mins": 2, "setup_mins": 38, "idle_mins": 39, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 84, "parts": 185, "cutting_mins": 554, "alarm_mins": 3, "setup_mins": 22, "idle_mins": 81, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 79, "parts": 174, "cutting_mins": 521, "alarm_mins": 5, "setup_mins": 21, "idle_mins": 113, "win": false, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 88, "parts": 145, "cutting_mins": 581, "alarm_mins": 3, "setup_mins": 26, "idle_mins": 50, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 87, "parts": 144, "cutting_mins": 574, "alarm_mins": 5, "setup_mins": 30, "idle_mins": 51, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 68, "parts": 64, "cutting_mins": 449, "alarm_mins": 0, "setup_mins": 21, "idle_mins": 190, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 77, "parts": 46, "cutting_mins": 508, "alarm_mins": 4, "setup_mins": 44, "idle_mins": 104, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 77, "parts": 51, "cutting_mins": 508, "alarm_mins": 4, "setup_mins": 45, "idle_mins": 103, "win": false, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 76, "parts": 30, "cutting_mins": 502, "alarm_mins": 8, "setup_mins": 33, "idle_mins": 117, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 54, "parts": 51, "cutting_mins": 356, "alarm_mins": 3, "setup_mins": 45, "idle_mins": 256, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 69, "parts": 152, "cutting_mins": 455, "alarm_mins": 4, "setup_mins": 23, "idle_mins": 178, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 56, "parts": 92, "cutting_mins": 370, "alarm_mins": 10, "setup_mins": 36, "idle_mins": 244, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 81, "parts": 178, "cutting_mins": 535, "alarm_mins": 0, "setup_mins": 43, "idle_mins": 82, "win": true, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 71, "parts": 43, "cutting_mins": 469, "alarm_mins": 9, "setup_mins": 30, "idle_mins": 152, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 2097, "avgUtil": 78, "running": 21, "winning": 10, "totalAlarmMins": 86, "totalSetupMins": 704, "totalIdleMins": 2266}, {"date": "2026-04-07", "label": "Tue 04/07", "dayOfWeek": 1, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 90, "parts": 40, "cutting_mins": 594, "alarm_mins": 4, "setup_mins": 14, "idle_mins": 48, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 70, "parts": 33, "cutting_mins": 462, "alarm_mins": 12, "setup_mins": 15, "idle_mins": 171, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 86, "parts": 41, "cutting_mins": 568, "alarm_mins": 5, "setup_mins": 14, "idle_mins": 73, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 92, "parts": 152, "cutting_mins": 607, "alarm_mins": 3, "setup_mins": 10, "idle_mins": 40, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 87, "parts": 29, "cutting_mins": 574, "alarm_mins": 3, "setup_mins": 17, "idle_mins": 66, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 92, "parts": 152, "cutting_mins": 607, "alarm_mins": 5, "setup_mins": 22, "idle_mins": 26, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 85, "parts": 94, "cutting_mins": 561, "alarm_mins": 3, "setup_mins": 10, "idle_mins": 86, "win": true, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 88, "parts": 116, "cutting_mins": 581, "alarm_mins": 5, "setup_mins": 14, "idle_mins": 60, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 85, "parts": 112, "cutting_mins": 561, "alarm_mins": 0, "setup_mins": 14, "idle_mins": 85, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 86, "parts": 95, "cutting_mins": 568, "alarm_mins": 3, "setup_mins": 16, "idle_mins": 73, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 96, "parts": 127, "cutting_mins": 634, "alarm_mins": 3, "setup_mins": 14, "idle_mins": 9, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 89, "parts": 98, "cutting_mins": 587, "alarm_mins": 2, "setup_mins": 14, "idle_mins": 57, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 79, "parts": 174, "cutting_mins": 521, "alarm_mins": 7, "setup_mins": 19, "idle_mins": 113, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 78, "parts": 47, "cutting_mins": 515, "alarm_mins": 3, "setup_mins": 13, "idle_mins": 129, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 83, "parts": 61, "cutting_mins": 548, "alarm_mins": 0, "setup_mins": 22, "idle_mins": 90, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 69, "parts": 30, "cutting_mins": 455, "alarm_mins": 0, "setup_mins": 23, "idle_mins": 182, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 47, "parts": 103, "cutting_mins": 310, "alarm_mins": 3, "setup_mins": 11, "idle_mins": 336, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 76, "parts": 100, "cutting_mins": 502, "alarm_mins": 9, "setup_mins": 23, "idle_mins": 126, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 59, "parts": 78, "cutting_mins": 389, "alarm_mins": 2, "setup_mins": 12, "idle_mins": 257, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 80, "parts": 132, "cutting_mins": 528, "alarm_mins": 2, "setup_mins": 20, "idle_mins": 110, "win": true, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 58, "parts": 32, "cutting_mins": 383, "alarm_mins": 8, "setup_mins": 20, "idle_mins": 249, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1846, "avgUtil": 80, "running": 21, "winning": 13, "totalAlarmMins": 82, "totalSetupMins": 337, "totalIdleMins": 2386}, {"date": "2026-04-08", "label": "Wed 04/08", "dayOfWeek": 2, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 84, "parts": 69, "cutting_mins": 554, "alarm_mins": 3, "setup_mins": 21, "idle_mins": 82, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 79, "parts": 40, "cutting_mins": 521, "alarm_mins": 11, "setup_mins": 14, "idle_mins": 114, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 80, "parts": 26, "cutting_mins": 528, "alarm_mins": 2, "setup_mins": 19, "idle_mins": 111, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 85, "parts": 80, "cutting_mins": 561, "alarm_mins": 5, "setup_mins": 18, "idle_mins": 76, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 84, "parts": 33, "cutting_mins": 554, "alarm_mins": 2, "setup_mins": 18, "idle_mins": 86, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 86, "parts": 142, "cutting_mins": 568, "alarm_mins": 2, "setup_mins": 14, "idle_mins": 76, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 84, "parts": 92, "cutting_mins": 554, "alarm_mins": 4, "setup_mins": 14, "idle_mins": 88, "win": true, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 89, "parts": 98, "cutting_mins": 587, "alarm_mins": 0, "setup_mins": 22, "idle_mins": 51, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 86, "parts": 142, "cutting_mins": 568, "alarm_mins": 1, "setup_mins": 23, "idle_mins": 68, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 83, "parts": 78, "cutting_mins": 548, "alarm_mins": 4, "setup_mins": 13, "idle_mins": 95, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 96, "parts": 127, "cutting_mins": 634, "alarm_mins": 3, "setup_mins": 17, "idle_mins": 6, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 88, "parts": 145, "cutting_mins": 581, "alarm_mins": 4, "setup_mins": 13, "idle_mins": 62, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 65, "parts": 86, "cutting_mins": 429, "alarm_mins": 11, "setup_mins": 17, "idle_mins": 203, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 81, "parts": 30, "cutting_mins": 535, "alarm_mins": 1, "setup_mins": 12, "idle_mins": 112, "win": true, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 82, "parts": 32, "cutting_mins": 541, "alarm_mins": 5, "setup_mins": 14, "idle_mins": 100, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 71, "parts": 36, "cutting_mins": 469, "alarm_mins": 1, "setup_mins": 12, "idle_mins": 178, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 56, "parts": 62, "cutting_mins": 370, "alarm_mins": 14, "setup_mins": 24, "idle_mins": 252, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 70, "parts": 92, "cutting_mins": 462, "alarm_mins": 8, "setup_mins": 22, "idle_mins": 168, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 60, "parts": 132, "cutting_mins": 396, "alarm_mins": 12, "setup_mins": 10, "idle_mins": 242, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 75, "parts": 99, "cutting_mins": 495, "alarm_mins": 1, "setup_mins": 18, "idle_mins": 146, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 60, "parts": 33, "cutting_mins": 396, "alarm_mins": 1, "setup_mins": 16, "idle_mins": 247, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1674, "avgUtil": 78, "running": 21, "winning": 13, "totalAlarmMins": 95, "totalSetupMins": 351, "totalIdleMins": 2563}, {"date": "2026-04-09", "label": "Thu 04/09", "dayOfWeek": 3, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 83, "parts": 30, "cutting_mins": 548, "alarm_mins": 3, "setup_mins": 16, "idle_mins": 93, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 79, "parts": 43, "cutting_mins": 521, "alarm_mins": 5, "setup_mins": 15, "idle_mins": 119, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 82, "parts": 54, "cutting_mins": 541, "alarm_mins": 5, "setup_mins": 19, "idle_mins": 95, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 94, "parts": 124, "cutting_mins": 620, "alarm_mins": 4, "setup_mins": 20, "idle_mins": 16, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 87, "parts": 41, "cutting_mins": 574, "alarm_mins": 2, "setup_mins": 15, "idle_mins": 69, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 82, "parts": 77, "cutting_mins": 541, "alarm_mins": 2, "setup_mins": 24, "idle_mins": 93, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 69, "parts": 152, "cutting_mins": 455, "alarm_mins": 2, "setup_mins": 24, "idle_mins": 179, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 86, "parts": 95, "cutting_mins": 568, "alarm_mins": 3, "setup_mins": 15, "idle_mins": 74, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 95, "parts": 157, "cutting_mins": 627, "alarm_mins": 5, "setup_mins": 24, "idle_mins": 4, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 77, "parts": 169, "cutting_mins": 508, "alarm_mins": 14, "setup_mins": 23, "idle_mins": 115, "win": false, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 98, "parts": 92, "cutting_mins": 647, "alarm_mins": 5, "setup_mins": 22, "idle_mins": 0, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 81, "parts": 107, "cutting_mins": 535, "alarm_mins": 0, "setup_mins": 21, "idle_mins": 104, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 75, "parts": 71, "cutting_mins": 495, "alarm_mins": 3, "setup_mins": 15, "idle_mins": 147, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 83, "parts": 27, "cutting_mins": 548, "alarm_mins": 0, "setup_mins": 15, "idle_mins": 97, "win": true, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 83, "parts": 68, "cutting_mins": 548, "alarm_mins": 1, "setup_mins": 10, "idle_mins": 101, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 60, "parts": 50, "cutting_mins": 396, "alarm_mins": 10, "setup_mins": 20, "idle_mins": 234, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 47, "parts": 78, "cutting_mins": 310, "alarm_mins": 9, "setup_mins": 25, "idle_mins": 316, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 73, "parts": 120, "cutting_mins": 482, "alarm_mins": 4, "setup_mins": 11, "idle_mins": 163, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 65, "parts": 143, "cutting_mins": 429, "alarm_mins": 15, "setup_mins": 20, "idle_mins": 196, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 73, "parts": 120, "cutting_mins": 482, "alarm_mins": 7, "setup_mins": 23, "idle_mins": 148, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 61, "parts": 29, "cutting_mins": 403, "alarm_mins": 5, "setup_mins": 22, "idle_mins": 230, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1847, "avgUtil": 78, "running": 21, "winning": 11, "totalAlarmMins": 104, "totalSetupMins": 399, "totalIdleMins": 2593}, {"date": "2026-04-10", "label": "Fri 04/10", "dayOfWeek": 4, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 90, "parts": 50, "cutting_mins": 594, "alarm_mins": 4, "setup_mins": 13, "idle_mins": 49, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 75, "parts": 38, "cutting_mins": 495, "alarm_mins": 12, "setup_mins": 15, "idle_mins": 138, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 90, "parts": 30, "cutting_mins": 594, "alarm_mins": 1, "setup_mins": 10, "idle_mins": 55, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 93, "parts": 123, "cutting_mins": 614, "alarm_mins": 5, "setup_mins": 22, "idle_mins": 19, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 82, "parts": 30, "cutting_mins": 541, "alarm_mins": 5, "setup_mins": 25, "idle_mins": 89, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 86, "parts": 81, "cutting_mins": 568, "alarm_mins": 2, "setup_mins": 16, "idle_mins": 74, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 72, "parts": 79, "cutting_mins": 475, "alarm_mins": 2, "setup_mins": 20, "idle_mins": 163, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 95, "parts": 90, "cutting_mins": 627, "alarm_mins": 4, "setup_mins": 22, "idle_mins": 7, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 95, "parts": 104, "cutting_mins": 627, "alarm_mins": 5, "setup_mins": 23, "idle_mins": 5, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 88, "parts": 97, "cutting_mins": 581, "alarm_mins": 1, "setup_mins": 12, "idle_mins": 66, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 99, "parts": 218, "cutting_mins": 653, "alarm_mins": 0, "setup_mins": 17, "idle_mins": 0, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 82, "parts": 90, "cutting_mins": 541, "alarm_mins": 0, "setup_mins": 17, "idle_mins": 102, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 77, "parts": 85, "cutting_mins": 508, "alarm_mins": 10, "setup_mins": 11, "idle_mins": 131, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 70, "parts": 33, "cutting_mins": 462, "alarm_mins": 15, "setup_mins": 11, "idle_mins": 172, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 75, "parts": 26, "cutting_mins": 495, "alarm_mins": 6, "setup_mins": 11, "idle_mins": 148, "win": false, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 60, "parts": 40, "cutting_mins": 396, "alarm_mins": 6, "setup_mins": 11, "idle_mins": 247, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 55, "parts": 52, "cutting_mins": 363, "alarm_mins": 15, "setup_mins": 10, "idle_mins": 272, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 65, "parts": 86, "cutting_mins": 429, "alarm_mins": 14, "setup_mins": 24, "idle_mins": 193, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 63, "parts": 104, "cutting_mins": 416, "alarm_mins": 14, "setup_mins": 17, "idle_mins": 213, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 72, "parts": 95, "cutting_mins": 475, "alarm_mins": 9, "setup_mins": 17, "idle_mins": 159, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 68, "parts": 22, "cutting_mins": 449, "alarm_mins": 8, "setup_mins": 13, "idle_mins": 190, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1573, "avgUtil": 79, "running": 21, "winning": 10, "totalAlarmMins": 138, "totalSetupMins": 337, "totalIdleMins": 2492}, {"date": "2026-04-13", "label": "Mon 04/13", "dayOfWeek": 0, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 78, "parts": 30, "cutting_mins": 515, "alarm_mins": 13, "setup_mins": 28, "idle_mins": 104, "win": false, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 71, "parts": 25, "cutting_mins": 469, "alarm_mins": 1, "setup_mins": 23, "idle_mins": 167, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 85, "parts": 28, "cutting_mins": 561, "alarm_mins": 1, "setup_mins": 34, "idle_mins": 64, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 90, "parts": 119, "cutting_mins": 594, "alarm_mins": 4, "setup_mins": 21, "idle_mins": 41, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 76, "parts": 36, "cutting_mins": 502, "alarm_mins": 6, "setup_mins": 40, "idle_mins": 112, "win": false, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 80, "parts": 132, "cutting_mins": 528, "alarm_mins": 0, "setup_mins": 40, "idle_mins": 92, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 72, "parts": 158, "cutting_mins": 475, "alarm_mins": 8, "setup_mins": 30, "idle_mins": 147, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 92, "parts": 87, "cutting_mins": 607, "alarm_mins": 5, "setup_mins": 37, "idle_mins": 11, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 85, "parts": 94, "cutting_mins": 561, "alarm_mins": 1, "setup_mins": 23, "idle_mins": 75, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 81, "parts": 89, "cutting_mins": 535, "alarm_mins": 5, "setup_mins": 34, "idle_mins": 86, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 88, "parts": 97, "cutting_mins": 581, "alarm_mins": 4, "setup_mins": 27, "idle_mins": 48, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 94, "parts": 124, "cutting_mins": 620, "alarm_mins": 5, "setup_mins": 20, "idle_mins": 15, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 70, "parts": 116, "cutting_mins": 462, "alarm_mins": 15, "setup_mins": 40, "idle_mins": 143, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 83, "parts": 55, "cutting_mins": 548, "alarm_mins": 0, "setup_mins": 38, "idle_mins": 74, "win": true, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 79, "parts": 35, "cutting_mins": 521, "alarm_mins": 15, "setup_mins": 45, "idle_mins": 79, "win": false, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 76, "parts": 28, "cutting_mins": 502, "alarm_mins": 9, "setup_mins": 31, "idle_mins": 118, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 63, "parts": 139, "cutting_mins": 416, "alarm_mins": 12, "setup_mins": 29, "idle_mins": 203, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 65, "parts": 72, "cutting_mins": 429, "alarm_mins": 11, "setup_mins": 30, "idle_mins": 190, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 53, "parts": 88, "cutting_mins": 350, "alarm_mins": 2, "setup_mins": 39, "idle_mins": 269, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 80, "parts": 106, "cutting_mins": 528, "alarm_mins": 3, "setup_mins": 32, "idle_mins": 97, "win": true, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 58, "parts": 26, "cutting_mins": 383, "alarm_mins": 8, "setup_mins": 20, "idle_mins": 249, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1684, "avgUtil": 77, "running": 21, "winning": 10, "totalAlarmMins": 128, "totalSetupMins": 661, "totalIdleMins": 2384}, {"date": "2026-04-14", "label": "Tue 04/14", "dayOfWeek": 1, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 81, "parts": 59, "cutting_mins": 535, "alarm_mins": 5, "setup_mins": 23, "idle_mins": 97, "win": true, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 67, "parts": 26, "cutting_mins": 442, "alarm_mins": 15, "setup_mins": 23, "idle_mins": 180, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 92, "parts": 55, "cutting_mins": 607, "alarm_mins": 4, "setup_mins": 20, "idle_mins": 29, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 93, "parts": 205, "cutting_mins": 614, "alarm_mins": 0, "setup_mins": 25, "idle_mins": 21, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 74, "parts": 35, "cutting_mins": 488, "alarm_mins": 5, "setup_mins": 17, "idle_mins": 150, "win": false, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 89, "parts": 196, "cutting_mins": 587, "alarm_mins": 4, "setup_mins": 15, "idle_mins": 54, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 74, "parts": 70, "cutting_mins": 488, "alarm_mins": 13, "setup_mins": 21, "idle_mins": 138, "win": false, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 89, "parts": 98, "cutting_mins": 587, "alarm_mins": 5, "setup_mins": 18, "idle_mins": 50, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 87, "parts": 82, "cutting_mins": 574, "alarm_mins": 5, "setup_mins": 23, "idle_mins": 58, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 90, "parts": 99, "cutting_mins": 594, "alarm_mins": 3, "setup_mins": 14, "idle_mins": 49, "win": true, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 96, "parts": 91, "cutting_mins": 634, "alarm_mins": 0, "setup_mins": 17, "idle_mins": 9, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 94, "parts": 103, "cutting_mins": 620, "alarm_mins": 0, "setup_mins": 22, "idle_mins": 18, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 63, "parts": 83, "cutting_mins": 416, "alarm_mins": 11, "setup_mins": 20, "idle_mins": 213, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 70, "parts": 36, "cutting_mins": 462, "alarm_mins": 9, "setup_mins": 23, "idle_mins": 166, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 88, "parts": 39, "cutting_mins": 581, "alarm_mins": 0, "setup_mins": 23, "idle_mins": 56, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 65, "parts": 48, "cutting_mins": 429, "alarm_mins": 4, "setup_mins": 13, "idle_mins": 214, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 48, "parts": 53, "cutting_mins": 317, "alarm_mins": 2, "setup_mins": 11, "idle_mins": 330, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 68, "parts": 90, "cutting_mins": 449, "alarm_mins": 8, "setup_mins": 22, "idle_mins": 181, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 54, "parts": 71, "cutting_mins": 356, "alarm_mins": 8, "setup_mins": 20, "idle_mins": 276, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 79, "parts": 174, "cutting_mins": 521, "alarm_mins": 6, "setup_mins": 24, "idle_mins": 109, "win": false, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 63, "parts": 52, "cutting_mins": 416, "alarm_mins": 7, "setup_mins": 11, "idle_mins": 226, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1765, "avgUtil": 77, "running": 21, "winning": 10, "totalAlarmMins": 114, "totalSetupMins": 405, "totalIdleMins": 2624}, {"date": "2026-04-15", "label": "Wed 04/15", "dayOfWeek": 2, "machines": [{"machine": "VF-2", "cell": "MPPI", "util": 76, "parts": 39, "cutting_mins": 502, "alarm_mins": 3, "setup_mins": 14, "idle_mins": 141, "win": false, "wo": "26-0288", "part": "114522", "customer": "Arrowhead Winch"}, {"machine": "VF-3", "cell": "MPPI", "util": 79, "parts": 58, "cutting_mins": 521, "alarm_mins": 7, "setup_mins": 13, "idle_mins": 119, "win": false, "wo": "26-0287", "part": "113972", "customer": "Arrowhead Winch"}, {"machine": "VF-6", "cell": "Big Mill", "util": 94, "parts": 39, "cutting_mins": 620, "alarm_mins": 2, "setup_mins": 13, "idle_mins": 25, "win": true, "wo": "26-0438", "part": "6308601", "customer": "McElroy Mfg"}, {"machine": "ST35", "cell": "MPPI", "util": 95, "parts": 209, "cutting_mins": 627, "alarm_mins": 2, "setup_mins": 20, "idle_mins": 11, "win": true, "wo": "26-0241", "part": "103486", "customer": "Arrowhead Winch"}, {"machine": "1050-B", "cell": "Big Mill", "util": 84, "parts": 29, "cutting_mins": 554, "alarm_mins": 0, "setup_mins": 23, "idle_mins": 83, "win": true, "wo": "26-0337", "part": "G437378V", "customer": "Geislinger Corp"}, {"machine": "PUMA-1", "cell": "Automation", "util": 83, "parts": 183, "cutting_mins": 548, "alarm_mins": 1, "setup_mins": 18, "idle_mins": 93, "win": true, "wo": "26-0025", "part": "C314103", "customer": "Centrilift BH"}, {"machine": "PUMA-2", "cell": "MPPI", "util": 83, "parts": 91, "cutting_mins": 548, "alarm_mins": 4, "setup_mins": 12, "idle_mins": 96, "win": true, "wo": "26-0296", "part": "102704", "customer": "Arrowhead Winch"}, {"machine": "PUMA-3", "cell": "MPPI", "util": 90, "parts": 99, "cutting_mins": 594, "alarm_mins": 5, "setup_mins": 11, "idle_mins": 50, "win": true, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "303-B", "cell": "Automation", "util": 94, "parts": 103, "cutting_mins": 620, "alarm_mins": 0, "setup_mins": 18, "idle_mins": 22, "win": true, "wo": "26-0204", "part": "26989", "customer": "Arrowhead Winch"}, {"machine": "403-A", "cell": "403 Cell", "util": 78, "parts": 129, "cutting_mins": 515, "alarm_mins": 1, "setup_mins": 22, "idle_mins": 122, "win": false, "wo": "26-0373", "part": "27009", "customer": "Arrowhead Winch"}, {"machine": "403-B", "cell": "403 Cell", "util": 93, "parts": 123, "cutting_mins": 614, "alarm_mins": 5, "setup_mins": 15, "idle_mins": 26, "win": true, "wo": "26-0223", "part": "980660-07545-0051B", "customer": "Military Parts Plus"}, {"machine": "403-C", "cell": "403 Cell", "util": 91, "parts": 120, "cutting_mins": 601, "alarm_mins": 3, "setup_mins": 16, "idle_mins": 40, "win": true, "wo": "26-0220", "part": "980140-56013-0300A", "customer": "Military Parts Plus"}, {"machine": "TWIN", "cell": "Automation", "util": 71, "parts": 94, "cutting_mins": 469, "alarm_mins": 6, "setup_mins": 20, "idle_mins": 165, "win": false, "wo": "26-0286", "part": "113020", "customer": "Arrowhead Winch"}, {"machine": "5100-A", "cell": "Mill/Lathe", "util": 71, "parts": 25, "cutting_mins": 469, "alarm_mins": 2, "setup_mins": 23, "idle_mins": 166, "win": false, "wo": "26-0350", "part": "MS-43", "customer": "Laser Engineering"}, {"machine": "5100-B", "cell": "Big Mill", "util": 84, "parts": 40, "cutting_mins": 554, "alarm_mins": 3, "setup_mins": 19, "idle_mins": 84, "win": true, "wo": "26-0093", "part": "100804", "customer": "Arrowhead Winch"}, {"machine": "7000", "cell": "Big Mill", "util": 64, "parts": 53, "cutting_mins": 422, "alarm_mins": 5, "setup_mins": 16, "idle_mins": 217, "win": false, "wo": "26-0146", "part": "C307916", "customer": "C&D Mfg"}, {"machine": "2500", "cell": "5100 Cell", "util": 52, "parts": 86, "cutting_mins": 343, "alarm_mins": 15, "setup_mins": 12, "idle_mins": 290, "win": false, "wo": "26-0308", "part": "103163419", "customer": "Halliburton ESP"}, {"machine": "2500-Y", "cell": "Automation", "util": 70, "parts": 77, "cutting_mins": 462, "alarm_mins": 11, "setup_mins": 15, "idle_mins": 172, "win": false, "wo": "26-0376", "part": "3000543", "customer": "Serva Corp"}, {"machine": "3000-A", "cell": "3000 Cell", "util": 65, "parts": 86, "cutting_mins": 429, "alarm_mins": 12, "setup_mins": 11, "idle_mins": 208, "win": false, "wo": "26-0316", "part": "101904", "customer": "Arrowhead Winch"}, {"machine": "3000-C", "cell": "3000 Cell", "util": 83, "parts": 91, "cutting_mins": 548, "alarm_mins": 0, "setup_mins": 15, "idle_mins": 97, "win": true, "wo": "26-0297", "part": "105827", "customer": "Arrowhead Winch"}, {"machine": "2G", "cell": "Horizontal", "util": 58, "parts": 24, "cutting_mins": 383, "alarm_mins": 11, "setup_mins": 22, "idle_mins": 244, "win": false, "wo": "26-0307", "part": "27009", "customer": "Arrowhead Winch"}], "totalParts": 1798, "avgUtil": 79, "running": 21, "winning": 11, "totalAlarmMins": 98, "totalSetupMins": 348, "totalIdleMins": 2471}];
+
+// ── INJECT REPORTS TAB ──────────────────────────────────────
+function injectReportsTab() {
+  if (document.getElementById('tab-reports')) return;
+  var shopTab = document.getElementById('tab-shop');
+  if (!shopTab) { setTimeout(injectReportsTab, 500); return; }
+  var tab = document.createElement('div');
+  tab.className = 'nav-tab';
+  tab.id = 'tab-reports';
+  tab.innerHTML = '<span class="tab-icon">📊</span><span class="tab-label">Reports</span>';
+  tab.onclick = function(){ if(window.switchTab) window.switchTab('reports'); };
+  shopTab.parentNode.insertBefore(tab, shopTab.nextSibling);
+}
+
+// ── INJECT REPORTS PAGE ─────────────────────────────────────
+function injectReportsPage() {
+  if (document.getElementById('page-reports')) return;
+  var page = document.createElement('div');
+  page.id = 'page-reports';
+  page.style.cssText = 'display:none;flex-direction:column;height:calc(100vh - 88px);background:#00071a;overflow-y:auto;';
+  page.innerHTML = `
+    <div style="background:linear-gradient(90deg,#060d1a,#0d1f33);border-bottom:2px solid #1e3a5c;padding:12px 16px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:3px;color:#f0f4f8;">PERFORMANCE REPORTS</div>
+          <div style="font-size:11px;color:#475569;">Shift: 6:00 AM - 5:00 PM · Monday - Friday · 21 Machines</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="window.printReport()" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c500;border-radius:8px;padding:7px 14px;font-family:Bebas Neue,sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">🖨 PRINT</button>
+        </div>
+      </div>
+      <!-- Period tabs -->
+      <div style="display:flex;gap:6px;margin-top:12px;overflow-x:auto;scrollbar-width:none;">
+        <button onclick="window.setReportPeriod('daily')"   id="rp-daily"   style="background:rgba(245,197,0,0.15);border:1px solid #f5c500;color:#f5c500;border-radius:20px;padding:5px 16px;font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;">DAILY</button>
+        <button onclick="window.setReportPeriod('weekly')"  id="rp-weekly"  style="background:transparent;border:1px solid #334155;color:#475569;border-radius:20px;padding:5px 16px;font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;">WEEKLY</button>
+        <button onclick="window.setReportPeriod('monthly')" id="rp-monthly" style="background:transparent;border:1px solid #334155;color:#475569;border-radius:20px;padding:5px 16px;font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;">MONTHLY</button>
+        <button onclick="window.setReportPeriod('yearly')"  id="rp-yearly"  style="background:transparent;border:1px solid #334155;color:#475569;border-radius:20px;padding:5px 16px;font-family:Bebas Neue,sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;">YEARLY</button>
+      </div>
+    </div>
+    <div id="report-body" style="padding:16px;flex:1;overflow-y:auto;"></div>
+  `;
+  document.body.appendChild(page);
+}
+
+// ── PERIOD SWITCHER ──────────────────────────────────────────
+var _reportPeriod = 'daily';
+window.setReportPeriod = function(period) {
+  _reportPeriod = period;
+  ['daily','weekly','monthly','yearly'].forEach(function(p) {
+    var b = document.getElementById('rp-'+p);
+    if (!b) return;
+    var on = p === period;
+    b.style.background = on ? 'rgba(245,197,0,0.15)' : 'transparent';
+    b.style.borderColor = on ? '#f5c500' : '#334155';
+    b.style.color       = on ? '#f5c500' : '#475569';
+  });
+  window.renderReport();
+};
+
+// ── AGGREGATE DATA ───────────────────────────────────────────
+function aggregateDays(days) {
+  if (!days.length) return null;
+  var totParts  = days.reduce(function(s,d){return s+d.totalParts;},0);
+  var avgUtil   = Math.round(days.reduce(function(s,d){return s+d.avgUtil;},0)/days.length);
+  var avgWin    = Math.round(days.reduce(function(s,d){return s+d.winning;},0)/days.length);
+  var totAlarm  = days.reduce(function(s,d){return s+d.totalAlarmMins;},0);
+  var totSetup  = days.reduce(function(s,d){return s+d.totalSetupMins;},0);
+  var totIdle   = days.reduce(function(s,d){return s+d.totalIdleMins;},0);
+  // Per machine totals
+  var machTotals = {};
+  days.forEach(function(day) {
+    day.machines.forEach(function(m) {
+      if (!machTotals[m.machine]) machTotals[m.machine] = {name:m.machine,cell:m.cell,parts:0,util_sum:0,days:0,alarms:0,wo:m.wo,part:m.part,customer:m.customer};
+      machTotals[m.machine].parts     += m.parts;
+      machTotals[m.machine].util_sum  += m.util;
+      machTotals[m.machine].days      += 1;
+      machTotals[m.machine].alarms    += m.alarm_mins;
+    });
+  });
+  Object.keys(machTotals).forEach(function(k) {
+    var m = machTotals[k];
+    m.avgUtil = Math.round(m.util_sum / m.days);
+  });
+  var machArr = Object.values(machTotals).sort(function(a,b){return b.avgUtil-a.avgUtil;});
+  return {totParts,avgUtil,avgWin,totAlarm,totSetup,totIdle,machArr,days:days.length};
+}
+
+function getReportDays() {
+  var all = DEMO_REPORT_DATA;
+  var today = all[all.length-1].date;
+  if (_reportPeriod === 'daily')   return all.slice(-1);
+  if (_reportPeriod === 'weekly')  return all.slice(-5);
+  if (_reportPeriod === 'monthly') return all.slice(-20);
+  return all; // yearly = all available
+}
+
+function fmtMins(m) {
+  if (!m) return '0m';
+  return m >= 60 ? Math.floor(m/60)+'h '+Math.round(m%60)+'m' : Math.round(m)+'m';
+}
+
+// ── RENDER REPORT ────────────────────────────────────────────
+window.renderReport = function() {
+  var body = document.getElementById('report-body');
+  if (!body) return;
+  var days = getReportDays();
+  var agg  = aggregateDays(days);
+  if (!agg) { body.innerHTML = '<div style="text-align:center;padding:60px;color:#334155;">No data available</div>'; return; }
+
+  var periodLabel = {daily:'Today',weekly:'This Week',monthly:'This Month',yearly:'Year to Date'}[_reportPeriod];
+  var dateRange = days.length > 1
+    ? days[0].label + ' - ' + days[days.length-1].label
+    : days[0].label;
+
+  // Trend chart (utilization trend by day)
+  var chartDays = _reportPeriod === 'daily' ? [days[0]] : days;
+  var maxParts = Math.max.apply(null, days.map(function(d){return d.totalParts;}));
+
+  var html = '';
+
+  // ── HEADER SUMMARY CARDS ──
+  html += '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px;">';
+  html += statCard('📦 TOTAL PARTS', agg.totParts.toLocaleString(), '#f5c500', 'rgba(245,197,0,0.2)');
+  html += statCard('📊 AVG UTILIZATION', agg.avgUtil+'%', '#60a5fa', 'rgba(59,130,246,0.2)');
+  html += statCard('✅ MACHINES WINNING', agg.avgWin+'/21 avg', '#22c55e', 'rgba(34,197,94,0.2)');
+  html += statCard('⏱ TOTAL DOWNTIME', fmtMins(agg.totAlarm+agg.totSetup), '#f87171', 'rgba(239,68,68,0.2)');
+  html += '</div>';
+
+  // ── PERIOD HEADER ──
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">';
+  html += '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;color:#f0f4f8;">'+periodLabel.toUpperCase()+' OVERVIEW</div>';
+  html += '<div style="font-size:10px;color:#475569;">'+dateRange+'</div>';
+  html += '</div>';
+
+  // ── PARTS TREND CHART (bar chart using divs) ──
+  if (days.length > 1) {
+    html += '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:12px;padding:14px;margin-bottom:16px;">';
+    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:10px;">PARTS PER DAY</div>';
+    html += '<div style="display:flex;align-items:flex-end;gap:4px;height:80px;">';
+    days.forEach(function(d) {
+      var h = maxParts > 0 ? Math.round((d.totalParts/maxParts)*70) : 0;
+      var isLast = d === days[days.length-1];
+      html += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">';
+      html += '<div style="font-size:7px;color:#475569;">'+d.totalParts+'</div>';
+      html += '<div style="width:100%;height:'+h+'px;background:'+(isLast?'#f5c500':'#3b82f6')+';border-radius:3px 3px 0 0;min-height:4px;"></div>';
+      html += '<div style="font-size:7px;color:#334155;white-space:nowrap;">'+d.label.split(' ')[0]+'</div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  // ── DOWNTIME BREAKDOWN ──
+  html += '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:12px;padding:14px;margin-bottom:16px;">';
+  html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:10px;">DOWNTIME BREAKDOWN · '+days.length+' day'+(days.length>1?'s':'')+'</div>';
+  var totalDT = agg.totAlarm + agg.totSetup + agg.totIdle;
+  html += dtBar('ALARMS', agg.totAlarm, totalDT, '#f87171', 'rgba(239,68,68,0.15)');
+  html += dtBar('SETUP / CHANGEOVER', agg.totSetup, totalDT, '#f59e0b', 'rgba(245,158,11,0.15)');
+  html += dtBar('IDLE / UNSPECIFIED', agg.totIdle, totalDT, '#475569', 'rgba(71,85,105,0.15)');
+  html += '</div>';
+
+  // ── MACHINE PERFORMANCE TABLE ──
+  html += '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:12px;padding:14px;margin-bottom:16px;">';
+  html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:10px;">MACHINE PERFORMANCE RANKING</div>';
+  agg.machArr.forEach(function(m, idx) {
+    var color = m.avgUtil >= 85 ? '#22c55e' : m.avgUtil >= 70 ? '#f5c500' : '#f87171';
+    var medal = idx===0?'🥇':idx===1?'🥈':idx===2?'🥉':'';
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(30,58,92,0.5);">';
+    html += '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;color:#f5d050;min-width:65px;">'+medal+' '+m.name+'</div>';
+    html += '<div style="flex:1;">';
+    html += '<div style="display:flex;justify-content:space-between;margin-bottom:2px;">';
+    html += '<span style="font-size:9px;color:#475569;">'+m.cell+'</span>';
+    html += '<span style="font-size:9px;color:'+color+';">'+m.avgUtil+'%</span>';
+    html += '</div>';
+    html += '<div style="background:#060d1a;border-radius:3px;height:4px;">';
+    html += '<div style="height:100%;width:'+m.avgUtil+'%;background:'+color+';border-radius:3px;"></div>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div style="text-align:right;min-width:50px;">';
+    html += '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;color:#f0f4f8;">'+m.parts.toLocaleString()+'</div>';
+    html += '<div style="font-size:7px;color:#334155;">PARTS</div>';
+    html += '</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  // ── TOP CUSTOMERS ──
+  var custMap = {};
+  agg.machArr.forEach(function(m) {
+    if (!m.customer) return;
+    if (!custMap[m.customer]) custMap[m.customer] = 0;
+    custMap[m.customer] += m.parts;
+  });
+  var custArr = Object.entries(custMap).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+  var maxCustParts = custArr[0] ? custArr[0][1] : 1;
+  html += '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:12px;padding:14px;margin-bottom:16px;">';
+  html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:10px;">TOP CUSTOMERS BY PARTS</div>';
+  custArr.forEach(function(c) {
+    var pct = Math.round(c[1]/maxCustParts*100);
+    html += '<div style="margin-bottom:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">';
+    html += '<span style="font-size:10px;color:#94a3b8;">'+c[0]+'</span>';
+    html += '<span style="font-size:10px;color:#60a5fa;">'+c[1].toLocaleString()+' parts</span>';
+    html += '</div>';
+    html += '<div style="background:#060d1a;border-radius:3px;height:5px;">';
+    html += '<div style="height:100%;width:'+pct+'%;background:#3b82f6;border-radius:3px;"></div>';
+    html += '</div></div>';
+  });
+  html += '</div>';
+
+  // ── ACTIVE WORK ORDERS ──
+  html += '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:12px;padding:14px;margin-bottom:16px;">';
+  html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:10px;">ACTIVE WORK ORDERS</div>';
+  var shownWOs = {};
+  agg.machArr.forEach(function(m) {
+    if (!m.wo || shownWOs[m.wo]) return;
+    shownWOs[m.wo] = true;
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(30,58,92,0.4);">';
+    html += '<div style="font-family:Bebas Neue,sans-serif;font-size:12px;color:#f5d050;min-width:72px;">'+m.wo+'</div>';
+    html += '<div style="flex:1;">';
+    html += '<div style="font-size:10px;color:#94a3b8;">'+m.part+'</div>';
+    html += '<div style="font-size:9px;color:#334155;">'+m.customer+' · '+m.name+'</div>';
+    html += '</div>';
+    html += '<div style="font-family:Bebas Neue,sans-serif;font-size:12px;color:#22c55e;">'+m.parts+'</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  body.innerHTML = html;
+};
+
+function statCard(label, value, color, bg) {
+  return '<div style="background:#0d1f35;border:1px solid '+bg+';border-radius:12px;padding:14px;text-align:center;">'
+    +'<div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:'+color+';line-height:1;">'+value+'</div>'
+    +'<div style="font-size:8px;color:#475569;letter-spacing:1px;margin-top:3px;">'+label+'</div>'
+    +'</div>';
+}
+
+function dtBar(label, mins, total, color, bg) {
+  var pct = total > 0 ? Math.round(mins/total*100) : 0;
+  return '<div style="margin-bottom:8px;">'
+    +'<div style="display:flex;justify-content:space-between;margin-bottom:3px;">'
+    +'<span style="font-size:9px;color:#64748b;">'+label+'</span>'
+    +'<span style="font-size:9px;color:'+color+';">'+fmtMins(mins)+' ('+pct+'%)</span>'
+    +'</div>'
+    +'<div style="background:#060d1a;border-radius:3px;height:5px;">'
+    +'<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px;"></div>'
+    +'</div></div>';
+}
+
+// ── PRINT REPORT ────────────────────────────────────────────
+window.printReport = function() {
+  var body = document.getElementById('report-body');
+  if (!body) return;
+  var periodLabel = {daily:'Daily',weekly:'Weekly',monthly:'Monthly',yearly:'Year to Date'}[_reportPeriod];
+  var win = window.open('','_blank');
+  win.document.write('<html><head><title>Hill Mfg - '+periodLabel+' Report</title>');
+  win.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;background:#fff;color:#333;}');
+  win.document.write('h1{font-size:24px;margin-bottom:4px;}');
+  win.document.write('h2{font-size:16px;color:#1e3a5c;margin-top:20px;margin-bottom:8px;border-bottom:2px solid #1e3a5c;padding-bottom:4px;}');
+  win.document.write('table{width:100%;border-collapse:collapse;margin-bottom:16px;}');
+  win.document.write('th{background:#1e3a5c;color:#fff;padding:8px;text-align:left;font-size:11px;}');
+  win.document.write('td{padding:7px 8px;border-bottom:1px solid #e2e8f0;font-size:12px;}');
+  win.document.write('tr:nth-child(even){background:#f8fafc;}');
+  win.document.write('.stat{display:inline-block;margin:0 16px 12px 0;}');
+  win.document.write('.stat-val{font-size:28px;font-weight:700;color:#1e3a5c;}');
+  win.document.write('.stat-lbl{font-size:10px;color:#64748b;letter-spacing:1px;}');
+  win.document.write('</style></head><body>');
+  win.document.write('<h1>Hill Manufacturing - '+periodLabel+' Performance Report</h1>');
+  win.document.write('<p style="color:#64748b;font-size:12px;">Generated: '+new Date().toLocaleString()+' | Shift: 6:00 AM - 5:00 PM | Monday - Friday | 21 Machines</p>');
+
+  var days = getReportDays();
+  var agg  = aggregateDays(days);
+  var dateRange = days.length > 1 ? days[0].label+' - '+days[days.length-1].label : days[0].label;
+  win.document.write('<p style="font-size:12px;color:#475569;">Period: '+dateRange+'</p>');
+
+  // Summary
+  win.document.write('<h2>Summary</h2>');
+  win.document.write('<div>');
+  win.document.write('<div class="stat"><div class="stat-val">'+agg.totParts.toLocaleString()+'</div><div class="stat-lbl">TOTAL PARTS</div></div>');
+  win.document.write('<div class="stat"><div class="stat-val">'+agg.avgUtil+'%</div><div class="stat-lbl">AVG UTILIZATION</div></div>');
+  win.document.write('<div class="stat"><div class="stat-val">'+agg.avgWin+'/21</div><div class="stat-lbl">AVG WINNING</div></div>');
+  win.document.write('<div class="stat"><div class="stat-val">'+fmtMins(agg.totAlarm+agg.totSetup)+'</div><div class="stat-lbl">TOTAL DOWNTIME</div></div>');
+  win.document.write('</div>');
+
+  // Machine ranking
+  win.document.write('<h2>Machine Performance Ranking</h2>');
+  win.document.write('<table><thead><tr><th>#</th><th>Machine</th><th>Cell</th><th>Avg Util %</th><th>Parts Made</th><th>Work Order</th><th>Customer</th></tr></thead><tbody>');
+  agg.machArr.forEach(function(m, i) {
+    var status = m.avgUtil >= 85 ? 'STAR' : m.avgUtil >= 70 ? 'GOOD' : 'ATTENTION';
+    win.document.write('<tr><td>'+(i+1)+'</td><td><strong>'+m.name+'</strong></td><td>'+m.cell+'</td><td>'+m.avgUtil+'%</td><td>'+m.parts.toLocaleString()+'</td><td>'+m.wo+'</td><td>'+m.customer+'</td></tr>');
+  });
+  win.document.write('</tbody></table>');
+
+  // Downtime
+  win.document.write('<h2>Downtime Breakdown</h2>');
+  win.document.write('<table><thead><tr><th>Category</th><th>Total Time</th><th>% of Downtime</th></tr></thead><tbody>');
+  var total = agg.totAlarm+agg.totSetup+agg.totIdle;
+  win.document.write('<tr><td>Alarms</td><td>'+fmtMins(agg.totAlarm)+'</td><td>'+Math.round(agg.totAlarm/total*100)+'%</td></tr>');
+  win.document.write('<tr><td>Setup / Changeover</td><td>'+fmtMins(agg.totSetup)+'</td><td>'+Math.round(agg.totSetup/total*100)+'%</td></tr>');
+  win.document.write('<tr><td>Idle / Unspecified</td><td>'+fmtMins(agg.totIdle)+'</td><td>'+Math.round(agg.totIdle/total*100)+'%</td></tr>');
+  win.document.write('</tbody></table>');
+
+  // Daily breakdown if multi-day
+  if (days.length > 1) {
+    win.document.write('<h2>Daily Breakdown</h2>');
+    win.document.write('<table><thead><tr><th>Date</th><th>Total Parts</th><th>Avg Util %</th><th>Winning</th><th>Alarm Time</th><th>Setup Time</th></tr></thead><tbody>');
+    days.forEach(function(d) {
+      win.document.write('<tr><td>'+d.label+'</td><td>'+d.totalParts.toLocaleString()+'</td><td>'+d.avgUtil+'%</td><td>'+d.winning+'/21</td><td>'+fmtMins(d.totalAlarmMins)+'</td><td>'+fmtMins(d.totalSetupMins)+'</td></tr>');
+    });
+    win.document.write('</tbody></table>');
+  }
+
+  win.document.write('<p style="margin-top:30px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;">Hill Manufacturing &amp; Fabrication | Shop Floor Intelligence | Confidential</p>');
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
+};
+
+// ── PATCH switchTab ──────────────────────────────────────────
+(function patchForReports() {
+  if (!window.switchTab) { setTimeout(patchForReports, 600); return; }
+  if (window._reportsPatched) return;
+  window._reportsPatched = true;
+  var orig = window.switchTab;
+  window.switchTab = function(tab) {
+    orig(tab);
+    var rp = document.getElementById('page-reports');
+    if (rp) rp.style.display = tab === 'reports' ? 'flex' : 'none';
+    if (tab === 'reports') window.renderReport();
+    // Show reports tab always (useful for demo)
+    var rt = document.getElementById('tab-reports');
+    if (rt) rt.style.display = '';
+  };
+})();
+
+// ── INIT ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  injectReportsTab();
+  injectReportsPage();
+});
+if (document.readyState !== 'loading') {
+  injectReportsTab();
+  injectReportsPage();
+}
+</script>
+
+
+<script>
+// ============================================================
+// SPOTLIGHT DASHBOARD STYLE - Floor Analytics Cards
+// Matches Datanomix Spotlight layout exactly
+// ============================================================
+
+// Override the grid to use Spotlight layout
+var _spotlightStyle = document.createElement('style');
+_spotlightStyle.textContent = [
+  // Card grid - 3 cols on desktop, 2 on tablet, 1 on mobile
+  '#dnx-cards { display:grid !important; grid-template-columns:repeat(3,1fr) !important; gap:10px !important; padding:10px 14px 16px !important; }',
+  '@media(max-width:900px){ #dnx-cards { grid-template-columns:repeat(2,1fr) !important; } }',
+  '@media(max-width:560px){ #dnx-cards { grid-template-columns:1fr !important; } }',
+  // Spotlight card base
+  '.sp-card { background:#0d1520; border-radius:10px; border:1px solid #1e3a5c; overflow:hidden; font-family:Arial,sans-serif; transition:box-shadow .2s; }',
+  '.sp-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.5); }',
+  '.sp-card.sp-running { border-color:rgba(34,197,94,.4); }',
+  '.sp-card.sp-alarm   { border-color:rgba(239,68,68,.6); animation:alarm-pulse 2s infinite; }',
+  '.sp-card.sp-idle    { border-color:rgba(234,179,8,.3); }',
+  '.sp-card.sp-no-data { border-color:#1e3a5c; opacity:.7; }',
+  // Top bar (color strip like Datanomix)
+  '.sp-topbar { height:4px; width:100%; }',
+  '.sp-topbar.running { background:linear-gradient(90deg,#22c55e,#16a34a); }',
+  '.sp-topbar.alarm   { background:linear-gradient(90deg,#ef4444,#dc2626); }',
+  '.sp-topbar.idle    { background:linear-gradient(90deg,#eab308,#ca8a04); }',
+  '.sp-topbar.no-data { background:#1e3a5c; }',
+  // Header
+  '.sp-header { padding:8px 10px 4px; display:flex; justify-content:space-between; align-items:flex-start; }',
+  '.sp-machine-name { font-family:"Bebas Neue",sans-serif; font-size:20px; letter-spacing:2px; color:#f5d050; line-height:1; }',
+  '.sp-cell-name { font-size:8px; color:#475569; letter-spacing:1px; margin-top:1px; }',
+  '.sp-status-badge { font-size:9px; font-weight:700; letter-spacing:1px; padding:3px 8px; border-radius:4px; white-space:nowrap; }',
+  '.sp-status-badge.running { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.3); }',
+  '.sp-status-badge.alarm   { background:rgba(239,68,68,.2);  color:#f87171; border:1px solid rgba(239,68,68,.4); }',
+  '.sp-status-badge.idle    { background:rgba(234,179,8,.12); color:#eab308; border:1px solid rgba(234,179,8,.3); }',
+  '.sp-status-badge.no-data { background:rgba(51,65,85,.3);   color:#334155; border:1px solid #1e3a5c; }',
+  // Operator row
+  '.sp-operator { padding:0 10px 4px; font-size:9px; color:#60a5fa; display:flex; align-items:center; gap:4px; }',
+  // Program row
+  '.sp-program { padding:0 10px 6px; font-size:10px; color:#94a3b8; font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }',
+  // Utilization bar (segmented like Datanomix)
+  '.sp-util-wrap { padding:0 10px 6px; }',
+  '.sp-util-track { height:12px; background:#0a1525; border-radius:3px; overflow:hidden; display:flex; gap:2px; }',
+  '.sp-util-seg { height:100%; border-radius:2px; }',
+  '.sp-util-label { display:flex; justify-content:space-between; margin-top:2px; }',
+  '.sp-util-label span { font-size:8px; color:#475569; }',
+  '.sp-util-val { font-family:"Bebas Neue",sans-serif; font-size:18px; line-height:1; }',
+  // Stat row (4 stats: First Active, Last Active, Break Bleed, Long Stop)
+  '.sp-stats { display:grid; grid-template-columns:repeat(4,1fr); padding:4px 6px 6px; gap:2px; }',
+  '.sp-stat { text-align:center; padding:3px 2px; }',
+  '.sp-stat-val { font-size:11px; font-weight:700; color:#f0f4f8; }',
+  '.sp-stat-val.warn { color:#f87171; }',
+  '.sp-stat-val.ok   { color:#94a3b8; }',
+  '.sp-stat-lbl { font-size:7px; color:#475569; letter-spacing:.5px; margin-top:1px; }',
+  // Job info
+  '.sp-job { margin:0 10px 8px; background:rgba(0,0,0,.3); border-radius:6px; padding:7px 9px; border-left:3px solid #f5c500; }',
+  '.sp-job-wo   { font-size:10px; color:#f5c500; font-family:"Bebas Neue",sans-serif; letter-spacing:1px; }',
+  '.sp-job-part { font-size:11px; color:#f0f4f8; font-weight:700; margin:2px 0; }',
+  '.sp-job-cust { font-size:10px; color:#60a5fa; }',
+  // Big stat boxes (parts, util, cut time)
+  '.sp-big-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:4px 10px 6px; }',
+  '.sp-big-stat { text-align:center; background:rgba(0,0,0,.25); border-radius:6px; padding:6px 4px; }',
+  '.sp-big-val { font-family:"Bebas Neue",sans-serif; font-size:22px; line-height:1; }',
+  '.sp-big-lbl { font-size:7px; color:#475569; letter-spacing:1px; margin-top:1px; }',
+  // Shift parts bar
+  '.sp-parts-bar { padding:0 10px 8px; }',
+  '.sp-parts-track { height:8px; background:#0a1525; border-radius:4px; overflow:hidden; }',
+  '.sp-parts-fill { height:100%; background:linear-gradient(90deg,#3b82f6,#60a5fa); border-radius:4px; transition:width .5s; }',
+  '@keyframes alarm-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4);} 50%{box-shadow:0 0 0 6px rgba(239,68,68,.0);} }',
+  '@keyframes pulse-green { 0%,100%{opacity:1;} 50%{opacity:.4;} }',
+].join('\n');
+document.head.appendChild(_spotlightStyle);
+
+// Spotlight-style operators (from your shop)
+var DEMO_OPERATORS = {
+  'VF-2':'Miguel S.','VF-3':'Brett T.','VF-6':'Kyle P.','ST35':'Hank A.',
+  '1050-B':'Daniel M.','PUMA-1':'Jason P.','PUMA-2':'Scott S.','PUMA-3':'Corey B.',
+  '303-B':'Miguel S.','403-A':'Brett T.','403-B':'Kyle P.','403-C':'Jason P.',
+  'TWIN':'Hank A.','5100-A':'Daniel M.','5100-B':'Scott S.','7000':'Corey B.',
+  '2500':'Jason P.','2500-Y':'Kyle P.','3000-A':'Brett T.','3000-C':'Hank A.','2G':'Daniel M.'
+};
+
+// Build one Spotlight-style card
+function buildSpotlightCard(m) {
+  var demoData = (typeof DEMO_MODE !== 'undefined' && DEMO_MODE && typeof DEMO_MACHINES !== 'undefined') ? DEMO_MACHINES[m.name] : null;
+
+  // Get real or demo data
+  var util, parts, cutting, bleed, longStop, firstAct, lastAct, program, win;
+  if (demoData) {
+    util     = demoData.util;
+    parts    = demoData.done;
+    cutting  = Math.round(demoData.util / 100 * 660); // 11hr shift in mins
+    bleed    = Math.round(Math.random() * 20);
+    longStop = demoData.running ? Math.round(Math.random() * 25) : Math.round(20 + Math.random() * 60);
+    firstAct = Math.round(Math.random() * 20);
+    lastAct  = demoData.running ? Math.round(Math.random() * 5) : Math.round(30 + Math.random() * 90);
+    program  = demoData.program;
+    win      = demoData.win;
+  } else {
+    // Real Firebase data
+    if (typeof getMData !== 'function') return '';
+    var d    = getMData(m.id);
+    util     = parseFloat(d.utilizationPercentage || 0);
+    parts    = parseInt(d.parts || 0);
+    cutting  = parseFloat(d.cuttingTime || 0);
+    bleed    = parseFloat(d.breakBleed || 0);
+    longStop = parseFloat(d.longStopDuration || 0);
+    firstAct = parseFloat(d.timeToFirstActive || 0);
+    lastAct  = parseFloat(d.timeFromLastActive || 0);
+    program  = d.program || '';
+    win      = d.win;
+  }
+
+  var utilPct  = Math.min(100, Math.round(util || 0));
+  var isRunning = utilPct > 5 || (demoData && demoData.running);
+  var isAlarm   = longStop > 45 && !isRunning;
+  var isIdle    = !isRunning && !isAlarm;
+  var isNoData  = !demoData && utilPct === 0 && parts === 0;
+
+  var statusClass = isAlarm ? 'alarm' : isRunning ? 'running' : isIdle ? 'idle' : 'no-data';
+  var statusLabel = isAlarm ? '🚨 ALARM' : isRunning ? (win ? '✅ RUNNING' : '⚠️ RUNNING') : isIdle ? 'IDLE' : 'NO DATA';
+
+  // Utilization color
+  var utilColor = utilPct >= 80 ? '#22c55e' : utilPct >= 60 ? '#f5c500' : utilPct >= 30 ? '#f97316' : '#ef4444';
+  if (!isRunning && utilPct < 5) utilColor = '#334155';
+
+  // Segmented util bar (like Datanomix - shows cutting vs idle vs other)
+  var cutPct   = Math.min(utilPct, 100);
+  var idlePct  = Math.max(0, Math.min(100 - cutPct, 30));
+  var otherPct = Math.max(0, 100 - cutPct - idlePct);
+
+  // Format helpers
+  function fmt(mins) {
+    if (!mins || mins <= 0) return '0m';
+    return mins >= 60 ? Math.floor(mins/60)+'h '+Math.round(mins%60)+'m' : Math.round(mins)+'m';
+  }
+
+  var operator = DEMO_OPERATORS[m.name] || 'Operator';
+  var planned  = demoData ? demoData.qty : 0;
+  var progStr  = program ? program.replace(/^O0*/,'O') : '';
+
+  // Warn colors
+  var bleedColor  = bleed  > 30 ? '#f87171' : '#94a3b8';
+  var stopColor   = longStop > 30 ? '#f87171' : '#94a3b8';
+  var firstColor  = firstAct > 30 ? '#f97316' : '#94a3b8';
+  var lastColor   = lastAct  > 45 ? '#f87171' : '#94a3b8';
+
+  // Job info
+  var jobHtml = '';
+  var job = window.dnxJobData && window.dnxJobData[m.name];
+  var hasJob = job && (job.wo || job.part);
+  if (!hasJob && demoData) {
+    job = {wo: demoData.wo, part: demoData.part, customer: demoData.customer};
+    hasJob = true;
+  }
+  if (hasJob) {
+    jobHtml = '<div class="sp-job">'
+      + (job.wo   ? '<div class="sp-job-wo">WO: '+job.wo+'</div>' : '')
+      + (job.part ? '<div class="sp-job-part">'+job.part+'</div>' : '')
+      + (job.customer ? '<div class="sp-job-cust">'+job.customer+'</div>' : '')
+      + '</div>';
+  }
+
+  // Parts progress bar
+  var partsBarHtml = '';
+  if (planned > 0 && parts > 0) {
+    var partsPct = Math.min(100, Math.round(parts / planned * 100));
+    var partsColor = partsPct >= 90 ? '#22c55e' : partsPct >= 60 ? '#f5c500' : '#ef4444';
+    partsBarHtml = '<div class="sp-parts-bar">'
+      + '<div style="display:flex;justify-content:space-between;margin-bottom:3px;">'
+        + '<span style="font-size:8px;color:#475569;">SHIFT PROGRESS</span>'
+        + '<span style="font-size:8px;color:'+partsColor+';">'+parts+' / '+planned+' ('+partsPct+'%)</span>'
+      + '</div>'
+      + '<div class="sp-parts-track"><div class="sp-parts-fill" style="width:'+partsPct+'%;background:linear-gradient(90deg,'+partsColor+','+partsColor+'88);"></div></div>'
+      + '</div>';
+  }
+
+  return '<div class="sp-card sp-'+statusClass+'">'
+    // Color strip on top
+    + '<div class="sp-topbar '+statusClass+'"></div>'
+    // Header: machine name + status badge
+    + '<div class="sp-header">'
+      + '<div>'
+        + '<div class="sp-machine-name">'+m.name+'</div>'
+        + '<div class="sp-cell-name">'+m.cell+'</div>'
+      + '</div>'
+      + '<span class="sp-status-badge '+statusClass+'">'+statusLabel+'</span>'
+    + '</div>'
+    // Operator
+    + '<div class="sp-operator">👤 '+operator+'</div>'
+    // Program
+    + (progStr ? '<div class="sp-program">'+progStr+'</div>' : '<div class="sp-program" style="color:#1e3a5c;">No program</div>')
+    // Big stats: Parts / Util / Cut Time
+    + '<div class="sp-big-stats">'
+      + '<div class="sp-big-stat">'
+        + '<div class="sp-big-val" style="color:#f5c500;">'+(parts || '—')+'</div>'
+        + '<div class="sp-big-lbl">PARTS</div>'
+      + '</div>'
+      + '<div class="sp-big-stat">'
+        + '<div class="sp-big-val" style="color:'+utilColor+';">'+(utilPct > 0 ? utilPct+'%' : '—')+'</div>'
+        + '<div class="sp-big-lbl">UTIL</div>'
+      + '</div>'
+      + '<div class="sp-big-stat">'
+        + '<div class="sp-big-val" style="color:#60a5fa;">'+(cutting > 0 ? fmt(cutting) : '—')+'</div>'
+        + '<div class="sp-big-lbl">CUT TIME</div>'
+      + '</div>'
+    + '</div>'
+    // Segmented utilization bar
+    + '<div class="sp-util-wrap">'
+      + '<div class="sp-util-track">'
+        + (cutPct > 0   ? '<div class="sp-util-seg" style="flex:'+cutPct+';background:'+utilColor+';opacity:.9;"></div>' : '')
+        + (idlePct > 0  ? '<div class="sp-util-seg" style="flex:'+idlePct+';background:#eab308;opacity:.6;"></div>' : '')
+        + (otherPct > 0 ? '<div class="sp-util-seg" style="flex:'+otherPct+';background:#334155;opacity:.5;"></div>' : '')
+      + '</div>'
+      + '<div class="sp-util-label">'
+        + '<span style="color:'+utilColor+';">■ Cutting '+cutPct+'%</span>'
+        + (idlePct > 0 ? '<span style="color:#eab308;">■ Idle</span>' : '')
+        + (otherPct > 0 ? '<span style="color:#334155;">■ Other</span>' : '')
+      + '</div>'
+    + '</div>'
+    // 4 secondary stats
+    + '<div class="sp-stats">'
+      + '<div class="sp-stat"><div class="sp-stat-val" style="color:'+firstColor+';">'+fmt(firstAct)+'</div><div class="sp-stat-lbl">FIRST ACT</div></div>'
+      + '<div class="sp-stat"><div class="sp-stat-val" style="color:'+lastColor+';">'+fmt(lastAct)+'</div><div class="sp-stat-lbl">LAST ACT</div></div>'
+      + '<div class="sp-stat"><div class="sp-stat-val" style="color:'+bleedColor+';">'+fmt(bleed)+'</div><div class="sp-stat-lbl">BRK BLEED</div></div>'
+      + '<div class="sp-stat"><div class="sp-stat-val" style="color:'+stopColor+';">'+fmt(longStop)+'</div><div class="sp-stat-lbl">LONG STOP</div></div>'
+    + '</div>'
+    // Parts progress
+    + partsBarHtml
+    // Job info
+    + jobHtml
+  + '</div>';
+}
+
+// Override renderDNXCards with Spotlight version
+(function patchRenderDNX() {
+  if (typeof DNX_MACHINES === 'undefined' || !DNX_MACHINES) {
+    setTimeout(patchRenderDNX, 500);
+    return;
+  }
+  if (window._spotlightPatched) return;
+  window._spotlightPatched = true;
+
+  var origRender = window.renderDNXCards;
+  window.renderDNXCards = function() {
+    // Still run original for summary strip counts
+    if (origRender) {
+      try { origRender(); } catch(e) {}
+    }
+    // Now rebuild cards with Spotlight layout
+    var cards = document.getElementById('dnx-cards');
+    if (!cards) return;
+    cards.innerHTML = DNX_MACHINES.map(buildSpotlightCard).join('');
+  };
+
+  // Also patch demo mode to refresh cards
+  var origEnable = window.enableDemoMode;
+  window.enableDemoMode = function() {
+    if (origEnable) origEnable();
+    setTimeout(function() { if (window.renderDNXCards) window.renderDNXCards(); }, 200);
+  };
+})();
+</script>
+
 </body>
 </html>
