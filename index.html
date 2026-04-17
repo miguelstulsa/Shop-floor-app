@@ -5443,29 +5443,40 @@
 
   function printDashboard() {
     var start=getDashStart();
-    var label=dashPeriod==='week'?'This Week':dashPeriod==='month'?'This Month':'All Time';
+    var _pLabels={today:'Today',week:'This Week',lastweek:'Last Week',month:'This Month',lastmonth:'Last Month',year:'This Year',lastyear:'Last Year',all:'All Time'};
+    var label=_pLabels[dashPeriod]||'All Time';
+    var printEnd=getDashEnd();
     var periodAll=dashRequests.filter(function(r){
       var ts=r.createdAt?new Date(r.createdAt.seconds*1000):new Date(0);
-      return ts>=start;
+      return ts>=start && ts<printEnd;
     });
     var counts={red:0,yellow:0,blue:0,green:0};
     periodAll.forEach(function(r){if(counts[r.type]!==undefined)counts[r.type]++;});
     var machines={};
     periodAll.forEach(function(r){if(r.machine)machines[r.machine]=(machines[r.machine]||0)+1;});
     var topM=Object.entries(machines).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
-    var typeLabels={red:'Inspection',yellow:'Machinist Req',blue:'Pending WO',green:'Running WO'};
+    var typeLabels={red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
+    var typeColors={red:'#dc2626',yellow:'#d97706',orange:'#ea580c',blue:'#2563eb',green:'#16a34a'};
     var rows=periodAll.map(function(r){
       var ts=r.createdAt?new Date(r.createdAt.seconds*1000):null;
       var t=ts?ts.toLocaleDateString()+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'--';
+      // Build description from all available fields
+      var desc = '';
+      if (r.detail)          desc = r.detail;
+      else if (r.note)       desc = r.note;
+      if (r.floorSupportType && r.type==='orange') desc = (desc ? desc+' · ' : '') + r.floorSupportType;
+      var typeColor = typeColors[r.type] || '#666';
+      var typeLabel = typeLabels[r.type] || r.type;
       return [
         '<tr style="border-bottom:1px solid #eee;">',
-        '<td style="padding:6px 10px;">'+t+'</td>',
+        '<td style="padding:6px 10px;white-space:nowrap;font-size:11px;">'+t+'</td>',
         '<td style="padding:6px 10px;font-weight:700;">'+(r.machine||'--')+'</td>',
-        '<td style="padding:6px 10px;">'+(r.cell||'--')+'</td>',
-        '<td style="padding:6px 10px;">'+(typeLabels[r.type]||r.type)+'</td>',
-        '<td style="padding:6px 10px;">'+(r.wo||'--')+'</td>',
-        '<td style="padding:6px 10px;">'+(r.operator||'--')+'</td>',
-        '<td style="padding:6px 10px;">'+(r.resolved?'Resolved':'Open')+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;">'+(r.cell||'--')+'</td>',
+        '<td style="padding:6px 10px;font-weight:700;color:'+typeColor+';">'+typeLabel+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;">'+(r.wo||'--')+'</td>',
+        '<td style="padding:6px 10px;font-size:12px;max-width:280px;">'+(desc||'<span style="color:#aaa;">—</span>')+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;">'+(r.operator||'--')+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;color:'+(r.resolved?'#16a34a':'#d97706')+';font-weight:700;">'+(r.resolved?'Resolved':'Open')+'</td>',
         '</tr>'
       ].join('');
     }).join('');
@@ -5508,7 +5519,7 @@
       '<h2>Top Machines by Request Volume</h2>',
       '<table><thead><tr><th></th><th>Machine</th><th>Requests</th><th>% of Total</th></tr></thead><tbody>'+topRows+'</tbody></table>',
       '<h2>Full Request Log ('+periodAll.length+' requests)</h2>',
-      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Description</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
       '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;">Print / Save as PDF</button>'
     ].join('');
     var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+body+'</body></html>';
@@ -5547,7 +5558,7 @@
       '<h2>Machine Activity Chart</h2>',
       '<table><thead><tr><th>Machine</th><th>Volume</th><th>Requests</th><th>Flags</th></tr></thead><tbody>'+chartRows+'</tbody></table>',
       '<h2>Full Request Log ('+periodAll.length+' records)</h2>',
-      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Description</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
       '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;margin-right:10px;">Print / Save as PDF</button>'
     ].join('');
 
