@@ -1683,8 +1683,12 @@
       }
     } catch(e) { console.warn('finishRequest getNote:', e.message); }
 
-    // Step 2: Delete the note from live feed (removes card from screen)
+    // Step 2: Cache note data then delete from live feed (removes card from screen)
     try {
+      var noteSnapForCache = await mods.getDoc(mods.doc(db2, 'notes', noteId));
+      if (noteSnapForCache && noteSnapForCache.exists()) {
+        window._lastFinishedNote = noteSnapForCache.data();
+      }
       await mods.deleteDoc(mods.doc(db2, 'notes', noteId));
     } catch(e) { console.warn('finishRequest deleteNote:', e.message); }
 
@@ -1719,7 +1723,46 @@
       }
     } catch(e) { console.warn('finishRequest updateHR:', e.message); }
 
-    showToast('green', 'Request Closed ✓', elapsedStr !== 'unknown' ? 'Time: ' + elapsedStr : 'Resolved');
+    // Post green Running WO alert for blue (Pending WO) and yellow (Machinist Req) requests
+    // Get the original request data so we can copy machine/cell/wo to the green note
+    try {
+      var origData = null;
+      // Try hillRequests first
+      if (hillReqId && hillReqId !== noteId && hillReqId !== '') {
+        var origSnap = await mods.getDoc(mods.doc(db2, 'hillRequests', hillReqId));
+        if (origSnap && origSnap.exists()) origData = origSnap.data();
+      }
+      // Fallback: read from the note we just deleted (we already have it from step 1)
+      if (!origData && window._lastFinishedNote) origData = window._lastFinishedNote;
+
+      if (origData && (origData.type === 'blue' || origData.type === 'yellow')) {
+        var greenNote = {
+          machine:  origData.machine  || '',
+          cell:     origData.cell     || '',
+          type:     'green',
+          wo:       origData.wo       || '',
+          detail:   origData.detail   || '',
+          operator: origData.operator || '',
+          autoPosted: true,
+          setupBy:  window.currentUser || 'admin',
+          setupTime: elapsedStr
+        };
+        // Add to notes (shows on shop floor) and hillRequests (shows on dashboard)
+        var greenReqRef = await mods.addDoc(mods.collection(db2, 'hillRequests'), {
+          ...greenNote, createdAt: mods.serverTimestamp(),
+          resolved: false, jobStatus: 'running'
+        });
+        await mods.addDoc(mods.collection(db2, 'notes'), {
+          ...greenNote, createdAt: mods.serverTimestamp(), hillReqId: greenReqRef.id
+        });
+        showToast('green', '✅ Job Running on ' + (origData.machine||''), 'Setup time: ' + elapsedStr);
+      } else {
+        showToast('green', 'Request Closed ✓', elapsedStr !== 'unknown' ? 'Time: ' + elapsedStr : 'Resolved');
+      }
+    } catch(e) {
+      console.warn('finishRequest greenNote:', e.message);
+      showToast('green', 'Request Closed ✓', elapsedStr !== 'unknown' ? 'Time: ' + elapsedStr : 'Resolved');
+    }
   };
   window.changeNoteType = async function(id, newType) { await updateDoc(doc(db, "notes", id), { type: newType }); };
 
