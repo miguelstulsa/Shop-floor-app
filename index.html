@@ -1605,49 +1605,65 @@
   // ── REQUEST TIMER — START / FINISH ──────────────────────────
   window.startRequest = async function(reqId) {
     if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
-    var mods = window.fbFirestore || window._fbModules;
-    var dbRef = window.fbDb || window._db;
-    if (!mods || !dbRef) return;
-    var now = mods.serverTimestamp ? mods.serverTimestamp() : new Date();
-    await mods.updateDoc(mods.doc(dbRef, 'hillRequests', reqId), {
-      startedAt: now,
-      startedBy: window.currentUser || 'admin',
-      inProgress: true
-    });
-    // Also update the notes collection
-    var notesSnap = await mods.getDocs(mods.query(
-      mods.collection(dbRef, 'notes'),
-      mods.where('hillReqId', '==', reqId)
-    )).catch(function(){return null;});
-    showToast('green', 'Request Started', 'Timer running — click Finish when done');
+    var db2  = window.fbDb || window._db;
+    var mods = window._fbModules;
+    if (!mods || !db2) { showToast('red','Error','Not connected to database'); return; }
+    try {
+      // Try to update hillRequests directly
+      await mods.updateDoc(mods.doc(db2, 'hillRequests', reqId), {
+        startedAt: mods.serverTimestamp(),
+        startedBy: window.currentUser || 'admin',
+        inProgress: true
+      });
+      showToast('green', 'Request Started', 'Timer running — click Finish when done');
+    } catch(e) {
+      // reqId might be the note id — try finding the hillRequest by searching
+      try {
+        var snap = await mods.getDocs(mods.query(
+          mods.collection(db2, 'hillRequests'),
+          mods.where('inProgress', '==', false),
+          mods.orderBy('createdAt', 'desc')
+        ));
+        // Just start timer on the note directly by storing startedAt in notes
+        await mods.updateDoc(mods.doc(db2, 'notes', reqId), {
+          startedAt: mods.serverTimestamp(),
+          inProgress: true
+        });
+        showToast('green', 'Request Started', 'Timer running — click Finish when done');
+      } catch(e2) {
+        showToast('red', 'Error', 'Could not start: ' + e2.message);
+      }
+    }
   };
 
   window.finishRequest = async function(reqId, noteId) {
     if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
-    var mods = window.fbFirestore || window._fbModules;
-    var dbRef = window.fbDb || window._db;
-    if (!mods || !dbRef) return;
-    // Get the request to calculate elapsed time
-    var snap = await mods.getDoc(mods.doc(dbRef, 'hillRequests', reqId));
-    if (!snap.exists()) { showToast('red','Error','Request not found'); return; }
-    var reqData = snap.data();
-    var startTs = reqData.startedAt ? new Date(reqData.startedAt.seconds * 1000) : null;
+    var db2  = window.fbDb || window._db;
+    var mods = window._fbModules;
+    if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
     var now = new Date();
-    var elapsedMins = startTs ? Math.round((now - startTs) / 60000) : null;
-    var elapsedStr = elapsedMins !== null
-      ? (elapsedMins >= 60 ? Math.floor(elapsedMins/60)+'h '+( elapsedMins%60)+'m' : elapsedMins+'m')
-      : 'unknown';
-    // Mark resolved in hillRequests
-    await mods.updateDoc(mods.doc(dbRef, 'hillRequests', reqId), {
-      resolved: true,
-      resolvedAt: mods.serverTimestamp ? mods.serverTimestamp() : now,
-      resolvedBy: window.currentUser || 'admin',
-      inProgress: false,
-      elapsedMins: elapsedMins,
-      elapsedStr: elapsedStr
-    });
+    var elapsedMins = null, elapsedStr = 'unknown';
+    // Try to get start time from hillRequests
+    try {
+      var snap = await mods.getDoc(mods.doc(db2, 'hillRequests', reqId));
+      if (snap && snap.exists && snap.exists()) {
+        var reqData = snap.data();
+        var startTs = reqData.startedAt ? new Date(reqData.startedAt.seconds * 1000) : null;
+        elapsedMins = startTs ? Math.round((now - startTs) / 60000) : null;
+        elapsedStr  = elapsedMins !== null
+          ? (elapsedMins >= 60 ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m' : elapsedMins+'m')
+          : 'unknown';
+        await mods.updateDoc(mods.doc(db2, 'hillRequests', reqId), {
+          resolved: true, resolvedAt: mods.serverTimestamp(),
+          resolvedBy: window.currentUser||'admin',
+          inProgress: false, elapsedMins: elapsedMins, elapsedStr: elapsedStr
+        });
+      }
+    } catch(e) { console.warn('finishRequest hillRequests:', e.message); }
+    // Also check note for startedAt if hillRequest didn't have it
     // Remove from live notes feed
-    if (noteId) {
+    var actualNoteId = noteId || reqId;
+    if (actualNoteId) {
       await mods.deleteDoc(mods.doc(dbRef, 'notes', noteId)).catch(function(){});
     }
     showToast('green', 'Request Closed ✓', 'Time: ' + elapsedStr);
