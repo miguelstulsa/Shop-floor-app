@@ -1698,7 +1698,9 @@
           resolvedBy: window.currentUser || 'admin',
           inProgress: false,
           elapsedMins: elapsedMins,
-          elapsedStr: elapsedStr
+          elapsedStr: elapsedStr,
+          jobStatus: 'completed',
+          completedAt: mods.serverTimestamp()
         });
       } else {
         // No hillReqId - find by searching for matching note data
@@ -1710,7 +1712,8 @@
           mods.updateDoc(mods.doc(db2, 'hillRequests', d.id), {
             resolved: true, resolvedAt: mods.serverTimestamp(),
             resolvedBy: window.currentUser||'admin',
-            inProgress: false, elapsedMins: elapsedMins, elapsedStr: elapsedStr
+            inProgress: false, elapsedMins: elapsedMins, elapsedStr: elapsedStr,
+            jobStatus: 'completed', completedAt: mods.serverTimestamp()
           }).catch(function(){});
         });
       }
