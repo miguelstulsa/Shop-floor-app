@@ -1735,7 +1735,7 @@
       // Fallback: read from the note we just deleted (we already have it from step 1)
       if (!origData && window._lastFinishedNote) origData = window._lastFinishedNote;
 
-      if (origData && (origData.type === 'blue' || origData.type === 'yellow')) {
+      if (origData && origData.type === 'blue') {
         var greenNote = {
           machine:  origData.machine  || '',
           cell:     origData.cell     || '',
