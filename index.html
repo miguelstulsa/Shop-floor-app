@@ -4946,10 +4946,22 @@
   }
   function getDashStart() {
     var now = new Date();
-    if (dashPeriod === 'today') { var d=new Date(now); d.setHours(0,0,0,0); return d; }
-    if (dashPeriod === 'week')  { var d=new Date(now); d.setDate(d.getDate()-d.getDay()); d.setHours(0,0,0,0); return d; }
-    if (dashPeriod === 'month') { return new Date(now.getFullYear(), now.getMonth(), 1); }
+    if (dashPeriod === 'today')     { var d=new Date(now); d.setHours(0,0,0,0); return d; }
+    if (dashPeriod === 'week')      { var d=new Date(now); d.setDate(d.getDate()-d.getDay()); d.setHours(0,0,0,0); return d; }
+    if (dashPeriod === 'lastweek')  { var d=new Date(now); d.setDate(d.getDate()-d.getDay()-7); d.setHours(0,0,0,0); return d; }
+    if (dashPeriod === 'month')     { return new Date(now.getFullYear(), now.getMonth(), 1); }
+    if (dashPeriod === 'lastmonth') { return new Date(now.getFullYear(), now.getMonth()-1, 1); }
+    if (dashPeriod === 'year')      { return new Date(now.getFullYear(), 0, 1); }
+    if (dashPeriod === 'lastyear')  { return new Date(now.getFullYear()-1, 0, 1); }
     return new Date(0);
+  }
+
+  function getDashEnd() {
+    var now = new Date();
+    if (dashPeriod === 'lastweek')  { var d=new Date(now); d.setDate(d.getDate()-d.getDay()); d.setHours(0,0,0,0); return d; }
+    if (dashPeriod === 'lastmonth') { return new Date(now.getFullYear(), now.getMonth(), 1); }
+    if (dashPeriod === 'lastyear')  { return new Date(now.getFullYear(), 0, 1); }
+    return new Date(); // for current periods, end is now
   }
   function getJobStatus(r) {
     if (r.jobStatus) return r.jobStatus;
@@ -4968,9 +4980,11 @@
     }
 
     var start = getDashStart();
+    var start = getDashStart();
+    var end   = getDashEnd();
     var periodAll = dashRequests.filter(function(r) {
       var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : new Date(0);
-      return ts >= start;
+      return ts >= start && ts < end;
     });
 
     // Status counts
@@ -5011,7 +5025,12 @@
     // Summary + production stats
     var sb = document.getElementById('dash-summary-block');
     if (sb) {
-      var periodLabel = dashPeriod==='week'?'THIS WEEK':dashPeriod==='month'?'THIS MONTH':'ALL TIME';
+      var periodLabels = {
+        today:'TODAY', week:'THIS WEEK', lastweek:'LAST WEEK',
+        month:'THIS MONTH', lastmonth:'LAST MONTH',
+        year:'THIS YEAR', lastyear:'LAST YEAR', all:'ALL TIME'
+      };
+      var periodLabel = periodLabels[dashPeriod] || 'ALL TIME';
       var completedByMachine = {};
       periodAll.filter(function(r){ return getJobStatus(r)==='completed'; })
         .forEach(function(r){ var m=r.machine||'Unknown'; completedByMachine[m]=(completedByMachine[m]||0)+1; });
@@ -5034,11 +5053,69 @@
       if (avgHours > 0) h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(34,197,94,0.08);border-radius:8px;border:1px solid rgba(34,197,94,0.2);font-size:12px;color:#4ade80;">Avg job completion time: <strong>'+avgHours+'h</strong></div>';
       if (topProducers.length > 0) {
         h += '<div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:2px;color:#4ade80;margin-bottom:6px;">PRODUCTION OUTPUT</div>';
-        topProducers.forEach(function(e) { h += '<div class="dash-top-machine"><span class="dash-top-machine-name">'+e[0]+'</span><span style="font-size:12px;color:#4ade80;font-weight:700;">'+e[1]+' completed</span></div>'; });
+        topProducers.forEach(function(e) {
+          var machineName = e[0];
+          var completedReqs = periodAll.filter(function(r){
+            return r.machine===machineName && getJobStatus(r)==='completed';
+          }).sort(function(a,b){
+            return (b.completedAt?b.completedAt.seconds:0)-(a.completedAt?a.completedAt.seconds:0);
+          });
+          h += '<div style="margin-bottom:8px;background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.2);border-radius:8px;overflow:hidden;">';
+          h += '<div style="display:flex;justify-content:space-between;padding:7px 10px;background:rgba(34,197,94,0.08);">';
+          h += '<span style="font-family:Bebas Neue,sans-serif;font-size:14px;color:#4ade80;letter-spacing:1px;">'+machineName+'</span>';
+          h += '<span style="font-size:11px;color:#4ade80;font-weight:700;">'+e[1]+' completed</span>';
+          h += '</div>';
+          completedReqs.slice(0,3).forEach(function(r) {
+            var ts = r.completedAt ? new Date(r.completedAt.seconds*1000) : null;
+            var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+            var desc = r.detail || r.note || r.wo || '';
+            h += '<div style="padding:5px 10px;border-bottom:1px solid rgba(34,197,94,0.1);display:flex;gap:8px;align-items:center;">';
+            h += '<span style="font-size:9px;color:#22c55e;">✓</span>';
+            h += '<div style="flex:1;">';
+            if (desc) h += '<div style="font-size:11px;color:#f0f4f8;">'+desc+'</div>';
+            if (r.operator||tsStr) h += '<div style="font-size:9px;color:#475569;">'+(r.operator||'')+(r.operator&&tsStr?' · ':'')+tsStr+'</div>';
+            h += '</div></div>';
+          });
+          h += '</div>';
+        });
       }
       if (repeatOffenders.length > 0) {
         h += '<div style="margin-top:12px;font-size:10px;font-weight:700;letter-spacing:2px;color:#f87171;margin-bottom:6px;">CONTINUOUS ISSUES (3+)</div>';
-        repeatOffenders.forEach(function(e) { h += '<div class="dash-top-machine"><span class="dash-top-machine-name" style="color:#f87171;">⚠ '+e[0]+'</span><span style="font-size:12px;color:#f87171;">'+e[1]+' issues</span></div>'; });
+        var typeLabels = {red:'🔴 Inspection',yellow:'🟡 Machinist Req',orange:'🟠 Floor Support',blue:'🔵 Pending WO',green:'🟢 Running WO'};
+        repeatOffenders.forEach(function(e) {
+          var machineName = e[0];
+          var issueCount  = e[1];
+          // Get all requests for this machine in period
+          var machineReqs = periodAll.filter(function(r){
+            return r.machine===machineName && r.type!=='blue' && r.type!=='green';
+          }).sort(function(a,b){
+            return (b.createdAt?b.createdAt.seconds:0)-(a.createdAt?a.createdAt.seconds:0);
+          });
+          h += '<div style="margin-bottom:10px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:8px;overflow:hidden;">';
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:rgba(239,68,68,0.1);">';
+          h += '<span style="font-family:Bebas Neue,sans-serif;font-size:14px;color:#f87171;letter-spacing:1px;">⚠ '+machineName+'</span>';
+          h += '<span style="font-size:11px;color:#f87171;font-weight:700;">'+issueCount+' issues</span>';
+          h += '</div>';
+          machineReqs.slice(0,5).forEach(function(r) {
+            var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
+            var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+            var typeLabel = typeLabels[r.type] || r.type;
+            var typeColor = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#22c55e'}[r.type]||'#94a3b8';
+            var desc = r.detail || r.note || r.wo || '';
+            var floorType = r.floorSupportType ? ' · '+r.floorSupportType : '';
+            h += '<div style="padding:6px 10px;border-bottom:1px solid rgba(239,68,68,0.1);display:flex;gap:8px;align-items:flex-start;">';
+            h += '<span style="font-size:9px;color:'+typeColor+';font-weight:700;white-space:nowrap;padding-top:1px;">'+typeLabel+'</span>';
+            h += '<div style="flex:1;min-width:0;">';
+            if (desc) h += '<div style="font-size:11px;color:#f0f4f8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+desc+floorType+'</div>';
+            if (r.operator) h += '<div style="font-size:9px;color:#475569;">'+r.operator+(tsStr?' · '+tsStr:'')+'</div>';
+            else if (tsStr) h += '<div style="font-size:9px;color:#475569;">'+tsStr+'</div>';
+            h += '</div></div>';
+          });
+          if (machineReqs.length > 5) {
+            h += '<div style="padding:5px 10px;font-size:9px;color:#475569;text-align:center;">+ '+(machineReqs.length-5)+' more requests</div>';
+          }
+          h += '</div>';
+        });
       }
       h += '<button class="dash-print-btn" onclick="printDashboard()" style="margin-top:12px;">PRINT / EXPORT REPORT</button>';
       h += '</div>';
@@ -5501,7 +5578,11 @@
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
       <button class="dash-period-btn active" onclick="setDashPeriod('today',this)">TODAY</button>
       <button class="dash-period-btn" onclick="setDashPeriod('week',this)">THIS WEEK</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('lastweek',this)">LAST WEEK</button>
       <button class="dash-period-btn" onclick="setDashPeriod('month',this)">THIS MONTH</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('lastmonth',this)">LAST MONTH</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('year',this)">THIS YEAR</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('lastyear',this)">LAST YEAR</button>
       <button class="dash-period-btn" onclick="setDashPeriod('all',this)">ALL TIME</button>
     </div>
 
