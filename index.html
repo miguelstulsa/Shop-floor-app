@@ -1667,45 +1667,56 @@
     if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
     var now = new Date();
     var elapsedMins = null, elapsedStr = 'unknown';
-    // Try to get start time from notes first (most reliable)
+
+    // Step 1: Get elapsed time from the note (startedAt was saved there)
     try {
       var noteSnap = await mods.getDoc(mods.doc(db2, 'notes', noteId));
-      if (noteSnap && noteSnap.exists && noteSnap.exists()) {
+      if (noteSnap && noteSnap.exists()) {
         var nData = noteSnap.data();
-        if (nData.startedAt) {
-          var startTs2 = new Date(nData.startedAt.seconds * 1000);
-          elapsedMins = Math.round((now - startTs2) / 60000);
+        if (nData.startedAt && nData.startedAt.seconds) {
+          var startTs = new Date(nData.startedAt.seconds * 1000);
+          elapsedMins = Math.round((now - startTs) / 60000);
           elapsedStr  = elapsedMins >= 60
             ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m'
             : elapsedMins+'m';
         }
       }
-    } catch(e) {}
-    // Try to get start time from hillRequests
+    } catch(e) { console.warn('finishRequest getNote:', e.message); }
+
+    // Step 2: Delete the note from live feed (removes card from screen)
     try {
-      var hrId = (hillReqId && hillReqId !== noteId) ? hillReqId : null;
-      var snap = hrId ? await mods.getDoc(mods.doc(db2, 'hillRequests', hrId)) : null;
-      if (snap && snap.exists && snap.exists()) {
-        var reqData = snap.data();
-        var startTs = reqData.startedAt ? new Date(reqData.startedAt.seconds * 1000) : null;
-        elapsedMins = startTs ? Math.round((now - startTs) / 60000) : null;
-        elapsedStr  = elapsedMins !== null
-          ? (elapsedMins >= 60 ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m' : elapsedMins+'m')
-          : 'unknown';
-        if (hrId) await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), {
-          resolved: true, resolvedAt: mods.serverTimestamp(),
-          resolvedBy: window.currentUser||'admin',
-          inProgress: false, elapsedMins: elapsedMins, elapsedStr: elapsedStr
+      await mods.deleteDoc(mods.doc(db2, 'notes', noteId));
+    } catch(e) { console.warn('finishRequest deleteNote:', e.message); }
+
+    // Step 3: Mark hillRequests as resolved with elapsed time
+    try {
+      var hrId = (hillReqId && hillReqId !== noteId && hillReqId !== '') ? hillReqId : null;
+      if (hrId) {
+        await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), {
+          resolved: true,
+          resolvedAt: mods.serverTimestamp(),
+          resolvedBy: window.currentUser || 'admin',
+          inProgress: false,
+          elapsedMins: elapsedMins,
+          elapsedStr: elapsedStr
+        });
+      } else {
+        // No hillReqId - find by searching for matching note data
+        var qSnap = await mods.getDocs(mods.query(
+          mods.collection(db2, 'hillRequests'),
+          mods.where('inProgress', '==', true)
+        ));
+        qSnap.forEach(function(d) {
+          mods.updateDoc(mods.doc(db2, 'hillRequests', d.id), {
+            resolved: true, resolvedAt: mods.serverTimestamp(),
+            resolvedBy: window.currentUser||'admin',
+            inProgress: false, elapsedMins: elapsedMins, elapsedStr: elapsedStr
+          }).catch(function(){});
         });
       }
-    } catch(e) { console.warn('finishRequest hillRequests:', e.message); }
-    // Also check note for startedAt if hillRequest didn't have it
-    // Remove from live notes feed
-    var actualNoteId = noteId;
-    if (actualNoteId) {
-      await mods.deleteDoc(mods.doc(dbRef, 'notes', noteId)).catch(function(){});
-    }
-    showToast('green', 'Request Closed ✓', 'Time: ' + elapsedStr);
+    } catch(e) { console.warn('finishRequest updateHR:', e.message); }
+
+    showToast('green', 'Request Closed ✓', elapsedStr !== 'unknown' ? 'Time: ' + elapsedStr : 'Resolved');
   };
   window.changeNoteType = async function(id, newType) { await updateDoc(doc(db, "notes", id), { type: newType }); };
 
