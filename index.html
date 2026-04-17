@@ -207,6 +207,13 @@
   .dash-req-card.type-blue::before   { background:#3b82f6; }
   .dash-req-card.type-green::before  { background:#22c55e; }
   .dash-req-card.resolved { opacity:0.4; }
+  .req-timer-btn { border:none;border-radius:6px;padding:5px 12px;font-family:"Bebas Neue",sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all .15s; }
+  .req-start-btn  { background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.4); }
+  .req-start-btn:hover  { background:rgba(34,197,94,0.3); }
+  .req-finish-btn { background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.4); }
+  .req-finish-btn:hover { background:rgba(59,130,246,0.3); }
+  .req-in-progress { background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.3) !important; }
+  .req-timer-badge { font-size:9px;color:#f5c500;letter-spacing:1px;margin-top:3px; }
   .dash-req-card.status-completed { border-color:rgba(34,197,94,0.5);background:linear-gradient(145deg,#001a08,#002a10); }
   .dash-req-card.status-completed::before { background:#22c55e; }
   .dash-status-badge { display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:1.5px;padding:3px 10px;border-radius:999px;text-transform:uppercase; }
@@ -1500,12 +1507,27 @@
       const item = document.createElement('div');
       item.className = 'notif-item ' + n.type;
       const timeStr = n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'just now';
+      var isAdmin = window._isAdmin || window.currentUser === 'hilladmin';
+      var inProg  = n.inProgress;
+      var timerBtns = isAdmin
+        ? (inProg
+            ? '<div class="req-timer-badge">⏱ IN PROGRESS — tap Finish when done</div>' +
+              '<div style="display:flex;gap:6px;margin-top:6px;">' +
+              '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + (n.hillReqId||n.id) + '\',\'' + n.id + '\')">✓ FINISH &amp; CLOSE</button>' +
+              '</div>'
+            : '<div style="display:flex;gap:6px;margin-top:6px;">' +
+              '<button class="req-timer-btn req-start-btn" onclick="window.startRequest(\'' + (n.hillReqId||n.id) + '\')">▶ START</button>' +
+              '</div>'
+          )
+        : '';
+      item.className = 'notif-item ' + n.type + (inProg ? ' req-in-progress' : '');
       item.innerHTML =
         '<div class="notif-blink-dot"></div>' +
         '<div class="notif-type">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
         '<div class="notif-machine">' + n.cell + ' — ' + n.machine + '</div>' +
         '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + n.wo + (n.detail ? ' · ' + n.detail : '') + '</div>' +
         '<div class="notif-time">Today at ' + timeStr + '</div>' +
+        timerBtns +
         '<button class="notif-dismiss" data-id="' + n.id + '">✕</button>';
       list.appendChild(item);
     });
@@ -1524,6 +1546,18 @@
       const item = document.createElement('div');
       item.className = 'req-card ' + n.type;
       const timeStr = n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'just now';
+      var isAdmin2 = window._isAdmin || window.currentUser === 'hilladmin';
+      var inProg2  = n.inProgress;
+      var adminBtns = isAdmin2
+        ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
+          (inProg2
+            ? '<div style="width:100%;font-size:9px;color:#f5c500;letter-spacing:1px;">⏱ IN PROGRESS</div>' +
+              '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + (n.hillReqId||n.id) + '\',\'' + n.id + '\')">✓ FINISH &amp; CLOSE</button>'
+            : '<button class="req-timer-btn req-start-btn" onclick="window.startRequest(\'' + (n.hillReqId||n.id) + '\')">▶ START</button>'
+          ) +
+          '</div>'
+        : '';
+      item.className = 'req-card ' + n.type + (inProg2 ? ' req-in-progress' : '');
       item.innerHTML =
         '<div class="req-dot-col"><span class="req-blink-dot ' + n.type + '"></span></div>' +
         '<div class="req-body">' +
@@ -1534,6 +1568,7 @@
           (n.detail ? '<div class="req-detail">'      + n.detail + '</div>' : '') +
           (n.operator ? '<div class="req-operator">👤 ' + n.operator + '</div>' : '') +
           '<div class="req-time">⏱ Today at ' + timeStr + '</div>' +
+          adminBtns +
         '</div>' +
         '<button class="req-dismiss" data-id="' + n.id + '">✕</button>';
       list.appendChild(item);
@@ -1548,9 +1583,13 @@
   }
 
   window.submitNoteToFirebase = async function(note) {
-    await addDoc(collection(db, "notes"), { ...note, createdAt: serverTimestamp() });
-    // Save to hillRequests for dashboard tracking
-    await addDoc(collection(db, "hillRequests"), { ...note, createdAt: serverTimestamp(), resolvedAt: null, resolved: false });
+    // Save to hillRequests first to get the ID
+    const reqRef = await addDoc(collection(db, "hillRequests"), {
+      ...note, createdAt: serverTimestamp(), resolvedAt: null, resolved: false,
+      startedAt: null, startedBy: null, inProgress: false, elapsedMins: null, elapsedStr: null
+    });
+    // Save to notes with hillReqId for linking START/FINISH
+    await addDoc(collection(db, "notes"), { ...note, createdAt: serverTimestamp(), hillReqId: reqRef.id });
     // Inspection requests also go to permanent archive — this collection is NEVER cleared
     if (note.type === 'red') {
       await addDoc(collection(db, "hillInspections"), {
@@ -1562,6 +1601,57 @@
     }
   };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
+
+  // ── REQUEST TIMER — START / FINISH ──────────────────────────
+  window.startRequest = async function(reqId) {
+    if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    var mods = window.fbFirestore || window._fbModules;
+    var dbRef = window.fbDb || window._db;
+    if (!mods || !dbRef) return;
+    var now = mods.serverTimestamp ? mods.serverTimestamp() : new Date();
+    await mods.updateDoc(mods.doc(dbRef, 'hillRequests', reqId), {
+      startedAt: now,
+      startedBy: window.currentUser || 'admin',
+      inProgress: true
+    });
+    // Also update the notes collection
+    var notesSnap = await mods.getDocs(mods.query(
+      mods.collection(dbRef, 'notes'),
+      mods.where('hillReqId', '==', reqId)
+    )).catch(function(){return null;});
+    showToast('green', 'Request Started', 'Timer running — click Finish when done');
+  };
+
+  window.finishRequest = async function(reqId, noteId) {
+    if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    var mods = window.fbFirestore || window._fbModules;
+    var dbRef = window.fbDb || window._db;
+    if (!mods || !dbRef) return;
+    // Get the request to calculate elapsed time
+    var snap = await mods.getDoc(mods.doc(dbRef, 'hillRequests', reqId));
+    if (!snap.exists()) { showToast('red','Error','Request not found'); return; }
+    var reqData = snap.data();
+    var startTs = reqData.startedAt ? new Date(reqData.startedAt.seconds * 1000) : null;
+    var now = new Date();
+    var elapsedMins = startTs ? Math.round((now - startTs) / 60000) : null;
+    var elapsedStr = elapsedMins !== null
+      ? (elapsedMins >= 60 ? Math.floor(elapsedMins/60)+'h '+( elapsedMins%60)+'m' : elapsedMins+'m')
+      : 'unknown';
+    // Mark resolved in hillRequests
+    await mods.updateDoc(mods.doc(dbRef, 'hillRequests', reqId), {
+      resolved: true,
+      resolvedAt: mods.serverTimestamp ? mods.serverTimestamp() : now,
+      resolvedBy: window.currentUser || 'admin',
+      inProgress: false,
+      elapsedMins: elapsedMins,
+      elapsedStr: elapsedStr
+    });
+    // Remove from live notes feed
+    if (noteId) {
+      await mods.deleteDoc(mods.doc(dbRef, 'notes', noteId)).catch(function(){});
+    }
+    showToast('green', 'Request Closed ✓', 'Time: ' + elapsedStr);
+  };
   window.changeNoteType = async function(id, newType) { await updateDoc(doc(db, "notes", id), { type: newType }); };
 
   window.renderExistingNotes = function() {
@@ -5476,7 +5566,7 @@
         '<td style="padding:6px 10px;font-size:11px;">'+(r.wo||'--')+'</td>',
         '<td style="padding:6px 10px;font-size:12px;max-width:280px;">'+(desc||'<span style="color:#aaa;">—</span>')+'</td>',
         '<td style="padding:6px 10px;font-size:11px;">'+(r.operator||'--')+'</td>',
-        '<td style="padding:6px 10px;font-size:11px;color:'+(r.resolved?'#16a34a':'#d97706')+';font-weight:700;">'+(r.resolved?'Resolved':'Open')+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;color:'+(r.resolved?'#16a34a':r.inProgress?'#f5c500':'#d97706')+';font-weight:700;">'+(r.resolved?'Resolved'+(r.elapsedStr?' ('+r.elapsedStr+')':''):r.inProgress?'In Progress':'Open')+'</td>',
         '</tr>'
       ].join('');
     }).join('');
