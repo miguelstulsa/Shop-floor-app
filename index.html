@@ -5608,6 +5608,81 @@
     });
     var counts={red:0,yellow:0,blue:0,green:0};
     periodAll.forEach(function(r){if(counts[r.type]!==undefined)counts[r.type]++;});
+
+    // ── TIME TRACKING CALCULATIONS ──────────────────────────────
+    var resolvedWithTime = periodAll.filter(function(r){ return r.resolved && r.elapsedMins != null; });
+    var totalMins = resolvedWithTime.reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
+    var avgMins   = resolvedWithTime.length > 0 ? Math.round(totalMins / resolvedWithTime.length) : 0;
+    var longestReq = resolvedWithTime.slice().sort(function(a,b){ return (b.elapsedMins||0)-(a.elapsedMins||0); })[0] || null;
+    var shortestReq = resolvedWithTime.slice().sort(function(a,b){ return (a.elapsedMins||0)-(b.elapsedMins||0); })[0] || null;
+
+    function fmtM(m) {
+      if (!m && m!==0) return '—';
+      return m >= 60 ? Math.floor(m/60)+'h '+Math.round(m%60)+'m' : m+'m';
+    }
+
+    // Time by machine
+    var timByMachine = {};
+    resolvedWithTime.forEach(function(r) {
+      var m = r.machine || 'Unknown';
+      if (!timByMachine[m]) timByMachine[m] = { mins:0, count:0 };
+      timByMachine[m].mins  += r.elapsedMins||0;
+      timByMachine[m].count += 1;
+    });
+    var timMachArr = Object.entries(timByMachine)
+      .sort(function(a,b){ return b[1].mins - a[1].mins; });
+
+    // Time by type
+    var timByType = {};
+    resolvedWithTime.forEach(function(r) {
+      var t = r.type || 'other';
+      if (!timByType[t]) timByType[t] = 0;
+      timByType[t] += r.elapsedMins||0;
+    });
+
+    var timeTrackedTotal = resolvedWithTime.length;
+    var timeNotTracked   = periodAll.filter(function(r){ return r.resolved && r.elapsedMins == null; }).length;
+
+    // Build time summary HTML block
+    var timeSummaryHtml = timeTrackedTotal === 0
+      ? '<p style="color:#888;font-style:italic;">No timed requests in this period. Use the START/FINISH buttons on requests to begin tracking time.</p>'
+      : [
+          '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;">',
+            '<div style="background:#eff6ff;border:2px solid #3b82f6;border-radius:8px;padding:14px;text-align:center;">',
+              '<div style="font-size:32px;font-weight:900;color:#1d4ed8;">'+fmtM(totalMins)+'</div>',
+              '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#1d4ed8;margin-top:4px;">TOTAL TIME</div>',
+            '</div>',
+            '<div style="background:#f0fdf4;border:2px solid #22c55e;border-radius:8px;padding:14px;text-align:center;">',
+              '<div style="font-size:32px;font-weight:900;color:#15803d;">'+fmtM(avgMins)+'</div>',
+              '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#15803d;margin-top:4px;">AVG PER REQUEST</div>',
+            '</div>',
+            '<div style="background:#fff7ed;border:2px solid #f97316;border-radius:8px;padding:14px;text-align:center;">',
+              '<div style="font-size:32px;font-weight:900;color:#c2410c;">'+timeTrackedTotal+'</div>',
+              '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#c2410c;margin-top:4px;">REQUESTS TIMED</div>',
+            '</div>',
+            '<div style="background:#faf5ff;border:2px solid #a855f7;border-radius:8px;padding:14px;text-align:center;">',
+              '<div style="font-size:32px;font-weight:900;color:#7e22ce;">'+fmtM(longestReq?longestReq.elapsedMins:0)+'</div>',
+              '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7e22ce;margin-top:4px;">LONGEST REQUEST</div>',
+            '</div>',
+          '</div>',
+          // Time by machine table
+          timMachArr.length > 0 ? [
+            '<table style="margin-top:8px;">',
+            '<thead><tr><th>Machine</th><th>Total Time</th><th>Requests</th><th>Avg per Request</th></tr></thead>',
+            '<tbody>',
+            timMachArr.map(function(e) {
+              var avg2 = Math.round(e[1].mins / e[1].count);
+              return '<tr><td style="padding:6px 10px;font-weight:700;">'+e[0]+'</td>'
+                +'<td style="padding:6px 10px;font-weight:700;color:#1d4ed8;">'+fmtM(e[1].mins)+'</td>'
+                +'<td style="padding:6px 10px;">'+e[1].count+'</td>'
+                +'<td style="padding:6px 10px;color:#666;">'+fmtM(avg2)+'</td></tr>';
+            }).join(''),
+            '</tbody></table>',
+          ].join('') : '',
+          timeNotTracked > 0
+            ? '<p style="margin-top:8px;font-size:11px;color:#888;">'+timeNotTracked+' resolved request(s) not timed (submitted before START/FINISH feature was added).</p>'
+            : '',
+        ].join('');
     var machines={};
     periodAll.forEach(function(r){if(r.machine)machines[r.machine]=(machines[r.machine]||0)+1;});
     var topM=Object.entries(machines).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
@@ -5711,6 +5786,8 @@
         '<div class="sc" style="background:#f0fdf4;border:2px solid #16a34a;"><div class="n" style="color:#16a34a;">'+completed2+'</div><div class="l">Completed</div></div>',
         '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+issues2+'</div><div class="l">Issues</div></div>',
       '</div>',
+      '<h2>⏱ Time Tracking Summary</h2>',
+      timeSummaryHtml,
       '<h2>Machine Activity Chart</h2>',
       '<table><thead><tr><th>Machine</th><th>Volume</th><th>Requests</th><th>Flags</th></tr></thead><tbody>'+chartRows+'</tbody></table>',
       '<h2>Full Request Log ('+periodAll.length+' records)</h2>',
