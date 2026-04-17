@@ -1513,10 +1513,10 @@
         ? (inProg
             ? '<div class="req-timer-badge">⏱ IN PROGRESS — tap Finish when done</div>' +
               '<div style="display:flex;gap:6px;margin-top:6px;">' +
-              '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + (n.hillReqId||n.id) + '\',\'' + n.id + '\')">✓ FINISH &amp; CLOSE</button>' +
+              '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH &amp; CLOSE</button>' +
               '</div>'
             : '<div style="display:flex;gap:6px;margin-top:6px;">' +
-              '<button class="req-timer-btn req-start-btn" onclick="window.startRequest(\'' + (n.hillReqId||n.id) + '\')">▶ START</button>' +
+              '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>' +
               '</div>'
           )
         : '';
@@ -1552,8 +1552,8 @@
         ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
           (inProg2
             ? '<div style="width:100%;font-size:9px;color:#f5c500;letter-spacing:1px;">⏱ IN PROGRESS</div>' +
-              '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + (n.hillReqId||n.id) + '\',\'' + n.id + '\')">✓ FINISH &amp; CLOSE</button>'
-            : '<button class="req-timer-btn req-start-btn" onclick="window.startRequest(\'' + (n.hillReqId||n.id) + '\')">▶ START</button>'
+              '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH &amp; CLOSE</button>'
+            : '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>'
           ) +
           '</div>'
         : '';
@@ -1603,49 +1603,88 @@
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
 
   // ── REQUEST TIMER — START / FINISH ──────────────────────────
-  window.startRequest = async function(reqId) {
+  window.startRequest = async function(noteId, hillReqId) {
     if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
-    if (!mods || !db2) { showToast('red','Error','Not connected to database'); return; }
+    if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
+    var startTime = mods.serverTimestamp();
     try {
-      // Try to update hillRequests directly
-      await mods.updateDoc(mods.doc(db2, 'hillRequests', reqId), {
-        startedAt: mods.serverTimestamp(),
-        startedBy: window.currentUser || 'admin',
-        inProgress: true
+      // Update the NOTES doc so the live listener re-renders with FINISH button
+      await mods.updateDoc(mods.doc(db2, 'notes', noteId), {
+        inProgress: true,
+        startedAt: startTime,
+        startedBy: window.currentUser || 'admin'
       });
-      showToast('green', 'Request Started', 'Timer running — click Finish when done');
-    } catch(e) {
-      // reqId might be the note id — try finding the hillRequest by searching
-      try {
-        var snap = await mods.getDocs(mods.query(
-          mods.collection(db2, 'hillRequests'),
-          mods.where('inProgress', '==', false),
-          mods.orderBy('createdAt', 'desc')
-        ));
-        // Just start timer on the note directly by storing startedAt in notes
-        await mods.updateDoc(mods.doc(db2, 'notes', reqId), {
-          startedAt: mods.serverTimestamp(),
-          inProgress: true
-        });
-        showToast('green', 'Request Started', 'Timer running — click Finish when done');
-      } catch(e2) {
-        showToast('red', 'Error', 'Could not start: ' + e2.message);
+      // Also update hillRequests if we have the ID
+      if (hillReqId && hillReqId !== noteId) {
+        mods.updateDoc(mods.doc(db2, 'hillRequests', hillReqId), {
+          inProgress: true, startedAt: startTime,
+          startedBy: window.currentUser || 'admin'
+        }).catch(function(){});
       }
+      // Immediately swap all START buttons for this noteId to FINISH in DOM
+      _swapStartToFinish(noteId, hillReqId || noteId);
+      showToast('green', '⏱ Timer Started', 'Tap FINISH & CLOSE when done');
+    } catch(e) {
+      showToast('red', 'Error starting', e.message);
     }
   };
 
-  window.finishRequest = async function(reqId, noteId) {
+  function _swapStartToFinish(noteId, reqId) {
+    // Find every start button whose onclick references this noteId
+    document.querySelectorAll('.req-start-btn').forEach(function(btn) {
+      // Match by data-noteid attribute (most reliable)
+      if (btn.dataset.noteid !== noteId && btn.getAttribute('data-noteid') !== noteId) return;
+      var wrap = btn.closest('div[style]') || btn.parentNode;
+      // Build FINISH button
+      var finBtn = document.createElement('button');
+      finBtn.className = 'req-timer-btn req-finish-btn';
+      finBtn.style.cssText = 'padding:6px 14px;font-size:12px;';
+      finBtn.textContent = '✓ FINISH & CLOSE';
+      finBtn.onclick = function() { window.finishRequest(noteId, reqId); };
+      // Build badge
+      var badge = document.createElement('div');
+      badge.style.cssText = 'font-size:9px;color:#f5c500;letter-spacing:1px;margin-bottom:4px;font-family:Bebas Neue,sans-serif;';
+      badge.textContent = '⏱ IN PROGRESS';
+      // Replace wrap contents
+      wrap.innerHTML = '';
+      wrap.appendChild(badge);
+      wrap.appendChild(finBtn);
+      // Highlight the card
+      var card = wrap.closest('.notif-item, .req-card');
+      if (card) {
+        card.style.borderColor = 'rgba(245,197,0,0.5)';
+        card.style.boxShadow = '0 0 12px rgba(245,197,0,0.15)';
+      }
+    });
+  }
+
+  window.finishRequest = async function(noteId, hillReqId) {
     if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
     if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
     var now = new Date();
     var elapsedMins = null, elapsedStr = 'unknown';
+    // Try to get start time from notes first (most reliable)
+    try {
+      var noteSnap = await mods.getDoc(mods.doc(db2, 'notes', noteId));
+      if (noteSnap && noteSnap.exists && noteSnap.exists()) {
+        var nData = noteSnap.data();
+        if (nData.startedAt) {
+          var startTs2 = new Date(nData.startedAt.seconds * 1000);
+          elapsedMins = Math.round((now - startTs2) / 60000);
+          elapsedStr  = elapsedMins >= 60
+            ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m'
+            : elapsedMins+'m';
+        }
+      }
+    } catch(e) {}
     // Try to get start time from hillRequests
     try {
-      var snap = await mods.getDoc(mods.doc(db2, 'hillRequests', reqId));
+      var hrId = (hillReqId && hillReqId !== noteId) ? hillReqId : null;
+      var snap = hrId ? await mods.getDoc(mods.doc(db2, 'hillRequests', hrId)) : null;
       if (snap && snap.exists && snap.exists()) {
         var reqData = snap.data();
         var startTs = reqData.startedAt ? new Date(reqData.startedAt.seconds * 1000) : null;
@@ -1653,7 +1692,7 @@
         elapsedStr  = elapsedMins !== null
           ? (elapsedMins >= 60 ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m' : elapsedMins+'m')
           : 'unknown';
-        await mods.updateDoc(mods.doc(db2, 'hillRequests', reqId), {
+        if (hrId) await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), {
           resolved: true, resolvedAt: mods.serverTimestamp(),
           resolvedBy: window.currentUser||'admin',
           inProgress: false, elapsedMins: elapsedMins, elapsedStr: elapsedStr
@@ -1662,7 +1701,7 @@
     } catch(e) { console.warn('finishRequest hillRequests:', e.message); }
     // Also check note for startedAt if hillRequest didn't have it
     // Remove from live notes feed
-    var actualNoteId = noteId || reqId;
+    var actualNoteId = noteId;
     if (actualNoteId) {
       await mods.deleteDoc(mods.doc(dbRef, 'notes', noteId)).catch(function(){});
     }
