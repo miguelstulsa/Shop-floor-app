@@ -1407,6 +1407,13 @@
 
   let knownIds = new Set();
   let isFirstLoad = true;
+
+  // Force live feed re-render every 5 seconds as fallback
+  setInterval(function() {
+    if (window._lastActionable && window.updateNotifFeed) {
+      window.updateNotifFeed(window._lastActionable);
+    }
+  }, 5000);
   const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO' };
   const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
 
@@ -1442,7 +1449,7 @@
       const notesEl = document.getElementById('notes-' + mid);
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
-    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue');
+    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.inProgress);
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
@@ -1488,7 +1495,7 @@
     });
   };
 
-  function updateNotifFeed(actionable) {
+  window.updateNotifFeed = function updateNotifFeed(actionable) {
     const list = document.getElementById('notifList');
     const reqBadge = document.getElementById('reqBadge');
     const reqCount = document.getElementById('reqCount');
@@ -1625,6 +1632,12 @@
       }
       // Immediately swap all START buttons for this noteId to FINISH in DOM
       _swapStartToFinish(noteId, hillReqId || noteId);
+      // Also update the in-memory note so re-renders show FINISH
+      if (window._lastActionable) {
+        window._lastActionable.forEach(function(n) {
+          if (n.id === noteId) { n.inProgress = true; n.startedAt = {seconds: Math.floor(Date.now()/1000)}; }
+        });
+      }
       showToast('green', '⏱ Timer Started', 'Tap FINISH & CLOSE when done');
     } catch(e) {
       showToast('red', 'Error starting', e.message);
@@ -1789,10 +1802,35 @@
         btn.onclick = function() { window.changeNoteType(n.id, 'green'); };
         actionsEl.appendChild(btn);
       } else if (n.type === 'green') {
+        // COMPLETE JOB button — marks running WO as complete and removes from floor
         const btn = document.createElement('button');
-        btn.textContent = '🔵 PENDING';
-        btn.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:4px 8px;border-radius:12px;border:none;background:#3b82f6;color:#fff;cursor:pointer;";
-        btn.onclick = function() { window.changeNoteType(n.id, 'blue'); };
+        btn.textContent = '✅ COMPLETE JOB';
+        btn.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:5px 10px;border-radius:12px;border:2px solid #22c55e;background:rgba(34,197,94,0.15);color:#22c55e;cursor:pointer;letter-spacing:1px;";
+        btn.onclick = async function() {
+          btn.disabled = true;
+          btn.textContent = '...';
+          try {
+            var db2  = window.fbDb  || window._db;
+            var mods = window._fbModules;
+            // Mark hillRequests record as completed if we have hillReqId
+            if (n.hillReqId && mods && db2) {
+              await mods.updateDoc(mods.doc(db2, 'hillRequests', n.hillReqId), {
+                resolved: true,
+                resolvedAt: mods.serverTimestamp(),
+                resolvedBy: window.currentUser || 'operator',
+                jobStatus: 'completed',
+                completedAt: mods.serverTimestamp()
+              }).catch(function(){});
+            }
+            // Remove the green note from the floor
+            if (window.removeNoteById) await window.removeNoteById(n.id);
+            showToast('green', '✅ Job Completed', n.wo ? 'WO: ' + n.wo : n.machine);
+          } catch(e) {
+            btn.disabled = false;
+            btn.textContent = '✅ COMPLETE JOB';
+            showToast('red', 'Error', e.message);
+          }
+        };
         actionsEl.appendChild(btn);
       } else if (n.type === 'yellow') {
         const btn = document.createElement('button');
