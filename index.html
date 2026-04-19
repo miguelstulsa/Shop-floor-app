@@ -1092,7 +1092,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
-  <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📊 Dashboard</div>
+  <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Floor Analytics</div>
   <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv">📺 Shop TV</div>
   <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop" style="display:none;">🔗 ProShop</div>
@@ -5251,7 +5251,7 @@
     if ((el=document.getElementById('dash-count-pending')))     el.textContent = pending;
     if ((el=document.getElementById('dash-count-running')))     el.textContent = running;
     if ((el=document.getElementById('dash-count-completed')))   el.textContent = completed;
-    if ((el=document.getElementById('dash-count-issues')))      el.textContent = issues;
+    if ((el=document.getElementById('dash-count-issues')))      el.textContent = periodAll ? periodAll.length : 0;
     if ((el=document.getElementById('dash-count-inspections'))) el.textContent = inspections;
 
     // Machine filters
@@ -5294,7 +5294,7 @@
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+pending+'</div><div class="dash-weekly-stat-lbl">Pending</div></div>';
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#4ade80;">'+running+'</div><div class="dash-weekly-stat-lbl">Running</div></div>';
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#22c55e;">'+completed+'</div><div class="dash-weekly-stat-lbl">Completed</div></div>';
-      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#f87171;">'+issues+'</div><div class="dash-weekly-stat-lbl">Issues</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#94a3b8;">'+periodAll.length+'</div><div class="dash-weekly-stat-lbl">Total Requests</div></div>';
       h += '</div>';
       if (avgHours > 0) h += '<div style="margin-top:10px;padding:8px 10px;background:rgba(34,197,94,0.08);border-radius:8px;border:1px solid rgba(34,197,94,0.2);font-size:12px;color:#4ade80;">Avg job completion time: <strong>'+avgHours+'h</strong></div>';
       if (topProducers.length > 0) {
@@ -5829,7 +5829,7 @@
       '@media print{button{display:none!important;}}'
     ].join('');
     var body = [
-      '<h1>Hill Manufacturing - Request Report</h1>',
+      '<h1>Hill Manufacturing - Production Log</h1>',
       '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
       '<div class="sg">',
         '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+counts.red+'</div><div class="l" style="color:#ef4444;">Inspections</div></div>',
@@ -5868,13 +5868,13 @@
     });
 
     var newBody = [
-      '<h1>Hill Manufacturing - Production Report</h1>',
+      '<h1>Hill Manufacturing - Production Log</h1>',
       '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
       '<div class="sg">',
         '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+pending2+'</div><div class="l">Pending</div></div>',
         '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+running2+'</div><div class="l">Running</div></div>',
         '<div class="sc" style="background:#f0fdf4;border:2px solid #16a34a;"><div class="n" style="color:#16a34a;">'+completed2+'</div><div class="l">Completed</div></div>',
-        '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+issues2+'</div><div class="l">Issues</div></div>',
+        '<div class="sc" style="background:#f8f9fa;border:2px solid #94a3b8;"><div class="n" style="color:#475569;">'+periodAll.length+'</div><div class="l">Total Requests</div></div>',
       '</div>',
       '<h2>⏱ Time Tracking Summary</h2>',
       timeSummaryHtml,
@@ -5905,7 +5905,7 @@
   }
 </script>
 
-<!-- REQUEST DASHBOARD PAGE -->
+<!-- PRODUCTION LOG PAGE -->
 <div id="page-dashboard" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
   <div style="padding:16px;">
 
@@ -5924,7 +5924,7 @@
       <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Waiting to run</div></div>
       <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;margin-right:4px;"></span> Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
       <div class="dash-summary-card" style="border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffffff;box-shadow:0 0 6px rgba(255,255,255,0.6);flex-shrink:0;"></span>Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
-      <div class="dash-summary-card yellow"><div class="dash-summary-label">🟡 Machinist Req</div><div class="dash-summary-num" id="dash-count-issues">0</div><div class="dash-summary-sub">Machinist requests</div></div>
+      <div class="dash-summary-card" style="border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All request types</div></div>
       <div class="dash-summary-card" style="grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted</div></div>
     </div>
 
