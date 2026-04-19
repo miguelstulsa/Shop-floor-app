@@ -1697,6 +1697,7 @@
     } catch(e) { console.warn('finishRequest getNote:', e.message); }
 
     // Step 2: Cache note data then delete from live feed (removes card from screen)
+    window._lastFinishedNote = null; // always clear first to prevent stale data bleed
     try {
       var noteSnapForCache = await mods.getDoc(mods.doc(db2, 'notes', noteId));
       if (noteSnapForCache && noteSnapForCache.exists()) {
@@ -1745,10 +1746,15 @@
         var origSnap = await mods.getDoc(mods.doc(db2, 'hillRequests', hillReqId));
         if (origSnap && origSnap.exists()) origData = origSnap.data();
       }
-      // Fallback: read from the note we just deleted (we already have it from step 1)
+      // Fallback: use the cached note we read before deleting (same request, always fresh)
       if (!origData && window._lastFinishedNote) origData = window._lastFinishedNote;
 
-      if (origData && origData.type === 'blue') {
+      // Safety check: origData must match THIS note (same machine at minimum)
+      // to prevent stale data from a previous request triggering a green post
+      // Only post green if this was definitely a Pending WO (blue)
+      // Use _lastFinishedNote.type as the authoritative source since we just read it
+      var confirmedType = window._lastFinishedNote ? window._lastFinishedNote.type : (origData ? origData.type : null);
+      if (confirmedType === 'blue') {
         var greenNote = {
           machine:  origData.machine  || '',
           cell:     origData.cell     || '',
