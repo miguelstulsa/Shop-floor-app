@@ -1292,7 +1292,10 @@
     </div>
     <div class="modal-form">
       <input type="text" id="operatorName" placeholder="Your name (e.g. Miguel)" />
-      <input type="text" id="woInput" placeholder="WO# / Operation (e.g. 12345-OP10)" />
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="woInput" placeholder="WO# (e.g. 26-0288)" style="flex:2;" />
+        <input type="text" id="opInput" placeholder="OP# (e.g. 10)" style="flex:1;" />
+      </div>
       <textarea id="noteText" rows="3" placeholder="Additional details..."></textarea>
     </div>
     <div class="modal-actions">
@@ -2327,7 +2330,7 @@
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
-    document.getElementById('woInput').value = ''; document.getElementById('noteText').value = '';
+    document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = '';
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
     if (window.renderExistingNotes) window.renderExistingNotes();
     document.getElementById('modalOverlay').classList.add('active');
@@ -2349,7 +2352,8 @@
     if (!window.submitNoteToFirebase) { showToast('red', 'Still connecting...', 'Wait a moment then try again.'); return; }
     const btn = document.querySelector('#modalOverlay .btn-submit');
     if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
-    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator };
+    const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
+    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op };
     try { await window.submitNoteToFirebase(note); }
     catch(err) {
       if (btn) { btn.disabled=false; btn.textContent='Submit'; }
@@ -5216,6 +5220,122 @@
     return 'issue';
   }
 
+  // ── WO TRACKER ───────────────────────────────────────────────
+  function renderWOTracker(periodAll) {
+    var container = document.getElementById('dash-wo-tracker');
+    if (!container) return;
+
+    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
+
+    // Group all requests by WO number
+    var woMap = {};
+    periodAll.forEach(function(r) {
+      var wo = (r.wo || '').trim();
+      if (!wo || wo === '--' || wo === '0' || wo === '00000') return;
+      if (!woMap[wo]) {
+        woMap[wo] = {
+          wo: wo,
+          ops: {},
+          machine: r.machine || '',
+          cell: r.cell || '',
+          requests: [],
+          totalMins: 0,
+          timedCount: 0,
+          types: {}
+        };
+      }
+      var entry = woMap[wo];
+      // Track op numbers
+      if (r.op) entry.ops[r.op] = true;
+      // Track request types
+      entry.types[r.type] = (entry.types[r.type] || 0) + 1;
+      // Track time
+      if (r.elapsedMins) { entry.totalMins += r.elapsedMins; entry.timedCount++; }
+      // Store machines seen
+      if (r.machine && entry.machine !== r.machine) entry.machine = r.machine;
+      entry.requests.push(r);
+    });
+
+    var woArr = Object.values(woMap).sort(function(a,b) {
+      return b.requests.length - a.requests.length;
+    });
+
+    if (woArr.length === 0) {
+      container.innerHTML = '<div style="color:#334155;font-size:12px;padding:12px;text-align:center;">No WO data for this period. Enter WO numbers when submitting requests.</div>';
+      return;
+    }
+
+    function fmtM(m) {
+      if (!m) return '—';
+      return m >= 60 ? Math.floor(m/60)+'h '+(m%60)+'m' : m+'m';
+    }
+
+    var html = '';
+    woArr.forEach(function(w) {
+      var ops = Object.keys(w.ops).sort();
+      var opsStr = ops.length ? 'OP ' + ops.join(', OP ') : '';
+      var totalReqs = w.requests.length;
+      var completed = w.requests.filter(function(r){return r.resolved||r.jobStatus==='completed';}).length;
+      var pending   = w.requests.filter(function(r){return r.type==='blue'&&!r.resolved;}).length;
+      var running   = w.requests.filter(function(r){return r.type==='green'&&!r.resolved;}).length;
+
+      // Type breakdown
+      var typePills = Object.entries(w.types).map(function(e) {
+        var colors = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
+        var bgs    = {red:'rgba(239,68,68,0.12)',yellow:'rgba(234,179,8,0.12)',orange:'rgba(249,115,22,0.12)',blue:'rgba(59,130,246,0.12)',green:'rgba(34,197,94,0.12)'};
+        return '<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+( bgs[e[0]]||'rgba(100,116,139,0.12)')+';color:'+(colors[e[0]]||'#94a3b8')+';margin-right:3px;">'+typeLabels[e[0]]+'×'+e[1]+'</span>';
+      }).join('');
+
+      // Status indicator
+      var statusColor = running ? '#4ade80' : pending ? '#60a5fa' : completed === totalReqs ? '#94a3b8' : '#f5c500';
+      var statusText  = running ? 'RUNNING' : pending ? 'PENDING SETUP' : completed === totalReqs ? 'ALL DONE' : 'IN PROGRESS';
+
+      html += '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-left:3px solid '+statusColor+';border-radius:10px;padding:12px 14px;margin-bottom:8px;">';
+
+      // Header row
+      html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">';
+      html += '<div>';
+      html += '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#f5d050;letter-spacing:1px;">WO '+w.wo+'</div>';
+      if (opsStr) html += '<div style="font-size:9px;color:#60a5fa;margin-top:1px;">'+opsStr+'</div>';
+      html += '<div style="font-size:9px;color:#475569;margin-top:1px;">'+w.machine+(w.cell?' · '+w.cell:'')+'</div>';
+      html += '</div>';
+      html += '<div style="text-align:right;">';
+      html += '<div style="font-size:9px;font-family:Bebas Neue,sans-serif;letter-spacing:1px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.3);color:'+statusColor+';">'+statusText+'</div>';
+      html += '<div style="font-family:Bebas Neue,sans-serif;font-size:20px;color:#f0f4f8;margin-top:4px;">'+totalReqs+' <span style="font-size:11px;color:#475569;">requests</span></div>';
+      if (w.totalMins) html += '<div style="font-size:11px;color:#f5c500;font-weight:700;">⏱ '+fmtM(w.totalMins)+' total</div>';
+      html += '</div>';
+      html += '</div>';
+
+      // Type pills
+      html += '<div style="margin-bottom:6px;">'+typePills+'</div>';
+
+      // Mini request list (last 3)
+      var recent = w.requests.slice().sort(function(a,b){
+        return (b.createdAt?b.createdAt.seconds:0)-(a.createdAt?a.createdAt.seconds:0);
+      }).slice(0,3);
+      recent.forEach(function(r) {
+        var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
+        var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+        var desc = r.detail || '';
+        var typeColors2 = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid rgba(30,58,92,0.5);">';
+        html += '<span style="width:6px;height:6px;border-radius:50%;background:'+(typeColors2[r.type]||'#475569')+';flex-shrink:0;"></span>';
+        html += '<span style="font-size:10px;color:#94a3b8;flex:1;">'+typeLabels[r.type]+(desc?' · '+desc:'')+'</span>';
+        if (r.elapsedStr) html += '<span style="font-size:9px;color:#f5c500;">⏱'+r.elapsedStr+'</span>';
+        if (r.operator) html += '<span style="font-size:9px;color:#475569;">'+r.operator+'</span>';
+        if (tsStr) html += '<span style="font-size:9px;color:#334155;">'+tsStr+'</span>';
+        html += '</div>';
+      });
+      if (w.requests.length > 3) {
+        html += '<div style="font-size:9px;color:#334155;padding-top:4px;text-align:center;">+'+(w.requests.length-3)+' more</div>';
+      }
+
+      html += '</div>';
+    });
+
+    container.innerHTML = html;
+  }
+
   function renderDashboard() {
     // Admin-only clear button
     var clearWrap = document.getElementById('dash-clear-wrap');
@@ -5367,6 +5487,9 @@
       h += '</div>';
       sb.innerHTML = h;
     }
+
+    // ── WO TRACKER SECTION ─────────────────────────────────────
+    renderWOTracker(periodAll);
 
     // Charts
     renderDashCharts(periodAll);
@@ -5930,6 +6053,11 @@
 
     <div id="dash-summary-block"></div>
     <div id="dash-chart-block" style="margin-bottom:14px;"></div>
+
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#f5c500;margin-bottom:10px;padding-top:4px;">
+      📋 WORK ORDER TRACKER
+    </div>
+    <div id="dash-wo-tracker" style="margin-bottom:16px;"></div>
 
     <div style="display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
       <button class="dash-filter-btn f-all active" onclick="setDashFilter('all',this)">ALL</button>
