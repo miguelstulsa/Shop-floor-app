@@ -5320,7 +5320,8 @@
       ? data.filter(function(w) {
           return w.wo.toLowerCase().indexOf(search) > -1
             || Object.keys(w.machines).join(' ').toLowerCase().indexOf(search) > -1
-            || w.requests.some(function(r){ return (r.detail||'').toLowerCase().indexOf(search) > -1; });
+            || w.requests.some(function(r){ return (r.detail||'').toLowerCase().indexOf(search) > -1; })
+            || w.requests.some(function(r){ return (r.operator||'').toLowerCase().indexOf(search) > -1; });
         })
       : data;
 
@@ -6296,7 +6297,7 @@
     </div>
     <!-- SEARCH BAR -->
     <div style="position:relative;margin-bottom:10px;">
-      <input id="wo-search-input" type="text" placeholder="Search WO# or part number... (e.g. 26-0288)"
+      <input id="wo-search-input" type="text" placeholder="Search WO#, employee name, or description... (e.g. 26-0288 or Jimmy)"
         oninput="window.filterWOTracker(this.value)"
         style="width:100%;box-sizing:border-box;background:#0d1f35;border:1px solid #1e3a5c;border-radius:8px;padding:10px 36px 10px 14px;color:#f0f4f8;font-size:13px;font-family:Barlow,sans-serif;outline:none;" />
       <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#334155;font-size:14px;">🔍</span>
