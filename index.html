@@ -1626,9 +1626,40 @@
         startedAt: startTime,
         startedBy: window.currentUser || 'admin'
       });
-      // Also update hillRequests if we have the ID
-      if (hillReqId && hillReqId !== noteId) {
-        mods.updateDoc(mods.doc(db2, 'hillRequests', hillReqId), {
+      // Find and update the matching hillRequests record
+      var resolvedHrId = (hillReqId && hillReqId !== noteId && hillReqId !== '') ? hillReqId : null;
+      if (!resolvedHrId) {
+        // Look up by noteId stored as hillReqId field, or by machine+wo match
+        try {
+          var noteData = await mods.getDoc(mods.doc(db2, 'notes', noteId));
+          if (noteData && noteData.exists()) {
+            var nd = noteData.data();
+            if (nd.hillReqId) {
+              resolvedHrId = nd.hillReqId;
+            } else if (nd.machine) {
+              var matchSnap = await mods.getDocs(mods.query(
+                mods.collection(db2, 'hillRequests'),
+                mods.where('machine', '==', nd.machine),
+                mods.where('resolved', '==', false)
+              ));
+              if (matchSnap && !matchSnap.empty) {
+                matchSnap.forEach(function(d) {
+                  var dd = d.data();
+                  if (dd.wo === nd.wo && dd.type === nd.type && !resolvedHrId) {
+                    resolvedHrId = d.id;
+                  }
+                });
+                // Stamp hillReqId back on the note so finish can find it
+                if (resolvedHrId) {
+                  mods.updateDoc(mods.doc(db2, 'notes', noteId), { hillReqId: resolvedHrId }).catch(function(){});
+                }
+              }
+            }
+          }
+        } catch(e) { console.warn('startRequest lookup:', e.message); }
+      }
+      if (resolvedHrId) {
+        mods.updateDoc(mods.doc(db2, 'hillRequests', resolvedHrId), {
           inProgress: true, startedAt: startTime,
           startedBy: window.currentUser || 'admin'
         }).catch(function(){});
@@ -1710,33 +1741,56 @@
     } catch(e) { console.warn('finishRequest deleteNote:', e.message); }
 
     // Step 3: Mark hillRequests as resolved with elapsed time
+    var resolvePayload = {
+      resolved: true,
+      resolvedAt: mods.serverTimestamp(),
+      resolvedBy: window.currentUser || 'admin',
+      inProgress: false,
+      elapsedMins: elapsedMins,
+      elapsedStr: elapsedStr,
+      jobStatus: 'completed',
+      completedAt: mods.serverTimestamp()
+    };
     try {
       var hrId = (hillReqId && hillReqId !== noteId && hillReqId !== '') ? hillReqId : null;
       if (hrId) {
-        await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), {
-          resolved: true,
-          resolvedAt: mods.serverTimestamp(),
-          resolvedBy: window.currentUser || 'admin',
-          inProgress: false,
-          elapsedMins: elapsedMins,
-          elapsedStr: elapsedStr,
-          jobStatus: 'completed',
-          completedAt: mods.serverTimestamp()
-        });
+        // Direct update by ID — most reliable
+        await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), resolvePayload);
       } else {
-        // No hillReqId - find by searching for matching note data
-        var qSnap = await mods.getDocs(mods.query(
-          mods.collection(db2, 'hillRequests'),
-          mods.where('inProgress', '==', true)
-        ));
-        qSnap.forEach(function(d) {
-          mods.updateDoc(mods.doc(db2, 'hillRequests', d.id), {
-            resolved: true, resolvedAt: mods.serverTimestamp(),
-            resolvedBy: window.currentUser||'admin',
-            inProgress: false, elapsedMins: elapsedMins, elapsedStr: elapsedStr,
-            jobStatus: 'completed', completedAt: mods.serverTimestamp()
-          }).catch(function(){});
-        });
+        // No hillReqId stored — find by machine + wo + type + not resolved
+        var nd = window._lastFinishedNote;
+        var fallbackSnap = null;
+        if (nd && nd.machine) {
+          fallbackSnap = await mods.getDocs(mods.query(
+            mods.collection(db2, 'hillRequests'),
+            mods.where('machine', '==', nd.machine),
+            mods.where('resolved', '==', false)
+          )).catch(function(){ return null; });
+        }
+        // Also try by noteId directly (notes collection uses same id sometimes)
+        if (!fallbackSnap || fallbackSnap.empty) {
+          fallbackSnap = await mods.getDocs(mods.query(
+            mods.collection(db2, 'hillRequests'),
+            mods.where('inProgress', '==', true)
+          )).catch(function(){ return null; });
+        }
+        if (fallbackSnap && !fallbackSnap.empty) {
+          var updates = [];
+          fallbackSnap.forEach(function(d) {
+            var data = d.data();
+            // Match by machine AND wo to avoid resolving wrong records
+            if (!nd || (data.machine === nd.machine && data.wo === nd.wo)) {
+              updates.push(mods.updateDoc(mods.doc(db2, 'hillRequests', d.id), resolvePayload));
+            }
+          });
+          // If nothing matched by machine+wo, resolve all inProgress ones
+          if (updates.length === 0) {
+            fallbackSnap.forEach(function(d) {
+              updates.push(mods.updateDoc(mods.doc(db2, 'hillRequests', d.id), resolvePayload));
+            });
+          }
+          await Promise.all(updates);
+        }
       }
     } catch(e) { console.warn('finishRequest updateHR:', e.message); }
 
@@ -5221,49 +5275,65 @@
   }
 
   // ── WO TRACKER ───────────────────────────────────────────────
-  function renderWOTracker(periodAll) {
-    var container = document.getElementById('dash-wo-tracker');
-    if (!container) return;
+  window._woData     = [];   // all WOs built from current period
+  window._woSelected = {};   // checked WOs keyed by wo number
+  window._woSearch   = '';   // current search string
 
+  function buildWOMap(periodAll) {
     var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
-
-    // Group all requests by WO number
     var woMap = {};
-    periodAll.forEach(function(r) {
+    // Also pull ALL hillRequests (all time) for the search feature
+    var allReqs = window._allDashRequests || periodAll;
+    allReqs.forEach(function(r) {
       var wo = (r.wo || '').trim();
       if (!wo || wo === '--' || wo === '0' || wo === '00000') return;
-      if (!woMap[wo]) {
-        woMap[wo] = {
-          wo: wo,
-          ops: {},
-          machine: r.machine || '',
-          cell: r.cell || '',
-          requests: [],
-          totalMins: 0,
-          timedCount: 0,
-          types: {}
-        };
-      }
-      var entry = woMap[wo];
-      // Track op numbers
-      if (r.op) entry.ops[r.op] = true;
-      // Track request types
-      entry.types[r.type] = (entry.types[r.type] || 0) + 1;
-      // Track time
-      if (r.elapsedMins) { entry.totalMins += r.elapsedMins; entry.timedCount++; }
-      // Store machines seen
-      if (r.machine && entry.machine !== r.machine) entry.machine = r.machine;
-      entry.requests.push(r);
+      if (!woMap[wo]) woMap[wo] = {
+        wo:wo, ops:{}, machines:{}, requests:[],
+        totalMins:0, timedCount:0, types:{},
+        lastDate: 0
+      };
+      var e = woMap[wo];
+      if (r.op) e.ops[r.op] = true;
+      e.types[r.type] = (e.types[r.type]||0)+1;
+      if (r.elapsedMins) { e.totalMins += r.elapsedMins; e.timedCount++; }
+      if (r.machine) e.machines[r.machine] = true;
+      var ts = r.createdAt ? r.createdAt.seconds : 0;
+      if (ts > e.lastDate) e.lastDate = ts;
+      e.requests.push(r);
     });
+    return Object.values(woMap).sort(function(a,b){ return b.lastDate - a.lastDate; });
+  }
 
-    var woArr = Object.values(woMap).sort(function(a,b) {
-      return b.requests.length - a.requests.length;
-    });
+  function renderWOTracker(periodAll) {
+    // Store all requests globally for search across all time
+    if (!window._allDashRequests) window._allDashRequests = window.dashRequests || periodAll;
+    window._woData = buildWOMap(window._allDashRequests);
+    renderWOCards();
+  }
 
-    if (woArr.length === 0) {
-      container.innerHTML = '<div style="color:#334155;font-size:12px;padding:12px;text-align:center;">No WO data for this period. Enter WO numbers when submitting requests.</div>';
+  function renderWOCards() {
+    var container = document.getElementById('dash-wo-tracker');
+    if (!container) return;
+    var search  = (window._woSearch || '').toLowerCase().trim();
+    var data    = window._woData || [];
+    var filtered = search
+      ? data.filter(function(w) {
+          return w.wo.toLowerCase().indexOf(search) > -1
+            || Object.keys(w.machines).join(' ').toLowerCase().indexOf(search) > -1
+            || w.requests.some(function(r){ return (r.detail||'').toLowerCase().indexOf(search) > -1; });
+        })
+      : data;
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="color:#334155;font-size:12px;padding:16px;text-align:center;">'
+        + (search ? 'No WOs matching "'+search+'"' : 'No WO data yet. Enter WO numbers when submitting requests.')
+        + '</div>';
       return;
     }
+
+    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
+    var typeColors = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
+    var typeBgs    = {red:'rgba(239,68,68,0.12)',yellow:'rgba(234,179,8,0.12)',orange:'rgba(249,115,22,0.12)',blue:'rgba(59,130,246,0.12)',green:'rgba(34,197,94,0.12)'};
 
     function fmtM(m) {
       if (!m) return '—';
@@ -5271,70 +5341,232 @@
     }
 
     var html = '';
-    woArr.forEach(function(w) {
-      var ops = Object.keys(w.ops).sort();
-      var opsStr = ops.length ? 'OP ' + ops.join(', OP ') : '';
+    filtered.forEach(function(w) {
+      var ops       = Object.keys(w.ops).sort();
+      var machines  = Object.keys(w.machines);
+      var opsStr    = ops.length ? 'OP ' + ops.join(', OP ') : '';
+      var machStr   = machines.join(' · ');
       var totalReqs = w.requests.length;
       var completed = w.requests.filter(function(r){return r.resolved||r.jobStatus==='completed';}).length;
       var pending   = w.requests.filter(function(r){return r.type==='blue'&&!r.resolved;}).length;
       var running   = w.requests.filter(function(r){return r.type==='green'&&!r.resolved;}).length;
+      var isSelected = !!window._woSelected[w.wo];
 
-      // Type breakdown
+      var statusColor = running ? '#4ade80' : pending ? '#60a5fa' : completed === totalReqs ? '#94a3b8' : '#f5c500';
+      var statusText  = running ? 'RUNNING' : pending ? 'PENDING' : completed === totalReqs ? 'DONE' : 'IN PROGRESS';
+
       var typePills = Object.entries(w.types).map(function(e) {
-        var colors = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
-        var bgs    = {red:'rgba(239,68,68,0.12)',yellow:'rgba(234,179,8,0.12)',orange:'rgba(249,115,22,0.12)',blue:'rgba(59,130,246,0.12)',green:'rgba(34,197,94,0.12)'};
-        return '<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+( bgs[e[0]]||'rgba(100,116,139,0.12)')+';color:'+(colors[e[0]]||'#94a3b8')+';margin-right:3px;">'+typeLabels[e[0]]+'×'+e[1]+'</span>';
+        return '<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(typeBgs[e[0]]||'rgba(100,116,139,0.12)')+';color:'+(typeColors[e[0]]||'#94a3b8');
       }).join('');
 
-      // Status indicator
-      var statusColor = running ? '#4ade80' : pending ? '#60a5fa' : completed === totalReqs ? '#94a3b8' : '#f5c500';
-      var statusText  = running ? 'RUNNING' : pending ? 'PENDING SETUP' : completed === totalReqs ? 'ALL DONE' : 'IN PROGRESS';
+      // Build type pills properly
+      var pillsHtml = Object.entries(w.types).map(function(kv) {
+        return '<span style="font-size:9px;padding:2px 7px;border-radius:10px;background:'+(typeBgs[kv[0]]||'rgba(100,116,139,0.12)')+';color:'+(typeColors[kv[0]]||'#94a3b8')+';margin-right:3px;white-space:nowrap;">'
+          +typeLabels[kv[0]]+'×'+kv[1]+'</span>';
+      }).join('');
 
-      html += '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-left:3px solid '+statusColor+';border-radius:10px;padding:12px 14px;margin-bottom:8px;">';
-
-      // Header row
-      html += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;">';
-      html += '<div>';
-      html += '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#f5d050;letter-spacing:1px;">WO '+w.wo+'</div>';
-      if (opsStr) html += '<div style="font-size:9px;color:#60a5fa;margin-top:1px;">'+opsStr+'</div>';
-      html += '<div style="font-size:9px;color:#475569;margin-top:1px;">'+w.machine+(w.cell?' · '+w.cell:'')+'</div>';
-      html += '</div>';
-      html += '<div style="text-align:right;">';
-      html += '<div style="font-size:9px;font-family:Bebas Neue,sans-serif;letter-spacing:1px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.3);color:'+statusColor+';">'+statusText+'</div>';
-      html += '<div style="font-family:Bebas Neue,sans-serif;font-size:20px;color:#f0f4f8;margin-top:4px;">'+totalReqs+' <span style="font-size:11px;color:#475569;">requests</span></div>';
-      if (w.totalMins) html += '<div style="font-size:11px;color:#f5c500;font-weight:700;">⏱ '+fmtM(w.totalMins)+' total</div>';
-      html += '</div>';
-      html += '</div>';
-
-      // Type pills
-      html += '<div style="margin-bottom:6px;">'+typePills+'</div>';
-
-      // Mini request list (last 3)
+      // Recent requests (last 4)
       var recent = w.requests.slice().sort(function(a,b){
         return (b.createdAt?b.createdAt.seconds:0)-(a.createdAt?a.createdAt.seconds:0);
-      }).slice(0,3);
-      recent.forEach(function(r) {
+      });
+      var reqRows = recent.slice(0,4).map(function(r) {
         var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
         var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
         var desc = r.detail || '';
-        var typeColors2 = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
-        html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid rgba(30,58,92,0.5);">';
-        html += '<span style="width:6px;height:6px;border-radius:50%;background:'+(typeColors2[r.type]||'#475569')+';flex-shrink:0;"></span>';
-        html += '<span style="font-size:10px;color:#94a3b8;flex:1;">'+typeLabels[r.type]+(desc?' · '+desc:'')+'</span>';
-        if (r.elapsedStr) html += '<span style="font-size:9px;color:#f5c500;">⏱'+r.elapsedStr+'</span>';
-        if (r.operator) html += '<span style="font-size:9px;color:#475569;">'+r.operator+'</span>';
-        if (tsStr) html += '<span style="font-size:9px;color:#334155;">'+tsStr+'</span>';
-        html += '</div>';
-      });
-      if (w.requests.length > 3) {
-        html += '<div style="font-size:9px;color:#334155;padding-top:4px;text-align:center;">+'+(w.requests.length-3)+' more</div>';
-      }
+        return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid rgba(30,58,92,0.5);">'
+          +'<span style="width:6px;height:6px;border-radius:50%;background:'+(typeColors[r.type]||'#475569')+';flex-shrink:0;"></span>'
+          +'<span style="font-size:10px;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+typeLabels[r.type]+(desc?' · '+desc:'')+'</span>'
+          +(r.elapsedStr ? '<span style="font-size:9px;color:#f5c500;white-space:nowrap;">⏱'+r.elapsedStr+'</span>' : '')
+          +(r.operator   ? '<span style="font-size:9px;color:#475569;white-space:nowrap;">'+r.operator+'</span>' : '')
+          +'<span style="font-size:9px;color:#334155;white-space:nowrap;">'+tsStr+'</span>'
+          +'</div>';
+      }).join('');
+      var moreRow = recent.length > 4 ? '<div style="font-size:9px;color:#334155;padding-top:4px;text-align:center;">+'+(recent.length-4)+' more</div>' : '';
 
-      html += '</div>';
+      html += '<div style="background:'+(isSelected?'rgba(245,197,0,0.07)':'#0d1f35')+';border:1px solid '+(isSelected?'rgba(245,197,0,0.4)':'#1e3a5c')+';border-left:3px solid '+statusColor+';border-radius:10px;padding:12px 14px;margin-bottom:8px;transition:all .15s;">'
+        // Checkbox + header
+        +'<div style="display:flex;align-items:flex-start;gap:10px;">'
+          +'<input type="checkbox" '+(isSelected?'checked':'')+' onchange="window.toggleWOSelect(\'' + w.wo + '\',this.checked)" '
+            +'style="width:16px;height:16px;margin-top:3px;accent-color:#f5c500;cursor:pointer;flex-shrink:0;" />'
+          +'<div style="flex:1;min-width:0;">'
+            // Title row
+            +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">'
+              +'<div>'
+                +'<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#f5d050;letter-spacing:1px;">WO '+w.wo+'</div>'
+                +(opsStr?'<div style="font-size:9px;color:#60a5fa;margin-top:1px;">'+opsStr+'</div>':'')
+                +'<div style="font-size:9px;color:#475569;margin-top:1px;">'+machStr+'</div>'
+              +'</div>'
+              +'<div style="text-align:right;flex-shrink:0;">'
+                +'<div style="font-size:9px;font-family:Bebas Neue,sans-serif;letter-spacing:1px;padding:2px 8px;border-radius:6px;background:rgba(0,0,0,.3);color:'+statusColor+';">'+statusText+'</div>'
+                +'<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#f0f4f8;margin-top:2px;">'+totalReqs+' <span style="font-size:10px;color:#475569;">req</span></div>'
+                +(w.totalMins?'<div style="font-size:10px;color:#f5c500;font-weight:700;">⏱ '+fmtM(w.totalMins)+'</div>':'')
+              +'</div>'
+            +'</div>'
+            // Pills
+            +'<div style="margin-bottom:6px;display:flex;flex-wrap:wrap;gap:3px;">'+pillsHtml+'</div>'
+            // Request rows
+            +reqRows+moreRow
+          +'</div>'
+        +'</div>'
+      +'</div>';
     });
 
     container.innerHTML = html;
+    // Update selection bar
+    window._updateSelectionBar();
   }
+
+  window.filterWOTracker = function(val) {
+    window._woSearch = val;
+    renderWOCards();
+  };
+
+  window.toggleWOSelect = function(wo, checked) {
+    if (checked) window._woSelected[wo] = true;
+    else delete window._woSelected[wo];
+    window._updateSelectionBar();
+    // Re-render just to update highlight without full rebuild
+    renderWOCards();
+  };
+
+  window.clearWOSelection = function() {
+    window._woSelected = {};
+    window._woSearch = '';
+    var inp = document.getElementById('wo-search-input');
+    if (inp) inp.value = '';
+    renderWOCards();
+  };
+
+  window._updateSelectionBar = function() {
+    var count = Object.keys(window._woSelected || {}).length;
+    var bar   = document.getElementById('wo-selection-bar');
+    var lbl   = document.getElementById('wo-selection-label');
+    if (bar) bar.style.display = count > 0 ? 'flex' : 'none';
+    if (lbl) lbl.textContent = count + ' JOB' + (count !== 1 ? 'S' : '') + ' SELECTED';
+  };
+
+  window.printWOReport = function() {
+    var selected = Object.keys(window._woSelected || {});
+    var data = window._woData || [];
+    // If nothing selected, print all visible (filtered)
+    var search = window._woSearch || '';
+    var toPrint = selected.length > 0
+      ? data.filter(function(w){ return selected.indexOf(w.wo) > -1; })
+      : (search ? data.filter(function(w){ return w.wo.toLowerCase().indexOf(search.toLowerCase()) > -1; }) : data);
+
+    if (toPrint.length === 0) { showToast('red','Nothing to print','Select at least one WO or search for a job'); return; }
+
+    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
+    var typeColors = {red:'#dc2626',yellow:'#d97706',orange:'#ea580c',blue:'#2563eb',green:'#16a34a'};
+
+    function fmtM(m) {
+      if (!m) return '—';
+      return m >= 60 ? Math.floor(m/60)+'h '+(m%60)+'m' : m+'m';
+    }
+
+    var css = [
+      'body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#111;font-size:12px;}',
+      'h1{color:#1a3a6a;border-bottom:3px solid #f59e0b;padding-bottom:8px;font-size:20px;}',
+      'h2{color:#1a3a6a;font-size:15px;margin:20px 0 6px;border-bottom:1px solid #e2e8f0;padding-bottom:4px;}',
+      '.wo-card{border:1px solid #e2e8f0;border-radius:8px;margin-bottom:20px;overflow:hidden;page-break-inside:avoid;}',
+      '.wo-header{background:#1a3a6a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;}',
+      '.wo-title{font-size:18px;font-weight:900;letter-spacing:1px;}',
+      '.wo-sub{font-size:11px;opacity:.7;margin-top:2px;}',
+      '.wo-stats{text-align:right;}',
+      '.wo-stat-big{font-size:20px;font-weight:900;}',
+      '.wo-stat-lbl{font-size:10px;opacity:.7;}',
+      '.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid #e2e8f0;}',
+      '.summary-cell{padding:10px 14px;border-right:1px solid #e2e8f0;text-align:center;}',
+      '.summary-cell:last-child{border-right:none;}',
+      '.summary-num{font-size:22px;font-weight:900;}',
+      '.summary-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-top:2px;}',
+      'table{width:100%;border-collapse:collapse;}',
+      'thead tr{background:#f8fafc;}',
+      'th{padding:8px 10px;text-align:left;font-size:11px;color:#475569;border-bottom:1px solid #e2e8f0;}',
+      'td{padding:7px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;}',
+      'tr:last-child td{border-bottom:none;}',
+      '.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;}',
+      '@media print{button{display:none!important;}.no-print{display:none!important;}}',
+    ].join('');
+
+    var bodyHtml = '<h1>Hill Manufacturing — Work Order Report</h1>'
+      +'<p style="color:#666;margin:-8px 0 20px;">Generated: '+new Date().toLocaleString()+' | '+toPrint.length+' Work Order'+(toPrint.length!==1?'s':'')+' | Period: All Time</p>';
+
+    toPrint.forEach(function(w) {
+      var ops = Object.keys(w.ops).sort();
+      var machines = Object.keys(w.machines);
+      var completed = w.requests.filter(function(r){return r.resolved||r.jobStatus==='completed';}).length;
+      var pending   = w.requests.filter(function(r){return r.type==='blue'&&!r.resolved;}).length;
+      var running   = w.requests.filter(function(r){return r.type==='green'&&!r.resolved;}).length;
+      var avgMins   = w.timedCount > 0 ? Math.round(w.totalMins/w.timedCount) : null;
+
+      // Type breakdown
+      var typeSummary = Object.entries(w.types).map(function(kv){
+        return typeLabels[kv[0]]+'×'+kv[1];
+      }).join('  ·  ');
+
+      // All requests sorted newest first
+      var sorted = w.requests.slice().sort(function(a,b){
+        return (b.createdAt?b.createdAt.seconds:0)-(a.createdAt?a.createdAt.seconds:0);
+      });
+
+      var reqRows = sorted.map(function(r) {
+        var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
+        var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—';
+        var status = r.resolved ? 'Resolved'+(r.elapsedStr?' ('+r.elapsedStr+')':'') : r.inProgress ? 'In Progress' : 'Open';
+        var statusColor2 = r.resolved ? '#16a34a' : r.inProgress ? '#d97706' : '#64748b';
+        return '<tr>'
+          +'<td style="white-space:nowrap;">'+tsStr+'</td>'
+          +'<td style="color:'+(typeColors[r.type]||'#475569')+';font-weight:700;">'+typeLabels[r.type]+'</td>'
+          +'<td>'+(r.machine||'—')+'</td>'
+          +'<td>'+(r.op?'OP '+r.op:'—')+'</td>'
+          +'<td>'+(r.detail||'—')+'</td>'
+          +'<td>'+(r.operator||'—')+'</td>'
+          +'<td style="color:'+statusColor2+';font-weight:700;">'+status+'</td>'
+          +'</tr>';
+      }).join('');
+
+      bodyHtml += '<div class="wo-card">'
+        // Header
+        +'<div class="wo-header">'
+          +'<div>'
+            +'<div class="wo-title">WO '+w.wo+'</div>'
+            +(ops.length?'<div class="wo-sub">Operations: '+ops.map(function(o){return 'OP '+o;}).join(', ')+'</div>':'')
+            +'<div class="wo-sub">'+machines.join(' · ')+'</div>'
+          +'</div>'
+          +'<div class="wo-stats">'
+            +'<div class="wo-stat-big">'+w.requests.length+'</div>'
+            +'<div class="wo-stat-lbl">Total Requests</div>'
+            +(w.totalMins?'<div class="wo-stat-big" style="margin-top:4px;">'+fmtM(w.totalMins)+'</div><div class="wo-stat-lbl">Total Time</div>':'')
+          +'</div>'
+        +'</div>'
+        // Summary grid
+        +'<div class="summary-grid">'
+          +'<div class="summary-cell"><div class="summary-num" style="color:#16a34a;">'+completed+'</div><div class="summary-lbl">Completed</div></div>'
+          +'<div class="summary-cell"><div class="summary-num" style="color:#2563eb;">'+pending+'</div><div class="summary-lbl">Pending</div></div>'
+          +'<div class="summary-cell"><div class="summary-num" style="color:#d97706;">'+(w.timedCount||0)+'</div><div class="summary-lbl">Timed</div></div>'
+          +'<div class="summary-cell"><div class="summary-num" style="color:#7c3aed;">'+(avgMins?fmtM(avgMins):'—')+'</div><div class="summary-lbl">Avg Time</div></div>'
+        +'</div>'
+        // Type breakdown
+        +(typeSummary?'<div style="padding:8px 14px;background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:10px;color:#475569;">'+typeSummary+'</div>':'')
+        // Requests table
+        +'<table>'
+          +'<thead><tr><th>Date/Time</th><th>Type</th><th>Machine</th><th>OP</th><th>Description</th><th>Operator</th><th>Status</th></tr></thead>'
+          +'<tbody>'+reqRows+'</tbody>'
+        +'</table>'
+      +'</div>';
+    });
+
+    var fullHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg - WO Report</title><style>'+css+'</style></head><body>'
+      +bodyHtml
+      +'<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;">🖨 Print / Save as PDF</button>'
+      +'</body></html>';
+
+    var w2 = window.open('','_blank');
+    if (w2) { w2.document.open(); w2.document.write(fullHtml); w2.document.close(); }
+    else showToast('red','Popup blocked','Allow popups to print the report');
+  };
+
 
   function renderDashboard() {
     // Admin-only clear button
@@ -6054,8 +6286,25 @@
     <div id="dash-summary-block"></div>
     <div id="dash-chart-block" style="margin-bottom:14px;"></div>
 
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#f5c500;margin-bottom:10px;padding-top:4px;">
-      📋 WORK ORDER TRACKER
+    <!-- WO TRACKER HEADER -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding-top:4px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#f5c500;">📋 WORK ORDER TRACKER</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button onclick="window.printWOReport()" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c500;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;">🖨 PRINT SELECTED</button>
+        <button onclick="window.clearWOSelection()" style="background:rgba(100,116,139,0.1);border:1px solid #334155;color:#475569;border-radius:7px;padding:5px 12px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;">✕ CLEAR</button>
+      </div>
+    </div>
+    <!-- SEARCH BAR -->
+    <div style="position:relative;margin-bottom:10px;">
+      <input id="wo-search-input" type="text" placeholder="Search WO# or part number... (e.g. 26-0288)"
+        oninput="window.filterWOTracker(this.value)"
+        style="width:100%;box-sizing:border-box;background:#0d1f35;border:1px solid #1e3a5c;border-radius:8px;padding:10px 36px 10px 14px;color:#f0f4f8;font-size:13px;font-family:Barlow,sans-serif;outline:none;" />
+      <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#334155;font-size:14px;">🔍</span>
+    </div>
+    <!-- SELECTION COUNT -->
+    <div id="wo-selection-bar" style="display:none;background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;display:none;align-items:center;justify-content:space-between;">
+      <span id="wo-selection-label" style="font-size:11px;color:#f5c500;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">0 JOBS SELECTED</span>
+      <button onclick="window.printWOReport()" style="background:#f5c500;border:none;color:#000;border-radius:6px;padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:11px;cursor:pointer;letter-spacing:1px;">🖨 PRINT PDF</button>
     </div>
     <div id="dash-wo-tracker" style="margin-bottom:16px;"></div>
 
