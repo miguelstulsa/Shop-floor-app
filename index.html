@@ -10445,24 +10445,102 @@ function _renderActiveBanner() {
 function _renderModalContent() {
   var mc = document.getElementById('live-strip-modal-content');
   if (!mc) return;
+
+  // Always pull freshest data from _lastActionable
+  var actionable = window._lastActionable || [];
+  var inProgNotes = actionable.filter(function(n){
+    return (n.inProgress || (n.startedAt && n.startedAt.seconds)) && !n.resolved;
+  });
+
+  // Merge into _activeJobs
+  inProgNotes.forEach(function(n) {
+    _activeJobs[n.id] = {
+      noteId:    n.id,
+      machine:   n.machine  || '',
+      cell:      n.cell     || '',
+      wo:        n.wo       || '',
+      detail:    n.detail   || '',
+      operator:  n.operator || '',
+      type:      n.type     || '',
+      startedAt: n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : (_activeJobs[n.id] ? _activeJobs[n.id].startedAt : Math.floor(Date.now()/1000))
+    };
+  });
+
   var jobs = Object.values(_activeJobs);
+
   if (jobs.length === 0) {
     mc.innerHTML = '<div style="text-align:center;padding:30px;color:#334155;font-size:14px;">No active requests right now.</div>';
     return;
   }
+
   mc.innerHTML = '';
   var now = Math.floor(Date.now()/1000);
+  var typeLabels = {red:'🔴 Inspection',yellow:'🟡 Machinist Req',orange:'🟠 Floor Support',blue:'🔵 Pending WO',green:'🟢 Running WO'};
+
   jobs.forEach(function(job) {
-    mc.appendChild(_buildJobCard(job, now, true));
-    mc.lastChild.style.marginBottom = '10px';
+    var elapsed   = job.startedAt ? now - job.startedAt : 0;
+    var timeColor = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:rgba(245,197,0,0.06);border:1px solid rgba(245,197,0,0.3);border-radius:12px;padding:16px;margin-bottom:10px;';
+    card.innerHTML =
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">'
+      + '<div>'
+        + '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#f5d050;letter-spacing:1px;line-height:1;">' + (job.machine||'') + '</div>'
+        + (job.cell ? '<div style="font-size:10px;color:#475569;margin-top:2px;">' + job.cell + '</div>' : '')
+        + (job.type ? '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">' + (typeLabels[job.type]||job.type) + '</div>' : '')
+      + '</div>'
+      + '<div style="text-align:right;">'
+        + '<div style="font-family:Bebas Neue,sans-serif;font-size:36px;color:'+timeColor+';line-height:1;" id="timer-lg-'+job.noteId+'">⏱ '+_fmtBannerTime(elapsed)+'</div>'
+        + '<div style="font-size:9px;color:#475569;margin-top:2px;">ELAPSED</div>'
+      + '</div>'
+      + '</div>'
+      + (job.wo ? '<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:8px 10px;margin-bottom:8px;border-left:3px solid #f5c500;">'
+          + '<div style="font-size:10px;color:#f5c500;font-family:Bebas Neue,sans-serif;letter-spacing:1px;">WO: ' + job.wo + '</div>'
+        + '</div>' : '')
+      + (job.detail ? '<div style="font-size:13px;color:#f0f4f8;margin-bottom:8px;line-height:1.4;">' + job.detail + '</div>' : '')
+      + (job.operator ? '<div style="font-size:11px;color:#475569;">👤 ' + job.operator + '</div>' : '');
+
+    mc.appendChild(card);
   });
 }
 
 window._toggleLiveStrip = function() {
   var modal = document.getElementById('live-strip-modal');
   if (!modal) return;
+
+  // Sync _activeJobs from live notes right before rendering
+  var actionable = window._lastActionable || [];
+  actionable.filter(function(n){ return n.inProgress; }).forEach(function(n) {
+    if (!_activeJobs[n.id]) {
+      _activeJobs[n.id] = {
+        noteId:    n.id,
+        machine:   n.machine  || '',
+        wo:        n.wo       || '',
+        detail:    n.detail   || '',
+        operator:  n.operator || '',
+        startedAt: n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : Math.floor(Date.now()/1000)
+      };
+    }
+  });
+
+  // Also include ALL notes that have startedAt even if inProgress flag not set
+  actionable.filter(function(n){ return n.startedAt && n.startedAt.seconds && !n.resolved; }).forEach(function(n) {
+    if (!_activeJobs[n.id]) {
+      _activeJobs[n.id] = {
+        noteId:    n.id,
+        machine:   n.machine  || '',
+        wo:        n.wo       || '',
+        detail:    n.detail   || '',
+        operator:  n.operator || '',
+        startedAt: n.startedAt.seconds
+      };
+    }
+  });
+
   _renderModalContent();
   modal.style.display = 'flex';
+  _startBannerTick();
 };
 
 window._closeLiveStrip = function() {
