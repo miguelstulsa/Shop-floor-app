@@ -1107,10 +1107,27 @@
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
     <!-- LIVE REQUEST STATUS STRIP -->
-    <div id="live-status-strip" style="background:#060d1a;border:1px solid #1e3a5c;border-radius:8px;padding:6px 10px;margin-bottom:8px;min-height:38px;display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;">
-      <div id="live-strip-content" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;width:100%;">
-        <span style="font-size:10px;color:#334155;letter-spacing:1px;font-family:'Bebas Neue',sans-serif;flex-shrink:0;">LIVE REQUESTS</span>
-        <span id="live-strip-empty" style="font-size:10px;color:#1e3a5c;font-style:italic;">No active requests</span>
+    <div id="live-status-strip" onclick="window._toggleLiveStrip()" style="background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;padding:10px 14px;margin-bottom:8px;min-height:52px;display:flex;align-items:center;gap:10px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;cursor:pointer;transition:all .2s;">
+      <div id="live-strip-content" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;width:100%;">
+        <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+          <span style="font-size:11px;color:#334155;letter-spacing:2px;font-family:'Bebas Neue',sans-serif;">LIVE FEED</span>
+          <span style="font-size:8px;color:#1e3a5c;">tap to expand</span>
+        </div>
+        <span id="live-strip-empty" style="font-size:11px;color:#1e3a5c;font-style:italic;">No active requests</span>
+      </div>
+    </div>
+
+    <!-- EXPANDED LIVE FEED OVERLAY -->
+    <div id="live-strip-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;" onclick="window._closeLiveStrip()">
+      <div onclick="event.stopPropagation()" style="background:#060d1a;border:2px solid rgba(245,197,0,0.4);border-radius:16px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;padding:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f5d050;">⚡ LIVE REQUEST FEED</div>
+            <div style="font-size:10px;color:#475569;letter-spacing:1px;">Updates in real time</div>
+          </div>
+          <button onclick="window._closeLiveStrip()" style="background:rgba(255,255,255,0.06);border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;cursor:pointer;letter-spacing:1px;">✕ CLOSE</button>
+        </div>
+        <div id="live-strip-modal-content"></div>
       </div>
     </div>
     <div class="floor-grid" style="grid-template-columns:repeat(4,1fr);grid-template-rows:auto;">
@@ -10372,51 +10389,86 @@ function _fmtBannerTime(secs) {
   return Math.floor(secs/3600) + 'h ' + Math.floor((secs%3600)/60) + 'm';
 }
 
+function _buildJobCard(job, now, large) {
+  var elapsed    = job.startedAt ? now - job.startedAt : 0;
+  var timeColor  = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
+  var nameSz     = large ? '20px' : '13px';
+  var timeSz     = large ? '28px' : '16px';
+  var detailSz   = large ? '12px' : '9px';
+  var padStyle   = large ? 'padding:14px 16px;border-radius:12px;gap:12px;' : 'padding:7px 12px;border-radius:8px;gap:8px;flex-shrink:0;';
+  var card       = document.createElement('div');
+  card.className = large ? 'active-job-card-lg' : 'active-job-card';
+  card.style.cssText = 'display:flex;align-items:center;background:rgba(245,197,0,0.06);border:1px solid rgba(245,197,0,0.3);'+padStyle;
+  card.innerHTML =
+    '<div style="width:'+(large?'12':'8')+'px;height:'+(large?'12':'8')+'px;border-radius:50%;background:'+timeColor+';animation:pulse-green 1s infinite;flex-shrink:0;"></div>'
+  + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-family:Bebas Neue,sans-serif;font-size:'+nameSz+';letter-spacing:1px;color:#f5d050;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
+        + (job.machine || '') + (job.wo ? ' · WO ' + job.wo : '')
+      + '</div>'
+    + (job.detail ? '<div style="font-size:'+detailSz+';color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">' + job.detail + '</div>' : '')
+    + (large && job.operator ? '<div style="font-size:11px;color:#475569;margin-top:4px;">👤 '+job.operator+'</div>' : '')
+  + '</div>'
+  + '<div style="font-family:Bebas Neue,sans-serif;font-size:'+timeSz+';color:'+timeColor+';white-space:nowrap;text-align:right;flex-shrink:0;" id="'+(large?'timer-lg-':'timer-')+job.noteId+'">⏱ '+_fmtBannerTime(elapsed)+'</div>';
+  return card;
+}
+
 function _renderActiveBanner() {
-  var banner = document.getElementById('live-status-strip');
+  var banner   = document.getElementById('live-status-strip');
   var content2 = document.getElementById('live-strip-content');
   var emptyEl  = document.getElementById('live-strip-empty');
   if (!banner || !content2) return;
 
   var jobs = Object.values(_activeJobs);
+  content2.querySelectorAll('.active-job-card').forEach(function(el){ el.remove(); });
+
   if (jobs.length === 0) {
     if (emptyEl) emptyEl.style.display = '';
-    // Remove any active job cards
-    content2.querySelectorAll('.active-job-card').forEach(function(el){ el.remove(); });
     banner.style.borderColor = '#1e3a5c';
-    banner.style.background = '#060d1a';
+    banner.style.background  = '#060d1a';
+    _renderModalContent();
     return;
   }
 
   if (emptyEl) emptyEl.style.display = 'none';
-  banner.style.borderColor = 'rgba(245,197,0,0.4)';
-  banner.style.background = 'linear-gradient(90deg,#0d1100,#060d1a)';
+  banner.style.borderColor = 'rgba(245,197,0,0.5)';
+  banner.style.background  = 'linear-gradient(90deg,#100d00,#060d1a)';
+  banner.style.boxShadow   = '0 0 16px rgba(245,197,0,0.1)';
 
   var now = Math.floor(Date.now()/1000);
-
-  // Remove stale cards
-  content2.querySelectorAll('.active-job-card').forEach(function(el){ el.remove(); });
-
   jobs.forEach(function(job) {
-    var elapsed = job.startedAt ? now - job.startedAt : 0;
-    var timeColor = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
+    content2.appendChild(_buildJobCard(job, now, false));
+  });
 
-    var card = document.createElement('div');
-    card.className = 'active-job-card';
-    card.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(245,197,0,0.06);border:1px solid rgba(245,197,0,0.25);border-radius:8px;padding:5px 10px;flex-shrink:0;';
-    card.innerHTML =
-      '<div style="width:8px;height:8px;border-radius:50%;background:'+timeColor+';animation:pulse-green 1s infinite;flex-shrink:0;"></div>'
-    + '<div style="display:flex;flex-direction:column;gap:1px;">'
-      + '<div style="font-family:Bebas Neue,sans-serif;font-size:12px;letter-spacing:1px;color:#f5d050;white-space:nowrap;">'
-          + (job.machine || '') + (job.wo ? ' · WO ' + job.wo : '')
-        + '</div>'
-      + (job.detail ? '<div style="font-size:9px;color:#94a3b8;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + job.detail + '</div>' : '')
-    + '</div>'
-    + '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;color:'+timeColor+';white-space:nowrap;min-width:48px;text-align:right;" id="timer-'+job.noteId+'">⏱ '+_fmtBannerTime(elapsed)+'</div>';
+  _renderModalContent();
+}
 
-    content2.appendChild(card);
+function _renderModalContent() {
+  var mc = document.getElementById('live-strip-modal-content');
+  if (!mc) return;
+  var jobs = Object.values(_activeJobs);
+  if (jobs.length === 0) {
+    mc.innerHTML = '<div style="text-align:center;padding:30px;color:#334155;font-size:14px;">No active requests right now.</div>';
+    return;
+  }
+  mc.innerHTML = '';
+  var now = Math.floor(Date.now()/1000);
+  jobs.forEach(function(job) {
+    mc.appendChild(_buildJobCard(job, now, true));
+    mc.lastChild.style.marginBottom = '10px';
   });
 }
+
+window._toggleLiveStrip = function() {
+  var modal = document.getElementById('live-strip-modal');
+  if (!modal) return;
+  _renderModalContent();
+  modal.style.display = 'flex';
+};
+
+window._closeLiveStrip = function() {
+  var modal = document.getElementById('live-strip-modal');
+  if (modal) modal.style.display = 'none';
+};
 
 // Tick every second to update timers
 function _startBannerTick() {
@@ -10429,12 +10481,14 @@ function _startBannerTick() {
     }
     var now = Math.floor(Date.now()/1000);
     Object.values(_activeJobs).forEach(function(job) {
-      var el = document.getElementById('timer-' + job.noteId);
-      if (!el) return;
-      var elapsed = job.startedAt ? now - job.startedAt : 0;
-      var timeColor = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
-      el.textContent = '⏱ ' + _fmtBannerTime(elapsed);
-      el.style.color = timeColor;
+      ['timer-', 'timer-lg-'].forEach(function(pfx) {
+        var el = document.getElementById(pfx + job.noteId);
+        if (!el) return;
+        var elapsed = job.startedAt ? now - job.startedAt : 0;
+        var timeColor = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
+        el.textContent = '⏱ ' + _fmtBannerTime(elapsed);
+        el.style.color = timeColor;
+      });
     });
   }, 1000);
 }
