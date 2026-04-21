@@ -1106,11 +1106,11 @@
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
-    <div class="motto-banner">
-      <div class="motto-text">
-        <span class="motto-line">Deliver Quality Parts.</span>
-        <span class="motto-line">On Time.</span>
-        <span class="motto-line">Every Time.</span>
+    <!-- LIVE REQUEST STATUS STRIP -->
+    <div id="live-status-strip" style="background:#060d1a;border:1px solid #1e3a5c;border-radius:8px;padding:6px 10px;margin-bottom:8px;min-height:38px;display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;">
+      <div id="live-strip-content" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;width:100%;">
+        <span style="font-size:10px;color:#334155;letter-spacing:1px;font-family:'Bebas Neue',sans-serif;flex-shrink:0;">LIVE REQUESTS</span>
+        <span id="live-strip-empty" style="font-size:10px;color:#1e3a5c;font-style:italic;">No active requests</span>
       </div>
     </div>
     <div class="floor-grid" style="grid-template-columns:repeat(4,1fr);grid-template-rows:auto;">
@@ -1521,7 +1521,7 @@
       var inProg  = n.inProgress;
       var timerBtns = isAdmin
         ? (inProg
-            ? '<div class="req-timer-badge">⏱ IN PROGRESS — tap Finish when done</div>' +
+            ? '<div class="req-timer-badge" data-started-at="' + (n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : '') + '" style="font-size:11px;font-weight:700;">⏱ ' + (n.startedAt && n.startedAt.seconds ? _fmtElapsed(Math.floor(Date.now()/1000) - n.startedAt.seconds) : 'IN PROGRESS') + '</div>' +
               '<div style="display:flex;gap:6px;margin-top:6px;">' +
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH &amp; CLOSE</button>' +
               '</div>'
@@ -1561,7 +1561,7 @@
       var adminBtns = isAdmin2
         ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
           (inProg2
-            ? '<div style="width:100%;font-size:9px;color:#f5c500;letter-spacing:1px;">⏱ IN PROGRESS</div>' +
+            ? '<div style="width:100%;font-size:11px;font-weight:700;color:#f5c500;" data-started-at="' + (n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : '') + '">⏱ ' + (n.startedAt && n.startedAt.seconds ? _fmtElapsed(Math.floor(Date.now()/1000) - n.startedAt.seconds) : 'IN PROGRESS') + '</div>' +
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH &amp; CLOSE</button>'
             : '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>'
           ) +
@@ -1666,6 +1666,11 @@
       }
       // Immediately swap all START buttons for this noteId to FINISH in DOM
       _swapStartToFinish(noteId, hillReqId || noteId);
+      // Show live banner on shop floor for everyone
+      if (window._addActiveJob) {
+        var nd2 = window._lastActionable && window._lastActionable.find(function(n){ return n.id === noteId; });
+        window._addActiveJob(noteId, nd2 ? nd2.machine : '', nd2 ? nd2.wo : '', nd2 ? nd2.detail : '', nd2 ? nd2.operator : '', Math.floor(Date.now()/1000));
+      }
       // Also update the in-memory note so re-renders show FINISH
       if (window._lastActionable) {
         window._lastActionable.forEach(function(n) {
@@ -1739,6 +1744,8 @@
       }
       await mods.deleteDoc(mods.doc(db2, 'notes', noteId));
     } catch(e) { console.warn('finishRequest deleteNote:', e.message); }
+    // Remove from live banner immediately
+    if (window._removeActiveJob) window._removeActiveJob(noteId);
 
     // Step 3: Mark hillRequests as resolved with elapsed time
     var resolvePayload = {
@@ -10196,6 +10203,293 @@ function buildSpotlightCard(m) {
         bars.forEach(function(b) { b.style.transition = 'background 0.5s'; });
       }
     }, 200);
+  };
+})();
+</script>
+
+
+<script>
+// ── LIVE REQUEST TIMER ────────────────────────────────────────
+// Updates all [data-started-at] elements every second with elapsed time
+function _fmtElapsed(secs) {
+  if (secs < 60)  return secs + 's';
+  if (secs < 3600) return Math.floor(secs/60) + 'm ' + (secs%60) + 's';
+  return Math.floor(secs/3600) + 'h ' + Math.floor((secs%3600)/60) + 'm';
+}
+
+setInterval(function() {
+  var now = Math.floor(Date.now() / 1000);
+  document.querySelectorAll('[data-started-at]').forEach(function(el) {
+    var started = parseInt(el.getAttribute('data-started-at'), 10);
+    if (!started) return;
+    var elapsed = now - started;
+    el.textContent = '⏱ ' + _fmtElapsed(elapsed);
+    // Color escalation: green → yellow → orange → red
+    if      (elapsed < 600)  el.style.color = '#22c55e';  // under 10m — green
+    else if (elapsed < 1800) el.style.color = '#f5c500';  // 10-30m — yellow
+    else if (elapsed < 3600) el.style.color = '#fb923c';  // 30-60m — orange
+    else                     el.style.color = '#f87171';  // over 1h — red
+  });
+}, 1000);
+</script>
+
+
+<script>
+// ── LIVE REQUEST STATUS STRIP ─────────────────────────────────
+// Shows all active requests as compact chips on the shop floor
+function updateLiveStrip() {
+  var strip = document.getElementById('live-strip-content');
+  var empty = document.getElementById('live-strip-empty');
+  if (!strip) return;
+
+  var notes = [];
+  // Collect from _lastActionable
+  if (window._lastActionable) {
+    notes = window._lastActionable.slice();
+  } else if (window.machineNotes) {
+    Object.values(window.machineNotes).forEach(function(arr) {
+      arr.forEach(function(n) { notes.push(n); });
+    });
+  }
+
+  // Sort: in-progress first, then by type priority
+  var typePri = {red:4, yellow:3, orange:3, blue:2, green:1};
+  notes.sort(function(a,b) {
+    if (a.inProgress && !b.inProgress) return -1;
+    if (!a.inProgress && b.inProgress) return 1;
+    return (typePri[b.type]||0) - (typePri[a.type]||0);
+  });
+
+  var typeColors = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
+  var typeBgs    = {red:'rgba(239,68,68,0.12)',yellow:'rgba(234,179,8,0.12)',orange:'rgba(249,115,22,0.12)',blue:'rgba(59,130,246,0.12)',green:'rgba(34,197,94,0.12)'};
+  var typeIcons  = {red:'🔴',yellow:'🟡',orange:'🟠',blue:'🔵',green:'🟢'};
+
+  if (notes.length === 0) {
+    if (empty) empty.style.display = '';
+    // Remove old chips
+    strip.querySelectorAll('.live-chip').forEach(function(c){ c.remove(); });
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  // Build or update chips
+  var existingChips = {};
+  strip.querySelectorAll('.live-chip').forEach(function(c) {
+    existingChips[c.dataset.noteId] = c;
+  });
+
+  var nowSecs = Math.floor(Date.now()/1000);
+
+  notes.forEach(function(n) {
+    var color = typeColors[n.type] || '#94a3b8';
+    var bg    = typeBgs[n.type]   || 'rgba(100,116,139,0.1)';
+    var icon  = typeIcons[n.type] || '⚪';
+
+    // Timer text
+    var timerStr = '';
+    var timerColor = color;
+    if (n.inProgress && n.startedAt && n.startedAt.seconds) {
+      var elapsed = nowSecs - n.startedAt.seconds;
+      timerStr = ' · ' + _fmtElapsed(elapsed);
+      if      (elapsed < 600)  timerColor = '#22c55e';
+      else if (elapsed < 1800) timerColor = '#f5c500';
+      else if (elapsed < 3600) timerColor = '#fb923c';
+      else                     timerColor = '#f87171';
+    }
+
+    var label = (n.machine || '') + (n.wo ? ' · ' + n.wo : '') + (n.inProgress ? timerStr : '');
+
+    if (existingChips[n.id]) {
+      // Update existing chip timer text only
+      var timerEl = existingChips[n.id].querySelector('.chip-timer');
+      if (timerEl && n.inProgress && n.startedAt && n.startedAt.seconds) {
+        var el2 = nowSecs - n.startedAt.seconds;
+        timerEl.textContent = _fmtElapsed(el2);
+        timerEl.style.color = timerColor;
+      }
+      delete existingChips[n.id];
+    } else {
+      // Create new chip
+      var chip = document.createElement('div');
+      chip.className = 'live-chip';
+      chip.dataset.noteId = n.id;
+      chip.style.cssText = 'display:inline-flex;align-items:center;gap:5px;background:'+bg+';border:1px solid '+color+'44;border-radius:20px;padding:3px 10px;flex-shrink:0;white-space:nowrap;';
+      chip.innerHTML = '<span style="font-size:10px;">'+icon+'</span>'
+        + '<span style="font-size:10px;color:'+color+';font-weight:700;font-family:sans-serif;letter-spacing:.5px;">' + (n.machine||'') + '</span>'
+        + (n.wo ? '<span style="font-size:9px;color:#475569;">' + n.wo + '</span>' : '')
+        + (n.operator ? '<span style="font-size:9px;color:#334155;">'+n.operator+'</span>' : '')
+        + (n.inProgress
+            ? '<span class="chip-timer" style="font-size:10px;font-weight:700;color:'+timerColor+';" data-started-at="'+(n.startedAt&&n.startedAt.seconds?n.startedAt.seconds:'')+'">'
+              + (n.startedAt&&n.startedAt.seconds ? _fmtElapsed(nowSecs-n.startedAt.seconds) : '▶')
+              + '</span>'
+            : '');
+      strip.appendChild(chip);
+    }
+  });
+
+  // Remove chips for notes that no longer exist
+  Object.values(existingChips).forEach(function(c){ c.remove(); });
+}
+
+// Update strip whenever notes change
+var _origUpdateNotifFeed = window.updateNotifFeed;
+window.updateNotifFeed = function(actionable) {
+  if (_origUpdateNotifFeed) _origUpdateNotifFeed(actionable);
+  updateLiveStrip();
+};
+
+// Also tick every second for live timers on chips
+setInterval(function() {
+  var nowSecs = Math.floor(Date.now()/1000);
+  document.querySelectorAll('.live-chip .chip-timer[data-started-at]').forEach(function(el) {
+    var started = parseInt(el.getAttribute('data-started-at'), 10);
+    if (!started) return;
+    var elapsed = nowSecs - started;
+    el.textContent = _fmtElapsed(elapsed);
+    if      (elapsed < 600)  el.style.color = '#22c55e';
+    else if (elapsed < 1800) el.style.color = '#f5c500';
+    else if (elapsed < 3600) el.style.color = '#fb923c';
+    else                     el.style.color = '#f87171';
+  });
+}, 1000);
+
+// Initial render
+setTimeout(updateLiveStrip, 2000);
+</script>
+
+
+<script>
+// ── ACTIVE JOB LIVE BANNER ────────────────────────────────────
+// Shows on shop floor for everyone when admin hits START
+// Disappears when admin hits FINISH
+
+var _activeJobs = {}; // keyed by noteId: {machine, wo, detail, operator, startedAt}
+var _activeBannerInterval = null;
+
+function _fmtBannerTime(secs) {
+  if (secs < 60)  return secs + 's';
+  if (secs < 3600) return Math.floor(secs/60) + 'm ' + (secs%60) + 's';
+  return Math.floor(secs/3600) + 'h ' + Math.floor((secs%3600)/60) + 'm';
+}
+
+function _renderActiveBanner() {
+  var banner = document.getElementById('live-status-strip');
+  var content2 = document.getElementById('live-strip-content');
+  var emptyEl  = document.getElementById('live-strip-empty');
+  if (!banner || !content2) return;
+
+  var jobs = Object.values(_activeJobs);
+  if (jobs.length === 0) {
+    if (emptyEl) emptyEl.style.display = '';
+    // Remove any active job cards
+    content2.querySelectorAll('.active-job-card').forEach(function(el){ el.remove(); });
+    banner.style.borderColor = '#1e3a5c';
+    banner.style.background = '#060d1a';
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = 'none';
+  banner.style.borderColor = 'rgba(245,197,0,0.4)';
+  banner.style.background = 'linear-gradient(90deg,#0d1100,#060d1a)';
+
+  var now = Math.floor(Date.now()/1000);
+
+  // Remove stale cards
+  content2.querySelectorAll('.active-job-card').forEach(function(el){ el.remove(); });
+
+  jobs.forEach(function(job) {
+    var elapsed = job.startedAt ? now - job.startedAt : 0;
+    var timeColor = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
+
+    var card = document.createElement('div');
+    card.className = 'active-job-card';
+    card.style.cssText = 'display:flex;align-items:center;gap:8px;background:rgba(245,197,0,0.06);border:1px solid rgba(245,197,0,0.25);border-radius:8px;padding:5px 10px;flex-shrink:0;';
+    card.innerHTML =
+      '<div style="width:8px;height:8px;border-radius:50%;background:'+timeColor+';animation:pulse-green 1s infinite;flex-shrink:0;"></div>'
+    + '<div style="display:flex;flex-direction:column;gap:1px;">'
+      + '<div style="font-family:Bebas Neue,sans-serif;font-size:12px;letter-spacing:1px;color:#f5d050;white-space:nowrap;">'
+          + (job.machine || '') + (job.wo ? ' · WO ' + job.wo : '')
+        + '</div>'
+      + (job.detail ? '<div style="font-size:9px;color:#94a3b8;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;">' + job.detail + '</div>' : '')
+    + '</div>'
+    + '<div style="font-family:Bebas Neue,sans-serif;font-size:14px;color:'+timeColor+';white-space:nowrap;min-width:48px;text-align:right;" id="timer-'+job.noteId+'">⏱ '+_fmtBannerTime(elapsed)+'</div>';
+
+    content2.appendChild(card);
+  });
+}
+
+// Tick every second to update timers
+function _startBannerTick() {
+  if (_activeBannerInterval) return;
+  _activeBannerInterval = setInterval(function() {
+    if (Object.keys(_activeJobs).length === 0) {
+      clearInterval(_activeBannerInterval);
+      _activeBannerInterval = null;
+      return;
+    }
+    var now = Math.floor(Date.now()/1000);
+    Object.values(_activeJobs).forEach(function(job) {
+      var el = document.getElementById('timer-' + job.noteId);
+      if (!el) return;
+      var elapsed = job.startedAt ? now - job.startedAt : 0;
+      var timeColor = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
+      el.textContent = '⏱ ' + _fmtBannerTime(elapsed);
+      el.style.color = timeColor;
+    });
+  }, 1000);
+}
+
+// Call this when admin hits START
+window._addActiveJob = function(noteId, machine, wo, detail, operator, startedAtSeconds) {
+  _activeJobs[noteId] = {
+    noteId: noteId,
+    machine: machine,
+    wo: wo,
+    detail: detail,
+    operator: operator,
+    startedAt: startedAtSeconds || Math.floor(Date.now()/1000)
+  };
+  _renderActiveBanner();
+  _startBannerTick();
+};
+
+// Call this when admin hits FINISH
+window._removeActiveJob = function(noteId) {
+  delete _activeJobs[noteId];
+  _renderActiveBanner();
+};
+
+// Also listen to Firebase notes for inProgress changes so it syncs across devices
+// Hook into the existing onSnapshot — after notes update, check for inProgress ones
+var _origUpdateNotifFeed = window.updateNotifFeed;
+(function patchForBanner() {
+  if (!window.updateNotifFeed) { setTimeout(patchForBanner, 500); return; }
+  var orig = window.updateNotifFeed;
+  window.updateNotifFeed = function(actionable) {
+    orig(actionable);
+    // Sync active jobs from live notes
+    var inProgressNotes = actionable.filter(function(n){ return n.inProgress; });
+    // Add any new ones
+    inProgressNotes.forEach(function(n) {
+      if (!_activeJobs[n.id]) {
+        _activeJobs[n.id] = {
+          noteId: n.id,
+          machine: n.machine || '',
+          wo: n.wo || '',
+          detail: n.detail || '',
+          operator: n.operator || '',
+          startedAt: n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : Math.floor(Date.now()/1000)
+        };
+      }
+    });
+    // Remove finished ones
+    Object.keys(_activeJobs).forEach(function(id) {
+      if (!inProgressNotes.find(function(n){ return n.id === id; })) {
+        delete _activeJobs[id];
+      }
+    });
+    _renderActiveBanner();
+    if (Object.keys(_activeJobs).length > 0) _startBannerTick();
   };
 })();
 </script>
