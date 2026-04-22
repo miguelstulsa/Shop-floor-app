@@ -2446,20 +2446,15 @@
       var _dedupKey = 'hillPushSent_' + Date.now();
       localStorage.setItem(_dedupKey, '1');
       setTimeout(function(){ localStorage.removeItem(_dedupKey); }, 10000);
-      sendPushover(selectedType, currentCell, currentMachine, wo, detail, operator);
+      sendPushover(selectedType, currentCell, currentMachine, wo, detail, operator, op);
     }
-    // Admin-specific alerts
-    if (selectedType === 'blue') {
+    // Admin personal alert — only for orange (Floor Support) since sendPushover
+    // already handles blue/yellow via safePushover. Prevents double notifications.
+    if (selectedType === 'orange') {
       adminPushover(
-        '🔵 PENDING WO — ' + currentMachine,
-        'WO# ' + wo + (operator?' · '+operator:'') + ' · ' + currentCell + (detail?' · '+detail.slice(0,60):''),
+        '🟠 FLOOR SUPPORT — ' + currentMachine,
+        'WO# ' + wo + (op?' OP'+op:'') + (operator?' · '+operator:'') + ' · ' + currentCell + (detail?' · '+detail.slice(0,60):''),
         'pushover', 0
-      );
-    } else if (selectedType === 'yellow') {
-      adminPushover(
-        '🟡 MACHINIST REQ — ' + currentMachine,
-        'WO# ' + wo + (operator?' · '+operator:'') + ' · ' + currentCell + (detail?' · '+detail.slice(0,60):''),
-        'bugle', 0
       );
     }
   }
@@ -2486,12 +2481,12 @@
   };
 
   // Shop floor request notifications
-  function sendPushover(type, cell, machine, wo, detail, operator) {
+  function sendPushover(type, cell, machine, wo, detail, operator, op) {
     const titles = { red: '🔴 INSPECTION REQUEST', yellow: '🟡 MACHINIST REQUEST', blue: '🔵 PENDING WO' };
     const sounds  = { red: 'siren', yellow: 'bugle', blue: 'pushover' };
     const parts = [cell + ' — ' + machine];
     if (operator) parts.push(operator);
-    parts.push('WO: ' + wo);
+    parts.push('WO: ' + wo + (op ? '  OP: ' + op : ''));
     if (detail) parts.push(detail);
     var msgBody = parts.join('\n');
 
