@@ -804,7 +804,7 @@
   .note-dot { width: 10px !important; height: 10px !important; }
   .machine-notes { padding: 2px 6px 3px 6px !important; gap: 3px !important; }
   .machine-led { width: 8px !important; height: 8px !important; }
-  .sidebar { overflow: hidden !important; display: flex !important; flex-direction: column !important; height: 100% !important; border-radius: 16px 16px 0 0; }
+  .sidebar { overflow: hidden !important; display: flex !important; flex-direction: column !important; height: 100% !important; border-radius: 16px 16px 0 0; }  .notif-list { overflow-y: auto !important; flex: 1 !important; }
   .notif-list { overflow-y: auto !important; flex: 1 !important; padding: 8px !important; }
 
   @media (max-height: 700px) { .motto-banner { display: none !important; } .floor-title { display: none !important; } }
@@ -812,7 +812,7 @@
   @media (max-width: 900px) {
     .shop-page.active { grid-template-columns: 1fr !important; grid-template-rows: 1fr auto !important; height: calc(100vh - 82px) !important; }
     .sidebar { position: fixed; bottom: 0; left: 0; right: 0; height: 48px; max-height: 48px; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); z-index: 50; background: #0a1829; border-top: 2px solid #f59e0b; border-left: none; border-radius: 16px 16px 0 0; }
-    .sidebar.open { max-height: 42vh; display: block !important; }
+    .sidebar.open { max-height: 80vh; display: block !important; }
     .sidebar { display: none; }
     .sidebar-header { cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; position: relative; flex-shrink: 0; min-height: 48px; }
     .sidebar-header::after { content: '▲'; font-size: 11px; color: #f59e0b; transition: transform 0.3s; }
