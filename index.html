@@ -1686,10 +1686,35 @@
         } catch(e) { console.warn('startRequest lookup:', e.message); }
       }
       if (resolvedHrId) {
-        mods.updateDoc(mods.doc(db2, 'hillRequests', resolvedHrId), {
-          inProgress: true, startedAt: startTime,
-          startedBy: window.currentUser || 'admin'
-        }).catch(function(){});
+        // Check if this was on hold — if so, stamp resumedAt on the last hold log entry
+        mods.getDoc(mods.doc(db2, 'hillRequests', resolvedHrId)).then(function(hrSnap) {
+          if (!hrSnap || !hrSnap.exists()) return;
+          var hrData = hrSnap.data();
+          var updatePayload = {
+            inProgress: true, startedAt: startTime,
+            startedBy: window.currentUser || 'admin',
+            onHold: false
+          };
+          // If there's a holdLog, update the last entry with resumedAt
+          if (hrData.holdLog && hrData.holdLog.length > 0) {
+            var log = hrData.holdLog.slice(); // copy
+            var lastIdx = log.length - 1;
+            if (!log[lastIdx].resumedAt) {
+              log[lastIdx] = Object.assign({}, log[lastIdx], {
+                resumedAt: new Date().toISOString(),
+                resumedAtStr: new Date().toLocaleDateString([],{month:'short',day:'numeric'})+' '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+              });
+              updatePayload.holdLog = log;
+            }
+          }
+          mods.updateDoc(mods.doc(db2, 'hillRequests', resolvedHrId), updatePayload).catch(function(){});
+        }).catch(function() {
+          mods.updateDoc(mods.doc(db2, 'hillRequests', resolvedHrId), {
+            inProgress: true, startedAt: startTime,
+            startedBy: window.currentUser || 'admin',
+            onHold: false
+          }).catch(function(){});
+        });
       }
       // Immediately swap all START buttons for this noteId to FINISH in DOM
       _swapStartToFinish(noteId, hillReqId || noteId);
@@ -1895,6 +1920,28 @@
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
     if (!mods || !db2) { _toast('red','Error','Not connected'); return; }
+    // Build a hold log entry with timestamp + elapsed time so far
+    var now = new Date();
+    var elapsedSoFar = null;
+    try {
+      var noteSnap2 = await mods.getDoc(mods.doc(db2, 'notes', noteId));
+      if (noteSnap2 && noteSnap2.exists()) {
+        var nd2 = noteSnap2.data();
+        if (nd2.startedAt && nd2.startedAt.seconds) {
+          var mins = Math.round((now - new Date(nd2.startedAt.seconds*1000)) / 60000);
+          elapsedSoFar = mins >= 60 ? Math.floor(mins/60)+'h '+(mins%60)+'m' : mins+'m';
+        }
+      }
+    } catch(e2) {}
+
+    var holdEntry = {
+      reason:      reason || '(no reason given)',
+      pausedAt:    now.toISOString(),
+      pausedAtStr: now.toLocaleDateString([],{month:'short',day:'numeric'})+' '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+      elapsedBeforePause: elapsedSoFar || '—',
+      resumedAt:   null
+    };
+
     try {
       await mods.updateDoc(mods.doc(db2, 'notes', noteId), {
         onHold: true,
@@ -1902,10 +1949,12 @@
         inProgress: false
       });
       if (hillReqId && hillReqId !== noteId && hillReqId !== '') {
+        // Append to holdLog array in hillRequests
         mods.updateDoc(mods.doc(db2, 'hillRequests', hillReqId), {
           onHold: true,
           holdReason: reason || '',
-          inProgress: false
+          inProgress: false,
+          holdLog: mods.arrayUnion(holdEntry)
         }).catch(function(){});
       }
       if (window._removeActiveJob) window._removeActiveJob(noteId);
@@ -1914,7 +1963,7 @@
           if (n.id === noteId) { n.onHold = true; n.holdReason = reason; n.inProgress = false; }
         });
       }
-      _toast('yellow', '⏸ Request On Hold', reason || 'Marked as pending');
+      _toast('yellow', '\u23F8 Request On Hold', reason || 'Marked as pending');
     } catch(e) {
       _toast('red', 'Error', e.message);
     }
@@ -5461,23 +5510,38 @@
           +typeLabels[kv[0]]+'×'+kv[1]+'</span>';
       }).join('');
 
-      // Recent requests (last 4)
+      // All requests sorted oldest first — timeline view
       var recent = w.requests.slice().sort(function(a,b){
-        return (b.createdAt?b.createdAt.seconds:0)-(a.createdAt?a.createdAt.seconds:0);
+        return (a.createdAt?a.createdAt.seconds:0)-(b.createdAt?b.createdAt.seconds:0);
       });
-      var reqRows = recent.slice(0,4).map(function(r) {
+      var reqRows = recent.map(function(r) {
         var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
         var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
         var desc = r.detail || '';
-        return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid rgba(30,58,92,0.5);">'
-          +'<span style="width:6px;height:6px;border-radius:50%;background:'+(typeColors[r.type]||'#475569')+';flex-shrink:0;"></span>'
-          +'<span style="font-size:10px;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+typeLabels[r.type]+(desc?' · '+desc:'')+'</span>'
-          +(r.elapsedStr ? '<span style="font-size:9px;color:#f5c500;white-space:nowrap;">⏱'+r.elapsedStr+'</span>' : '')
+        var statusDot = r.resolved ? '#4ade80' : r.onHold ? '#f59e0b' : r.inProgress ? '#f5c500' : (typeColors[r.type]||'#475569');
+        var holdRows = '';
+        if (r.holdLog && r.holdLog.length > 0) {
+          holdRows = r.holdLog.map(function(h) {
+            return '<div style="margin:3px 0 3px 14px;padding:4px 8px;border-left:2px solid #f59e0b;background:rgba(245,158,11,0.06);border-radius:0 4px 4px 0;">'
+              +'<div style="font-size:9px;color:#f59e0b;font-weight:700;">&#9208; PAUSED &mdash; '+h.pausedAtStr+'</div>'
+              +'<div style="font-size:9px;color:#e2e8f0;margin:1px 0;">'+h.reason+'</div>'
+              +(h.elapsedBeforePause && h.elapsedBeforePause!=='&mdash;' ? '<div style="font-size:9px;color:#64748b;">Time before pause: '+h.elapsedBeforePause+'</div>' : '')
+              +(h.resumedAtStr ? '<div style="font-size:9px;color:#4ade80;margin-top:1px;">&#9654; RESUMED &mdash; '+h.resumedAtStr+'</div>' : '<div style="font-size:9px;color:#f87171;margin-top:1px;">Still on hold</div>')
+              +'</div>';
+          }).join('');
+        }
+        return '<div style="padding:5px 0;border-top:1px solid rgba(30,58,92,0.5);">'
+          +'<div style="display:flex;align-items:center;gap:6px;">'
+          +'<span style="width:6px;height:6px;border-radius:50%;background:'+statusDot+';flex-shrink:0;"></span>'
+          +'<span style="font-size:10px;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+typeLabels[r.type]+(desc?' &mdash; '+desc:'')+'</span>'
+          +(r.elapsedStr ? '<span style="font-size:9px;color:#f5c500;white-space:nowrap;">&#9201; '+r.elapsedStr+'</span>' : '')
           +(r.operator   ? '<span style="font-size:9px;color:#475569;white-space:nowrap;">'+r.operator+'</span>' : '')
           +'<span style="font-size:9px;color:#334155;white-space:nowrap;">'+tsStr+'</span>'
+          +'</div>'
+          +holdRows
           +'</div>';
       }).join('');
-      var moreRow = recent.length > 4 ? '<div style="font-size:9px;color:#334155;padding-top:4px;text-align:center;">+'+(recent.length-4)+' more</div>' : '';
+      var moreRow = '';
 
       html += '<div style="background:'+(isSelected?'rgba(245,197,0,0.07)':'#0d1f35')+';border:1px solid '+(isSelected?'rgba(245,197,0,0.4)':'#1e3a5c')+';border-left:3px solid '+statusColor+';border-radius:10px;padding:12px 14px;margin-bottom:8px;transition:all .15s;">'
         // Checkbox + header
@@ -5608,18 +5672,31 @@
 
       var reqRows = sorted.map(function(r) {
         var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
-        var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—';
-        var status = r.resolved ? 'Resolved'+(r.elapsedStr?' ('+r.elapsedStr+')':'') : r.inProgress ? 'In Progress' : 'Open';
-        var statusColor2 = r.resolved ? '#16a34a' : r.inProgress ? '#d97706' : '#64748b';
+        var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '&mdash;';
+        var status = r.resolved ? 'Resolved'+(r.elapsedStr?' ('+r.elapsedStr+')':'') : r.onHold ? 'On Hold' : r.inProgress ? 'In Progress' : 'Open';
+        var statusColor2 = r.resolved ? '#16a34a' : r.onHold ? '#d97706' : r.inProgress ? '#d97706' : '#64748b';
+        // Hold log rows — printed as indented amber rows below the main row
+        var holdPrintRows = '';
+        if (r.holdLog && r.holdLog.length > 0) {
+          holdPrintRows = r.holdLog.map(function(h) {
+            return '<tr style="background:#fffbeb;">'
+              +'<td style="padding-left:24px;color:#92400e;font-size:10px;white-space:nowrap;">'+h.pausedAtStr+'</td>'
+              +'<td colspan="2" style="color:#92400e;font-size:10px;font-weight:700;">&#9208; PAUSED &mdash; '+h.reason+'</td>'
+              +'<td style="font-size:10px;color:#92400e;">'+(h.elapsedBeforePause&&h.elapsedBeforePause!=='&mdash;'?'Worked: '+h.elapsedBeforePause:'')+'</td>'
+              +'<td colspan="3" style="font-size:10px;color:'+(h.resumedAtStr?'#166534':'#991b1b')+';">'+(h.resumedAtStr?'&#9654; Resumed: '+h.resumedAtStr:'Still on hold')+'</td>'
+              +'</tr>';
+          }).join('');
+        }
         return '<tr>'
           +'<td style="white-space:nowrap;">'+tsStr+'</td>'
           +'<td style="color:'+(typeColors[r.type]||'#475569')+';font-weight:700;">'+typeLabels[r.type]+'</td>'
-          +'<td>'+(r.machine||'—')+'</td>'
-          +'<td>'+(r.op?'OP '+r.op:'—')+'</td>'
-          +'<td>'+(r.detail||'—')+'</td>'
-          +'<td>'+(r.operator||'—')+'</td>'
+          +'<td>'+(r.machine||'&mdash;')+'</td>'
+          +'<td>'+(r.op?'OP '+r.op:'&mdash;')+'</td>'
+          +'<td>'+(r.detail||'&mdash;')+'</td>'
+          +'<td>'+(r.operator||'&mdash;')+'</td>'
           +'<td style="color:'+statusColor2+';font-weight:700;">'+status+'</td>'
-          +'</tr>';
+          +'</tr>'
+          +holdPrintRows;
       }).join('');
 
       bodyHtml += '<div class="wo-card">'
@@ -10517,13 +10594,12 @@ function _renderModalContent() {
   var mc = document.getElementById('live-strip-modal-content');
   if (!mc) return;
 
-  // Always pull freshest data from _lastActionable
   var actionable = window._lastActionable || [];
+  // Show ALL active notes (inProgress OR on hold OR started) that aren't resolved
   var inProgNotes = actionable.filter(function(n){
-    return (n.inProgress || (n.startedAt && n.startedAt.seconds)) && !n.resolved;
+    return (n.inProgress || n.onHold || (n.startedAt && n.startedAt.seconds)) && !n.resolved;
   });
 
-  // Merge into _activeJobs
   inProgNotes.forEach(function(n) {
     _activeJobs[n.id] = {
       noteId:    n.id,
@@ -10531,8 +10607,12 @@ function _renderModalContent() {
       cell:      n.cell     || '',
       wo:        n.wo       || '',
       detail:    n.detail   || '',
+      op:        n.op       || '',
       operator:  n.operator || '',
       type:      n.type     || '',
+      onHold:    n.onHold   || false,
+      holdReason:n.holdReason || '',
+      holdLog:   n.holdLog  || [],
       startedAt: n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : (_activeJobs[n.id] ? _activeJobs[n.id].startedAt : Math.floor(Date.now()/1000))
     };
   });
@@ -10547,33 +10627,170 @@ function _renderModalContent() {
   mc.innerHTML = '';
   var now = Math.floor(Date.now()/1000);
   var typeLabels = {red:'🔴 Inspection',yellow:'🟡 Machinist Req',orange:'🟠 Floor Support',blue:'🔵 Pending WO',green:'🟢 Running WO'};
+  var typeColors = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
 
   jobs.forEach(function(job) {
     var elapsed   = job.startedAt ? now - job.startedAt : 0;
     var timeColor = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
+    var isOnHold  = job.onHold;
+    var borderCol = isOnHold ? 'rgba(245,158,11,0.5)' : 'rgba(245,197,0,0.3)';
+    var bgColor   = isOnHold ? 'rgba(245,158,11,0.05)' : 'rgba(245,197,0,0.06)';
+    var tCol      = typeColors[job.type] || '#94a3b8';
 
     var card = document.createElement('div');
-    card.style.cssText = 'background:rgba(245,197,0,0.06);border:1px solid rgba(245,197,0,0.3);border-radius:12px;padding:16px;margin-bottom:10px;';
-    card.innerHTML =
+    card.style.cssText = 'background:'+bgColor+';border:1px solid '+borderCol+';border-radius:14px;padding:16px;margin-bottom:12px;';
+    card.setAttribute('data-noteid', job.noteId);
+
+    // ── Header row ──
+    var headerHtml =
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">'
       + '<div>'
-        + '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;color:#f5d050;letter-spacing:1px;line-height:1;">' + (job.machine||'') + '</div>'
-        + (job.cell ? '<div style="font-size:10px;color:#475569;margin-top:2px;">' + job.cell + '</div>' : '')
-        + (job.type ? '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">' + (typeLabels[job.type]||job.type) + '</div>' : '')
+        + '<div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#f5d050;letter-spacing:1px;line-height:1;">' + (job.machine||'') + '</div>'
+        + (job.cell ? '<div style="font-size:10px;color:#475569;margin-top:1px;letter-spacing:1px;">' + job.cell + '</div>' : '')
+        + '<div style="font-size:11px;color:'+tCol+';margin-top:3px;font-weight:700;">' + (typeLabels[job.type]||job.type||'') + '</div>'
       + '</div>'
       + '<div style="text-align:right;">'
-        + '<div style="font-family:Bebas Neue,sans-serif;font-size:36px;color:'+timeColor+';line-height:1;" id="timer-lg-'+job.noteId+'">⏱ '+_fmtBannerTime(elapsed)+'</div>'
-        + '<div style="font-size:9px;color:#475569;margin-top:2px;">ELAPSED</div>'
+        + (isOnHold
+            ? '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#f59e0b;line-height:1;">⏸ ON HOLD</div>'
+            : '<div style="font-family:Bebas Neue,sans-serif;font-size:34px;color:'+timeColor+';line-height:1;" id="timer-lg-'+job.noteId+'">⏱ '+_fmtBannerTime(elapsed)+'</div>'
+          )
+        + '<div style="font-size:9px;color:#475569;margin-top:2px;">' + (isOnHold ? 'PAUSED' : 'ELAPSED') + '</div>'
       + '</div>'
-      + '</div>'
-      + (job.wo ? '<div style="background:rgba(0,0,0,.3);border-radius:8px;padding:8px 10px;margin-bottom:8px;border-left:3px solid #f5c500;">'
-          + '<div style="font-size:10px;color:#f5c500;font-family:Bebas Neue,sans-serif;letter-spacing:1px;">WO: ' + job.wo + '</div>'
-        + '</div>' : '')
-      + (job.detail ? '<div style="font-size:13px;color:#f0f4f8;margin-bottom:8px;line-height:1.4;">' + job.detail + '</div>' : '')
-      + (job.operator ? '<div style="font-size:11px;color:#475569;">👤 ' + job.operator + '</div>' : '');
+      + '</div>';
 
+    // ── Info block ──
+    var infoHtml = '';
+    if (job.wo || job.op) {
+      infoHtml += '<div style="background:rgba(0,0,0,.35);border-radius:8px;padding:8px 12px;margin-bottom:8px;border-left:3px solid #f5c500;display:flex;gap:16px;">';
+      if (job.wo) infoHtml += '<div><div style="font-size:9px;color:#475569;letter-spacing:1px;">WORK ORDER</div><div style="font-size:14px;color:#f5c500;font-family:Bebas Neue,sans-serif;letter-spacing:1px;">' + job.wo + '</div></div>';
+      if (job.op) infoHtml += '<div><div style="font-size:9px;color:#475569;letter-spacing:1px;">OPERATION</div><div style="font-size:14px;color:#60a5fa;font-family:Bebas Neue,sans-serif;letter-spacing:1px;">OP ' + job.op + '</div></div>';
+      infoHtml += '</div>';
+    }
+
+    // ── Description ──
+    if (job.detail) {
+      infoHtml += '<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 12px;margin-bottom:8px;border-left:3px solid '+tCol+';">'
+        + '<div style="font-size:9px;color:#475569;letter-spacing:1px;margin-bottom:4px;">REQUEST DETAILS</div>'
+        + '<div style="font-size:13px;color:#f0f4f8;line-height:1.5;">' + job.detail + '</div>'
+        + '</div>';
+    }
+
+    // ── Operator ──
+    if (job.operator) {
+      infoHtml += '<div style="font-size:11px;color:#475569;margin-bottom:8px;">👤 Submitted by <strong style="color:#94a3b8;">' + job.operator + '</strong></div>';
+    }
+
+    // ── Hold log history ──
+    if (job.holdLog && job.holdLog.length > 0) {
+      infoHtml += '<div style="margin-bottom:8px;">'
+        + '<div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:4px;">⏸ PAUSE HISTORY</div>';
+      job.holdLog.forEach(function(h) {
+        infoHtml += '<div style="padding:6px 10px;border-left:2px solid #f59e0b;background:rgba(245,158,11,0.07);border-radius:0 6px 6px 0;margin-bottom:4px;">'
+          + '<div style="font-size:10px;color:#f59e0b;font-weight:700;">' + h.pausedAtStr + (h.elapsedBeforePause&&h.elapsedBeforePause!=='—'?' · '+h.elapsedBeforePause+' worked':'') + '</div>'
+          + '<div style="font-size:11px;color:#e2e8f0;margin:2px 0;">' + h.reason + '</div>'
+          + (h.resumedAtStr ? '<div style="font-size:10px;color:#4ade80;">▶ Resumed ' + h.resumedAtStr + '</div>' : '<div style="font-size:10px;color:#f87171;">Still on hold</div>')
+          + '</div>';
+      });
+      infoHtml += '</div>';
+    }
+
+    // ── Comments section ──
+    var commentsId = 'comments-' + job.noteId;
+    infoHtml += '<div style="margin-top:10px;border-top:1px solid rgba(30,58,92,0.6);padding-top:10px;">'
+      + '<div style="font-size:9px;color:#475569;letter-spacing:1px;font-weight:700;margin-bottom:6px;">💬 COMMENTS</div>'
+      + '<div id="' + commentsId + '" style="margin-bottom:8px;min-height:0;"></div>'
+      + '<div style="display:flex;gap:6px;">'
+        + '<input id="comment-input-' + job.noteId + '" type="text" placeholder="Reply to ' + (job.operator||'machinist') + '..." maxlength="200" '
+          + 'data-noteid="' + job.noteId + '" data-machine="' + job.machine + '" data-wo="' + (job.wo||'') + '" '
+          + 'style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(30,58,92,0.8);border-radius:8px;padding:8px 10px;color:#f0f4f8;font-size:12px;outline:none;" '
+          + 'onkeydown="if(event.key===\'Enter\'){var el=this;window._postComment(el.dataset.noteid,el.dataset.machine,el.dataset.wo);}" />'
+        + '<button data-noteid="' + job.noteId + '" data-machine="' + job.machine + '" data-wo="' + (job.wo||'') + '" '
+          + 'onclick="var el=this;window._postComment(el.dataset.noteid,el.dataset.machine,el.dataset.wo);" '
+          + 'style="background:linear-gradient(135deg,#0f4c81,#1e6bb8);border:none;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-family:Bebas Neue,sans-serif;font-size:12px;letter-spacing:1px;white-space:nowrap;">SEND</button>'
+      + '</div>'
+      + '</div>';
+
+    card.innerHTML = headerHtml + infoHtml;
     mc.appendChild(card);
+
+    // Load comments for this note
+    _loadComments(job.noteId, commentsId);
   });
+}
+
+// ── COMMENTS ─────────────────────────────────────────────────────
+window._postComment = async function(noteId, machine, wo) {
+  var input = document.getElementById('comment-input-' + noteId);
+  if (!input) return;
+  var text = (input.value || '').trim();
+  if (!text) return;
+  var db2  = window.fbDb || window._db;
+  var mods = window._fbModules;
+  if (!mods || !db2) return;
+  var user = window.currentUser || (window.currentUserData && window.currentUserData.name) || 'Miguel';
+  try {
+    await mods.addDoc(mods.collection(db2, 'requestComments'), {
+      noteId:    noteId,
+      machine:   machine || '',
+      wo:        wo || '',
+      text:      text,
+      author:    user,
+      createdAt: mods.serverTimestamp(),
+      isAdmin:   !!(window._isAdmin || window.currentUser === 'hilladmin')
+    });
+    input.value = '';
+  } catch(e) {
+    if(window.showToast) window.showToast('red','Comment failed',e.message);
+  }
+};
+
+var _commentListeners = {}; // track active Firebase listeners
+
+function _loadComments(noteId, containerId) {
+  var db2  = window.fbDb || window._db;
+  var mods = window._fbModules;
+  if (!mods || !db2) return;
+
+  // Unsubscribe previous listener for this note if any
+  if (_commentListeners[noteId]) {
+    try { _commentListeners[noteId](); } catch(e) {}
+  }
+
+  var q = mods.query(
+    mods.collection(db2, 'requestComments'),
+    mods.where('noteId', '==', noteId),
+    mods.orderBy('createdAt', 'asc')
+  );
+
+  _commentListeners[noteId] = mods.onSnapshot(q, function(snap) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (snap.empty) {
+      el.innerHTML = '<div style="font-size:10px;color:#334155;font-style:italic;padding:2px 0;">No comments yet — be first to reply</div>';
+      return;
+    }
+    var html = '';
+    snap.forEach(function(doc) {
+      var d = doc.data();
+      var ts = d.createdAt ? new Date(d.createdAt.seconds*1000) : new Date();
+      var tsStr = ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      var isAdm = d.isAdmin;
+      html += '<div style="display:flex;gap:8px;margin-bottom:6px;'+(isAdm?'flex-direction:row-reverse;':'')+'">'
+        + '<div style="width:28px;height:28px;border-radius:50%;background:'+(isAdm?'linear-gradient(135deg,#b45309,#f59e0b)':'rgba(59,130,246,0.3)')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:'+(isAdm?'#000':'#60a5fa')+';flex-shrink:0;">'
+          + (d.author ? d.author.charAt(0).toUpperCase() : '?')
+          + '</div>'
+        + '<div style="max-width:80%;'+(isAdm?'text-align:right;':'')+'">'
+          + '<div style="background:'+(isAdm?'linear-gradient(135deg,rgba(180,83,9,0.25),rgba(245,158,11,0.15))':'rgba(255,255,255,0.06)')+';border:1px solid '+(isAdm?'rgba(245,158,11,0.3)':'rgba(30,58,92,0.8)')+';border-radius:'+(isAdm?'12px 4px 12px 12px':'4px 12px 12px 12px')+';padding:6px 10px;">'
+            + '<div style="font-size:12px;color:#f0f4f8;line-height:1.4;">' + d.text + '</div>'
+          + '</div>'
+          + '<div style="font-size:9px;color:#334155;margin-top:2px;">' + d.author + ' · ' + tsStr + '</div>'
+        + '</div>'
+        + '</div>';
+    });
+    el.innerHTML = html;
+    // Auto scroll to bottom
+    el.scrollTop = el.scrollHeight;
+  }, function(e) { console.warn('comments listener:', e.message); });
 }
 
 window._toggleLiveStrip = function() {
@@ -10617,6 +10834,11 @@ window._toggleLiveStrip = function() {
 window._closeLiveStrip = function() {
   var modal = document.getElementById('live-strip-modal');
   if (modal) modal.style.display = 'none';
+  // Unsubscribe all comment listeners to avoid memory leaks
+  Object.keys(_commentListeners).forEach(function(id) {
+    try { _commentListeners[id](); } catch(e) {}
+  });
+  _commentListeners = {};
 };
 
 // Tick every second to update timers
