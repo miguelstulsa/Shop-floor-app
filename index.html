@@ -5360,8 +5360,12 @@
   }
   function getJobStatus(r) {
     if (r.jobStatus) return r.jobStatus;
-    if (r.type === 'blue')  return 'pending';
-    if (r.type === 'green') return 'running';
+    // resolved:true with no jobStatus still counts as completed
+    if (r.resolved) return 'completed';
+    if (r.onHold)   return 'pending';   // on hold = still pending, not completed
+    if (r.inProgress) return 'running'; // started but not finished
+    if (r.type === 'blue')   return 'pending';
+    if (r.type === 'green')  return 'running';
     return 'issue';
   }
 
