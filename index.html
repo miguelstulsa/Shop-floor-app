@@ -1098,7 +1098,7 @@
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Floor Analytics</div>
-  <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv">📺 Shop TV</div>
+  <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv" style="display:none;">📺 Shop TV</div>
   <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop" style="display:none;">🔗 ProShop</div>
   <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;">📅 Planner</div>
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
@@ -2987,18 +2987,14 @@
       document.getElementById('adminBtn').classList.add('visible');
       window._isAdmin = true;
       listenToUsers();
-      var mgmtTab = document.getElementById('tab-mgmt');
-      if (mgmtTab) mgmtTab.style.display = '';
+      // Production Log tab — always visible to admin
       var dashTab = document.getElementById('tab-dashboard');
       if (dashTab) dashTab.style.display = '';
-      var proshopTab = document.getElementById('tab-proshop');
-      if (proshopTab) proshopTab.style.display = '';
-      var plannerTab = document.getElementById('tab-planner');
-      if (plannerTab) plannerTab.style.display = '';
+      // These tabs are hidden until ProShop/Datanomix APIs are ready
+      // They appear automatically in Demo Mode
+      // tab-mgmt, tab-proshop, tab-planner, tab-datanomix, tab-shoptv — demo only
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
-      var dnxTab = document.getElementById('tab-datanomix');
-      if (dnxTab) dnxTab.style.display = '';
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
       // Show QMI switch button for admin
@@ -3011,16 +3007,12 @@
       }
     } else if (user.role === 'manager') {
       listenToUsers();
-      var mgmtTab = document.getElementById('tab-mgmt');
-      if (mgmtTab) mgmtTab.style.display = '';
+      // Production Log always visible to manager
       var dashTab = document.getElementById('tab-dashboard');
       if (dashTab) dashTab.style.display = '';
-      var proshopTab = document.getElementById('tab-proshop');
-      if (proshopTab) proshopTab.style.display = '';
-      var plannerTab = document.getElementById('tab-planner');
-      if (plannerTab) plannerTab.style.display = '';
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
+      // tab-mgmt, tab-proshop, tab-planner, tab-datanomix, tab-shoptv — demo only
     } else {
       // machinist — check legacy isManager flag as fallback
       if (window.checkManagerAccess) {
@@ -8914,8 +8906,9 @@ window.slSendMorning = function() {
     } catch(e) { console.warn('Yesterday strip:', e.message); }
   }
 
-  // Inject strip HTML into shop floor
+  // Inject strip HTML into shop floor — demo mode only
   function injectStrip() {
+    if (typeof DEMO_MODE === 'undefined' || !DEMO_MODE) return;
     var floorTitle = document.querySelector('.floor-title');
     if (!floorTitle) { setTimeout(injectStrip, 500); return; }
     if (document.getElementById('yesterday-strip')) return;
@@ -9050,6 +9043,7 @@ window.slSendMorning = function() {
 (function() {
   // Inject Job Tracker tab
   function injectJobTrackerTab() {
+    if (!window._demoMode) return; // Job Tracker hidden — demo only
     var mgmtTab = document.getElementById('tab-mgmt');
     if (!mgmtTab) { setTimeout(injectJobTrackerTab, 500); return; }
     if (document.getElementById('tab-jobs')) return;
@@ -9370,6 +9364,7 @@ var PI_NAME_MAP={
 var _piLiveData={}, _alarmsNotified={}, _jobAlertsFired={};
 
 function startLiveMachineMonitor(){
+  if(typeof DEMO_MODE === 'undefined' || !DEMO_MODE) return; // PI bar hidden — demo only
   if(!window.fbDb||!window.fbFirestore){setTimeout(startLiveMachineMonitor,1000);return;}
   var mods=window.fbFirestore;
   mods.onSnapshot(mods.doc(window.fbDb,'machineData','live'),function(snap){
@@ -9460,7 +9455,7 @@ function fireAlarm(name,msg){
   setTimeout(function(){delete _alarmsNotified[key];},600000);
 }
 
-(function init(){if(window.fbDb&&window.fbFirestore){startLiveMachineMonitor();}else{setTimeout(init,800);}})();
+(function init(){if(window.fbDb&&window.fbFirestore){if (typeof DEMO_MODE !== 'undefined' && DEMO_MODE) startLiveMachineMonitor();}else{setTimeout(init,800);}})();
 </script>
 
 
@@ -9670,23 +9665,41 @@ function loadDemoAnalytics() {
 // Toggle demo mode on/off
 window.enableDemoMode = function() {
   DEMO_MODE = true;
-  localStorage.setItem("hillDemoMode","1"); // always persist
+  window._demoMode = true;
+  localStorage.setItem("hillDemoMode","1");
   applyDemoToCards();
   loadDemoAnalytics();
+  // Show all tabs that are normally hidden
+  ['tab-shoptv','tab-datanomix','tab-proshop','tab-planner','tab-mgmt'].forEach(function(id){
+    var t = document.getElementById(id); if (t) t.style.display = '';
+  });
+  if (typeof injectReportsTab === 'function') setTimeout(injectReportsTab, 200);
   // Tick every 8 seconds to simulate live parts counting
   if (!window._demoInterval) {
-    window._demoInterval = setInterval(function(){
-      tickDemoData();
-    }, 8000);
+    window._demoInterval = setInterval(function(){ tickDemoData(); }, 8000);
   }
-  showToast("green","DEMO MODE ON","Showing live shift simulation with real WO data");
+  showToast("green","DEMO MODE ON","All tabs visible — showing live shift simulation");
 };
 
 window.disableDemoMode = function() {
   DEMO_MODE = false;
+  window._demoMode = false;
   localStorage.removeItem("hillDemoMode");
   if (window._demoInterval) { clearInterval(window._demoInterval); window._demoInterval = null; }
-  showToast("yellow","Demo mode off","Switched back to live data");
+  // Hide demo-only tabs
+  ['tab-shoptv','tab-datanomix','tab-proshop','tab-planner','tab-mgmt'].forEach(function(id){
+    var t = document.getElementById(id); if (t) t.style.display = 'none';
+  });
+  var rt = document.getElementById('tab-reports');
+  if (rt) rt.remove();
+  var jt = document.getElementById('tab-jobs');
+  if (jt) jt.remove();
+  // Remove PI LIVE bar and yesterday strip from DOM
+  var piBar = document.getElementById('pi-live-bar');
+  if (piBar) piBar.remove();
+  var ystrip = document.getElementById('yesterday-strip');
+  if (ystrip) ystrip.remove();
+  showToast("yellow","Demo mode off","Showing only active tabs");
 };
 
 // Add demo toggle button to admin panel
@@ -9746,6 +9759,8 @@ var DEMO_REPORT_DATA = [{"date": "2026-03-23", "label": "Mon 03/23", "dayOfWeek"
 
 // ── INJECT REPORTS TAB ──────────────────────────────────────
 function injectReportsTab() {
+  // Reports tab hidden — enabled in demo mode only
+  if (!window._demoMode) return;
   if (document.getElementById('tab-reports')) return;
   var shopTab = document.getElementById('tab-shop');
   if (!shopTab) { setTimeout(injectReportsTab, 500); return; }
