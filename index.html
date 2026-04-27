@@ -10736,13 +10736,21 @@ function _renderModalContent() {
 // ── COMMENTS ─────────────────────────────────────────────────────
 window._postComment = async function(noteId, machine, wo) {
   var input = document.getElementById('comment-input-' + noteId);
-  if (!input) return;
+  if (!input) { console.warn('Comment: no input found for', noteId); return; }
   var text = (input.value || '').trim();
   if (!text) return;
   var db2  = window.fbDb || window._db;
   var mods = window._fbModules;
-  if (!mods || !db2) return;
-  var user = window.currentUser || (window.currentUserData && window.currentUserData.name) || 'Miguel';
+  if (!mods || !db2) {
+    if(window.showToast) window.showToast('red','Not connected','Firebase not ready');
+    return;
+  }
+  // Optimistic clear + visual feedback
+  var btn = input.nextElementSibling;
+  var origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+  input.value = '';
+  var user = window.currentUser || (window.currentUserData && window.currentUserData.name) || 'Admin';
   try {
     await mods.addDoc(mods.collection(db2, 'requestComments'), {
       noteId:    noteId,
@@ -10753,9 +10761,13 @@ window._postComment = async function(noteId, machine, wo) {
       createdAt: mods.serverTimestamp(),
       isAdmin:   !!(window._isAdmin || window.currentUser === 'hilladmin')
     });
-    input.value = '';
+    if (btn) { btn.textContent = '✓'; setTimeout(function(){ if(btn) { btn.textContent = origText; btn.disabled = false; } }, 1000); }
   } catch(e) {
-    if(window.showToast) window.showToast('red','Comment failed',e.message);
+    console.error('Comment post error:', e);
+    // Restore text if failed
+    input.value = text;
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+    if(window.showToast) window.showToast('red','Comment failed', e.message || 'Check Firestore rules');
   }
 };
 
@@ -10771,10 +10783,10 @@ function _loadComments(noteId, containerId) {
     try { _commentListeners[noteId](); } catch(e) {}
   }
 
+  // No orderBy — avoids needing a Firestore composite index. Sort client-side instead.
   var q = mods.query(
     mods.collection(db2, 'requestComments'),
-    mods.where('noteId', '==', noteId),
-    mods.orderBy('createdAt', 'asc')
+    mods.where('noteId', '==', noteId)
   );
 
   _commentListeners[noteId] = mods.onSnapshot(q, function(snap) {
@@ -10784,9 +10796,16 @@ function _loadComments(noteId, containerId) {
       el.innerHTML = '<div style="font-size:10px;color:#334155;font-style:italic;padding:2px 0;">No comments yet — be first to reply</div>';
       return;
     }
+    // Sort by createdAt client-side (ascending)
+    var docs = [];
+    snap.forEach(function(doc) { docs.push(doc.data()); });
+    docs.sort(function(a,b){
+      var at = a.createdAt ? a.createdAt.seconds : 0;
+      var bt = b.createdAt ? b.createdAt.seconds : 0;
+      return at - bt;
+    });
     var html = '';
-    snap.forEach(function(doc) {
-      var d = doc.data();
+    docs.forEach(function(d) {
       var ts = d.createdAt ? new Date(d.createdAt.seconds*1000) : new Date();
       var tsStr = ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
       var isAdm = d.isAdmin;
