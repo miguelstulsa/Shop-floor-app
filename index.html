@@ -11440,115 +11440,120 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return data;
   }
 
-  // ── DJ LINES ──────────────────────────────────────────────
-  function _buildScript() {
-    var d = _getShopData();
-    var scripts = [];
+  // ── JIM: AI-POWERED DJ (Claude API) ──────────────────────
+  var _jimBusy = false; // prevent overlapping API calls
 
-    // ── INTRO / HYPE ──
-    var intros = [
-      "Yooo! This is your shop DJ, keeping Hill Manufacturing moving! Let's get it!",
-      "What is UP Hill Manufacturing! Your favorite shop DJ is in the building. Let's make some parts today!",
-      "Hill Manufacturing in the house! DJ keeping the floor pumping — let's GO!",
-      "Good morning Hill fam! Time to get these machines running. Your DJ has got you covered all shift!",
-      "This is Hill Radio — the only station that knows exactly what's happening on YOUR floor. Let's ride!",
-    ];
+  function _buildJimPrompt(d) {
+    var now = new Date();
+    var hour = now.getHours();
+    var timeOfDay = hour < 10 ? 'morning' : hour < 14 ? 'midday' : hour < 17 ? 'afternoon' : 'evening';
 
-    // ── MACHINE SHOUTOUTS ──
-    var machineLines = [];
+    // Describe machine utilization
+    var machineDesc = '';
     if (d.machines.length > 0) {
-      // Sort and pick interesting ones
       var sorted = d.machines.slice().sort(function(a,b){ return b.util - a.util; });
-      var top    = sorted[0];
-      var bottom = sorted[sorted.length-1];
-
-      if (top && top.util >= 70) {
-        machineLines.push(
-          "Shoutout to " + _machineName(top.name) + " — running hot at " + top.util + " percent utilization! That machine is on FIRE today!",
-          _machineName(top.name) + " is absolutely killing it right now. " + top.util + " percent and climbing. Let's go!",
-          "Best machine on the floor right now? " + _machineName(top.name) + " at " + top.util + " percent. That operator knows what they're doing!"
-        );
-      }
-      if (bottom && bottom.util < 30 && bottom.util > 0) {
-        machineLines.push(
-          "Hey, " + _machineName(bottom.name) + " — we need you to wake up! Only at " + bottom.util + " percent. Let's get those numbers up!",
-          "Quick check on " + _machineName(bottom.name) + ". Sitting at " + bottom.util + " percent utilization. Somebody get over there!",
-        );
-      }
-      if (d.machines.length >= 3) {
-        machineLines.push(
-          "We got " + d.machines.length + " machines cutting right now across the floor. Hill Manufacturing is WORKING today!",
-          d.machines.length + " machines in action on the floor. Average utilization looking " + (d.machines.reduce(function(a,m){return a+m.util;},0)/d.machines.length > 50 ? "strong" : "like it could use a push") + ". Let's keep it moving!"
-        );
-      }
+      var lines = sorted.map(function(m){ return _machineName(m.name) + ' at ' + m.util + '%'; });
+      machineDesc = lines.join(', ');
     } else {
-      machineLines.push(
-        "Floor's warming up — machines getting ready to roll. Stay locked in!",
-        "Quiet on the floor right now. Let's change that. Get those spindles turning!"
-      );
+      machineDesc = 'No machine utilization data available right now';
     }
 
-    // ── REQUEST SHOUTOUTS ──
-    var requestLines = [];
+    // Describe active requests
+    var reqDesc = '';
     if (d.requests.length > 0) {
-      var r = d.requests[Math.floor(Math.random()*d.requests.length)];
-      var op = r.operator ? r.operator.split(' ')[0] : 'somebody';
-      requestLines.push(
-        "Hey quick shoutout. " + op + " over at " + _machineName(r.machine) + " put in a request. " + (r.detail ? "They need " + r.detail + "." : "Go check them out!") + " Keep that machine running!",
-        _machineName(r.machine) + " has a request on the board. " + op + " is waiting. Tooling crew — you're up!",
-      );
-    }
-    if (d.pending > 0) {
-      requestLines.push(
-        "We got " + d.pending + " job" + (d.pending>1?"s":"") + " pending setup on the floor right now. Tooling crew — let's get those machines running!",
-        d.pending + " pending setup" + (d.pending>1?"s":"") + " waiting. Every minute they sit is money on the table. Let's move!"
-      );
-    }
-    if (d.inspections > 0) {
-      requestLines.push(
-        "Quality team — heads up! There " + (d.inspections>1?"are "+d.inspections+" inspection requests":"is an inspection request") + " on the board. Go check those parts!",
-      );
+      reqDesc = d.requests.map(function(r){
+        return (r.operator ? r.operator.split(' ')[0] : 'Someone') + ' at ' + _machineName(r.machine) + (r.detail ? ' needs: ' + r.detail : ' needs assistance');
+      }).join('; ');
     }
 
-    // ── MOTIVATIONAL ──
-    var motivation = [
-      "Remember — every part you make today is Hill Manufacturing's reputation. Make it count!",
-      "Stay focused, stay safe, and let's ship some quality parts today. Hill Manufacturing!",
-      "You are the reason this shop runs. Operators, machinists, tooling — ALL of you. Keep it going!",
-      "Miguel's got the floor covered. You run the machines, he handles the setup. It's a TEAM effort. Let's go!",
-      "Hill Manufacturing — delivering quality parts, on time, every time. That's what we do. Let's get it!",
-      "Twelve machines cutting, chips flying, parts shipping. THIS is Hill Manufacturing at its best!",
-      "Stay hydrated, stay focused, stay safe. DJ's got the music, you got the floor. Let's make it happen!",
+    var contextParts = [
+      'Time of day: ' + timeOfDay,
+      'Machines cutting: ' + machineDesc,
+      d.pending > 0    ? d.pending + ' job(s) pending setup (blue flags)' : '',
+      d.inspections > 0 ? d.inspections + ' inspection request(s) waiting (red flags)' : '',
+      reqDesc          ? 'Active floor requests: ' + reqDesc : '',
+      d.running > 0    ? d.running + ' setup(s) currently in progress (green)' : '',
+    ].filter(Boolean).join('\n');
+
+    return contextParts;
+  }
+
+  async function _jimSpeak(forceSpeak) {
+    if (_jimBusy) return;
+    if (!_djActive && !forceSpeak) return;
+    if (!window.speechSynthesis) {
+      if(window.showToast) window.showToast('yellow','DJ','Your browser does not support speech');
+      return;
+    }
+
+    _jimBusy = true;
+
+    var d = _getShopData();
+    var shopContext = _buildJimPrompt(d);
+
+    // Show a "Jim is thinking" indicator
+    if(window.showToast) window.showToast('blue','🎙 Jim is on it...','Generating shoutout');
+
+    try {
+      var response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 350,
+          system: `You are Jim, the enthusiastic shop floor DJ at Hill Manufacturing — a precision CNC machining company. You give live shoutouts over the PA system to keep energy high, communicate floor status, and motivate the crew.
+
+YOUR PERSONALITY:
+- Energetic but professional — like a sports radio DJ who also knows manufacturing
+- You know every machine by name and treat them like team players
+- You hype up good performance, call out slowdowns constructively, relay requests urgently
+- You use phrases like "Hill Manufacturing," "Let's go," "Chips are flying," "spindles turning," "let's ship some parts"
+- You NEVER say anything negative about operators by name — machines are the "players," people are the "crew"
+- Miguel handles setup/tooling — reference him when setup requests are pending
+- Keep it to 2-4 punchy sentences. No filler. Speak like you're live on air.
+- Vary your style each time — sometimes hype, sometimes informational, sometimes urgent
+- Do NOT start every announcement the same way
+- Reference actual machine names and real numbers from the data when available`,
+          messages: [{
+            role: 'user',
+            content: 'Here is the current shop floor status. Generate one live PA announcement:\n\n' + shopContext
+          }]
+        })
+      });
+
+      var data = await response.json();
+      var script = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text.trim() : null;
+
+      if (script) {
+        _speak(script, 0.91, 0.80);
+        if(window.showToast) window.showToast('green','🎙 Jim is ON AIR','');
+      } else {
+        // Fallback to a basic line if API fails
+        _jimFallback(d);
+      }
+    } catch(err) {
+      console.warn('Jim API error:', err);
+      _jimFallback(d);
+    }
+
+    _jimBusy = false;
+  }
+
+  function _jimFallback(d) {
+    // Simple fallback if API is unreachable
+    var lines = [
+      "Hill Manufacturing — let's keep those machines cutting and parts shipping. Stay focused, stay safe!",
+      "This is Jim — your shop floor DJ. " + (d.machines.length > 0 ? d.machines.length + " machines running right now. " : "") + "Let's make it count today!",
+      (d.pending > 0 ? "Heads up — " + d.pending + " setup" + (d.pending>1?"s":"") + " pending on the floor. Tooling crew, you're up! " : "") + "Hill Manufacturing, let's go!",
     ];
-
-    // ── BUILD THE FULL SCRIPT ──
-    var pick = function(arr){ return arr[Math.floor(Math.random()*arr.length)]; };
-
-    // Random script variations
-    var type = Math.floor(Math.random() * 4);
-    if (type === 0) {
-      // Intro + machine + motivation
-      scripts = [ pick(intros), pick(machineLines), pick(motivation) ];
-    } else if (type === 1) {
-      // Machine + request
-      scripts = [ pick(machineLines), requestLines.length ? pick(requestLines) : pick(motivation) ];
-    } else if (type === 2) {
-      // Request + hype
-      scripts = [ requestLines.length ? pick(requestLines) : pick(machineLines), pick(motivation) ];
-    } else {
-      // Just one punchy line
-      scripts = [ pick([].concat(machineLines, motivation)) ];
-    }
-
-    return scripts.join(' ... ');
+    _speak(lines[Math.floor(Math.random()*lines.length)], 0.91, 0.80);
   }
 
   // ── TRIGGER DJ ────────────────────────────────────────────
   window._djSpeak = function() {
     if (!_djActive) return;
-    if (!window.speechSynthesis) { if(window.showToast) window.showToast('yellow','DJ','Your browser does not support speech'); return; }
-    var script = _buildScript();
-    _speak(script, 0.92, 0.8);
+    _pickVoice();
+    _jimSpeak(false);
   };
 
   window._djToggle = function() {
@@ -11560,25 +11565,24 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       if (btn)   { btn.textContent = '🎙 DJ ON AIR'; btn.style.background = 'linear-gradient(135deg,#dc2626,#ef4444)'; }
       if (badge) badge.style.display = 'inline-block';
       // Speak immediately
-      setTimeout(window._djSpeak, 500);
+      setTimeout(function(){ _pickVoice(); _jimSpeak(true); }, 500);
       // Then every N minutes
       _djTimer = setInterval(window._djSpeak, _djInterval * 60 * 1000);
-      if(window.showToast) window.showToast('green','&#127897; DJ is ON AIR','Shoutouts every '+_djInterval+' minutes');
+      if(window.showToast) window.showToast('green','&#127897; Jim is ON AIR','Shoutouts every '+_djInterval+' minutes');
     } else {
       _synth.cancel();
       clearInterval(_djTimer);
+      _jimBusy = false;
       if (btn)   { btn.textContent = '&#127897; ACTIVATE DJ'; btn.style.background = 'linear-gradient(135deg,#7c3aed,#8b5cf6)'; }
       if (badge) badge.style.display = 'none';
-      if(window.showToast) window.showToast('yellow','DJ off','Shop DJ has left the building');
+      if(window.showToast) window.showToast('yellow','DJ off','Jim has left the building');
     }
   };
 
   window._djNow = function() {
     if (!window.speechSynthesis) { if(window.showToast) window.showToast('yellow','Not supported','Your browser does not support speech'); return; }
     _pickVoice();
-    var script = _buildScript();
-    _speak(script, 0.92, 0.8);
-    if(window.showToast) window.showToast('blue','&#127897; DJ Speaking...','');
+    _jimSpeak(true);
   };
 
   window._djSetInterval = function(mins) {
@@ -11624,89 +11628,114 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _synth.speak(utt);
   }
 
-  // ── ANNOUNCE: NEW REQUEST FROM FLOOR ─────────────────────
-  window._djAnnounceNew = function(n) {
+  // ── AI-POWERED ANNOUNCE: NEW REQUEST FROM FLOOR ──────────
+  window._djAnnounceNew = async function(n) {
     if (!n) return;
     var machine = _mn(n.machine);
-    var op      = n.operator ? n.operator.split(' ')[0] : 'someone';
-    var wo      = n.wo  ? 'Work order ' + n.wo  + '.' : '';
-    var opNum   = n.op  ? 'Operation ' + n.op + '.' : '';
-    var detail  = n.detail ? n.detail + '.' : '';
+    var type = n.type || 'yellow';
+    var urgent = (type === 'red');
 
-    var lines = {
-      blue: [ // Pending WO — needs setup
-        'Attention shop floor! ' + op + ' on ' + machine + ' has a job ready for setup. ' + wo + ' ' + opNum + ' Tooling crew — that one is waiting on you.',
-        'New setup request from ' + machine + '. ' + op + ' is ready to run. ' + wo + ' Get that machine cutting!',
-        'Setup needed on ' + machine + ' for ' + op + '. ' + wo + ' ' + opNum + ' Tooling — you are up. Go!',
-      ],
-      yellow: [ // Machinist request — needs something
-        'Quick heads up — ' + op + ' at ' + machine + ' needs something. ' + detail + ' ' + wo + ' Someone go help keep that machine running.',
-        machine + " calling for assistance. " + op + " says: " + detail + " Get them what they need!",
-        'Tooling shoutout — ' + machine + ' needs ' + detail + ' Operator ' + op + ' is waiting. ' + wo,
-      ],
-      orange: [ // Floor support
-        'Floor support needed at ' + machine + '! ' + op + ' is calling for help. ' + detail + ' Go check them out.',
-        'Hey floor support — ' + machine + ' needs you right now. ' + op + ' is waiting. ' + detail,
-      ],
-      red: [ // Inspection
-        'Quality team — inspection request from ' + machine + '. ' + op + ' has parts ready to check. ' + wo + ' Go take a look.',
-        'Heads up quality — ' + machine + ' has parts waiting for inspection. ' + op + '. ' + wo,
-      ],
+    // Build context for Claude
+    var typeDesc = {
+      blue: 'setup request — operator has a job ready but needs tooling crew to come set up the machine',
+      yellow: 'machinist assistance request — operator needs something to keep running',
+      orange: 'floor support request — operator needs general floor support',
+      red: 'URGENT quality inspection request — operator has parts ready for quality check'
+    }[type] || 'floor request';
+
+    var context = [
+      'Machine: ' + machine,
+      n.operator ? 'Operator: ' + n.operator.split(' ')[0] : '',
+      'Request type: ' + typeDesc,
+      n.wo     ? 'Work order: ' + n.wo : '',
+      n.op     ? 'Operation: ' + n.op : '',
+      n.detail ? 'Details: ' + n.detail : '',
+    ].filter(Boolean).join('\n');
+
+    // Fallback lines while API loads
+    var fallbacks = {
+      blue:   machine + ' has a setup request. Tooling crew — you are up!',
+      yellow: machine + ' needs assistance. ' + (n.detail || 'Go check them out!'),
+      orange: 'Floor support to ' + machine + ' — ' + (n.operator ? n.operator.split(' ')[0] : 'operator') + ' needs you.',
+      red:    'Quality team to ' + machine + ' — inspection request waiting. Go now!',
     };
 
-    var type = n.type || 'yellow';
-    var pool = lines[type] || lines.yellow;
-    _djSay(_pick(pool), type === 'red');
+    // Speak fallback immediately for urgent, then upgrade with AI
+    if (urgent) _djSay(fallbacks.red, true);
+
+    try {
+      var response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 180,
+          system: `You are Jim, the live PA announcer at Hill Manufacturing CNC shop. Announce the floor request in 1-2 punchy sentences. Be direct, energetic, and specific. For red/inspection requests, be URGENT. For blue/setup, call out the tooling crew. For yellow/orange, call for whoever can help. Use the machine name. Do not include sound effects or stage directions.`,
+          messages: [{ role: 'user', content: 'Announce this floor request:\n\n' + context }]
+        })
+      });
+      var data = await response.json();
+      var script = data.content && data.content[0] && data.content[0].text ? data.content[0].text.trim() : null;
+      if (script) _djSay(script, urgent);
+      else if (!urgent) _djSay(fallbacks[type] || fallbacks.yellow, false);
+    } catch(e) {
+      if (!urgent) _djSay(fallbacks[type] || fallbacks.yellow, false);
+    }
   };
 
-  // ── ANNOUNCE: SETUP STARTED (admin hit START) ─────────────
-  window._djAnnounceStart = function(n) {
+  // ── AI-POWERED ANNOUNCE: SETUP STARTED ────────────────────
+  window._djAnnounceStart = async function(n) {
     if (!n) return;
     var machine = _mn(n.machine);
-    var op      = n.operator ? n.operator.split(' ')[0] : 'the operator';
-    var wo      = n.wo  ? 'work order ' + n.wo  : 'your job';
-    var opNum   = n.op  ? ', operation ' + n.op  : '';
-
-    var lines = [
-      machine + ' — your setup is on the way. Miguel is headed over right now with ' + wo + opNum + '. ' + op + ', get ready to run!',
-      'Good news for ' + machine + ' — setup is in progress for ' + wo + opNum + '. Miguel is on the clock. ' + op + ', stand by!',
-      "Timer is running! Miguel just started setup on " + machine + " for " + wo + opNum + ". " + op + " you will be cutting soon!",
-      'Shoutout to ' + op + ' on ' + machine + ' — your setup for ' + wo + ' just kicked off. We are on it!',
-      machine + ', your setup has started. ' + wo + opNum + '. Clock is ticking — Miguel is moving. ' + op + ' — stay ready!',
-    ];
-
-    _djSay(_pick(lines), false);
+    var op  = n.operator ? n.operator.split(' ')[0] : 'the operator';
+    var wo  = n.wo  ? 'work order ' + n.wo  : 'the job';
+    var context = 'Machine: ' + machine + '\nOperator: ' + op + '\n' + (n.wo ? 'Work order: ' + n.wo + '\n' : '') + (n.op ? 'Operation: ' + n.op + '\n' : '') + 'Status: Setup just started — Miguel is headed over now.';
+    try {
+      var response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 150,
+          system: 'You are Jim, live PA announcer at Hill Manufacturing CNC shop. Announce that setup has started on a machine. Miguel handles setups. Be encouraging and energetic. 1-2 sentences. Mention the machine and operator.',
+          messages: [{ role: 'user', content: 'Announce setup started:\n\n' + context }]
+        })
+      });
+      var data = await response.json();
+      var script = data.content && data.content[0] && data.content[0].text ? data.content[0].text.trim() : null;
+      _djSay(script || machine + ' — setup is on the way. Miguel is moving. ' + op + ', get ready to run!', false);
+    } catch(e) {
+      _djSay(machine + ' — setup underway! Miguel is on it. ' + op + ', stand by to run!', false);
+    }
   };
 
-  // ── ANNOUNCE: PENDING REQUESTS (no one has started) ───────
-  window._djAnnouncePending = function(n) {
-    window._djAnnounceNew(n); // same as new for now — pending IS a new request
-  };
+  // ── ANNOUNCE: PENDING (same as new) ───────────────────────
+  window._djAnnouncePending = function(n) { window._djAnnounceNew(n); };
 
-  // ── ANNOUNCE: COMMENT IN LIVE FEED ───────────────────────
-  window._djAnnounceComment = function(noteId, text, machine, wo, author) {
+  // ── AI-POWERED ANNOUNCE: COMMENT IN LIVE FEED ─────────────
+  window._djAnnounceComment = async function(noteId, text, machine, wo, author) {
     if (!text || text.length < 3) return;
     var machineName = _mn(machine);
     var isAdmin = !!(window._isAdmin || window.currentUser === 'hilladmin');
-
-    var lines;
-    if (isAdmin) {
-      lines = [
-        "Message for " + machineName + ". Miguel says: " + text,
-        "Hey " + machineName + ", update from Miguel. He says: " + text,
-        machineName + ", Miguel just sent you a message: " + text + " Keep it moving!",
-        "Quick message to " + machineName + " from Miguel. " + text,
-      ];
-    } else {
-      var name = author ? author.split(' ')[0] : 'your operator';
-      lines = [
-        "Update from " + machineName + ". " + name + " says: " + text,
-        name + " at " + machineName + " just sent a message: " + text,
-        "Heads up. " + machineName + " operator " + name + " says: " + text,
-      ];
+    var sender = isAdmin ? 'Miguel' : (author ? author.split(' ')[0] : 'the operator');
+    var context = 'Machine: ' + machineName + '\nSender: ' + sender + '\nMessage: ' + text + (wo ? '\nWork order: ' + wo : '');
+    try {
+      var response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 120,
+          system: 'You are Jim, live PA announcer at Hill Manufacturing. Relay this shop floor message in 1-2 natural sentences. Read the message naturally as an update. Be brief and clear.',
+          messages: [{ role: 'user', content: 'Relay this floor message:\n\n' + context }]
+        })
+      });
+      var data = await response.json();
+      var script = data.content && data.content[0] && data.content[0].text ? data.content[0].text.trim() : null;
+      _djSay(script || sender + ' says for ' + machineName + ': ' + text, false);
+    } catch(e) {
+      _djSay('Message for ' + machineName + '. ' + sender + ' says: ' + text, false);
     }
-
-    _djSay(_pick(lines), false);
   };
 
 })();
