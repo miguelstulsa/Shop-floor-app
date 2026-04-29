@@ -10985,76 +10985,59 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════ -->
-<!-- ── MUSIC PLAYER PAGE ──────────────────────────────────── -->
+<!-- ── HILL RADIO — DJ CONTROL PANEL ──────────────────────── -->
 <!-- ═══════════════════════════════════════════════════════════ -->
 <div id="page-music" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
 
-  <!-- Install Banner -->
-  <div id="music-install-banner" style="display:none;background:linear-gradient(135deg,#0f2744,#1a3a6a);border-bottom:1px solid rgba(96,165,250,0.3);padding:14px 16px;">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="font-size:22px;">&#128241;</span>
-      <div style="flex:1;min-width:200px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#60a5fa;letter-spacing:1px;">INSTALL FOR BACKGROUND MUSIC</div>
-        <div style="font-size:11px;color:#475569;">Music stops when screen locks in browser. Install the app to keep it playing in your pocket.</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button onclick="window._showInstallSteps()" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border:none;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;">HOW TO INSTALL</button>
-        <button id="pwa-install-btn" style="display:none;background:linear-gradient(135deg,#166534,#22c55e);border:none;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;">&#8659; INSTALL</button>
-        <button onclick="window._dismissInstallBanner()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:11px;">Done</button>
-      </div>
-    </div>
-    <div id="install-steps-box" style="display:none;margin-top:10px;background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;font-size:11px;color:#94a3b8;line-height:1.8;">
-      <strong style="color:#60a5fa;">iPhone:</strong> Tap Share &#9633;&#8599; → Add to Home Screen → Add<br>
-      <strong style="color:#60a5fa;">Android:</strong> Tap Menu &#8942; in Chrome → Add to Home Screen → Install
-    </div>
+
+  <!-- Hidden YouTube iframe — audio engine (1×1, invisible) -->
+  <div style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;top:0;left:0;">
+    <iframe id="yt-engine" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="width:1px;height:1px;"></iframe>
   </div>
 
-  <!-- YouTube Player Embed (hidden iframe) -->
-  <div id="yt-player-wrap" style="display:none;">
-    <iframe id="yt-iframe" width="100%" height="200" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="display:block;"></iframe>
-  </div>
+  <div style="padding:20px 16px 100px;">
 
-  <!-- Now Playing Bar -->
-  <div id="yt-now-playing-bar" style="display:none;background:linear-gradient(90deg,#0a1525,#0d1f35);border-bottom:1px solid rgba(245,197,0,0.2);padding:12px 16px;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div id="yt-thumb" style="width:48px;height:48px;border-radius:8px;background:#1e3a5f;flex-shrink:0;overflow:hidden;">
-        <img id="yt-thumb-img" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div id="yt-track-name" style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#f5c842;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Nothing playing</div>
-        <div id="yt-track-genre" style="font-size:10px;color:#475569;letter-spacing:1px;">HILL SHOP MUSIC</div>
-      </div>
-      <button id="yt-stop-btn" onclick="window._ytStop()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">&#9632; STOP</button>
-    </div>
-  </div>
-
-  <div style="padding:16px;">
     <!-- Header -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#f5c842;letter-spacing:2px;">&#127925; SHOP MUSIC</div>
-        <div style="font-size:11px;color:#475569;letter-spacing:1px;">Powered by YouTube — no account needed</div>
-      </div>
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:#f5c842;letter-spacing:3px;">🎙 HILL RADIO</div>
+      <div style="font-size:11px;color:#475569;letter-spacing:2px;text-transform:uppercase;">Jim announces every track. Jim's got the mic.</div>
     </div>
 
-    <!-- ── SHOP DJ PANEL ── -->
-    <div style="background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:16px;padding:18px;margin-bottom:20px;position:relative;overflow:hidden;">
+    <!-- Now Playing -->
+    <div id="radio-now-playing" style="display:none;background:linear-gradient(135deg,#0a1a0a,#0d2210);border:1px solid rgba(34,197,94,0.4);border-radius:16px;padding:18px;margin-bottom:20px;">
+      <div style="font-size:10px;color:#4ade80;letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;">▶ NOW PLAYING</div>
+      <div id="radio-playlist-name" style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#64748b;letter-spacing:2px;margin-bottom:2px;">—</div>
+      <div id="radio-track-name" style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5c842;letter-spacing:1.5px;line-height:1.2;margin-bottom:4px;">—</div>
+      <div id="radio-track-artist" style="font-size:12px;color:#64748b;">—</div>
+      <!-- Progress dots -->
+      <div id="radio-track-dots" style="display:flex;gap:5px;margin-top:12px;flex-wrap:wrap;"></div>
+    </div>
+
+    <!-- Playlist Cards -->
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#f5c842;letter-spacing:2px;margin-bottom:12px;">📻 CHOOSE YOUR PLAYLIST</div>
+    <div id="playlist-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px;"></div>
+
+    <!-- Controls row -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:28px;">
+      <button id="radio-skip-btn" onclick="window._radioSkip()" style="display:none;background:rgba(245,197,0,0.12);border:1px solid rgba(245,197,0,0.4);color:#f5c842;border-radius:10px;padding:10px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">⏭ SKIP TRACK</button>
+      <button id="radio-stop-btn" onclick="window._radioStop()" style="display:none;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:10px;padding:10px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">⏹ STOP</button>
+    </div>
+
+    <!-- DJ Panel -->
+    <div style="background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:16px;padding:18px;position:relative;overflow:hidden;">
       <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(139,92,246,0.2),transparent);pointer-events:none;"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <div style="font-size:32px;">&#127897;</div>
-        <div style="flex:1;">
+        <div style="font-size:28px;">🎙</div>
+        <div>
           <div style="display:flex;align-items:center;gap:8px;">
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#c4b5fd;letter-spacing:2px;">HILL SHOP DJ</div>
-            <span id="dj-live-badge" style="display:none;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);border-radius:999px;padding:2px 8px;font-size:9px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;animation:pulse 2s infinite;">&#11044; ON AIR</span>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#c4b5fd;letter-spacing:2px;">JIM — SHOP DJ</div>
+            <span id="dj-live-badge" style="display:none;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);border-radius:999px;padding:2px 8px;font-size:9px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;animation:pulse 2s infinite;">● ON AIR</span>
           </div>
-          <div style="font-size:10px;color:#6d28d9;letter-spacing:1px;">Reads your live shop floor data out loud</div>
+          <div style="font-size:10px;color:#6d28d9;letter-spacing:1px;">Floor reports · Live shoutouts · Track intros</div>
         </div>
       </div>
-      <div style="font-size:11px;color:#7c3aed;line-height:1.6;margin-bottom:14px;background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;">
-        DJ reads machine utilization, pending jobs, machinist requests, and hype lines — live from your floor — between songs. Sounds like a real radio DJ.
-      </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
-        <button id="dj-toggle-btn" onclick="window._djToggle()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:10px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;">&#127897; ACTIVATE DJ</button>
+        <button id="dj-toggle-btn" onclick="window._djToggle()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:10px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;">🎙 ACTIVATE DJ</button>
         <button onclick="window._djNow()" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:10px;padding:10px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">SPEAK NOW</button>
         <div style="display:flex;align-items:center;gap:6px;margin-left:4px;">
           <div style="font-size:10px;color:#6d28d9;white-space:nowrap;">Every</div>
@@ -11069,271 +11052,350 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       </div>
     </div>
 
-    <!-- Search Bar -->
-    <div style="display:flex;gap:8px;margin-bottom:20px;">
-      <input id="yt-search-input" type="text" placeholder="Search any music, genre, artist... (e.g. Classic Rock 24/7)" maxlength="100"
-        style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(245,197,0,0.3);border-radius:10px;padding:12px 14px;color:#f0f4f8;font-size:14px;outline:none;"
-        onkeydown="if(event.key==='Enter') window._ytSearch();">
-      <button onclick="window._ytSearch()" style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#000;border-radius:10px;padding:12px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;white-space:nowrap;">SEARCH</button>
-    </div>
-
-    <!-- Quick Genre Buttons -->
-    <div style="margin-bottom:20px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#f5c842;letter-spacing:2px;margin-bottom:10px;">&#9889; QUICK PLAY BY GENRE</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="genre-buttons"></div>
-    </div>
-
-    <!-- Search Results -->
-    <div id="yt-results-section" style="display:none;margin-bottom:20px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#f5c842;letter-spacing:2px;margin-bottom:10px;">SEARCH RESULTS</div>
-      <div id="yt-results" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
-    </div>
-
-    <!-- Saved Favorites -->
-    <div style="margin-bottom:80px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#f5c842;letter-spacing:2px;">&#9733; SHOP FAVORITES</div>
-        <div style="font-size:10px;color:#334155;">Tap &#9733; on any result to save</div>
-      </div>
-      <div id="yt-favorites" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
-      <div id="yt-fav-empty" style="text-align:center;padding:20px;color:#334155;font-size:12px;">No favorites saved yet.<br>Search for music and tap &#9733; to save it here.</div>
-    </div>
   </div>
 </div>
 
-<!-- Mini Music Bar (sticks to bottom when playing) -->
-<div id="music-mini-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9990;background:linear-gradient(90deg,#0a1525,#0d1f35);border-top:1px solid rgba(245,197,0,0.3);padding:8px 16px;align-items:center;gap:12px;">
+<!-- Mini Radio Bar (fixed bottom when playing) -->
+<div id="radio-mini-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9990;background:linear-gradient(90deg,#0a1525,#0d1f35);border-top:2px solid rgba(245,197,0,0.4);padding:8px 16px;align-items:center;gap:12px;flex-shrink:0;">
+  <div style="font-size:16px;">🎵</div>
   <div style="flex:1;min-width:0;">
-    <div id="mini-track-name" style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#f5c842;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Nothing playing</div>
-    <div style="font-size:9px;color:#475569;letter-spacing:1px;">HILL SHOP MUSIC</div>
+    <div id="mini-radio-name" style="font-family:'Bebas Neue',sans-serif;font-size:12px;color:#f5c842;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Hill Radio</div>
+    <div style="font-size:9px;color:#475569;letter-spacing:1px;">JIM'S SHOP RADIO</div>
   </div>
-  <button onclick="window._ytStop()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;white-space:nowrap;">&#9632; STOP</button>
-  <button onclick="window.switchTab('music')" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c842;border-radius:6px;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">OPEN</button>
+  <button onclick="window._radioSkip()" style="background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.3);color:#f5c842;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:0.5px;">⏭</button>
+  <button onclick="window._radioStop()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">⏹</button>
+  <button onclick="window.switchTab('music')" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c842;border-radius:6px;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;">OPEN</button>
 </div>
 
 <script>
 (function(){
-  // ── GENRES ─────────────────────────────────────────────────
-  var GENRES = [
-    { label:'&#127928; Classic Rock', q:'classic rock radio 24/7 mix' },
-    { label:'&#127917; Country',      q:'country music 24/7 radio stream' },
-    { label:'&#127911; Hip Hop',      q:'hip hop rap music 24/7 mix' },
-    { label:'&#127881; 80s Hits',     q:'80s hits music 24/7 nonstop' },
-    { label:'&#11088; Pop Hits',      q:'pop hits 2024 2025 nonstop mix' },
-    { label:'&#9889; Metal',          q:'heavy metal rock music 24/7' },
-    { label:'&#127926; R&B Soul',     q:'rnb soul music 24/7 radio' },
-    { label:'&#127927; Jazz',         q:'smooth jazz music 24/7 radio' },
-    { label:'&#127974; Reggae',       q:'reggae music 24/7 radio' },
-    { label:'&#127908; Blues',        q:'blues music 24/7 radio' },
-    { label:'&#127995; Latin',        q:'latin music 24/7 mix radio' },
-    { label:'&#128170; Workout',      q:'workout motivation music mix' },
-    { label:'&#127869; Chill',        q:'chill lofi hip hop radio 24/7' },
-    { label:'&#127963; Country Road', q:'country road trip music mix' },
+
+  // ══════════════════════════════════════════════════════════
+  // HILL RADIO — INDIVIDUAL TRACK PLAYLIST ENGINE
+  // Jim announces each song by name, then it plays.
+  // Auto-starts on first user interaction. Loops forever.
+  // ══════════════════════════════════════════════════════════
+
+  var PLAYLISTS = [
+    {
+      id: 'alt90s',
+      emoji: '🎸',
+      name: '90s Alternative',
+      color: '#ef4444',
+      border: 'rgba(239,68,68,0.5)',
+      bg: 'linear-gradient(135deg,#1a0000,#2d0808)',
+      tracks: [
+        { id: 'hTWKbfoikeg', title: 'Smells Like Teen Spirit', artist: 'Nirvana' },
+        { id: 'oVME_l4IwII', title: 'Black',                  artist: 'Pearl Jam' },
+        { id: 'yRuzml5hpxE', title: 'Black Hole Sun',         artist: 'Soundgarden' },
+        { id: '1lyu1KKwC74', title: 'Bullet with Butterfly Wings', artist: 'Smashing Pumpkins' },
+        { id: 'LHQqqM5sr7g', title: 'Buddy Holly',            artist: 'Weezer' },
+        { id: 'DInYaHVSLvc', title: 'Come As You Are',        artist: 'Nirvana' },
+        { id: 'NU9JoFKlaZ0', title: 'Even Flow',              artist: 'Pearl Jam' },
+        { id: 'bFfJFKwC5Fo', title: 'Today',                  artist: 'Smashing Pumpkins' },
+        { id: '5IsSpAOD6K8', title: 'Everlong',               artist: 'Foo Fighters' },
+        { id: 'jYjML-2bkMg', title: 'Spoonman',               artist: 'Soundgarden' },
+        { id: 'L05uLbm6gfQ', title: 'Semi-Charmed Life',      artist: 'Third Eye Blind' },
+        { id: 'TU6-BBbHG7g', title: 'What I Got',             artist: 'Sublime' },
+        { id: '8oKoFGqBUhE', title: 'No Rain',                artist: 'Blind Melon' },
+        { id: 'r9uOSVNw3sQ', title: 'Say It Ain\'t So',       artist: 'Weezer' },
+        { id: 'waAlgFAzYkE', title: 'In Bloom',               artist: 'Nirvana' },
+        { id: 'FfegL8PBjXI', title: 'Jeremy',                 artist: 'Pearl Jam' },
+        { id: 'CdqoNKCCt7A', title: 'Learn to Fly',           artist: 'Foo Fighters' },
+        { id: 'ABVHPzqvHSw', title: 'Glycerine',              artist: 'Bush' },
+        { id: '9Rx_lEi8tVU', title: 'All Star',               artist: 'Smash Mouth' },
+        { id: 'I_8APQGgO94', title: 'Hand in My Pocket',      artist: 'Alanis Morissette' },
+      ]
+    },
+    {
+      id: 'hiphop',
+      emoji: '🎤',
+      name: 'Commercial Hip-Hop',
+      color: '#f59e0b',
+      border: 'rgba(245,158,11,0.5)',
+      bg: 'linear-gradient(135deg,#1a1000,#2d1d00)',
+      tracks: [
+        { id: 'RBK2KKOPKNE', title: 'HUMBLE.',                artist: 'Kendrick Lamar' },
+        { id: 'uelHwf8o7_U', title: 'God\'s Plan',            artist: 'Drake' },
+        { id: 'US-8_I-i9MA', title: 'Sicko Mode',             artist: 'Travis Scott' },
+        { id: 'W76pHK2hKBQ', title: 'Rockstar',               artist: 'Post Malone ft. 21 Savage' },
+        { id: 'Yvbf6Ou7K8w', title: 'All Falls Down',         artist: 'Kanye West' },
+        { id: 'xpJYYXen-34', title: 'Lucid Dreams',           artist: 'Juice WRLD' },
+        { id: 'QVJ_BnAu7xI', title: 'WAP',                   artist: 'Cardi B ft. Megan Thee Stallion' },
+        { id: 'tSBfhLXjSZw', title: 'Lollipop',              artist: 'Lil Wayne' },
+        { id: 'Tv1pXTHaBEU', title: 'New York State of Mind', artist: 'Jay-Z' },
+        { id: 'eCyAkCYzaXs', title: 'Money in the Grave',     artist: 'Drake' },
+        { id: 'A0WFkuCb_e4', title: 'Mask Off',              artist: 'Future' },
+        { id: 'T6j4F8cTTgU', title: 'Congratulations',        artist: 'Post Malone' },
+        { id: 'pKkdxXH3UKU', title: 'Mo Bamba',              artist: 'Sheck Wes' },
+        { id: 'N91YCYVtqBM', title: 'We Are Young',          artist: 'Fun.' },
+        { id: '3FjUbMb8Rvk', title: 'Lose Yourself',         artist: 'Eminem' },
+        { id: '4JkIs37a2JE', title: 'Rap God',               artist: 'Eminem' },
+        { id: '3GwjfUFyY6M', title: 'Clique',                artist: 'Kanye West' },
+        { id: 'yoPQE4EUNKw', title: 'XO Tour Llif3',         artist: 'Lil Uzi Vert' },
+        { id: 'QgaALEfkYok', title: 'Middle Child',          artist: 'J. Cole' },
+        { id: 'bGYGmgkHkdo', title: 'The Box',               artist: 'Roddy Ricch' },
+      ]
+    }
   ];
 
-  var _favorites   = [];
-  var _currentVid  = null;
-  var _ytApiReady  = false;
-  var _ytPlayer    = null;
-  var _playerState = 'stopped'; // stopped | playing
+  var _curPlaylist  = null;
+  var _curIdx       = 0;
+  var _playing      = false;
+  var _announcing   = false;   // true while Jim is speaking the intro
+  var _autoStartDone = false;
 
-  // ── RENDER GENRE BUTTONS ───────────────────────────────────
-  function _renderGenres() {
-    var container = document.getElementById('genre-buttons');
-    if (!container) return;
-    container.innerHTML = GENRES.map(function(g) {
-      return '<button onclick="window._ytQuickPlay('+JSON.stringify(g.q)+')" '
-        +'style="background:rgba(13,31,53,0.9);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;border-radius:999px;padding:8px 14px;cursor:pointer;font-size:12px;white-space:nowrap;">'
-        +g.label+'</button>';
+  // ── RENDER PLAYLIST CARDS ─────────────────────────────────
+  function _render() {
+    var grid = document.getElementById('playlist-grid');
+    if (!grid) return;
+    grid.innerHTML = PLAYLISTS.map(function(pl) {
+      var trackCount = pl.tracks.length;
+      return '<div onclick="window._radioPlay(\''+pl.id+'\')" '
+        +'id="pl-card-'+pl.id+'" '
+        +'style="background:'+pl.bg+';border:2px solid '+pl.border+';border-radius:14px;padding:16px;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;">'
+        +'<div style="font-size:28px;margin-bottom:6px;">'+pl.emoji+'</div>'
+        +'<div style="font-family:Bebas Neue,sans-serif;font-size:16px;color:#f5c842;letter-spacing:1.5px;line-height:1.2;margin-bottom:4px;">'+pl.name+'</div>'
+        +'<div style="font-size:9px;color:#64748b;line-height:1.4;">'+trackCount+' tracks · Jim announces each one</div>'
+        +'<div id="pl-on-'+pl.id+'" style="display:none;position:absolute;top:8px;right:8px;background:rgba(34,197,94,0.2);border:1px solid #22c55e;border-radius:999px;padding:2px 7px;font-size:8px;color:#4ade80;letter-spacing:1px;font-family:Bebas Neue,sans-serif;">▶ ON</div>'
+        +'</div>';
     }).join('');
   }
 
-  // ── YOUTUBE SEARCH via oEmbed + search redirect ────────────
-  // We use YouTube's iframe embed directly with search queries
-  // This is the most reliable CORS-free approach
-  window._ytQuickPlay = function(query) {
-    _playYouTubeSearch(query, query.split(' ').slice(0,3).join(' '));
+  // ── PLAY A PLAYLIST ───────────────────────────────────────
+  window._radioPlay = function(plId) {
+    var pl = PLAYLISTS.find(function(p){ return p.id === plId; });
+    if (!pl) return;
+
+    // If same playlist is already playing, do nothing
+    if (_playing && _curPlaylist && _curPlaylist.id === plId) return;
+
+    _curPlaylist = pl;
+    _curIdx      = 0;
+    _playing     = true;
+
+    _updateUI();
+    _playTrack(_curIdx, true /* isFirst */);
   };
 
-  window._ytSearch = function() {
-    var input = document.getElementById('yt-search-input');
-    var q = (input ? input.value : '').trim();
-    if (!q) { if(window.showToast) window.showToast('yellow','Enter a search','Type an artist, genre, or song'); return; }
-    _playYouTubeSearch(q, q);
-  };
+  // ── PLAY A SPECIFIC TRACK (with Jim intro) ────────────────
+  function _playTrack(idx, isFirst) {
+    if (!_curPlaylist) return;
 
-  function _playYouTubeSearch(query, displayName) {
-    // Use YouTube's search embed — plays the top result for a query
-    // This is 100% CORS-free, no API key needed
-    var searchQuery = encodeURIComponent(query + ' 24/7 radio music');
-    var embedUrl = 'https://www.youtube.com/embed?listType=search&list='
-      + searchQuery
-      + '&autoplay=1&controls=1&modestbranding=1&rel=0';
+    // Wrap around
+    if (idx >= _curPlaylist.tracks.length) idx = 0;
+    _curIdx = idx;
 
-    _loadEmbed(embedUrl, displayName, query);
-  }
+    var track = _curPlaylist.tracks[_curIdx];
 
-  window._ytPlayVideo = function(videoId, title) {
-    var embedUrl = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&controls=1&modestbranding=1&rel=0';
-    _loadEmbed(embedUrl, title, title);
-    _currentVid = { id: videoId, title: title };
-  };
-
-  function _loadEmbed(url, displayName, query) {
-    // Show the iframe
-    var wrap = document.getElementById('yt-player-wrap');
-    var iframe = document.getElementById('yt-iframe');
-    if (!wrap || !iframe) return;
-
-    iframe.src = url;
-    wrap.style.display = 'block';
-
-    // Update UI
-    _playerState = 'playing';
-    _currentVid  = { title: displayName, query: query };
-
-    document.getElementById('yt-track-name').textContent = displayName;
-    document.getElementById('yt-track-genre').textContent = 'YouTube Music';
-
-    var nowBar = document.getElementById('yt-now-playing-bar');
-    if (nowBar) nowBar.style.display = 'block';
-
-    // Show mini bar
-    var mini = document.getElementById('music-mini-bar');
-    var miniName = document.getElementById('mini-track-name');
-    if (mini) mini.style.display = 'flex';
-    if (miniName) miniName.textContent = displayName;
-
-    if (window.showToast) window.showToast('green', '&#9654; Now Playing', displayName);
-  }
-
-  window._ytStop = function() {
-    var iframe = document.getElementById('yt-iframe');
-    var wrap   = document.getElementById('yt-player-wrap');
-    var nowBar = document.getElementById('yt-now-playing-bar');
-    var mini   = document.getElementById('music-mini-bar');
-    if (iframe) iframe.src = '';
-    if (wrap)   wrap.style.display   = 'none';
-    if (nowBar) nowBar.style.display = 'none';
-    if (mini)   mini.style.display   = 'none';
-    _playerState = 'stopped';
-    _currentVid  = null;
-  };
-
-  // ── FAVORITES ──────────────────────────────────────────────
-  function _loadFavorites() {
-    try { _favorites = JSON.parse(localStorage.getItem('hillMusicFavs') || '[]'); } catch(e) { _favorites = []; }
-    _renderFavorites();
-  }
-
-  function _saveFavorites() {
-    localStorage.setItem('hillMusicFavs', JSON.stringify(_favorites));
-    // Also save to Firebase so everyone shares favorites
-    var db2 = window.fbDb, mods = window.fbFirestore;
-    if (db2 && mods) {
-      mods.setDoc(mods.doc(db2, 'hillSettings', 'musicFavs'), { favs: _favorites })
-        .catch(function(){});
+    // Build Jim's announcement
+    var intros = [
+      'Up next on Hill Radio — ' + track.title + ' by ' + track.artist + '. Let\'s go!',
+      'Coming at you now — ' + track.title + ', ' + track.artist + '. Hill Manufacturing, stay locked in!',
+      'This one goes out to the floor — ' + track.title + ' by ' + track.artist + '!',
+      'Hill Fam, you know what time it is — ' + track.title + ', ' + track.artist + '. Let\'s run it!',
+      'Next up, ' + track.artist + ' with ' + track.title + '. Keep those machines moving!',
+    ];
+    if (isFirst) {
+      intros = [
+        'Hill Manufacturing — Jim\'s got the mic and the music! Kicking off with ' + track.title + ' by ' + track.artist + '. Let\'s BUILD!',
+        'The ' + _curPlaylist.name + ' playlist is LIVE! First track — ' + track.title + ' by ' + track.artist + '. Hill Fam, let\'s go!',
+      ];
     }
-  }
+    var line = intros[Math.floor(Math.random() * intros.length)];
 
-  window._ytFavorite = function(query, label) {
-    var exists = _favorites.some(function(f){ return f.query === query; });
-    if (exists) {
-      _favorites = _favorites.filter(function(f){ return f.query !== query; });
-      if(window.showToast) window.showToast('yellow','Removed','Removed from Shop Favorites');
-    } else {
-      _favorites.unshift({ query: query, label: label, id: 'fav'+Date.now() });
-      if(window.showToast) window.showToast('green','&#9733; Saved!','Added to Shop Favorites');
-    }
-    _saveFavorites();
-    _renderFavorites();
-  };
+    _updateTrackUI(track);
+    _updateDots();
 
-  function _renderFavorites() {
-    var container = document.getElementById('yt-favorites');
-    var empty     = document.getElementById('yt-fav-empty');
-    if (!container) return;
-    if (empty) empty.style.display = _favorites.length ? 'none' : 'block';
-    container.innerHTML = _favorites.map(function(f) {
-      return _makeCard(f.query, f.label, true);
-    }).join('');
-  }
-
-  function _makeCard(query, label, isFav) {
-    var short = label.length > 22 ? label.slice(0,22)+'...' : label;
-    return '<div style="background:rgba(13,31,53,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;cursor:pointer;position:relative;" '
-      +'onclick="window._ytQuickPlay('+JSON.stringify(query)+')">'
-      +'<div style="font-size:26px;margin-bottom:6px;">&#127925;</div>'
-      +'<div style="font-family:Bebas Neue,sans-serif;font-size:13px;color:#f5d050;letter-spacing:1px;line-height:1.3;margin-bottom:6px;">'+short+'</div>'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;">'
-        +'<div style="font-size:10px;color:#22c55e;">&#9654; PLAY</div>'
-        +'<button onclick="event.stopPropagation();window._ytFavorite('+JSON.stringify(query)+','+JSON.stringify(label)+');" '
-          +'style="background:none;border:none;color:'+(isFav?'#f5c842':'#334155')+';font-size:16px;cursor:pointer;padding:2px;">&#9733;</button>'
-      +'</div>'
-      +'</div>';
-  }
-
-  // ── INSTALL PROMPT ─────────────────────────────────────────
-  var _deferredInstall = null;
-  window.addEventListener('beforeinstallprompt', function(e) {
-    e.preventDefault();
-    _deferredInstall = e;
-    var btn = document.getElementById('pwa-install-btn');
-    if (btn) btn.style.display = 'block';
-  });
-  document.getElementById('pwa-install-btn') && document.getElementById('pwa-install-btn').addEventListener('click', function(){
-    if (!_deferredInstall) return;
-    _deferredInstall.prompt();
-    _deferredInstall.userChoice.then(function(r){
-      if (r.outcome==='accepted') window._dismissInstallBanner();
-      _deferredInstall = null;
+    // Jim speaks, then music starts
+    _announcing = true;
+    _djSayThen(line, function() {
+      _announcing = false;
+      _loadYT(track.id);
     });
-  });
-  window._showInstallSteps = function() {
-    var box = document.getElementById('install-steps-box');
-    if (box) box.style.display = box.style.display==='none'?'block':'none';
-  };
-  window._dismissInstallBanner = function() {
-    var b = document.getElementById('music-install-banner');
-    if (b) b.style.display = 'none';
-    localStorage.setItem('hillMusicInstallDismissed','1');
-  };
-  function _checkInstallBanner() {
-    var dismissed   = localStorage.getItem('hillMusicInstallDismissed');
-    var isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    var banner = document.getElementById('music-install-banner');
-    if (!banner) return;
-    banner.style.display = (dismissed||isInstalled) ? 'none' : 'block';
   }
 
-  // ── HOOK INTO SWITCHTAB ────────────────────────────────────
+  // ── LOAD YOUTUBE TRACK ────────────────────────────────────
+  function _loadYT(videoId) {
+    var iframe = document.getElementById('yt-engine');
+    if (!iframe) return;
+    // autoplay, no controls, no loop — we advance manually via postMessage polling
+    iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId
+      + '?autoplay=1&mute=0&controls=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=' + encodeURIComponent(location.origin);
+
+    // Poll for end-of-video via YouTube iframe API state changes
+    _pollForEnd(videoId);
+  }
+
+  // ── POLL FOR END OF VIDEO ─────────────────────────────────
+  // YouTube iframe API: listen for postMessage with state=0 (ended)
+  var _endPollTimer = null;
+  var _currentVideoId = null;
+  var _endListenerAdded = false;
+
+  function _pollForEnd(videoId) {
+    _currentVideoId = videoId;
+    clearTimeout(_endPollTimer);
+
+    if (!_endListenerAdded) {
+      _endListenerAdded = true;
+      window.addEventListener('message', function(e) {
+        if (!_playing) return;
+        try {
+          var data = JSON.parse(e.data);
+          // YouTube sends {event:'infoDelivery', info:{playerState:0}} when ended
+          if (data && data.event === 'infoDelivery' && data.info && data.info.playerState === 0) {
+            // Small delay then next track
+            setTimeout(function(){ if (_playing && !_announcing) _advanceTrack(); }, 1500);
+          }
+        } catch(err){}
+      });
+    }
+
+    // Fallback: most songs are under 6 minutes; if no end signal after 7min, advance
+    _endPollTimer = setTimeout(function(){
+      if (_playing && !_announcing) _advanceTrack();
+    }, 7 * 60 * 1000);
+  }
+
+  function _advanceTrack() {
+    if (!_playing || !_curPlaylist) return;
+    var next = _curIdx + 1;
+    if (next >= _curPlaylist.tracks.length) next = 0;
+    _playTrack(next, false);
+  }
+
+  // ── SKIP ─────────────────────────────────────────────────
+  window._radioSkip = function() {
+    if (!_playing) return;
+    clearTimeout(_endPollTimer);
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    _announcing = false;
+    _advanceTrack();
+  };
+
+  // ── STOP ─────────────────────────────────────────────────
+  window._radioStop = function() {
+    _playing     = false;
+    _curPlaylist = null;
+    _announcing  = false;
+    clearTimeout(_endPollTimer);
+    var iframe = document.getElementById('yt-engine');
+    if (iframe) iframe.src = '';
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    _updateUI();
+  };
+
+  // ── SPEAK THEN CALLBACK ───────────────────────────────────
+  function _djSayThen(text, cb) {
+    if (!window.speechSynthesis) { if (cb) setTimeout(cb, 200); return; }
+    window.speechSynthesis.cancel();
+    var utt = new SpeechSynthesisUtterance(text);
+    if (window._djVoice) utt.voice = window._djVoice;
+    utt.rate   = 1.0;
+    utt.pitch  = 0.85;
+    utt.volume = 1;
+    utt.onend  = function(){ if (cb) setTimeout(cb, 400); };
+    utt.onerror = function(){ if (cb) setTimeout(cb, 200); };
+    window.speechSynthesis.speak(utt);
+    // Safety fallback — if speech stalls, proceed anyway
+    var maxWait = Math.max(4000, text.length * 65);
+    var safeTimer = setTimeout(function(){
+      if (_announcing && cb) { _announcing = false; cb(); }
+    }, maxWait);
+    utt.onend = function(){ clearTimeout(safeTimer); if (cb) setTimeout(cb, 400); };
+  }
+
+  // ── UPDATE TRACK UI ───────────────────────────────────────
+  function _updateTrackUI(track) {
+    var el = document.getElementById('radio-playlist-name');
+    if (el && _curPlaylist) el.textContent = _curPlaylist.emoji + ' ' + _curPlaylist.name.toUpperCase();
+    el = document.getElementById('radio-track-name');
+    if (el) el.textContent = track.title;
+    el = document.getElementById('radio-track-artist');
+    if (el) el.textContent = track.artist;
+    // Mini bar
+    var mini = document.getElementById('mini-radio-name');
+    if (mini) mini.textContent = track.title + ' — ' + track.artist;
+  }
+
+  function _updateDots() {
+    var wrap = document.getElementById('radio-track-dots');
+    if (!wrap || !_curPlaylist) return;
+    wrap.innerHTML = _curPlaylist.tracks.map(function(t, i){
+      var active = i === _curIdx;
+      return '<div style="width:'+(active?'22px':'8px')+';height:8px;border-radius:4px;background:'+(active?'#4ade80':'rgba(255,255,255,0.12)')+';transition:all 0.3s;flex-shrink:0;"></div>';
+    }).join('');
+  }
+
+  // ── UPDATE GLOBAL UI ─────────────────────────────────────
+  function _updateUI() {
+    var nowBar  = document.getElementById('radio-now-playing');
+    var stopBtn = document.getElementById('radio-stop-btn');
+    var skipBtn = document.getElementById('radio-skip-btn');
+    var miniBar = document.getElementById('radio-mini-bar');
+
+    if (_playing && _curPlaylist) {
+      if (nowBar)  nowBar.style.display  = 'block';
+      if (stopBtn) stopBtn.style.display = 'inline-block';
+      if (skipBtn) skipBtn.style.display = 'inline-block';
+      if (miniBar) miniBar.style.display = 'flex';
+      // Mark active card
+      PLAYLISTS.forEach(function(pl){
+        var ind  = document.getElementById('pl-on-'+pl.id);
+        var card = document.getElementById('pl-card-'+pl.id);
+        if (ind)  ind.style.display  = (pl.id === _curPlaylist.id) ? 'block' : 'none';
+        if (card) card.style.opacity = (pl.id === _curPlaylist.id) ? '1' : '0.55';
+      });
+    } else {
+      if (nowBar)  nowBar.style.display  = 'none';
+      if (stopBtn) stopBtn.style.display = 'none';
+      if (skipBtn) skipBtn.style.display = 'none';
+      if (miniBar) miniBar.style.display = 'none';
+      PLAYLISTS.forEach(function(pl){
+        var i = document.getElementById('pl-on-'+pl.id);
+        var c = document.getElementById('pl-card-'+pl.id);
+        if (i) i.style.display  = 'none';
+        if (c) c.style.opacity = '1';
+      });
+    }
+  }
+
+  // ── AUTO-START on first user gesture ─────────────────────
+  document.addEventListener('click', function _firstClick() {
+    document.removeEventListener('click', _firstClick);
+    if (!_playing && !_autoStartDone) {
+      _autoStartDone = true;
+      setTimeout(function(){ window._radioPlay('alt90s'); }, 300);
+    }
+  }, { once: true });
+
+  // Also auto-start when user opens the Music tab
   var _origSwitch = window.switchTab;
   window.switchTab = function(tab) {
     if (_origSwitch) _origSwitch(tab);
-    if (tab === 'music') {
-      setTimeout(_checkInstallBanner, 100);
-      // Load Firebase favorites if not loaded yet
-      _loadFavoritesFromFirebase();
+    if (tab === 'music' && !_playing && !_autoStartDone) {
+      _autoStartDone = true;
+      setTimeout(function(){ window._radioPlay('alt90s'); }, 400);
     }
   };
 
-  function _loadFavoritesFromFirebase() {
-    var db2 = window.fbDb, mods = window.fbFirestore;
-    if (!db2 || !mods) { _loadFavorites(); return; }
-    mods.getDoc(mods.doc(db2,'hillSettings','musicFavs')).then(function(snap){
-      if (snap && snap.exists && snap.exists()) {
-        _favorites = snap.data().favs || [];
-        localStorage.setItem('hillMusicFavs', JSON.stringify(_favorites));
-      } else {
-        _loadFavorites();
-      }
-      _renderFavorites();
-    }).catch(function(){ _loadFavorites(); });
-  }
+  // ── VOICE SETUP ──────────────────────────────────────────
+  var _voiceCheck = setInterval(function(){
+    if (!window.speechSynthesis) return;
+    var voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return;
+    var preferred = ['Google US English','Alex','Daniel','Microsoft David','en-US-GuyNeural'];
+    var found = null;
+    preferred.forEach(function(n){ if (!found) found = voices.find(function(v){ return v.name === n; }); });
+    if (!found) found = voices.find(function(v){ return v.lang && v.lang.startsWith('en') && !v.name.toLowerCase().includes('female'); });
+    if (!found) found = voices[0];
+    if (found) { window._djVoice = found; clearInterval(_voiceCheck); }
+  }, 400);
 
-  // ── INIT ───────────────────────────────────────────────────
-  _renderGenres();
-  _loadFavorites();
+  // ── INIT ─────────────────────────────────────────────────
+  _render();
+  _updateUI();
 
 })();
 </script>
@@ -11440,44 +11502,91 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return data;
   }
 
-  // ── JIM: AI-POWERED DJ (Claude API) ──────────────────────
-  var _jimBusy = false; // prevent overlapping API calls
+  // ── JIM: AI-POWERED DJ ───────────────────────────────────
+  var _jimBusy   = false;
+  var _jimTopicIndex = 0; // rotates: 0=requests, 1=weather, 2=sports, 3=requests...
 
-  function _buildJimPrompt(d) {
+  // ── FETCH BROKEN ARROW WEATHER (Open-Meteo, no key needed) ─
+  async function _fetchWeather() {
+    try {
+      // Broken Arrow, OK — lat 36.0526, lon -95.7808
+      var r = await fetch(
+        'https://api.open-meteo.com/v1/forecast?latitude=36.0526&longitude=-95.7808' +
+        '&current=temperature_2m,weathercode,windspeed_10m,relativehumidity_2m' +
+        '&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FChicago'
+      );
+      var j = await r.json();
+      var c = j.current;
+      var code = c.weathercode;
+      // WMO weather code → plain English
+      var cond =
+        code === 0 ? 'clear skies' :
+        code <= 2  ? 'partly cloudy' :
+        code === 3 ? 'overcast' :
+        code <= 49 ? 'foggy' :
+        code <= 57 ? 'drizzly' :
+        code <= 67 ? 'rainy' :
+        code <= 77 ? 'snowy' :
+        code <= 82 ? 'rain showers' :
+        code <= 99 ? 'thunderstorms' : 'mixed conditions';
+      return {
+        temp: Math.round(c.temperature_2m),
+        cond: cond,
+        wind: Math.round(c.windspeed_10m),
+        humidity: Math.round(c.relativehumidity_2m)
+      };
+    } catch(e) { return null; }
+  }
+
+  // ── FETCH NBA PLAYOFF SCORES via Claude web_search tool ───
+  async function _fetchSportsContext() {
+    try {
+      var r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 300,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          system: 'You are a sports data assistant. Search for the most recent NBA playoff game scores and results from today or yesterday. Return ONLY a plain JSON object with this shape: {"games":[{"home":"TeamName","away":"TeamName","homeScore":0,"awayScore":0,"status":"Final or In Progress or Upcoming","note":"any short note like OT or Game 4"}]}. No markdown, no explanation, just the JSON object.',
+          messages: [{ role: 'user', content: 'Get the latest NBA playoff scores right now.' }]
+        })
+      });
+      var j = await r.json();
+      // Find the last text block which should be the JSON answer
+      var txt = '';
+      (j.content || []).forEach(function(b){ if (b.type === 'text') txt = b.text; });
+      txt = txt.replace(/```json|```/g, '').trim();
+      return JSON.parse(txt);
+    } catch(e) { return null; }
+  }
+
+  // ── BUILD FLOOR REQUEST CONTEXT ───────────────────────────
+  function _buildRequestContext(d) {
     var now = new Date();
     var hour = now.getHours();
     var timeOfDay = hour < 10 ? 'morning' : hour < 14 ? 'midday' : hour < 17 ? 'afternoon' : 'evening';
-
-    // Describe machine utilization
-    var machineDesc = '';
-    if (d.machines.length > 0) {
-      var sorted = d.machines.slice().sort(function(a,b){ return b.util - a.util; });
-      var lines = sorted.map(function(m){ return _machineName(m.name) + ' at ' + m.util + '%'; });
-      machineDesc = lines.join(', ');
-    } else {
-      machineDesc = 'No machine utilization data available right now';
-    }
-
-    // Describe active requests
-    var reqDesc = '';
-    if (d.requests.length > 0) {
-      reqDesc = d.requests.map(function(r){
-        return (r.operator ? r.operator.split(' ')[0] : 'Someone') + ' at ' + _machineName(r.machine) + (r.detail ? ' needs: ' + r.detail : ' needs assistance');
-      }).join('; ');
-    }
-
-    var contextParts = [
+    var parts = [
       'Time of day: ' + timeOfDay,
-      'Machines cutting: ' + machineDesc,
-      d.pending > 0    ? d.pending + ' job(s) pending setup (blue flags)' : '',
-      d.inspections > 0 ? d.inspections + ' inspection request(s) waiting (red flags)' : '',
-      reqDesc          ? 'Active floor requests: ' + reqDesc : '',
-      d.running > 0    ? d.running + ' setup(s) currently in progress (green)' : '',
-    ].filter(Boolean).join('\n');
-
-    return contextParts;
+      d.pending     > 0 ? d.pending     + ' setup request(s) waiting — blue flags on the board' : '',
+      d.inspections > 0 ? d.inspections + ' quality inspection request(s) pending — red flags' : '',
+      d.running     > 0 ? d.running     + ' setup(s) currently in progress' : '',
+    ];
+    if (d.requests.length > 0) {
+      d.requests.forEach(function(r){
+        parts.push(
+          'Floor request: ' +
+          (r.operator ? r.operator.split(' ')[0] : 'Someone') +
+          ' at ' + _machineName(r.machine) +
+          (r.detail ? ' needs ' + r.detail : ' needs assistance')
+        );
+      });
+    }
+    var ctx = parts.filter(Boolean).join('\n');
+    return ctx || 'No active floor requests right now. Floor is quiet.';
   }
 
+  // ── MAIN JIM SPEAK ────────────────────────────────────────
   async function _jimSpeak(forceSpeak) {
     if (_jimBusy) return;
     if (!_djActive && !forceSpeak) return;
@@ -11487,37 +11596,79 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     _jimBusy = true;
+    if(window.showToast) window.showToast('blue','🎙 Jim is loading...','');
 
     var d = _getShopData();
-    var shopContext = _buildJimPrompt(d);
 
-    // Show a "Jim is thinking" indicator
-    if(window.showToast) window.showToast('blue','🎙 Jim is on it...','Generating shoutout');
+    // Determine topic this rotation
+    // Priority: if urgent requests exist, always do requests first
+    var hasUrgent = d.pending > 0 || d.inspections > 0 || d.requests.length > 0;
+    var topic;
+    if (hasUrgent && _jimTopicIndex % 2 === 0) {
+      topic = 'requests';
+    } else {
+      // Cycle: requests → weather → sports → requests → ...
+      var topics = ['requests', 'weather', 'sports'];
+      topic = topics[_jimTopicIndex % topics.length];
+    }
+    _jimTopicIndex++;
+
+    var systemPrompt = `You are JIM — the voice of Hill Manufacturing's shop floor PA system in Broken Arrow, Oklahoma. You sound like a fired-up morning radio DJ crossed with a sports commentator. Energy is everything. Every word punches.
+
+STYLE RULES:
+- 2-4 sentences MAX — tight, punchy, radio-ready
+- Vary your openings every time, never start the same way twice
+- Sound like a real person on a live mic, not a script
+- Oklahoma proud — you love Broken Arrow, you know the Thunder, you feel the weather
+- Miguel handles setups on the floor — hype him when relevant
+- NEVER mention Datanomix, machine utilization percentages, or production data
+- No stage directions, no asterisks, just spoken words`;
+
+    var userMsg = '';
+    var extraData = null;
 
     try {
+      if (topic === 'weather') {
+        extraData = await _fetchWeather();
+        if (extraData) {
+          userMsg = 'Give a live weather update for the crew at Hill Manufacturing in Broken Arrow, OK.\n\nCurrent conditions:\n' +
+            'Temperature: ' + extraData.temp + '°F\n' +
+            'Conditions: ' + extraData.cond + '\n' +
+            'Wind: ' + extraData.wind + ' mph\n' +
+            'Humidity: ' + extraData.humidity + '%\n\n' +
+            'Make it feel local and personal. If it\'s hot, tell them to stay hydrated. If storms, heads up for the drive home. Keep it short and fun.';
+        } else {
+          // fallback to requests if weather fails
+          topic = 'requests';
+        }
+      }
+
+      if (topic === 'sports') {
+        extraData = await _fetchSportsContext();
+        if (extraData && extraData.games && extraData.games.length > 0) {
+          var gameLines = extraData.games.map(function(g){
+            return g.away + ' ' + (g.awayScore||0) + ', ' + g.home + ' ' + (g.homeScore||0) + ' — ' + (g.status||'') + (g.note ? ' (' + g.note + ')' : '');
+          }).join('\n');
+          userMsg = 'Give a quick NBA playoff update for the Hill Manufacturing crew in Broken Arrow, OK. Keep it hype and local — the Thunder are their team.\n\nLatest scores:\n' + gameLines + '\n\nMake it punchy. If OKC won, GO CRAZY. If they lost, keep it real but positive. 2-3 sentences max.';
+        } else {
+          // fallback to requests if sports fetch fails
+          topic = 'requests';
+        }
+      }
+
+      if (topic === 'requests') {
+        var ctx = _buildRequestContext(d);
+        userMsg = 'Give a live PA shoutout about what\'s happening on the Hill Manufacturing shop floor RIGHT NOW.\n\nFloor status:\n' + ctx + '\n\nIf there are requests, call out the right people urgently. If it\'s quiet, hype the crew up for the shift. Keep it real, keep it energetic.';
+      }
+
       var response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 350,
-          system: `You are Jim, the enthusiastic shop floor DJ at Hill Manufacturing — a precision CNC machining company. You give live shoutouts over the PA system to keep energy high, communicate floor status, and motivate the crew.
-
-YOUR PERSONALITY:
-- Energetic but professional — like a sports radio DJ who also knows manufacturing
-- You know every machine by name and treat them like team players
-- You hype up good performance, call out slowdowns constructively, relay requests urgently
-- You use phrases like "Hill Manufacturing," "Let's go," "Chips are flying," "spindles turning," "let's ship some parts"
-- You NEVER say anything negative about operators by name — machines are the "players," people are the "crew"
-- Miguel handles setup/tooling — reference him when setup requests are pending
-- Keep it to 2-4 punchy sentences. No filler. Speak like you're live on air.
-- Vary your style each time — sometimes hype, sometimes informational, sometimes urgent
-- Do NOT start every announcement the same way
-- Reference actual machine names and real numbers from the data when available`,
-          messages: [{
-            role: 'user',
-            content: 'Here is the current shop floor status. Generate one live PA announcement:\n\n' + shopContext
-          }]
+          max_tokens: 250,
+          system: systemPrompt,
+          messages: [{ role: 'user', content: userMsg }]
         })
       });
 
@@ -11525,14 +11676,13 @@ YOUR PERSONALITY:
       var script = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text.trim() : null;
 
       if (script) {
-        _speak(script, 0.91, 0.80);
+        _speak(script, 1.02, 0.85);
         if(window.showToast) window.showToast('green','🎙 Jim is ON AIR','');
       } else {
-        // Fallback to a basic line if API fails
         _jimFallback(d);
       }
     } catch(err) {
-      console.warn('Jim API error:', err);
+      console.warn('Jim error:', err);
       _jimFallback(d);
     }
 
@@ -11540,13 +11690,12 @@ YOUR PERSONALITY:
   }
 
   function _jimFallback(d) {
-    // Simple fallback if API is unreachable
     var lines = [
-      "Hill Manufacturing — let's keep those machines cutting and parts shipping. Stay focused, stay safe!",
-      "This is Jim — your shop floor DJ. " + (d.machines.length > 0 ? d.machines.length + " machines running right now. " : "") + "Let's make it count today!",
-      (d.pending > 0 ? "Heads up — " + d.pending + " setup" + (d.pending>1?"s":"") + " pending on the floor. Tooling crew, you're up! " : "") + "Hill Manufacturing, let's go!",
+      "Hill Manufacturing, let's keep those spindles turning and parts shipping. Stay sharp out there!",
+      "This is Jim — " + (d.pending > 0 ? d.pending + ' setup' + (d.pending>1?'s':'') + ' waiting on the board. Tooling crew, you know what to do. ' : '') + "Hill Manufacturing, let's go!",
+      "Broken Arrow's finest shop floor is OPEN for business. Let's get after it, Hill Fam!",
     ];
-    _speak(lines[Math.floor(Math.random()*lines.length)], 0.91, 0.80);
+    _speak(lines[Math.floor(Math.random()*lines.length)], 1.02, 0.85);
   }
 
   // ── TRIGGER DJ ────────────────────────────────────────────
@@ -11622,8 +11771,8 @@ YOUR PERSONALITY:
     _synth.cancel();
     var utt = new SpeechSynthesisUtterance(text);
     utt.voice  = _voice;
-    utt.rate   = 0.92;
-    utt.pitch  = 0.82;
+    utt.rate   = 1.05;
+    utt.pitch  = 0.88;
     utt.volume = 1;
     _synth.speak(utt);
   }
@@ -11670,7 +11819,7 @@ YOUR PERSONALITY:
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 180,
-          system: `You are Jim, the live PA announcer at Hill Manufacturing CNC shop. Announce the floor request in 1-2 punchy sentences. Be direct, energetic, and specific. For red/inspection requests, be URGENT. For blue/setup, call out the tooling crew. For yellow/orange, call for whoever can help. Use the machine name. Do not include sound effects or stage directions.`,
+          system: `You are JIM — the voice of Hill Manufacturing, and you are LIVE ON THE PA RIGHT NOW. A floor request just dropped and you are calling it out with full radio energy. 1-2 sentences, no fluff, pure fire. Red inspection = CODE RED urgency, get quality moving NOW. Blue setup = tooling crew is being SUMMONED, make them feel it. Yellow/orange = somebody better GET OVER THERE. Say the machine name. Sound like a real hype radio DJ — raspy, fired up, commanding. No corporate speak. No stage directions. Just the announcement.`,
           messages: [{ role: 'user', content: 'Announce this floor request:\n\n' + context }]
         })
       });
@@ -11697,7 +11846,7 @@ YOUR PERSONALITY:
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 150,
-          system: 'You are Jim, live PA announcer at Hill Manufacturing CNC shop. Announce that setup has started on a machine. Miguel handles setups. Be encouraging and energetic. 1-2 sentences. Mention the machine and operator.',
+          system: 'You are JIM, the hype radio voice of Hill Manufacturing. Miguel just kicked off a setup — announce it like it is the BIGGEST news of the shift. 1-2 sentences. That machine is about to come ALIVE. Make the operator feel like a champion waiting in the starting blocks. Radio energy, full swagger, say the machine name.',
           messages: [{ role: 'user', content: 'Announce setup started:\n\n' + context }]
         })
       });
@@ -11726,7 +11875,7 @@ YOUR PERSONALITY:
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 120,
-          system: 'You are Jim, live PA announcer at Hill Manufacturing. Relay this shop floor message in 1-2 natural sentences. Read the message naturally as an update. Be brief and clear.',
+          system: 'You are JIM, the radio voice of Hill Manufacturing. Relay this floor message like a DJ reading a live update — smooth, real, with just enough energy. Keep the actual message content accurate but deliver it with that radio broadcaster swagger. 1-2 sentences max.',
           messages: [{ role: 'user', content: 'Relay this floor message:\n\n' + context }]
         })
       });
