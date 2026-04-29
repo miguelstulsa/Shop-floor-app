@@ -1096,6 +1096,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
+  <div class="nav-tab" onclick="switchTab('music')" id="tab-music">🎵 Music</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Floor Analytics</div>
   <div class="nav-tab" onclick="switchTab('shoptv')" id="tab-shoptv" style="display:none;">📺 Shop TV</div>
@@ -2472,6 +2473,7 @@
     else { stopShopTV(); }
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
+    var musicEl = document.getElementById('page-music'); if (musicEl) musicEl.style.display = tab === 'music' ? 'block' : 'none';
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
     if (tab === 'proshop') { var psFrame = document.getElementById('proshop-iframe'); if (psFrame && !psFrame.src) psFrame.src = PROSHOP_BASE + '/'; }
     var planEl = document.getElementById('page-planner'); if (planEl) planEl.style.display = tab === 'planner' ? 'flex' : 'none';
@@ -10972,5 +10974,394 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ── MUSIC PLAYER PAGE ──────────────────────────────────── -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="page-music" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;padding:16px;">
+
+  <!-- Mini persistent player bar (shown on all tabs when music is playing) -->
+  <div id="music-mini-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9990;background:linear-gradient(90deg,#0a1525,#0d1f35);border-top:1px solid rgba(245,197,0,0.3);padding:8px 16px;display:none;align-items:center;gap:12px;">
+    <div style="flex:1;min-width:0;">
+      <div id="mini-track-name" style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#f5c842;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Nothing playing</div>
+      <div id="mini-track-sub" style="font-size:9px;color:#475569;letter-spacing:1px;">HILL MANUFACTURING</div>
+    </div>
+    <button onclick="window._musicPrev()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:4px;">&#9664;&#9664;</button>
+    <button id="mini-play-btn" onclick="window._musicToggle()" style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:#000;display:flex;align-items:center;justify-content:center;">&#9654;</button>
+    <button onclick="window._musicNext()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:4px;">&#9654;&#9654;</button>
+    <button onclick="window._musicStop()" style="background:none;border:none;color:#475569;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid #1e3a5f;">&#9632;</button>
+    <input id="mini-volume" type="range" min="0" max="1" step="0.05" value="0.7" oninput="window._musicVolume(this.value)" style="width:70px;accent-color:#f5c842;">
+  </div>
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#f5c842;letter-spacing:2px;">&#127925; SHOP MUSIC</div>
+      <div style="font-size:11px;color:#475569;letter-spacing:1px;">Radio stations &amp; uploaded tracks</div>
+    </div>
+    <div id="music-now-playing" style="font-size:11px;color:#4ade80;letter-spacing:1px;text-align:right;display:none;">&#9654; NOW PLAYING</div>
+  </div>
+
+  <!-- Main player card -->
+  <div style="background:linear-gradient(145deg,#0d1f35,#091525);border:1px solid rgba(245,197,0,0.2);border-radius:16px;padding:20px;margin-bottom:20px;">
+    <div style="text-align:center;margin-bottom:16px;">
+      <div id="player-artwork" style="width:120px;height:120px;border-radius:12px;background:linear-gradient(135deg,#0f2744,#1a3a6a);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:48px;border:2px solid rgba(245,197,0,0.2);">&#127925;</div>
+      <div id="player-track" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:1px;">Select a station or track</div>
+      <div id="player-source" style="font-size:11px;color:#475569;margin-top:2px;letter-spacing:1px;">READY</div>
+    </div>
+
+    <!-- Progress bar (for uploaded tracks) -->
+    <div id="player-progress-wrap" style="display:none;margin-bottom:12px;">
+      <input id="player-seek" type="range" min="0" max="100" value="0" oninput="window._musicSeek(this.value)"
+        style="width:100%;accent-color:#f5c842;margin-bottom:4px;">
+      <div style="display:flex;justify-content:space-between;">
+        <span id="player-current" style="font-size:10px;color:#475569;">0:00</span>
+        <span id="player-duration" style="font-size:10px;color:#475569;">0:00</span>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;">
+      <button onclick="window._musicPrev()" style="background:rgba(255,255,255,0.05);border:1px solid #1e3a5f;color:#94a3b8;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;">&#9664;&#9664;</button>
+      <button id="main-play-btn" onclick="window._musicToggle()" style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;border-radius:50%;width:56px;height:56px;font-size:24px;cursor:pointer;color:#000;box-shadow:0 4px 20px rgba(245,197,0,0.3);">&#9654;</button>
+      <button onclick="window._musicNext()" style="background:rgba(255,255,255,0.05);border:1px solid #1e3a5f;color:#94a3b8;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;">&#9654;&#9654;</button>
+    </div>
+
+    <!-- Volume -->
+    <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
+      <span style="font-size:14px;">&#128264;</span>
+      <input id="main-volume" type="range" min="0" max="1" step="0.05" value="0.7" oninput="window._musicVolume(this.value)"
+        style="width:160px;accent-color:#f5c842;">
+      <span style="font-size:14px;">&#128266;</span>
+    </div>
+  </div>
+
+  <!-- Radio Stations -->
+  <div style="margin-bottom:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#f5c842;letter-spacing:2px;">&#128246; RADIO STATIONS</div>
+      <button id="add-station-btn" onclick="window._showAddStation()" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c842;border-radius:8px;padding:5px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">+ ADD STATION</button>
+    </div>
+    <div id="station-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
+  </div>
+
+  <!-- Uploaded Tracks -->
+  <div style="margin-bottom:80px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#f5c842;letter-spacing:2px;">&#127911; UPLOADED TRACKS</div>
+      <label id="upload-track-btn" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c842;border-radius:8px;padding:5px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">
+        &#8679; UPLOAD
+        <input type="file" accept="audio/*" multiple onchange="window._uploadTracks(this.files)" style="display:none;">
+      </label>
+    </div>
+    <div id="track-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div id="track-empty" style="text-align:center;padding:24px;color:#334155;font-size:12px;">
+      No tracks uploaded yet.<br>Tap UPLOAD to add MP3, WAV, or other audio files.
+    </div>
+  </div>
+</div>
+
+<!-- Add Station Modal -->
+<div id="add-station-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:linear-gradient(160deg,#00060f,#091525);border:1px solid #f5c842;border-radius:18px;width:100%;max-width:380px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.8);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5c842;letter-spacing:2px;margin-bottom:16px;">&#128246; ADD RADIO STATION</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="font-size:10px;color:#475569;letter-spacing:1px;">STATION NAME</label>
+        <input id="station-name-input" placeholder="e.g. Classic Rock 103.7" style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#475569;letter-spacing:1px;">STREAM URL (MP3 or HLS)</label>
+        <input id="station-url-input" placeholder="https://stream.example.com/radio.mp3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:10px;color:#475569;letter-spacing:1px;">GENRE / DESCRIPTION</label>
+        <input id="station-genre-input" placeholder="e.g. Classic Rock, Country, Hip Hop..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:#334155;line-height:1.5;">
+      Tip: Find free stream URLs at <strong style="color:#60a5fa;">radio.garden</strong> or <strong style="color:#60a5fa;">streamurl.net</strong>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="document.getElementById('add-station-modal').style.display='none'" style="flex:1;background:rgba(255,255,255,.06);border:1px solid #1e3a5f;color:#94a3b8;border-radius:10px;padding:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;">CANCEL</button>
+      <button onclick="window._addStation()" style="flex:2;background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#00060f;border-radius:10px;padding:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:15px;font-weight:700;">SAVE STATION</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ── STATE ──────────────────────────────────────────────────
+  var _audio        = new Audio();
+  var _currentIdx   = -1;
+  var _playlist     = []; // { name, url, type:'station'|'track', genre, id }
+  var _stations     = []; // saved stations (Firebase + defaults)
+  var _tracks       = []; // uploaded tracks (Firebase Storage)
+  var _playing      = false;
+  var _seeking      = false;
+
+  _audio.volume = 0.7;
+  _audio.crossOrigin = 'anonymous';
+
+  // ── DEFAULT STATIONS ───────────────────────────────────────
+  var DEFAULT_STATIONS = [
+    { id:'ds1', name:'Classic Rock Radio',  url:'https://streaming.radio.co/s2e675f482/listen', genre:'Classic Rock',  type:'station', emoji:'&#127928;' },
+    { id:'ds2', name:'Country Roads 24/7',  url:'https://playerservices.streamtheworld.com/api/livestream-redirect/KHKXFM.mp3', genre:'Country', type:'station', emoji:'&#127917;' },
+    { id:'ds3', name:'Hip Hop Nation',      url:'https://ice6.securenetsystems.net/HIPHOP', genre:'Hip Hop', type:'station', emoji:'&#127911;' },
+    { id:'ds4', name:'WorkDay Mix',         url:'https://streaming.live365.com/a05572', genre:'Mix / Upbeat', type:'station', emoji:'&#9889;' },
+  ];
+
+  // ── AUDIO EVENTS ───────────────────────────────────────────
+  _audio.addEventListener('play',  function(){ _playing=true;  _updatePlayBtns('&#9646;&#9646;'); _showMiniBar(true); });
+  _audio.addEventListener('pause', function(){ _playing=false; _updatePlayBtns('&#9654;'); });
+  _audio.addEventListener('ended', function(){ window._musicNext(); });
+  _audio.addEventListener('error', function(){ 
+    if(window.showToast) window.showToast('red','Stream error','Could not connect to this station or track');
+    _playing=false; _updatePlayBtns('&#9654;');
+  });
+  _audio.addEventListener('timeupdate', function(){
+    if(_seeking||!_audio.duration) return;
+    var pct = (_audio.currentTime/_audio.duration)*100;
+    var seekEl=document.getElementById('player-seek'); if(seekEl) seekEl.value=pct;
+    var curEl=document.getElementById('player-current'); if(curEl) curEl.textContent=_fmtTime(_audio.currentTime);
+    var durEl=document.getElementById('player-duration'); if(durEl) durEl.textContent=_fmtTime(_audio.duration);
+  });
+  _audio.addEventListener('loadedmetadata', function(){
+    var pw=document.getElementById('player-progress-wrap');
+    if(pw) pw.style.display=_audio.duration&&isFinite(_audio.duration)?'block':'none';
+  });
+
+  function _fmtTime(s){
+    if(!s||!isFinite(s)) return '0:00';
+    var m=Math.floor(s/60), sec=Math.floor(s%60);
+    return m+':'+(sec<10?'0':'')+sec;
+  }
+
+  function _updatePlayBtns(icon){
+    var mb=document.getElementById('mini-play-btn'); if(mb) mb.innerHTML=icon;
+    var mp=document.getElementById('main-play-btn'); if(mp) mp.innerHTML=icon;
+  }
+
+  function _showMiniBar(show){
+    var bar=document.getElementById('music-mini-bar');
+    if(!bar) return;
+    bar.style.display = show?'flex':'none';
+    // Add bottom padding to pages when bar is showing
+    document.querySelectorAll('.shop-page,.page,#page-dashboard,#page-music').forEach(function(el){
+      el.style.paddingBottom = show?'56px':'';
+    });
+  }
+
+  function _setNowPlaying(item){
+    var trackEl=document.getElementById('player-track'); if(trackEl) trackEl.textContent=item.name;
+    var srcEl=document.getElementById('player-source'); if(srcEl) srcEl.textContent=item.genre||item.type.toUpperCase();
+    var miniEl=document.getElementById('mini-track-name'); if(miniEl) miniEl.textContent=item.name;
+    var artEl=document.getElementById('player-artwork'); if(artEl) artEl.innerHTML=item.emoji||'&#127925;';
+    var npEl=document.getElementById('music-now-playing'); if(npEl) npEl.style.display='block';
+    // Update station/track card active states
+    document.querySelectorAll('.music-card').forEach(function(c){ c.style.borderColor='rgba(255,255,255,0.1)'; c.style.background='rgba(13,31,53,0.8)'; });
+    var active=document.getElementById('mcard-'+item.id);
+    if(active){ active.style.borderColor='rgba(245,197,0,0.6)'; active.style.background='rgba(245,197,0,0.08)'; }
+  }
+
+  // ── PLAY ───────────────────────────────────────────────────
+  function _playItem(item){
+    _audio.pause();
+    _audio.src = item.url;
+    _audio.load();
+    _audio.play().catch(function(e){ 
+      if(window.showToast) window.showToast('red','Playback blocked',e.message);
+    });
+    _setNowPlaying(item);
+  }
+
+  window._musicPlay = function(id){
+    var item = _playlist.find(function(p){ return p.id===id; });
+    if(!item) return;
+    _currentIdx = _playlist.indexOf(item);
+    _playItem(item);
+  };
+
+  window._musicToggle = function(){
+    if(!_audio.src){ if(window.showToast) window.showToast('yellow','Nothing loaded','Pick a station or track first'); return; }
+    if(_playing) _audio.pause(); else _audio.play();
+  };
+
+  window._musicNext = function(){
+    if(!_playlist.length) return;
+    _currentIdx = (_currentIdx+1) % _playlist.length;
+    _playItem(_playlist[_currentIdx]);
+  };
+
+  window._musicPrev = function(){
+    if(!_playlist.length) return;
+    if(_audio.currentTime > 3){ _audio.currentTime=0; return; }
+    _currentIdx = (_currentIdx-1+_playlist.length) % _playlist.length;
+    _playItem(_playlist[_currentIdx]);
+  };
+
+  window._musicStop = function(){
+    _audio.pause();
+    _audio.src='';
+    _playing=false;
+    _updatePlayBtns('&#9654;');
+    _showMiniBar(false);
+    var npEl=document.getElementById('music-now-playing'); if(npEl) npEl.style.display='none';
+    var trackEl=document.getElementById('player-track'); if(trackEl) trackEl.textContent='Select a station or track';
+  };
+
+  window._musicVolume = function(v){
+    _audio.volume = parseFloat(v);
+    var mv=document.getElementById('mini-volume'); if(mv) mv.value=v;
+    var av=document.getElementById('main-volume'); if(av) av.value=v;
+  };
+
+  window._musicSeek = function(pct){
+    _seeking=true;
+    if(_audio.duration) _audio.currentTime=(_audio.duration*(pct/100));
+    setTimeout(function(){ _seeking=false; }, 200);
+  };
+
+  // ── STATIONS ───────────────────────────────────────────────
+  function _renderStations(){
+    _playlist = _stations.map(function(s){ return Object.assign({},s,{type:'station'}); })
+                 .concat(_tracks.map(function(t){ return Object.assign({},t,{type:'track'}); }));
+
+    var container = document.getElementById('station-list');
+    if(!container) return;
+    container.innerHTML = '';
+    _stations.forEach(function(s){
+      var card = document.createElement('div');
+      card.className='music-card';
+      card.id='mcard-'+s.id;
+      card.style.cssText='background:rgba(13,31,53,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;position:relative;';
+      card.innerHTML = 
+        '<div style="font-size:28px;margin-bottom:6px;">'+(s.emoji||'&#128246;')+'</div>'
+        +'<div style="font-family:Bebas Neue,sans-serif;font-size:14px;color:#f5d050;letter-spacing:1px;line-height:1.2;margin-bottom:4px;">'+s.name+'</div>'
+        +'<div style="font-size:10px;color:#475569;letter-spacing:1px;">'+( s.genre||'Radio')+'</div>'
+        +(s.canDelete?'<button data-sid="'+s.id+'" onclick="event.stopPropagation();window._deleteStation(this.dataset.sid);" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:2px 6px;font-size:10px;cursor:pointer;">&#10005;</button>':'');
+      card.addEventListener('click', function(){ window._musicPlay(s.id); });
+      container.appendChild(card);
+    });
+  }
+
+  // ── ADD STATION ────────────────────────────────────────────
+  window._showAddStation = function(){
+    document.getElementById('add-station-modal').style.display='flex';
+    document.getElementById('station-name-input').value='';
+    document.getElementById('station-url-input').value='';
+    document.getElementById('station-genre-input').value='';
+  };
+
+  window._addStation = function(){
+    var name  = (document.getElementById('station-name-input').value||'').trim();
+    var url   = (document.getElementById('station-url-input').value||'').trim();
+    var genre = (document.getElementById('station-genre-input').value||'').trim();
+    if(!name||!url){ if(window.showToast) window.showToast('yellow','Fill in all fields','Name and URL are required'); return; }
+    document.getElementById('add-station-modal').style.display='none';
+    var station = { id:'st'+Date.now(), name:name, url:url, genre:genre, type:'station', emoji:'&#128246;', canDelete:true };
+    _stations.push(station);
+    // Save to Firebase
+    _saveStations();
+    _renderStations();
+    if(window.showToast) window.showToast('green','Station added',name+' is ready to play');
+  };
+
+  window._deleteStation = function(id){
+    _stations = _stations.filter(function(s){ return s.id!==id; });
+    _saveStations();
+    _renderStations();
+  };
+
+  function _saveStations(){
+    var db2=window.fbDb, mods=window.fbFirestore;
+    if(!db2||!mods) { localStorage.setItem('hillMusicStations', JSON.stringify(_stations.filter(function(s){return s.canDelete;}))); return; }
+    var custom = _stations.filter(function(s){ return s.canDelete; });
+    mods.setDoc(mods.doc(db2,'hillSettings','musicStations'), { stations: custom })
+      .catch(function(e){ localStorage.setItem('hillMusicStations', JSON.stringify(custom)); });
+  }
+
+  function _loadStations(){
+    _stations = DEFAULT_STATIONS.slice();
+    var db2=window.fbDb, mods=window.fbFirestore;
+    if(!db2||!mods){
+      try { var saved=JSON.parse(localStorage.getItem('hillMusicStations')||'[]'); _stations=_stations.concat(saved); } catch(e){}
+      _renderStations(); return;
+    }
+    mods.getDoc(mods.doc(db2,'hillSettings','musicStations')).then(function(snap){
+      if(snap&&snap.exists&&snap.exists()){
+        var custom = snap.data().stations || [];
+        _stations = DEFAULT_STATIONS.concat(custom);
+      }
+      _renderStations();
+    }).catch(function(){ _renderStations(); });
+  }
+
+  // ── UPLOAD TRACKS ──────────────────────────────────────────
+  window._uploadTracks = function(files){
+    if(!files||!files.length) return;
+    Array.from(files).forEach(function(file){
+      if(!file.type.startsWith('audio/')){ if(window.showToast) window.showToast('yellow','Not an audio file',file.name); return; }
+      var url = URL.createObjectURL(file);
+      var track = {
+        id:    'tr'+Date.now()+Math.random().toString(36).slice(2,6),
+        name:  file.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' '),
+        url:   url,
+        genre: 'Uploaded',
+        type:  'track',
+        emoji: '&#127911;',
+        size:  Math.round(file.size/1024)+'KB'
+      };
+      _tracks.push(track);
+      _renderTracks();
+      _renderStations(); // rebuild playlist
+      if(window.showToast) window.showToast('green','Track added',track.name);
+    });
+  };
+
+  function _renderTracks(){
+    var container=document.getElementById('track-list');
+    var empty=document.getElementById('track-empty');
+    if(!container) return;
+    if(empty) empty.style.display=_tracks.length?'none':'block';
+    container.innerHTML='';
+    _tracks.forEach(function(t){
+      var row=document.createElement('div');
+      row.className='music-card';
+      row.id='mcard-'+t.id;
+      row.style.cssText='background:rgba(13,31,53,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s;';
+      row.innerHTML=
+        '<div style="font-size:22px;flex-shrink:0;">&#127911;</div>'
+        +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-family:Bebas Neue,sans-serif;font-size:14px;color:#f5d050;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+t.name+'</div>'
+          +'<div style="font-size:10px;color:#475569;">'+t.size+'</div>'
+        +'</div>'
+        +'<button data-tid="'+t.id+'" onclick="event.stopPropagation();window._deleteTrack(this.dataset.tid);" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;">&#10005;</button>';
+      row.addEventListener('click', function(){ window._musicPlay(t.id); });
+      container.appendChild(row);
+    });
+  }
+
+  window._deleteTrack = function(id){
+    var t=_tracks.find(function(x){return x.id===id;});
+    if(t&&t.url&&t.url.startsWith('blob:')) URL.revokeObjectURL(t.url);
+    _tracks=_tracks.filter(function(x){return x.id!==id;});
+    _renderTracks(); _renderStations();
+  };
+
+  // ── INIT ───────────────────────────────────────────────────
+  function init(){
+    if(!window.fbDb||!window.fbFirestore){ setTimeout(init,800); return; }
+    _loadStations();
+    _renderTracks();
+  }
+
+  // Start when Firebase is ready
+  var _initTimer = setInterval(function(){
+    if(window.fbDb&&window.fbFirestore){ clearInterval(_initTimer); init(); }
+  }, 600);
+
+})();
+</script>
 </body>
 </html>
