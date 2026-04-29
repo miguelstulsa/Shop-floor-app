@@ -11581,7 +11581,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // Expose for ElevenLabs key entry from admin
   window._jimSetKey = function(key, voiceId) {
     ELEVEN_API_KEY = key || '';
-    if (voiceId) ELEVEN_VOICE_ID = voiceId;
+    if (voiceId) 
+  ELEVEN_VOICE_ID = voiceId;
     localStorage.setItem('jimElevenKey', ELEVEN_API_KEY);
     localStorage.setItem('jimElevenVoice', ELEVEN_VOICE_ID);
     if(window.showToast) window.showToast('green', 'Jim upgraded', ELEVEN_API_KEY ? 'Using ElevenLabs AI voice' : 'Using browser voice');
