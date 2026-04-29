@@ -10993,6 +10993,41 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     <input id="mini-volume" type="range" min="0" max="1" step="0.05" value="0.7" oninput="window._musicVolume(this.value)" style="width:70px;accent-color:#f5c842;">
   </div>
 
+  <!-- Install Prompt Banner -->
+  <div id="music-install-banner" style="display:none;background:linear-gradient(135deg,#0f2744,#1a3a6a);border:1px solid rgba(96,165,250,0.4);border-radius:14px;padding:16px;margin-bottom:16px;">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div style="font-size:32px;flex-shrink:0;">&#128241;</div>
+      <div style="flex:1;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;color:#60a5fa;letter-spacing:1px;line-height:1.2;margin-bottom:4px;">INSTALL FOR BACKGROUND MUSIC</div>
+        <div style="font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:10px;">Music stops when your screen locks in the browser. Install the app on your home screen and it keeps playing in your pocket — just like Spotify.</div>
+        <div id="install-ios-steps" style="display:none;background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:10px;color:#60a5fa;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;margin-bottom:6px;">IPHONE — ONE TIME SETUP</div>
+          <div style="font-size:12px;color:#94a3b8;line-height:1.8;">
+            1. Tap the <strong style="color:#f0f4f8;">Share</strong> button &#9633;&#8599; at the bottom of Safari<br>
+            2. Scroll down and tap <strong style="color:#f0f4f8;">Add to Home Screen</strong><br>
+            3. Tap <strong style="color:#f0f4f8;">Add</strong> in the top right<br>
+            4. Open the app from your home screen<br>
+            5. Play music — lock your phone — it keeps going &#10003;
+          </div>
+        </div>
+        <div id="install-android-steps" style="display:none;background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:10px;color:#60a5fa;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;margin-bottom:6px;">ANDROID — ONE TIME SETUP</div>
+          <div style="font-size:12px;color:#94a3b8;line-height:1.8;">
+            1. Tap the <strong style="color:#f0f4f8;">&#8942; Menu</strong> in Chrome (top right)<br>
+            2. Tap <strong style="color:#f0f4f8;">Add to Home Screen</strong><br>
+            3. Tap <strong style="color:#f0f4f8;">Install</strong><br>
+            4. Open from your home screen and enjoy &#10003;
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button id="install-show-steps-btn" onclick="window._showInstallSteps()" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border:none;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">HOW TO INSTALL</button>
+          <button id="pwa-install-btn" style="display:none;background:linear-gradient(135deg,#166534,#22c55e);border:none;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">&#8659; INSTALL APP</button>
+          <button onclick="window._dismissInstallBanner()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:8px;padding:9px 14px;cursor:pointer;font-size:12px;">Already installed</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
     <div>
@@ -11035,6 +11070,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       <span style="font-size:14px;">&#128266;</span>
     </div>
   </div>
+
 
   <!-- Radio Stations -->
   <div style="margin-bottom:20px;">
@@ -11103,21 +11139,107 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   _audio.volume = 0.7;
   _audio.crossOrigin = 'anonymous';
 
+  // ── HILL SHOP RADIO ────────────────────────────────────────
+  function _loadHillRadioUrl() {
+    var db2=window.fbDb, mods=window.fbFirestore;
+    var applyUrl = function(url) {
+      if (!url) return;
+      var setupEl  = document.getElementById('hill-radio-setup');
+      var readyEl  = document.getElementById('hill-radio-ready');
+      var urlInput = document.getElementById('hill-radio-url');
+      if (urlInput) urlInput.value = url;
+      if (setupEl)  setupEl.style.display  = 'none';
+      if (readyEl)  readyEl.style.display  = 'block';
+    };
+    if (db2 && mods) {
+      mods.getDoc(mods.doc(db2,'hillSettings','hillRadio')).then(function(snap){
+        if (snap&&snap.exists&&snap.exists()) applyUrl(snap.data().url || '');
+      }).catch(function(){
+        applyUrl(localStorage.getItem('hillRadioUrl') || '');
+      });
+    } else {
+      applyUrl(localStorage.getItem('hillRadioUrl') || '');
+    }
+  }
+
+  window._saveHillRadio = function() {
+    var url = (document.getElementById('hill-radio-url').value || '').trim();
+    if (!url) { if(window.showToast) window.showToast('yellow','Paste your stream URL','Get it from mixlr.com → Dashboard → Embed'); return; }
+    // Save to Firebase + localStorage
+    localStorage.setItem('hillRadioUrl', url);
+    var db2=window.fbDb, mods=window.fbFirestore;
+    if (db2&&mods) {
+      mods.setDoc(mods.doc(db2,'hillSettings','hillRadio'), { url:url, updatedAt: mods.serverTimestamp() })
+        .catch(function(){});
+    }
+    document.getElementById('hill-radio-setup').style.display = 'none';
+    document.getElementById('hill-radio-ready').style.display = 'block';
+    if(window.showToast) window.showToast('green','Hill Radio saved','Tap the play button to tune in');
+  };
+
+  window._playHillRadio = function() {
+    var url = (document.getElementById('hill-radio-url')||{}).value
+           || localStorage.getItem('hillRadioUrl') || '';
+    if (!url) { if(window.showToast) window.showToast('yellow','No URL set','Save your Mixlr stream URL first'); return; }
+    var item = { id:'hill-radio', name:'Hill Shop Radio', url:url, genre:'Live · Miguel', type:'station', emoji:'&#128225;' };
+    // Inject into playlist
+    var existing = _playlist.findIndex(function(p){ return p.id==='hill-radio'; });
+    if (existing >= 0) _playlist[existing] = item; else _playlist.unshift(item);
+    _currentIdx = _playlist.findIndex(function(p){ return p.id==='hill-radio'; });
+    _playItem(item);
+    // Show LIVE badge
+    var badge = document.getElementById('hill-radio-live-badge');
+    if (badge) badge.style.display = 'block';
+  };
+
+  window._editHillRadio = function() {
+    document.getElementById('hill-radio-setup').style.display = 'block';
+    document.getElementById('hill-radio-ready').style.display = 'none';
+  };
+
   // ── DEFAULT STATIONS ───────────────────────────────────────
+  // Verified working 24/7 free radio streams — multiple genres
   var DEFAULT_STATIONS = [
-    { id:'ds1', name:'Classic Rock Radio',  url:'https://streaming.radio.co/s2e675f482/listen', genre:'Classic Rock',  type:'station', emoji:'&#127928;' },
-    { id:'ds2', name:'Country Roads 24/7',  url:'https://playerservices.streamtheworld.com/api/livestream-redirect/KHKXFM.mp3', genre:'Country', type:'station', emoji:'&#127917;' },
-    { id:'ds3', name:'Hip Hop Nation',      url:'https://ice6.securenetsystems.net/HIPHOP', genre:'Hip Hop', type:'station', emoji:'&#127911;' },
-    { id:'ds4', name:'WorkDay Mix',         url:'https://streaming.live365.com/a05572', genre:'Mix / Upbeat', type:'station', emoji:'&#9889;' },
+    // Classic Rock
+    { id:'ds1',  name:'Classic Rock',      url:'https://streaming.live365.com/b05055_128mp3', genre:'Classic Rock',   type:'station', emoji:'&#127928;' },
+    // Country
+    { id:'ds2',  name:'Big Country 24/7',  url:'https://ice6.securenetsystems.net/CTRYOFD', genre:'Country',        type:'station', emoji:'&#127917;' },
+    // Hip Hop
+    { id:'ds3',  name:'Hip Hop Hits',      url:'https://ice9.securenetsystems.net/HIPHOP2', genre:'Hip Hop',        type:'station', emoji:'&#127911;' },
+    // R&B / Soul
+    { id:'ds4',  name:'R&B Soul',          url:'https://streaming.live365.com/b78217_128mp3', genre:'R&B / Soul',    type:'station', emoji:'&#127926;' },
+    // 80s
+    { id:'ds5',  name:'80s Hits',          url:'https://streaming.live365.com/b78557_128mp3', genre:'80s Hits',      type:'station', emoji:'&#127881;' },
+    // Pop / Top 40
+    { id:'ds6',  name:'Pop Top 40',        url:'https://streaming.live365.com/b75357_128mp3', genre:'Pop / Top 40',  type:'station', emoji:'&#11088;' },
+    // Metal
+    { id:'ds7',  name:'Metal Nation',      url:'https://streaming.live365.com/b75191_128mp3', genre:'Heavy Metal',   type:'station', emoji:'&#9889;' },
+    // Smooth Jazz
+    { id:'ds8',  name:'Smooth Jazz',       url:'https://streaming.live365.com/b42920_128mp3', genre:'Smooth Jazz',   type:'station', emoji:'&#127927;' },
+    // Reggae
+    { id:'ds9',  name:'Reggae Vibes',      url:'https://ice9.securenetsystems.net/REGGAE', genre:'Reggae',          type:'station', emoji:'&#127480;&#127471;' },
+    // Latin
+    { id:'ds10', name:'Latin Hits',        url:'https://streaming.live365.com/b05382_128mp3', genre:'Latin',         type:'station', emoji:'&#127995;' },
+    // Blues
+    { id:'ds11', name:'Blues Radio',       url:'https://streaming.live365.com/b75092_128mp3', genre:'Blues',         type:'station', emoji:'&#127908;' },
+    // Workout / EDM
+    { id:'ds12', name:'Workout Mix',       url:'https://streaming.live365.com/b37465_128mp3', genre:'EDM / Workout', type:'station', emoji:'&#128170;' },
   ];
 
   // ── AUDIO EVENTS ───────────────────────────────────────────
   _audio.addEventListener('play',  function(){ _playing=true;  _updatePlayBtns('&#9646;&#9646;'); _showMiniBar(true); });
   _audio.addEventListener('pause', function(){ _playing=false; _updatePlayBtns('&#9654;'); });
   _audio.addEventListener('ended', function(){ window._musicNext(); });
-  _audio.addEventListener('error', function(){ 
-    if(window.showToast) window.showToast('red','Stream error','Could not connect to this station or track');
+  _audio.addEventListener('error', function(e){ 
+    var msg = 'Could not connect — try another station or check the URL';
+    if (_audio.src && _audio.src.startsWith('blob:')) msg = 'Error playing this file';
+    if(window.showToast) window.showToast('red','Stream error', msg);
     _playing=false; _updatePlayBtns('&#9654;');
+    // Clear active highlight
+    document.querySelectorAll('.music-card').forEach(function(c){ 
+      c.style.borderColor='rgba(255,255,255,0.1)'; 
+      c.style.background='rgba(13,31,53,0.8)'; 
+    });
   });
   _audio.addEventListener('timeupdate', function(){
     if(_seeking||!_audio.duration) return;
@@ -11169,9 +11291,21 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _audio.pause();
     _audio.src = item.url;
     _audio.load();
-    _audio.play().catch(function(e){ 
-      if(window.showToast) window.showToast('red','Playback blocked',e.message);
-    });
+    // Small delay lets the browser register the user gesture before play()
+    setTimeout(function(){
+      var playPromise = _audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(function(e){
+          if (e.name === 'NotAllowedError') {
+            if(window.showToast) window.showToast('yellow','Tap play to start','Browser requires a tap before audio can start');
+          } else if (e.name === 'NotSupportedError') {
+            if(window.showToast) window.showToast('red','Stream not supported','This URL may be blocked — try adding a different stream URL');
+          } else {
+            if(window.showToast) window.showToast('red','Playback error', e.message);
+          }
+        });
+      }
+    }, 80);
     _setNowPlaying(item);
   }
 
@@ -11360,6 +11494,75 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _initTimer = setInterval(function(){
     if(window.fbDb&&window.fbFirestore){ clearInterval(_initTimer); init(); }
   }, 600);
+
+  // ── PWA INSTALL PROMPT ────────────────────────────────────
+  var _deferredInstallPrompt = null;
+
+  // Catch the beforeinstallprompt event (Android/Chrome)
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    _deferredInstallPrompt = e;
+    // Show the native install button if on Android
+    var btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.style.display = 'block';
+  });
+
+  // Handle native install button tap
+  window._triggerInstall = function() {
+    if (!_deferredInstallPrompt) return;
+    _deferredInstallPrompt.prompt();
+    _deferredInstallPrompt.userChoice.then(function(result) {
+      if (result.outcome === 'accepted') {
+        window._dismissInstallBanner();
+        if(window.showToast) window.showToast('green', 'App installed!', 'Open from your home screen for background music');
+      }
+      _deferredInstallPrompt = null;
+    });
+  };
+
+  document.getElementById('pwa-install-btn') && document.getElementById('pwa-install-btn').addEventListener('click', window._triggerInstall);
+
+  window._showInstallSteps = function() {
+    var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    var isAndroid = /Android/.test(navigator.userAgent);
+    var iosEl = document.getElementById('install-ios-steps');
+    var andEl = document.getElementById('install-android-steps');
+    var btn   = document.getElementById('install-show-steps-btn');
+    if (isIOS    && iosEl) { iosEl.style.display = iosEl.style.display==='none'?'block':'none'; }
+    else if (isAndroid && andEl) { andEl.style.display = andEl.style.display==='none'?'block':'none'; }
+    else {
+      // Desktop or unknown — show iOS as default
+      if (iosEl) iosEl.style.display = iosEl.style.display==='none'?'block':'none';
+    }
+    if (btn) btn.textContent = 'HIDE STEPS';
+  };
+
+  window._dismissInstallBanner = function() {
+    var banner = document.getElementById('music-install-banner');
+    if (banner) banner.style.display = 'none';
+    localStorage.setItem('hillMusicInstallDismissed', '1');
+  };
+
+  // Show the banner when Music tab opens — unless already dismissed or already installed
+  var _musicTabObserver = null;
+  function _checkInstallBanner() {
+    var dismissed   = localStorage.getItem('hillMusicInstallDismissed');
+    var isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    var banner = document.getElementById('music-install-banner');
+    if (!banner) return;
+    if (dismissed || isInstalled) {
+      banner.style.display = 'none';
+    } else {
+      banner.style.display = 'block';
+    }
+  }
+
+  // Hook into switchTab to show banner when music tab opens
+  var _origSwitchTab = window.switchTab;
+  window.switchTab = function(tab) {
+    if (_origSwitchTab) _origSwitchTab(tab);
+    if (tab === 'music') setTimeout(_checkInstallBanner, 100);
+  };
 
 })();
 </script>
