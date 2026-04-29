@@ -1470,10 +1470,12 @@
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
-        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue')) {
+        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'orange')) {
           // Only browser notification from listener — Pushover fires from submit button only
           sendBrowserNotif(n);
           showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.cell + ' — ' + n.machine + ': ' + n.wo);
+          // DJ announces new requests to the floor
+          setTimeout(function(){ window._djAnnounceNew(n); }, 1500);
         }
       });
     }
@@ -1730,7 +1732,12 @@
           if (n.id === noteId) { n.inProgress = true; n.startedAt = {seconds: Math.floor(Date.now()/1000)}; }
         });
       }
-      showToast('green', '⏱ Timer Started', 'Tap FINISH & CLOSE when done');
+      showToast('green', '\u23f1 Timer Started', 'Tap FINISH & CLOSE when done');
+
+      // ── DJ SHOUTOUT on START ──
+      var _nd3 = window._lastActionable && window._lastActionable.find(function(n){ return n.id === noteId; });
+      if (_nd3) { setTimeout(function(){ window._djAnnounceStart(_nd3); }, 800); }
+
     } catch(e) {
       showToast('red', 'Error starting', e.message);
     }
@@ -10764,6 +10771,8 @@ window._postComment = async function(noteId, machine, wo) {
       isAdmin:   !!(window._isAdmin || window.currentUser === 'hilladmin')
     });
     if (btn) { btn.textContent = '✓'; setTimeout(function(){ if(btn) { btn.textContent = origText; btn.disabled = false; } }, 1000); }
+    // DJ reads comment aloud
+    setTimeout(function(){ window._djAnnounceComment(noteId, text, machine, wo, user); }, 700);
   } catch(e) {
     console.error('Comment post error:', e);
     // Restore text if failed
@@ -11025,6 +11034,38 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       <div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#f5c842;letter-spacing:2px;">&#127925; SHOP MUSIC</div>
         <div style="font-size:11px;color:#475569;letter-spacing:1px;">Powered by YouTube — no account needed</div>
+      </div>
+    </div>
+
+    <!-- ── SHOP DJ PANEL ── -->
+    <div style="background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:16px;padding:18px;margin-bottom:20px;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(139,92,246,0.2),transparent);pointer-events:none;"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="font-size:32px;">&#127897;</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#c4b5fd;letter-spacing:2px;">HILL SHOP DJ</div>
+            <span id="dj-live-badge" style="display:none;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);border-radius:999px;padding:2px 8px;font-size:9px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;animation:pulse 2s infinite;">&#11044; ON AIR</span>
+          </div>
+          <div style="font-size:10px;color:#6d28d9;letter-spacing:1px;">Reads your live shop floor data out loud</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#7c3aed;line-height:1.6;margin-bottom:14px;background:rgba(0,0,0,0.2);border-radius:8px;padding:10px;">
+        DJ reads machine utilization, pending jobs, machinist requests, and hype lines — live from your floor — between songs. Sounds like a real radio DJ.
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <button id="dj-toggle-btn" onclick="window._djToggle()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:10px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;">&#127897; ACTIVATE DJ</button>
+        <button onclick="window._djNow()" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:10px;padding:10px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">SPEAK NOW</button>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:4px;">
+          <div style="font-size:10px;color:#6d28d9;white-space:nowrap;">Every</div>
+          <select onchange="window._djSetInterval(this.value)" style="background:rgba(0,0,0,0.4);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:6px;padding:4px 6px;font-size:11px;">
+            <option value="5">5 min</option>
+            <option value="8" selected>8 min</option>
+            <option value="10">10 min</option>
+            <option value="15">15 min</option>
+            <option value="20">20 min</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -11293,6 +11334,380 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── INIT ───────────────────────────────────────────────────
   _renderGenres();
   _loadFavorites();
+
+})();
+</script>
+
+<!-- ═══ SHOP DJ ═══ -->
+<script>
+(function(){
+
+  // ── MACHINE NAMES (friendly) ──────────────────────────────
+  var MACHINE_NAMES = {
+    '1050-B':'Ten Fifty B', '7000':'Seven Thousand', 'VF-6':'V F Six',
+    '5100-B':'Fifty One Hundred B', '2500':'Twenty Five Hundred', 'PUMA-3':'Puma Three',
+    'ST35':'S T Thirty Five', 'VF-3':'V F Three', 'VF-2':'V F Two', 'PUMA-2':'Puma Two',
+    '403-A':'Four Oh Three A', '403-B':'Four Oh Three B', '403-C':'Four Oh Three C',
+    '5100-A':'Fifty One Hundred A', 'SHARP':'Sharp', 'SH403':'S H Four Oh Three',
+    '3000-C':'Three Thousand C', 'SYIL':'Syle', '3000-A':'Three Thousand A',
+    'EMCO':'Emco', '2G':'Two G', 'PUMA-1':'Puma One', '303-B':'Three Oh Three B',
+    'TWIN':'Twin', '2500-Y':'Twenty Five Hundred Y', 'SAW-1':'Saw One', 'SAW-2':'Saw Two',
+    '5000':'Five Thousand', 'SH-403':'S H Four Oh Three'
+  };
+
+  function _machineName(m){ return MACHINE_NAMES[m] || m; }
+
+  // ── VOICE SETUP ───────────────────────────────────────────
+  var _synth  = window.speechSynthesis;
+  var _voice  = null;
+  var _djActive = false;
+  var _djTimer  = null;
+  var _djInterval = 8; // minutes between shoutouts
+
+  function _pickVoice() {
+    var voices = _synth.getVoices();
+    // Prefer a deep/male US English voice for DJ feel
+    var preferred = ['Google US English', 'Alex', 'Daniel', 'Microsoft David', 'en-US-GuyNeural'];
+    var found = null;
+    preferred.forEach(function(name){
+      if (!found) found = voices.find(function(v){ return v.name === name; });
+    });
+    if (!found) found = voices.find(function(v){ return v.lang && v.lang.startsWith('en') && !v.name.toLowerCase().includes('female'); });
+    if (!found && voices.length) found = voices[0];
+    _voice = found;
+  }
+
+  _synth.addEventListener ? _synth.addEventListener('voiceschanged', _pickVoice) : null;
+  setTimeout(_pickVoice, 500);
+
+  function _speak(text, rate, pitch) {
+    _synth.cancel();
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.voice  = _voice;
+    utt.rate   = rate  || 0.95;
+    utt.pitch  = pitch || 0.85;
+    utt.volume = 1;
+    _synth.speak(utt);
+    return utt;
+  }
+
+  // ── GATHER SHOP DATA ──────────────────────────────────────
+  function _getShopData() {
+    var data = { requests:[], machines:[], pending:0, running:0, completed:0, inspections:0 };
+
+    // Live requests from floor
+    var actionable = window._lastActionable || [];
+    actionable.forEach(function(n){
+      if (n.resolved) return;
+      if (n.type === 'blue')   data.pending++;
+      if (n.type === 'green')  data.running++;
+      if (n.type === 'red')    data.inspections++;
+      if (n.type === 'yellow' || n.type === 'orange') {
+        data.requests.push({ machine: n.machine||'', detail: n.detail||'', operator: n.operator||'' });
+      }
+    });
+
+    // Machine performance from Datanomix snapshot
+    var dnx = window.dnxLiveData || {};
+    var DNX_MACHINES = [
+      {name:'1050-B',id:253},{name:'7000',id:853},{name:'VF-6',id:1253},
+      {name:'5100-B',id:753},{name:'2500',id:1603},{name:'PUMA-3',id:1153},
+      {name:'ST35',id:1903},{name:'VF-3',id:953},{name:'VF-2',id:1553},
+      {name:'PUMA-2',id:3},{name:'403-A',id:553},{name:'403-B',id:1003},
+      {name:'403-C',id:1303},{name:'5100-A',id:653},{name:'3000-C',id:1803},
+      {name:'3000-A',id:1703},{name:'2G',id:1973},{name:'PUMA-1',id:453},
+      {name:'303-B',id:103},{name:'TWIN',id:1403},{name:'2500-Y',id:1653}
+    ];
+    DNX_MACHINES.forEach(function(m){
+      var d = dnx[m.id] || dnx[String(m.id)] || {};
+      var util = parseFloat(d.utilizationPercentage || d.utilization || 0);
+      if (util > 0) {
+        data.machines.push({ name: m.name, util: Math.round(util) });
+      }
+    });
+
+    // Also check Firebase snapshot
+    var snap = window._lastDnxSnapshot;
+    if (snap && snap.machines) {
+      Object.values(snap.machines).forEach(function(m){
+        if (m.running && m.util > 0) {
+          var already = data.machines.find(function(x){ return x.name === m.name; });
+          if (!already) data.machines.push({ name:m.name, util:Math.round(m.util||0), winning:m.win });
+        }
+      });
+    }
+
+    return data;
+  }
+
+  // ── DJ LINES ──────────────────────────────────────────────
+  function _buildScript() {
+    var d = _getShopData();
+    var scripts = [];
+
+    // ── INTRO / HYPE ──
+    var intros = [
+      "Yooo! This is your shop DJ, keeping Hill Manufacturing moving! Let's get it!",
+      "What is UP Hill Manufacturing! Your favorite shop DJ is in the building. Let's make some parts today!",
+      "Hill Manufacturing in the house! DJ keeping the floor pumping — let's GO!",
+      "Good morning Hill fam! Time to get these machines running. Your DJ has got you covered all shift!",
+      "This is Hill Radio — the only station that knows exactly what's happening on YOUR floor. Let's ride!",
+    ];
+
+    // ── MACHINE SHOUTOUTS ──
+    var machineLines = [];
+    if (d.machines.length > 0) {
+      // Sort and pick interesting ones
+      var sorted = d.machines.slice().sort(function(a,b){ return b.util - a.util; });
+      var top    = sorted[0];
+      var bottom = sorted[sorted.length-1];
+
+      if (top && top.util >= 70) {
+        machineLines.push(
+          "Shoutout to " + _machineName(top.name) + " — running hot at " + top.util + " percent utilization! That machine is on FIRE today!",
+          _machineName(top.name) + " is absolutely killing it right now. " + top.util + " percent and climbing. Let's go!",
+          "Best machine on the floor right now? " + _machineName(top.name) + " at " + top.util + " percent. That operator knows what they're doing!"
+        );
+      }
+      if (bottom && bottom.util < 30 && bottom.util > 0) {
+        machineLines.push(
+          "Hey, " + _machineName(bottom.name) + " — we need you to wake up! Only at " + bottom.util + " percent. Let's get those numbers up!",
+          "Quick check on " + _machineName(bottom.name) + ". Sitting at " + bottom.util + " percent utilization. Somebody get over there!",
+        );
+      }
+      if (d.machines.length >= 3) {
+        machineLines.push(
+          "We got " + d.machines.length + " machines cutting right now across the floor. Hill Manufacturing is WORKING today!",
+          d.machines.length + " machines in action on the floor. Average utilization looking " + (d.machines.reduce(function(a,m){return a+m.util;},0)/d.machines.length > 50 ? "strong" : "like it could use a push") + ". Let's keep it moving!"
+        );
+      }
+    } else {
+      machineLines.push(
+        "Floor's warming up — machines getting ready to roll. Stay locked in!",
+        "Quiet on the floor right now. Let's change that. Get those spindles turning!"
+      );
+    }
+
+    // ── REQUEST SHOUTOUTS ──
+    var requestLines = [];
+    if (d.requests.length > 0) {
+      var r = d.requests[Math.floor(Math.random()*d.requests.length)];
+      var op = r.operator ? r.operator.split(' ')[0] : 'somebody';
+      requestLines.push(
+        "Hey quick shoutout. " + op + " over at " + _machineName(r.machine) + " put in a request. " + (r.detail ? "They need " + r.detail + "." : "Go check them out!") + " Keep that machine running!",
+        _machineName(r.machine) + " has a request on the board. " + op + " is waiting. Tooling crew — you're up!",
+      );
+    }
+    if (d.pending > 0) {
+      requestLines.push(
+        "We got " + d.pending + " job" + (d.pending>1?"s":"") + " pending setup on the floor right now. Tooling crew — let's get those machines running!",
+        d.pending + " pending setup" + (d.pending>1?"s":"") + " waiting. Every minute they sit is money on the table. Let's move!"
+      );
+    }
+    if (d.inspections > 0) {
+      requestLines.push(
+        "Quality team — heads up! There " + (d.inspections>1?"are "+d.inspections+" inspection requests":"is an inspection request") + " on the board. Go check those parts!",
+      );
+    }
+
+    // ── MOTIVATIONAL ──
+    var motivation = [
+      "Remember — every part you make today is Hill Manufacturing's reputation. Make it count!",
+      "Stay focused, stay safe, and let's ship some quality parts today. Hill Manufacturing!",
+      "You are the reason this shop runs. Operators, machinists, tooling — ALL of you. Keep it going!",
+      "Miguel's got the floor covered. You run the machines, he handles the setup. It's a TEAM effort. Let's go!",
+      "Hill Manufacturing — delivering quality parts, on time, every time. That's what we do. Let's get it!",
+      "Twelve machines cutting, chips flying, parts shipping. THIS is Hill Manufacturing at its best!",
+      "Stay hydrated, stay focused, stay safe. DJ's got the music, you got the floor. Let's make it happen!",
+    ];
+
+    // ── BUILD THE FULL SCRIPT ──
+    var pick = function(arr){ return arr[Math.floor(Math.random()*arr.length)]; };
+
+    // Random script variations
+    var type = Math.floor(Math.random() * 4);
+    if (type === 0) {
+      // Intro + machine + motivation
+      scripts = [ pick(intros), pick(machineLines), pick(motivation) ];
+    } else if (type === 1) {
+      // Machine + request
+      scripts = [ pick(machineLines), requestLines.length ? pick(requestLines) : pick(motivation) ];
+    } else if (type === 2) {
+      // Request + hype
+      scripts = [ requestLines.length ? pick(requestLines) : pick(machineLines), pick(motivation) ];
+    } else {
+      // Just one punchy line
+      scripts = [ pick([].concat(machineLines, motivation)) ];
+    }
+
+    return scripts.join(' ... ');
+  }
+
+  // ── TRIGGER DJ ────────────────────────────────────────────
+  window._djSpeak = function() {
+    if (!_djActive) return;
+    if (!window.speechSynthesis) { if(window.showToast) window.showToast('yellow','DJ','Your browser does not support speech'); return; }
+    var script = _buildScript();
+    _speak(script, 0.92, 0.8);
+  };
+
+  window._djToggle = function() {
+    _djActive = !_djActive;
+    var btn   = document.getElementById('dj-toggle-btn');
+    var badge = document.getElementById('dj-live-badge');
+
+    if (_djActive) {
+      if (btn)   { btn.textContent = '🎙 DJ ON AIR'; btn.style.background = 'linear-gradient(135deg,#dc2626,#ef4444)'; }
+      if (badge) badge.style.display = 'inline-block';
+      // Speak immediately
+      setTimeout(window._djSpeak, 500);
+      // Then every N minutes
+      _djTimer = setInterval(window._djSpeak, _djInterval * 60 * 1000);
+      if(window.showToast) window.showToast('green','&#127897; DJ is ON AIR','Shoutouts every '+_djInterval+' minutes');
+    } else {
+      _synth.cancel();
+      clearInterval(_djTimer);
+      if (btn)   { btn.textContent = '&#127897; ACTIVATE DJ'; btn.style.background = 'linear-gradient(135deg,#7c3aed,#8b5cf6)'; }
+      if (badge) badge.style.display = 'none';
+      if(window.showToast) window.showToast('yellow','DJ off','Shop DJ has left the building');
+    }
+  };
+
+  window._djNow = function() {
+    if (!window.speechSynthesis) { if(window.showToast) window.showToast('yellow','Not supported','Your browser does not support speech'); return; }
+    _pickVoice();
+    var script = _buildScript();
+    _speak(script, 0.92, 0.8);
+    if(window.showToast) window.showToast('blue','&#127897; DJ Speaking...','');
+  };
+
+  window._djSetInterval = function(mins) {
+    _djInterval = parseInt(mins) || 8;
+    if (_djActive) {
+      clearInterval(_djTimer);
+      _djTimer = setInterval(window._djSpeak, _djInterval * 60 * 1000);
+    }
+  };
+
+  // Save last DNX snapshot for DJ to read
+  var _origRenderDNX = window.renderDNXFromData;
+  window.renderDNXFromData = function(data) {
+    window._lastDnxSnapshot = data;
+    if (_origRenderDNX) _origRenderDNX(data);
+  };
+
+  // ── MACHINE NAME HELPER ───────────────────────────────────
+  var _MN = {
+    '1050-B':'Ten Fifty B','7000':'Seven Thousand','VF-6':'V F Six',
+    '5100-B':'Fifty One Hundred B','2500':'Twenty Five Hundred','PUMA-3':'Puma Three',
+    'ST35':'S T Thirty Five','VF-3':'V F Three','VF-2':'V F Two','PUMA-2':'Puma Two',
+    '403-A':'Four Oh Three A','403-B':'Four Oh Three B','403-C':'Four Oh Three C',
+    '5100-A':'Fifty One Hundred A','SHARP':'Sharp','SH403':'S H Four Oh Three',
+    '3000-C':'Three Thousand C','SYIL':'Syle','3000-A':'Three Thousand A',
+    'EMCO':'Emco','2G':'Two G','PUMA-1':'Puma One','303-B':'Three Oh Three B',
+    'TWIN':'Twin','2500-Y':'Twenty Five Hundred Y','SAW-1':'Saw One','SAW-2':'Saw Two',
+    '5000':'Five Thousand','SH-403':'S H Four Oh Three'
+  };
+  function _mn(m){ return _MN[m] || m || 'a machine'; }
+  function _pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+  // Guard — only speak if DJ is active OR it is an urgent announcement
+  function _djSay(text, urgent) {
+    if (!_synth) return;
+    if (!_djActive && !urgent) return;
+    _synth.cancel();
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.voice  = _voice;
+    utt.rate   = 0.92;
+    utt.pitch  = 0.82;
+    utt.volume = 1;
+    _synth.speak(utt);
+  }
+
+  // ── ANNOUNCE: NEW REQUEST FROM FLOOR ─────────────────────
+  window._djAnnounceNew = function(n) {
+    if (!n) return;
+    var machine = _mn(n.machine);
+    var op      = n.operator ? n.operator.split(' ')[0] : 'someone';
+    var wo      = n.wo  ? 'Work order ' + n.wo  + '.' : '';
+    var opNum   = n.op  ? 'Operation ' + n.op + '.' : '';
+    var detail  = n.detail ? n.detail + '.' : '';
+
+    var lines = {
+      blue: [ // Pending WO — needs setup
+        'Attention shop floor! ' + op + ' on ' + machine + ' has a job ready for setup. ' + wo + ' ' + opNum + ' Tooling crew — that one is waiting on you.',
+        'New setup request from ' + machine + '. ' + op + ' is ready to run. ' + wo + ' Get that machine cutting!',
+        'Setup needed on ' + machine + ' for ' + op + '. ' + wo + ' ' + opNum + ' Tooling — you are up. Go!',
+      ],
+      yellow: [ // Machinist request — needs something
+        'Quick heads up — ' + op + ' at ' + machine + ' needs something. ' + detail + ' ' + wo + ' Someone go help keep that machine running.',
+        machine + " calling for assistance. " + op + " says: " + detail + " Get them what they need!",
+        'Tooling shoutout — ' + machine + ' needs ' + detail + ' Operator ' + op + ' is waiting. ' + wo,
+      ],
+      orange: [ // Floor support
+        'Floor support needed at ' + machine + '! ' + op + ' is calling for help. ' + detail + ' Go check them out.',
+        'Hey floor support — ' + machine + ' needs you right now. ' + op + ' is waiting. ' + detail,
+      ],
+      red: [ // Inspection
+        'Quality team — inspection request from ' + machine + '. ' + op + ' has parts ready to check. ' + wo + ' Go take a look.',
+        'Heads up quality — ' + machine + ' has parts waiting for inspection. ' + op + '. ' + wo,
+      ],
+    };
+
+    var type = n.type || 'yellow';
+    var pool = lines[type] || lines.yellow;
+    _djSay(_pick(pool), type === 'red');
+  };
+
+  // ── ANNOUNCE: SETUP STARTED (admin hit START) ─────────────
+  window._djAnnounceStart = function(n) {
+    if (!n) return;
+    var machine = _mn(n.machine);
+    var op      = n.operator ? n.operator.split(' ')[0] : 'the operator';
+    var wo      = n.wo  ? 'work order ' + n.wo  : 'your job';
+    var opNum   = n.op  ? ', operation ' + n.op  : '';
+
+    var lines = [
+      machine + ' — your setup is on the way. Miguel is headed over right now with ' + wo + opNum + '. ' + op + ', get ready to run!',
+      'Good news for ' + machine + ' — setup is in progress for ' + wo + opNum + '. Miguel is on the clock. ' + op + ', stand by!',
+      "Timer is running! Miguel just started setup on " + machine + " for " + wo + opNum + ". " + op + " you will be cutting soon!",
+      'Shoutout to ' + op + ' on ' + machine + ' — your setup for ' + wo + ' just kicked off. We are on it!',
+      machine + ', your setup has started. ' + wo + opNum + '. Clock is ticking — Miguel is moving. ' + op + ' — stay ready!',
+    ];
+
+    _djSay(_pick(lines), false);
+  };
+
+  // ── ANNOUNCE: PENDING REQUESTS (no one has started) ───────
+  window._djAnnouncePending = function(n) {
+    window._djAnnounceNew(n); // same as new for now — pending IS a new request
+  };
+
+  // ── ANNOUNCE: COMMENT IN LIVE FEED ───────────────────────
+  window._djAnnounceComment = function(noteId, text, machine, wo, author) {
+    if (!text || text.length < 3) return;
+    var machineName = _mn(machine);
+    var isAdmin = !!(window._isAdmin || window.currentUser === 'hilladmin');
+
+    var lines;
+    if (isAdmin) {
+      lines = [
+        "Message for " + machineName + ". Miguel says: " + text,
+        "Hey " + machineName + ", update from Miguel. He says: " + text,
+        machineName + ", Miguel just sent you a message: " + text + " Keep it moving!",
+        "Quick message to " + machineName + " from Miguel. " + text,
+      ];
+    } else {
+      var name = author ? author.split(' ')[0] : 'your operator';
+      lines = [
+        "Update from " + machineName + ". " + name + " says: " + text,
+        name + " at " + machineName + " just sent a message: " + text,
+        "Heads up. " + machineName + " operator " + name + " says: " + text,
+      ];
+    }
+
+    _djSay(_pick(lines), false);
+  };
 
 })();
 </script>
