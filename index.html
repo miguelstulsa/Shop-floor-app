@@ -10978,591 +10978,321 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 <!-- ═══════════════════════════════════════════════════════════ -->
 <!-- ── MUSIC PLAYER PAGE ──────────────────────────────────── -->
 <!-- ═══════════════════════════════════════════════════════════ -->
-<div id="page-music" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;padding:16px;">
+<div id="page-music" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
 
-  <!-- Mini persistent player bar (shown on all tabs when music is playing) -->
-  <div id="music-mini-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9990;background:linear-gradient(90deg,#0a1525,#0d1f35);border-top:1px solid rgba(245,197,0,0.3);padding:8px 16px;display:none;align-items:center;gap:12px;">
-    <div style="flex:1;min-width:0;">
-      <div id="mini-track-name" style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#f5c842;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Nothing playing</div>
-      <div id="mini-track-sub" style="font-size:9px;color:#475569;letter-spacing:1px;">HILL MANUFACTURING</div>
-    </div>
-    <button onclick="window._musicPrev()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:4px;">&#9664;&#9664;</button>
-    <button id="mini-play-btn" onclick="window._musicToggle()" style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:#000;display:flex;align-items:center;justify-content:center;">&#9654;</button>
-    <button onclick="window._musicNext()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:4px;">&#9654;&#9654;</button>
-    <button onclick="window._musicStop()" style="background:none;border:none;color:#475569;font-size:13px;cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid #1e3a5f;">&#9632;</button>
-    <input id="mini-volume" type="range" min="0" max="1" step="0.05" value="0.7" oninput="window._musicVolume(this.value)" style="width:70px;accent-color:#f5c842;">
-  </div>
-
-  <!-- Install Prompt Banner -->
-  <div id="music-install-banner" style="display:none;background:linear-gradient(135deg,#0f2744,#1a3a6a);border:1px solid rgba(96,165,250,0.4);border-radius:14px;padding:16px;margin-bottom:16px;">
-    <div style="display:flex;align-items:flex-start;gap:12px;">
-      <div style="font-size:32px;flex-shrink:0;">&#128241;</div>
-      <div style="flex:1;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;color:#60a5fa;letter-spacing:1px;line-height:1.2;margin-bottom:4px;">INSTALL FOR BACKGROUND MUSIC</div>
-        <div style="font-size:12px;color:#94a3b8;line-height:1.6;margin-bottom:10px;">Music stops when your screen locks in the browser. Install the app on your home screen and it keeps playing in your pocket — just like Spotify.</div>
-        <div id="install-ios-steps" style="display:none;background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:10px;color:#60a5fa;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;margin-bottom:6px;">IPHONE — ONE TIME SETUP</div>
-          <div style="font-size:12px;color:#94a3b8;line-height:1.8;">
-            1. Tap the <strong style="color:#f0f4f8;">Share</strong> button &#9633;&#8599; at the bottom of Safari<br>
-            2. Scroll down and tap <strong style="color:#f0f4f8;">Add to Home Screen</strong><br>
-            3. Tap <strong style="color:#f0f4f8;">Add</strong> in the top right<br>
-            4. Open the app from your home screen<br>
-            5. Play music — lock your phone — it keeps going &#10003;
-          </div>
-        </div>
-        <div id="install-android-steps" style="display:none;background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:10px;color:#60a5fa;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;margin-bottom:6px;">ANDROID — ONE TIME SETUP</div>
-          <div style="font-size:12px;color:#94a3b8;line-height:1.8;">
-            1. Tap the <strong style="color:#f0f4f8;">&#8942; Menu</strong> in Chrome (top right)<br>
-            2. Tap <strong style="color:#f0f4f8;">Add to Home Screen</strong><br>
-            3. Tap <strong style="color:#f0f4f8;">Install</strong><br>
-            4. Open from your home screen and enjoy &#10003;
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button id="install-show-steps-btn" onclick="window._showInstallSteps()" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border:none;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">HOW TO INSTALL</button>
-          <button id="pwa-install-btn" style="display:none;background:linear-gradient(135deg,#166534,#22c55e);border:none;color:#fff;border-radius:8px;padding:9px 16px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">&#8659; INSTALL APP</button>
-          <button onclick="window._dismissInstallBanner()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:8px;padding:9px 14px;cursor:pointer;font-size:12px;">Already installed</button>
-        </div>
+  <!-- Install Banner -->
+  <div id="music-install-banner" style="display:none;background:linear-gradient(135deg,#0f2744,#1a3a6a);border-bottom:1px solid rgba(96,165,250,0.3);padding:14px 16px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:22px;">&#128241;</span>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#60a5fa;letter-spacing:1px;">INSTALL FOR BACKGROUND MUSIC</div>
+        <div style="font-size:11px;color:#475569;">Music stops when screen locks in browser. Install the app to keep it playing in your pocket.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="window._showInstallSteps()" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6);border:none;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;">HOW TO INSTALL</button>
+        <button id="pwa-install-btn" style="display:none;background:linear-gradient(135deg,#166534,#22c55e);border:none;color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;">&#8659; INSTALL</button>
+        <button onclick="window._dismissInstallBanner()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:8px;padding:7px 12px;cursor:pointer;font-size:11px;">Done</button>
       </div>
     </div>
+    <div id="install-steps-box" style="display:none;margin-top:10px;background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;font-size:11px;color:#94a3b8;line-height:1.8;">
+      <strong style="color:#60a5fa;">iPhone:</strong> Tap Share &#9633;&#8599; → Add to Home Screen → Add<br>
+      <strong style="color:#60a5fa;">Android:</strong> Tap Menu &#8942; in Chrome → Add to Home Screen → Install
+    </div>
   </div>
 
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-    <div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#f5c842;letter-spacing:2px;">&#127925; SHOP MUSIC</div>
-      <div style="font-size:11px;color:#475569;letter-spacing:1px;">Radio stations &amp; uploaded tracks</div>
-    </div>
-    <div id="music-now-playing" style="font-size:11px;color:#4ade80;letter-spacing:1px;text-align:right;display:none;">&#9654; NOW PLAYING</div>
+  <!-- YouTube Player Embed (hidden iframe) -->
+  <div id="yt-player-wrap" style="display:none;">
+    <iframe id="yt-iframe" width="100%" height="200" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="display:block;"></iframe>
   </div>
 
-  <!-- Main player card -->
-  <div style="background:linear-gradient(145deg,#0d1f35,#091525);border:1px solid rgba(245,197,0,0.2);border-radius:16px;padding:20px;margin-bottom:20px;">
-    <div style="text-align:center;margin-bottom:16px;">
-      <div id="player-artwork" style="width:120px;height:120px;border-radius:12px;background:linear-gradient(135deg,#0f2744,#1a3a6a);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:48px;border:2px solid rgba(245,197,0,0.2);">&#127925;</div>
-      <div id="player-track" style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:1px;">Select a station or track</div>
-      <div id="player-source" style="font-size:11px;color:#475569;margin-top:2px;letter-spacing:1px;">READY</div>
+  <!-- Now Playing Bar -->
+  <div id="yt-now-playing-bar" style="display:none;background:linear-gradient(90deg,#0a1525,#0d1f35);border-bottom:1px solid rgba(245,197,0,0.2);padding:12px 16px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="yt-thumb" style="width:48px;height:48px;border-radius:8px;background:#1e3a5f;flex-shrink:0;overflow:hidden;">
+        <img id="yt-thumb-img" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div id="yt-track-name" style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#f5c842;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Nothing playing</div>
+        <div id="yt-track-genre" style="font-size:10px;color:#475569;letter-spacing:1px;">HILL SHOP MUSIC</div>
+      </div>
+      <button id="yt-stop-btn" onclick="window._ytStop()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">&#9632; STOP</button>
     </div>
+  </div>
 
-    <!-- Progress bar (for uploaded tracks) -->
-    <div id="player-progress-wrap" style="display:none;margin-bottom:12px;">
-      <input id="player-seek" type="range" min="0" max="100" value="0" oninput="window._musicSeek(this.value)"
-        style="width:100%;accent-color:#f5c842;margin-bottom:4px;">
-      <div style="display:flex;justify-content:space-between;">
-        <span id="player-current" style="font-size:10px;color:#475569;">0:00</span>
-        <span id="player-duration" style="font-size:10px;color:#475569;">0:00</span>
+  <div style="padding:16px;">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:#f5c842;letter-spacing:2px;">&#127925; SHOP MUSIC</div>
+        <div style="font-size:11px;color:#475569;letter-spacing:1px;">Powered by YouTube — no account needed</div>
       </div>
     </div>
 
-    <!-- Controls -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;">
-      <button onclick="window._musicPrev()" style="background:rgba(255,255,255,0.05);border:1px solid #1e3a5f;color:#94a3b8;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;">&#9664;&#9664;</button>
-      <button id="main-play-btn" onclick="window._musicToggle()" style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;border-radius:50%;width:56px;height:56px;font-size:24px;cursor:pointer;color:#000;box-shadow:0 4px 20px rgba(245,197,0,0.3);">&#9654;</button>
-      <button onclick="window._musicNext()" style="background:rgba(255,255,255,0.05);border:1px solid #1e3a5f;color:#94a3b8;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;">&#9654;&#9654;</button>
+    <!-- Search Bar -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <input id="yt-search-input" type="text" placeholder="Search any music, genre, artist... (e.g. Classic Rock 24/7)" maxlength="100"
+        style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(245,197,0,0.3);border-radius:10px;padding:12px 14px;color:#f0f4f8;font-size:14px;outline:none;"
+        onkeydown="if(event.key==='Enter') window._ytSearch();">
+      <button onclick="window._ytSearch()" style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#000;border-radius:10px;padding:12px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;white-space:nowrap;">SEARCH</button>
     </div>
 
-    <!-- Volume -->
-    <div style="display:flex;align-items:center;gap:10px;justify-content:center;">
-      <span style="font-size:14px;">&#128264;</span>
-      <input id="main-volume" type="range" min="0" max="1" step="0.05" value="0.7" oninput="window._musicVolume(this.value)"
-        style="width:160px;accent-color:#f5c842;">
-      <span style="font-size:14px;">&#128266;</span>
+    <!-- Quick Genre Buttons -->
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#f5c842;letter-spacing:2px;margin-bottom:10px;">&#9889; QUICK PLAY BY GENRE</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;" id="genre-buttons"></div>
     </div>
-  </div>
 
-
-  <!-- Radio Stations -->
-  <div style="margin-bottom:20px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#f5c842;letter-spacing:2px;">&#128246; RADIO STATIONS</div>
-      <button id="add-station-btn" onclick="window._showAddStation()" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c842;border-radius:8px;padding:5px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">+ ADD STATION</button>
+    <!-- Search Results -->
+    <div id="yt-results-section" style="display:none;margin-bottom:20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#f5c842;letter-spacing:2px;margin-bottom:10px;">SEARCH RESULTS</div>
+      <div id="yt-results" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
     </div>
-    <div id="station-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
-  </div>
 
-  <!-- Uploaded Tracks -->
-  <div style="margin-bottom:80px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#f5c842;letter-spacing:2px;">&#127911; UPLOADED TRACKS</div>
-      <label id="upload-track-btn" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c842;border-radius:8px;padding:5px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">
-        &#8679; UPLOAD
-        <input type="file" accept="audio/*" multiple onchange="window._uploadTracks(this.files)" style="display:none;">
-      </label>
-    </div>
-    <div id="track-list" style="display:flex;flex-direction:column;gap:8px;"></div>
-    <div id="track-empty" style="text-align:center;padding:24px;color:#334155;font-size:12px;">
-      No tracks uploaded yet.<br>Tap UPLOAD to add MP3, WAV, or other audio files.
+    <!-- Saved Favorites -->
+    <div style="margin-bottom:80px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#f5c842;letter-spacing:2px;">&#9733; SHOP FAVORITES</div>
+        <div style="font-size:10px;color:#334155;">Tap &#9733; on any result to save</div>
+      </div>
+      <div id="yt-favorites" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;"></div>
+      <div id="yt-fav-empty" style="text-align:center;padding:20px;color:#334155;font-size:12px;">No favorites saved yet.<br>Search for music and tap &#9733; to save it here.</div>
     </div>
   </div>
 </div>
 
-<!-- Add Station Modal -->
-<div id="add-station-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:linear-gradient(160deg,#00060f,#091525);border:1px solid #f5c842;border-radius:18px;width:100%;max-width:380px;padding:24px;box-shadow:0 24px 80px rgba(0,0,0,.8);">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5c842;letter-spacing:2px;margin-bottom:16px;">&#128246; ADD RADIO STATION</div>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <div>
-        <label style="font-size:10px;color:#475569;letter-spacing:1px;">STATION NAME</label>
-        <input id="station-name-input" placeholder="e.g. Classic Rock 103.7" style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
-      </div>
-      <div>
-        <label style="font-size:10px;color:#475569;letter-spacing:1px;">STREAM URL (MP3 or HLS)</label>
-        <input id="station-url-input" placeholder="https://stream.example.com/radio.mp3" style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
-      </div>
-      <div>
-        <label style="font-size:10px;color:#475569;letter-spacing:1px;">GENRE / DESCRIPTION</label>
-        <input id="station-genre-input" placeholder="e.g. Classic Rock, Country, Hip Hop..." style="width:100%;background:rgba(255,255,255,.04);border:1px solid #1e3a5f;border-radius:8px;padding:10px 12px;color:#f0f4f8;font-size:14px;margin-top:4px;box-sizing:border-box;">
-      </div>
-    </div>
-    <div style="margin-top:8px;font-size:10px;color:#334155;line-height:1.5;">
-      Tip: Find free stream URLs at <strong style="color:#60a5fa;">radio.garden</strong> or <strong style="color:#60a5fa;">streamurl.net</strong>
-    </div>
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button onclick="document.getElementById('add-station-modal').style.display='none'" style="flex:1;background:rgba(255,255,255,.06);border:1px solid #1e3a5f;color:#94a3b8;border-radius:10px;padding:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;">CANCEL</button>
-      <button onclick="window._addStation()" style="flex:2;background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#00060f;border-radius:10px;padding:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:15px;font-weight:700;">SAVE STATION</button>
-    </div>
+<!-- Mini Music Bar (sticks to bottom when playing) -->
+<div id="music-mini-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9990;background:linear-gradient(90deg,#0a1525,#0d1f35);border-top:1px solid rgba(245,197,0,0.3);padding:8px 16px;align-items:center;gap:12px;">
+  <div style="flex:1;min-width:0;">
+    <div id="mini-track-name" style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#f5c842;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Nothing playing</div>
+    <div style="font-size:9px;color:#475569;letter-spacing:1px;">HILL SHOP MUSIC</div>
   </div>
+  <button onclick="window._ytStop()" style="background:rgba(255,255,255,0.06);border:1px solid #1e3a5f;color:#475569;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;white-space:nowrap;">&#9632; STOP</button>
+  <button onclick="window.switchTab('music')" style="background:rgba(245,197,0,0.1);border:1px solid rgba(245,197,0,0.3);color:#f5c842;border-radius:6px;padding:5px 10px;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">OPEN</button>
 </div>
 
 <script>
-(function() {
-  // ── STATE ──────────────────────────────────────────────────
-  var _audio        = new Audio();
-  var _currentIdx   = -1;
-  var _playlist     = []; // { name, url, type:'station'|'track', genre, id }
-  var _stations     = []; // saved stations (Firebase + defaults)
-  var _tracks       = []; // uploaded tracks (Firebase Storage)
-  var _playing      = false;
-  var _seeking      = false;
-
-  _audio.volume = 0.7;
-  _audio.crossOrigin = 'anonymous';
-
-  // ── HILL SHOP RADIO ────────────────────────────────────────
-  function _loadHillRadioUrl() {
-    var db2=window.fbDb, mods=window.fbFirestore;
-    var applyUrl = function(url) {
-      if (!url) return;
-      var setupEl  = document.getElementById('hill-radio-setup');
-      var readyEl  = document.getElementById('hill-radio-ready');
-      var urlInput = document.getElementById('hill-radio-url');
-      if (urlInput) urlInput.value = url;
-      if (setupEl)  setupEl.style.display  = 'none';
-      if (readyEl)  readyEl.style.display  = 'block';
-    };
-    if (db2 && mods) {
-      mods.getDoc(mods.doc(db2,'hillSettings','hillRadio')).then(function(snap){
-        if (snap&&snap.exists&&snap.exists()) applyUrl(snap.data().url || '');
-      }).catch(function(){
-        applyUrl(localStorage.getItem('hillRadioUrl') || '');
-      });
-    } else {
-      applyUrl(localStorage.getItem('hillRadioUrl') || '');
-    }
-  }
-
-  window._saveHillRadio = function() {
-    var url = (document.getElementById('hill-radio-url').value || '').trim();
-    if (!url) { if(window.showToast) window.showToast('yellow','Paste your stream URL','Get it from mixlr.com → Dashboard → Embed'); return; }
-    // Save to Firebase + localStorage
-    localStorage.setItem('hillRadioUrl', url);
-    var db2=window.fbDb, mods=window.fbFirestore;
-    if (db2&&mods) {
-      mods.setDoc(mods.doc(db2,'hillSettings','hillRadio'), { url:url, updatedAt: mods.serverTimestamp() })
-        .catch(function(){});
-    }
-    document.getElementById('hill-radio-setup').style.display = 'none';
-    document.getElementById('hill-radio-ready').style.display = 'block';
-    if(window.showToast) window.showToast('green','Hill Radio saved','Tap the play button to tune in');
-  };
-
-  window._playHillRadio = function() {
-    var url = (document.getElementById('hill-radio-url')||{}).value
-           || localStorage.getItem('hillRadioUrl') || '';
-    if (!url) { if(window.showToast) window.showToast('yellow','No URL set','Save your Mixlr stream URL first'); return; }
-    var item = { id:'hill-radio', name:'Hill Shop Radio', url:url, genre:'Live · Miguel', type:'station', emoji:'&#128225;' };
-    // Inject into playlist
-    var existing = _playlist.findIndex(function(p){ return p.id==='hill-radio'; });
-    if (existing >= 0) _playlist[existing] = item; else _playlist.unshift(item);
-    _currentIdx = _playlist.findIndex(function(p){ return p.id==='hill-radio'; });
-    _playItem(item);
-    // Show LIVE badge
-    var badge = document.getElementById('hill-radio-live-badge');
-    if (badge) badge.style.display = 'block';
-  };
-
-  window._editHillRadio = function() {
-    document.getElementById('hill-radio-setup').style.display = 'block';
-    document.getElementById('hill-radio-ready').style.display = 'none';
-  };
-
-  // ── DEFAULT STATIONS ───────────────────────────────────────
-  // Verified working 24/7 free radio streams — multiple genres
-  var DEFAULT_STATIONS = [
-    // Classic Rock
-    { id:'ds1',  name:'Classic Rock',      url:'https://streaming.live365.com/b05055_128mp3', genre:'Classic Rock',   type:'station', emoji:'&#127928;' },
-    // Country
-    { id:'ds2',  name:'Big Country 24/7',  url:'https://ice6.securenetsystems.net/CTRYOFD', genre:'Country',        type:'station', emoji:'&#127917;' },
-    // Hip Hop
-    { id:'ds3',  name:'Hip Hop Hits',      url:'https://ice9.securenetsystems.net/HIPHOP2', genre:'Hip Hop',        type:'station', emoji:'&#127911;' },
-    // R&B / Soul
-    { id:'ds4',  name:'R&B Soul',          url:'https://streaming.live365.com/b78217_128mp3', genre:'R&B / Soul',    type:'station', emoji:'&#127926;' },
-    // 80s
-    { id:'ds5',  name:'80s Hits',          url:'https://streaming.live365.com/b78557_128mp3', genre:'80s Hits',      type:'station', emoji:'&#127881;' },
-    // Pop / Top 40
-    { id:'ds6',  name:'Pop Top 40',        url:'https://streaming.live365.com/b75357_128mp3', genre:'Pop / Top 40',  type:'station', emoji:'&#11088;' },
-    // Metal
-    { id:'ds7',  name:'Metal Nation',      url:'https://streaming.live365.com/b75191_128mp3', genre:'Heavy Metal',   type:'station', emoji:'&#9889;' },
-    // Smooth Jazz
-    { id:'ds8',  name:'Smooth Jazz',       url:'https://streaming.live365.com/b42920_128mp3', genre:'Smooth Jazz',   type:'station', emoji:'&#127927;' },
-    // Reggae
-    { id:'ds9',  name:'Reggae Vibes',      url:'https://ice9.securenetsystems.net/REGGAE', genre:'Reggae',          type:'station', emoji:'&#127480;&#127471;' },
-    // Latin
-    { id:'ds10', name:'Latin Hits',        url:'https://streaming.live365.com/b05382_128mp3', genre:'Latin',         type:'station', emoji:'&#127995;' },
-    // Blues
-    { id:'ds11', name:'Blues Radio',       url:'https://streaming.live365.com/b75092_128mp3', genre:'Blues',         type:'station', emoji:'&#127908;' },
-    // Workout / EDM
-    { id:'ds12', name:'Workout Mix',       url:'https://streaming.live365.com/b37465_128mp3', genre:'EDM / Workout', type:'station', emoji:'&#128170;' },
+(function(){
+  // ── GENRES ─────────────────────────────────────────────────
+  var GENRES = [
+    { label:'&#127928; Classic Rock', q:'classic rock radio 24/7 mix' },
+    { label:'&#127917; Country',      q:'country music 24/7 radio stream' },
+    { label:'&#127911; Hip Hop',      q:'hip hop rap music 24/7 mix' },
+    { label:'&#127881; 80s Hits',     q:'80s hits music 24/7 nonstop' },
+    { label:'&#11088; Pop Hits',      q:'pop hits 2024 2025 nonstop mix' },
+    { label:'&#9889; Metal',          q:'heavy metal rock music 24/7' },
+    { label:'&#127926; R&B Soul',     q:'rnb soul music 24/7 radio' },
+    { label:'&#127927; Jazz',         q:'smooth jazz music 24/7 radio' },
+    { label:'&#127974; Reggae',       q:'reggae music 24/7 radio' },
+    { label:'&#127908; Blues',        q:'blues music 24/7 radio' },
+    { label:'&#127995; Latin',        q:'latin music 24/7 mix radio' },
+    { label:'&#128170; Workout',      q:'workout motivation music mix' },
+    { label:'&#127869; Chill',        q:'chill lofi hip hop radio 24/7' },
+    { label:'&#127963; Country Road', q:'country road trip music mix' },
   ];
 
-  // ── AUDIO EVENTS ───────────────────────────────────────────
-  _audio.addEventListener('play',  function(){ _playing=true;  _updatePlayBtns('&#9646;&#9646;'); _showMiniBar(true); });
-  _audio.addEventListener('pause', function(){ _playing=false; _updatePlayBtns('&#9654;'); });
-  _audio.addEventListener('ended', function(){ window._musicNext(); });
-  _audio.addEventListener('error', function(e){ 
-    var msg = 'Could not connect — try another station or check the URL';
-    if (_audio.src && _audio.src.startsWith('blob:')) msg = 'Error playing this file';
-    if(window.showToast) window.showToast('red','Stream error', msg);
-    _playing=false; _updatePlayBtns('&#9654;');
-    // Clear active highlight
-    document.querySelectorAll('.music-card').forEach(function(c){ 
-      c.style.borderColor='rgba(255,255,255,0.1)'; 
-      c.style.background='rgba(13,31,53,0.8)'; 
-    });
-  });
-  _audio.addEventListener('timeupdate', function(){
-    if(_seeking||!_audio.duration) return;
-    var pct = (_audio.currentTime/_audio.duration)*100;
-    var seekEl=document.getElementById('player-seek'); if(seekEl) seekEl.value=pct;
-    var curEl=document.getElementById('player-current'); if(curEl) curEl.textContent=_fmtTime(_audio.currentTime);
-    var durEl=document.getElementById('player-duration'); if(durEl) durEl.textContent=_fmtTime(_audio.duration);
-  });
-  _audio.addEventListener('loadedmetadata', function(){
-    var pw=document.getElementById('player-progress-wrap');
-    if(pw) pw.style.display=_audio.duration&&isFinite(_audio.duration)?'block':'none';
-  });
+  var _favorites   = [];
+  var _currentVid  = null;
+  var _ytApiReady  = false;
+  var _ytPlayer    = null;
+  var _playerState = 'stopped'; // stopped | playing
 
-  function _fmtTime(s){
-    if(!s||!isFinite(s)) return '0:00';
-    var m=Math.floor(s/60), sec=Math.floor(s%60);
-    return m+':'+(sec<10?'0':'')+sec;
+  // ── RENDER GENRE BUTTONS ───────────────────────────────────
+  function _renderGenres() {
+    var container = document.getElementById('genre-buttons');
+    if (!container) return;
+    container.innerHTML = GENRES.map(function(g) {
+      return '<button onclick="window._ytQuickPlay('+JSON.stringify(g.q)+')" '
+        +'style="background:rgba(13,31,53,0.9);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;border-radius:999px;padding:8px 14px;cursor:pointer;font-size:12px;white-space:nowrap;">'
+        +g.label+'</button>';
+    }).join('');
   }
 
-  function _updatePlayBtns(icon){
-    var mb=document.getElementById('mini-play-btn'); if(mb) mb.innerHTML=icon;
-    var mp=document.getElementById('main-play-btn'); if(mp) mp.innerHTML=icon;
+  // ── YOUTUBE SEARCH via oEmbed + search redirect ────────────
+  // We use YouTube's iframe embed directly with search queries
+  // This is the most reliable CORS-free approach
+  window._ytQuickPlay = function(query) {
+    _playYouTubeSearch(query, query.split(' ').slice(0,3).join(' '));
+  };
+
+  window._ytSearch = function() {
+    var input = document.getElementById('yt-search-input');
+    var q = (input ? input.value : '').trim();
+    if (!q) { if(window.showToast) window.showToast('yellow','Enter a search','Type an artist, genre, or song'); return; }
+    _playYouTubeSearch(q, q);
+  };
+
+  function _playYouTubeSearch(query, displayName) {
+    // Use YouTube's search embed — plays the top result for a query
+    // This is 100% CORS-free, no API key needed
+    var searchQuery = encodeURIComponent(query + ' 24/7 radio music');
+    var embedUrl = 'https://www.youtube.com/embed?listType=search&list='
+      + searchQuery
+      + '&autoplay=1&controls=1&modestbranding=1&rel=0';
+
+    _loadEmbed(embedUrl, displayName, query);
   }
 
-  function _showMiniBar(show){
-    var bar=document.getElementById('music-mini-bar');
-    if(!bar) return;
-    bar.style.display = show?'flex':'none';
-    // Add bottom padding to pages when bar is showing
-    document.querySelectorAll('.shop-page,.page,#page-dashboard,#page-music').forEach(function(el){
-      el.style.paddingBottom = show?'56px':'';
-    });
+  window._ytPlayVideo = function(videoId, title) {
+    var embedUrl = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&controls=1&modestbranding=1&rel=0';
+    _loadEmbed(embedUrl, title, title);
+    _currentVid = { id: videoId, title: title };
+  };
+
+  function _loadEmbed(url, displayName, query) {
+    // Show the iframe
+    var wrap = document.getElementById('yt-player-wrap');
+    var iframe = document.getElementById('yt-iframe');
+    if (!wrap || !iframe) return;
+
+    iframe.src = url;
+    wrap.style.display = 'block';
+
+    // Update UI
+    _playerState = 'playing';
+    _currentVid  = { title: displayName, query: query };
+
+    document.getElementById('yt-track-name').textContent = displayName;
+    document.getElementById('yt-track-genre').textContent = 'YouTube Music';
+
+    var nowBar = document.getElementById('yt-now-playing-bar');
+    if (nowBar) nowBar.style.display = 'block';
+
+    // Show mini bar
+    var mini = document.getElementById('music-mini-bar');
+    var miniName = document.getElementById('mini-track-name');
+    if (mini) mini.style.display = 'flex';
+    if (miniName) miniName.textContent = displayName;
+
+    if (window.showToast) window.showToast('green', '&#9654; Now Playing', displayName);
   }
 
-  function _setNowPlaying(item){
-    var trackEl=document.getElementById('player-track'); if(trackEl) trackEl.textContent=item.name;
-    var srcEl=document.getElementById('player-source'); if(srcEl) srcEl.textContent=item.genre||item.type.toUpperCase();
-    var miniEl=document.getElementById('mini-track-name'); if(miniEl) miniEl.textContent=item.name;
-    var artEl=document.getElementById('player-artwork'); if(artEl) artEl.innerHTML=item.emoji||'&#127925;';
-    var npEl=document.getElementById('music-now-playing'); if(npEl) npEl.style.display='block';
-    // Update station/track card active states
-    document.querySelectorAll('.music-card').forEach(function(c){ c.style.borderColor='rgba(255,255,255,0.1)'; c.style.background='rgba(13,31,53,0.8)'; });
-    var active=document.getElementById('mcard-'+item.id);
-    if(active){ active.style.borderColor='rgba(245,197,0,0.6)'; active.style.background='rgba(245,197,0,0.08)'; }
+  window._ytStop = function() {
+    var iframe = document.getElementById('yt-iframe');
+    var wrap   = document.getElementById('yt-player-wrap');
+    var nowBar = document.getElementById('yt-now-playing-bar');
+    var mini   = document.getElementById('music-mini-bar');
+    if (iframe) iframe.src = '';
+    if (wrap)   wrap.style.display   = 'none';
+    if (nowBar) nowBar.style.display = 'none';
+    if (mini)   mini.style.display   = 'none';
+    _playerState = 'stopped';
+    _currentVid  = null;
+  };
+
+  // ── FAVORITES ──────────────────────────────────────────────
+  function _loadFavorites() {
+    try { _favorites = JSON.parse(localStorage.getItem('hillMusicFavs') || '[]'); } catch(e) { _favorites = []; }
+    _renderFavorites();
   }
 
-  // ── PLAY ───────────────────────────────────────────────────
-  function _playItem(item){
-    _audio.pause();
-    _audio.src = item.url;
-    _audio.load();
-    // Small delay lets the browser register the user gesture before play()
-    setTimeout(function(){
-      var playPromise = _audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(function(e){
-          if (e.name === 'NotAllowedError') {
-            if(window.showToast) window.showToast('yellow','Tap play to start','Browser requires a tap before audio can start');
-          } else if (e.name === 'NotSupportedError') {
-            if(window.showToast) window.showToast('red','Stream not supported','This URL may be blocked — try adding a different stream URL');
-          } else {
-            if(window.showToast) window.showToast('red','Playback error', e.message);
-          }
-        });
-      }
-    }, 80);
-    _setNowPlaying(item);
-  }
-
-  window._musicPlay = function(id){
-    var item = _playlist.find(function(p){ return p.id===id; });
-    if(!item) return;
-    _currentIdx = _playlist.indexOf(item);
-    _playItem(item);
-  };
-
-  window._musicToggle = function(){
-    if(!_audio.src){ if(window.showToast) window.showToast('yellow','Nothing loaded','Pick a station or track first'); return; }
-    if(_playing) _audio.pause(); else _audio.play();
-  };
-
-  window._musicNext = function(){
-    if(!_playlist.length) return;
-    _currentIdx = (_currentIdx+1) % _playlist.length;
-    _playItem(_playlist[_currentIdx]);
-  };
-
-  window._musicPrev = function(){
-    if(!_playlist.length) return;
-    if(_audio.currentTime > 3){ _audio.currentTime=0; return; }
-    _currentIdx = (_currentIdx-1+_playlist.length) % _playlist.length;
-    _playItem(_playlist[_currentIdx]);
-  };
-
-  window._musicStop = function(){
-    _audio.pause();
-    _audio.src='';
-    _playing=false;
-    _updatePlayBtns('&#9654;');
-    _showMiniBar(false);
-    var npEl=document.getElementById('music-now-playing'); if(npEl) npEl.style.display='none';
-    var trackEl=document.getElementById('player-track'); if(trackEl) trackEl.textContent='Select a station or track';
-  };
-
-  window._musicVolume = function(v){
-    _audio.volume = parseFloat(v);
-    var mv=document.getElementById('mini-volume'); if(mv) mv.value=v;
-    var av=document.getElementById('main-volume'); if(av) av.value=v;
-  };
-
-  window._musicSeek = function(pct){
-    _seeking=true;
-    if(_audio.duration) _audio.currentTime=(_audio.duration*(pct/100));
-    setTimeout(function(){ _seeking=false; }, 200);
-  };
-
-  // ── STATIONS ───────────────────────────────────────────────
-  function _renderStations(){
-    _playlist = _stations.map(function(s){ return Object.assign({},s,{type:'station'}); })
-                 .concat(_tracks.map(function(t){ return Object.assign({},t,{type:'track'}); }));
-
-    var container = document.getElementById('station-list');
-    if(!container) return;
-    container.innerHTML = '';
-    _stations.forEach(function(s){
-      var card = document.createElement('div');
-      card.className='music-card';
-      card.id='mcard-'+s.id;
-      card.style.cssText='background:rgba(13,31,53,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;cursor:pointer;transition:all .2s;position:relative;';
-      card.innerHTML = 
-        '<div style="font-size:28px;margin-bottom:6px;">'+(s.emoji||'&#128246;')+'</div>'
-        +'<div style="font-family:Bebas Neue,sans-serif;font-size:14px;color:#f5d050;letter-spacing:1px;line-height:1.2;margin-bottom:4px;">'+s.name+'</div>'
-        +'<div style="font-size:10px;color:#475569;letter-spacing:1px;">'+( s.genre||'Radio')+'</div>'
-        +(s.canDelete?'<button data-sid="'+s.id+'" onclick="event.stopPropagation();window._deleteStation(this.dataset.sid);" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:2px 6px;font-size:10px;cursor:pointer;">&#10005;</button>':'');
-      card.addEventListener('click', function(){ window._musicPlay(s.id); });
-      container.appendChild(card);
-    });
-  }
-
-  // ── ADD STATION ────────────────────────────────────────────
-  window._showAddStation = function(){
-    document.getElementById('add-station-modal').style.display='flex';
-    document.getElementById('station-name-input').value='';
-    document.getElementById('station-url-input').value='';
-    document.getElementById('station-genre-input').value='';
-  };
-
-  window._addStation = function(){
-    var name  = (document.getElementById('station-name-input').value||'').trim();
-    var url   = (document.getElementById('station-url-input').value||'').trim();
-    var genre = (document.getElementById('station-genre-input').value||'').trim();
-    if(!name||!url){ if(window.showToast) window.showToast('yellow','Fill in all fields','Name and URL are required'); return; }
-    document.getElementById('add-station-modal').style.display='none';
-    var station = { id:'st'+Date.now(), name:name, url:url, genre:genre, type:'station', emoji:'&#128246;', canDelete:true };
-    _stations.push(station);
-    // Save to Firebase
-    _saveStations();
-    _renderStations();
-    if(window.showToast) window.showToast('green','Station added',name+' is ready to play');
-  };
-
-  window._deleteStation = function(id){
-    _stations = _stations.filter(function(s){ return s.id!==id; });
-    _saveStations();
-    _renderStations();
-  };
-
-  function _saveStations(){
-    var db2=window.fbDb, mods=window.fbFirestore;
-    if(!db2||!mods) { localStorage.setItem('hillMusicStations', JSON.stringify(_stations.filter(function(s){return s.canDelete;}))); return; }
-    var custom = _stations.filter(function(s){ return s.canDelete; });
-    mods.setDoc(mods.doc(db2,'hillSettings','musicStations'), { stations: custom })
-      .catch(function(e){ localStorage.setItem('hillMusicStations', JSON.stringify(custom)); });
-  }
-
-  function _loadStations(){
-    _stations = DEFAULT_STATIONS.slice();
-    var db2=window.fbDb, mods=window.fbFirestore;
-    if(!db2||!mods){
-      try { var saved=JSON.parse(localStorage.getItem('hillMusicStations')||'[]'); _stations=_stations.concat(saved); } catch(e){}
-      _renderStations(); return;
+  function _saveFavorites() {
+    localStorage.setItem('hillMusicFavs', JSON.stringify(_favorites));
+    // Also save to Firebase so everyone shares favorites
+    var db2 = window.fbDb, mods = window.fbFirestore;
+    if (db2 && mods) {
+      mods.setDoc(mods.doc(db2, 'hillSettings', 'musicFavs'), { favs: _favorites })
+        .catch(function(){});
     }
-    mods.getDoc(mods.doc(db2,'hillSettings','musicStations')).then(function(snap){
-      if(snap&&snap.exists&&snap.exists()){
-        var custom = snap.data().stations || [];
-        _stations = DEFAULT_STATIONS.concat(custom);
-      }
-      _renderStations();
-    }).catch(function(){ _renderStations(); });
   }
 
-  // ── UPLOAD TRACKS ──────────────────────────────────────────
-  window._uploadTracks = function(files){
-    if(!files||!files.length) return;
-    Array.from(files).forEach(function(file){
-      if(!file.type.startsWith('audio/')){ if(window.showToast) window.showToast('yellow','Not an audio file',file.name); return; }
-      var url = URL.createObjectURL(file);
-      var track = {
-        id:    'tr'+Date.now()+Math.random().toString(36).slice(2,6),
-        name:  file.name.replace(/\.[^.]+$/,'').replace(/[-_]/g,' '),
-        url:   url,
-        genre: 'Uploaded',
-        type:  'track',
-        emoji: '&#127911;',
-        size:  Math.round(file.size/1024)+'KB'
-      };
-      _tracks.push(track);
-      _renderTracks();
-      _renderStations(); // rebuild playlist
-      if(window.showToast) window.showToast('green','Track added',track.name);
-    });
+  window._ytFavorite = function(query, label) {
+    var exists = _favorites.some(function(f){ return f.query === query; });
+    if (exists) {
+      _favorites = _favorites.filter(function(f){ return f.query !== query; });
+      if(window.showToast) window.showToast('yellow','Removed','Removed from Shop Favorites');
+    } else {
+      _favorites.unshift({ query: query, label: label, id: 'fav'+Date.now() });
+      if(window.showToast) window.showToast('green','&#9733; Saved!','Added to Shop Favorites');
+    }
+    _saveFavorites();
+    _renderFavorites();
   };
 
-  function _renderTracks(){
-    var container=document.getElementById('track-list');
-    var empty=document.getElementById('track-empty');
-    if(!container) return;
-    if(empty) empty.style.display=_tracks.length?'none':'block';
-    container.innerHTML='';
-    _tracks.forEach(function(t){
-      var row=document.createElement('div');
-      row.className='music-card';
-      row.id='mcard-'+t.id;
-      row.style.cssText='background:rgba(13,31,53,0.8);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s;';
-      row.innerHTML=
-        '<div style="font-size:22px;flex-shrink:0;">&#127911;</div>'
-        +'<div style="flex:1;min-width:0;">'
-          +'<div style="font-family:Bebas Neue,sans-serif;font-size:14px;color:#f5d050;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+t.name+'</div>'
-          +'<div style="font-size:10px;color:#475569;">'+t.size+'</div>'
-        +'</div>'
-        +'<button data-tid="'+t.id+'" onclick="event.stopPropagation();window._deleteTrack(this.dataset.tid);" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;">&#10005;</button>';
-      row.addEventListener('click', function(){ window._musicPlay(t.id); });
-      container.appendChild(row);
-    });
+  function _renderFavorites() {
+    var container = document.getElementById('yt-favorites');
+    var empty     = document.getElementById('yt-fav-empty');
+    if (!container) return;
+    if (empty) empty.style.display = _favorites.length ? 'none' : 'block';
+    container.innerHTML = _favorites.map(function(f) {
+      return _makeCard(f.query, f.label, true);
+    }).join('');
   }
 
-  window._deleteTrack = function(id){
-    var t=_tracks.find(function(x){return x.id===id;});
-    if(t&&t.url&&t.url.startsWith('blob:')) URL.revokeObjectURL(t.url);
-    _tracks=_tracks.filter(function(x){return x.id!==id;});
-    _renderTracks(); _renderStations();
-  };
-
-  // ── INIT ───────────────────────────────────────────────────
-  function init(){
-    if(!window.fbDb||!window.fbFirestore){ setTimeout(init,800); return; }
-    _loadStations();
-    _renderTracks();
+  function _makeCard(query, label, isFav) {
+    var short = label.length > 22 ? label.slice(0,22)+'...' : label;
+    return '<div style="background:rgba(13,31,53,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px;cursor:pointer;position:relative;" '
+      +'onclick="window._ytQuickPlay('+JSON.stringify(query)+')">'
+      +'<div style="font-size:26px;margin-bottom:6px;">&#127925;</div>'
+      +'<div style="font-family:Bebas Neue,sans-serif;font-size:13px;color:#f5d050;letter-spacing:1px;line-height:1.3;margin-bottom:6px;">'+short+'</div>'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;">'
+        +'<div style="font-size:10px;color:#22c55e;">&#9654; PLAY</div>'
+        +'<button onclick="event.stopPropagation();window._ytFavorite('+JSON.stringify(query)+','+JSON.stringify(label)+');" '
+          +'style="background:none;border:none;color:'+(isFav?'#f5c842':'#334155')+';font-size:16px;cursor:pointer;padding:2px;">&#9733;</button>'
+      +'</div>'
+      +'</div>';
   }
 
-  // Start when Firebase is ready
-  var _initTimer = setInterval(function(){
-    if(window.fbDb&&window.fbFirestore){ clearInterval(_initTimer); init(); }
-  }, 600);
-
-  // ── PWA INSTALL PROMPT ────────────────────────────────────
-  var _deferredInstallPrompt = null;
-
-  // Catch the beforeinstallprompt event (Android/Chrome)
+  // ── INSTALL PROMPT ─────────────────────────────────────────
+  var _deferredInstall = null;
   window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
-    _deferredInstallPrompt = e;
-    // Show the native install button if on Android
+    _deferredInstall = e;
     var btn = document.getElementById('pwa-install-btn');
     if (btn) btn.style.display = 'block';
   });
-
-  // Handle native install button tap
-  window._triggerInstall = function() {
-    if (!_deferredInstallPrompt) return;
-    _deferredInstallPrompt.prompt();
-    _deferredInstallPrompt.userChoice.then(function(result) {
-      if (result.outcome === 'accepted') {
-        window._dismissInstallBanner();
-        if(window.showToast) window.showToast('green', 'App installed!', 'Open from your home screen for background music');
-      }
-      _deferredInstallPrompt = null;
+  document.getElementById('pwa-install-btn') && document.getElementById('pwa-install-btn').addEventListener('click', function(){
+    if (!_deferredInstall) return;
+    _deferredInstall.prompt();
+    _deferredInstall.userChoice.then(function(r){
+      if (r.outcome==='accepted') window._dismissInstallBanner();
+      _deferredInstall = null;
     });
-  };
-
-  document.getElementById('pwa-install-btn') && document.getElementById('pwa-install-btn').addEventListener('click', window._triggerInstall);
-
+  });
   window._showInstallSteps = function() {
-    var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-    var isAndroid = /Android/.test(navigator.userAgent);
-    var iosEl = document.getElementById('install-ios-steps');
-    var andEl = document.getElementById('install-android-steps');
-    var btn   = document.getElementById('install-show-steps-btn');
-    if (isIOS    && iosEl) { iosEl.style.display = iosEl.style.display==='none'?'block':'none'; }
-    else if (isAndroid && andEl) { andEl.style.display = andEl.style.display==='none'?'block':'none'; }
-    else {
-      // Desktop or unknown — show iOS as default
-      if (iosEl) iosEl.style.display = iosEl.style.display==='none'?'block':'none';
-    }
-    if (btn) btn.textContent = 'HIDE STEPS';
+    var box = document.getElementById('install-steps-box');
+    if (box) box.style.display = box.style.display==='none'?'block':'none';
   };
-
   window._dismissInstallBanner = function() {
-    var banner = document.getElementById('music-install-banner');
-    if (banner) banner.style.display = 'none';
-    localStorage.setItem('hillMusicInstallDismissed', '1');
+    var b = document.getElementById('music-install-banner');
+    if (b) b.style.display = 'none';
+    localStorage.setItem('hillMusicInstallDismissed','1');
   };
-
-  // Show the banner when Music tab opens — unless already dismissed or already installed
-  var _musicTabObserver = null;
   function _checkInstallBanner() {
     var dismissed   = localStorage.getItem('hillMusicInstallDismissed');
     var isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     var banner = document.getElementById('music-install-banner');
     if (!banner) return;
-    if (dismissed || isInstalled) {
-      banner.style.display = 'none';
-    } else {
-      banner.style.display = 'block';
-    }
+    banner.style.display = (dismissed||isInstalled) ? 'none' : 'block';
   }
 
-  // Hook into switchTab to show banner when music tab opens
-  var _origSwitchTab = window.switchTab;
+  // ── HOOK INTO SWITCHTAB ────────────────────────────────────
+  var _origSwitch = window.switchTab;
   window.switchTab = function(tab) {
-    if (_origSwitchTab) _origSwitchTab(tab);
-    if (tab === 'music') setTimeout(_checkInstallBanner, 100);
+    if (_origSwitch) _origSwitch(tab);
+    if (tab === 'music') {
+      setTimeout(_checkInstallBanner, 100);
+      // Load Firebase favorites if not loaded yet
+      _loadFavoritesFromFirebase();
+    }
   };
+
+  function _loadFavoritesFromFirebase() {
+    var db2 = window.fbDb, mods = window.fbFirestore;
+    if (!db2 || !mods) { _loadFavorites(); return; }
+    mods.getDoc(mods.doc(db2,'hillSettings','musicFavs')).then(function(snap){
+      if (snap && snap.exists && snap.exists()) {
+        _favorites = snap.data().favs || [];
+        localStorage.setItem('hillMusicFavs', JSON.stringify(_favorites));
+      } else {
+        _loadFavorites();
+      }
+      _renderFavorites();
+    }).catch(function(){ _loadFavorites(); });
+  }
+
+  // ── INIT ───────────────────────────────────────────────────
+  _renderGenres();
+  _loadFavorites();
 
 })();
 </script>
