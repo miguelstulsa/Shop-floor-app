@@ -1057,14 +1057,17 @@
     <div class="admin-section" style="background:linear-gradient(135deg,#1a0033,#2a0050);border-top:2px solid rgba(139,92,246,0.4);">
       <div class="admin-section-title" style="color:#c4b5fd;">&#127897; SPARKY — SHOP VOICE &amp; MUSIC</div>
       <div style="font-size:11px;color:#475569;margin-bottom:8px;line-height:1.6;">Upload MP3s here — Sparky plays them between floor updates. Any audio file works. They go into Firebase Storage and play on all devices.</div>
-      <label style="display:flex;align-items:center;gap:8px;background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.3);border-radius:8px;padding:10px 12px;cursor:pointer;margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:8px;background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.3);border-radius:8px;padding:10px 12px;cursor:pointer;margin-bottom:6px;">
         <span style="font-size:18px;">&#127925;</span>
         <div>
           <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#f5c842;letter-spacing:1px;">UPLOAD SONGS FOR SPARKY</div>
-          <div style="font-size:10px;color:#475569;">MP3, WAV, M4A — any audio format</div>
+          <div style="font-size:10px;color:#475569;">Pick MP3s from your phone — plays between updates</div>
         </div>
         <input type="file" accept="audio/*" multiple onchange="window._uploadSparkyMusic(this.files)" style="display:none;">
       </label>
+      <div id="sparky-song-list" style="max-height:120px;overflow-y:auto;padding:4px 0;">
+        <div style="font-size:11px;color:#334155;padding:6px 0;">No songs loaded — tap UPLOAD SONGS above</div>
+      </div>
       <div style="font-size:11px;color:#6d28d9;margin-bottom:8px;">Jim auto-starts when you log in and reads floor activity live. For a real human voice, add your ElevenLabs API key below (free at elevenlabs.io — 10,000 chars/month).</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
         <input id="eleven-key-input" placeholder="ElevenLabs API key (optional)" type="password"
@@ -11088,110 +11091,99 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var ELEVEN_API_KEY  = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
   var ELEVEN_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
 
-  // ── MUSIC BETWEEN SPARKY — Firebase Storage ───────────────
+  // ── MUSIC BETWEEN SPARKY — Local blob (works instantly) ────
   var _musicOn      = true;
   var _musicBetween = 45;
   var _currentSong  = 0;
   var _audioEl      = null;
-  var _songList     = [];   // populated from Firebase Storage
-  var _musicLoaded  = false;
+  var _songList     = []; // { name, url (blob URL) }
 
   function getAudio() {
     if (!_audioEl) {
       _audioEl = document.getElementById('sparky-audio');
-      if (!_audioEl) { _audioEl = new Audio(); document.body.appendChild(_audioEl); }
+      if (!_audioEl) {
+        _audioEl = new Audio();
+        _audioEl.id = 'sparky-audio';
+        document.body.appendChild(_audioEl);
+      }
     }
     return _audioEl;
   }
 
-  // Load song list from Firebase Storage bucket /music/
-  async function loadSongList() {
-    if (_musicLoaded) return;
-    try {
-      var storage = window.fbStorage;
-      var mods    = window.fbStorageModules;
-      if (!storage || !mods) return;
-      var musicRef  = mods.ref(storage, 'music/');
-      var result    = await mods.listAll(musicRef);
-      var urls      = await Promise.all(result.items.map(function(item){
-        return mods.getDownloadURL(item).then(function(url){
-          return { url: url, name: item.name.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ') };
-        });
-      }));
-      if (urls.length > 0) {
-        _songList = urls;
-        // Shuffle
-        _songList.sort(function(){ return Math.random()-0.5; });
-        _musicLoaded = true;
-        console.log('Sparky music: loaded', _songList.length, 'songs from Firebase');
-      }
-    } catch(e) {
-      console.log('Music load error:', e.message);
-    }
-  }
-
-  // Upload songs to Firebase Storage
-  window._uploadSparkyMusic = async function(files) {
-    var storage = window.fbStorage;
-    var mods    = window.fbStorageModules;
-    if (!storage || !mods) { if(window.showToast) window.showToast('red','Not ready','Firebase storage not connected'); return; }
-    var count = 0;
+  // Add songs from file picker — creates blob URLs instantly, no Firebase needed
+  window._uploadSparkyMusic = function(files) {
+    if (!files || !files.length) return;
+    var added = 0;
     for (var i = 0; i < files.length; i++) {
       var file = files[i];
       if (!file.type.startsWith('audio/')) continue;
-      try {
-        var fileRef = mods.ref(storage, 'music/' + file.name);
-        await mods.uploadBytes(fileRef, file);
-        count++;
-        if(window.showToast) window.showToast('green', '♪ Uploaded', file.name + ' ('+count+'/'+files.length+')');
-      } catch(e) {
-        if(window.showToast) window.showToast('red','Upload failed', file.name + ': ' + e.message);
-      }
+      var blobUrl = URL.createObjectURL(file);
+      var name = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+      _songList.push({ name: name, url: blobUrl });
+      added++;
     }
-    if (count > 0) { _musicLoaded = false; await loadSongList(); }
+    _updateSongListUI();
+    if (added > 0 && window.showToast) {
+      window.showToast('green', '♪ ' + added + ' song' + (added>1?'s':'') + ' added!', 'Sparky will play them between updates');
+    }
+  };
+
+  function _updateSongListUI() {
+    var listEl = document.getElementById('sparky-song-list');
+    if (!listEl) return;
+    if (_songList.length === 0) {
+      listEl.innerHTML = '<div style="font-size:11px;color:#334155;padding:6px 0;">No songs loaded — tap UPLOAD SONGS above</div>';
+      return;
+    }
+    listEl.innerHTML = _songList.map(function(s, i) {
+      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(30,58,92,0.4);">'
+        + '<span style="font-size:12px;">&#127925;</span>'
+        + '<span style="font-size:11px;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + s.name + '</span>'
+        + '<button onclick="window._removeSong(' + i + ')" style="background:none;border:none;color:#475569;cursor:pointer;font-size:12px;">&#10005;</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  window._removeSong = function(idx) {
+    URL.revokeObjectURL(_songList[idx].url);
+    _songList.splice(idx, 1);
+    if (_currentSong >= _songList.length) _currentSong = 0;
+    _updateSongListUI();
   };
 
   function playMusic() {
-    if (!_musicOn) return;
+    if (!_musicOn || _songList.length === 0) return;
+    var song  = _songList[_currentSong % _songList.length];
     var audio = getAudio();
+    audio.src    = song.url;
+    audio.volume = 0.75;
+    audio.play().catch(function(e) {
+      console.log('Music play error:', e.message);
+    });
+    _currentSong = (_currentSong + 1) % _songList.length;
     var statusEl = document.getElementById('sparky-status-text');
-
-    if (_songList.length > 0) {
-      // Play from Firebase Storage uploads
-      var song = _songList[_currentSong % _songList.length];
-      audio.src    = song.url;
-      audio.volume = 0.75;
-      audio.play().catch(function(e){ console.log('Music play failed:', e.message); });
-      if (statusEl) statusEl.textContent = '♪ ' + song.name + ' — Sparky back in ' + _musicBetween + 's';
-    } else {
-      // No songs uploaded yet — show message
-      if (statusEl) statusEl.textContent = '♪ Upload songs in Admin Panel — Sparky back in ' + _musicBetween + 's';
-      console.log('No songs loaded — upload MP3s in Admin Panel');
-    }
-    _currentSong++;
+    if (statusEl) statusEl.textContent = '♪ ' + song.name + ' — Sparky back in ' + _musicBetween + 's';
   }
 
   function stopMusic() {
     var audio = getAudio();
-    try { audio.pause(); audio.src = ''; } catch(e){}
+    try { audio.pause(); audio.src = ''; } catch(e) {}
     var statusEl = document.getElementById('sparky-status-text');
-    if (statusEl) statusEl.textContent = '🎙️ Sparky is talking...';
+    if (statusEl && _active) statusEl.textContent = '🎙️ Sparky is talking...';
   }
-
-  // Auto-load songs when Firebase is ready
-  var _musicLoadTimer = setInterval(function(){
-    if (window.fbStorage) { clearInterval(_musicLoadTimer); loadSongList(); }
-  }, 1500);
 
   window._sparkyMusicToggle = function() {
     _musicOn = !_musicOn;
     if (!_musicOn) stopMusic();
-    else playMusic();
+    else if (_active) playMusic();
+    var btn = document.getElementById('sparky-music-btn');
+    if (btn) btn.style.opacity = _musicOn ? '1' : '0.4';
     if (window.showToast) window.showToast(_musicOn?'green':'yellow', _musicOn?'Music ON':'Music OFF', '');
   };
   window._sparkyNextSong = function() {
-    _currentSong = (_currentSong+1) % Math.max(_songList.length,1);
-    stopMusic(); setTimeout(playMusic, 200);
+    stopMusic();
+    _currentSong = (_currentSong + 1) % Math.max(_songList.length, 1);
+    setTimeout(playMusic, 200);
   };
   window._sparkySetMusicTime = function(secs) { _musicBetween = parseInt(secs)||45; };
 
