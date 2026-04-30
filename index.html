@@ -11135,28 +11135,19 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 (function(){
 
   // ── CONFIG ────────────────────────────────────────────────
-  // ElevenLabs free tier: 10,000 chars/month. Get key at elevenlabs.io
-  // Leave blank to use browser TTS (still sounds decent with our tricks)
-  var ELEVEN_API_KEY = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
-  var ELEVEN_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // George — deep, authoritative male (ElevenLabs default)
-  // Other great voices:
-  //   pNInz6obpgDQGcFmaJgB = Adam (deep male)
-  //   EXAVITQu4vr4xnSDxMaL = Sarah (warm female)
-  //   onwK4e9ZLuTAKqWW03F9 = Daniel (british male)
-  //   TxGEqnHWrfWFTfGW9XjX = Josh (conversational male)
-  //   IKne3meq5aSn9XLyUdCD = Charlie (natural male)
+  var ELEVEN_API_KEY  = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
+  var ELEVEN_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // George — deep natural male
 
   // ── STATE ─────────────────────────────────────────────────
-  var _active       = false;
-  var _speaking     = false;
-  var _queue        = [];
-  var _autoTimer    = null;
-  var _lastSpoke    = 0;
-  var _seenNoteIds  = new Set();
-  var _MIN_GAP      = 45000; // ms min between auto updates
-  var _AUTO_EVERY   = 120000; // 2 min auto floor reports
+  var _active    = false;
+  var _speaking  = false;
+  var _queue     = [];
+  var _autoTimer = null;
+  var _lastSpoke = 0;
+  var _MIN_GAP   = 30000;   // 30s minimum between any two Jim speaks
+  var _AUTO_EVERY= 120000;  // auto floor report every 2 minutes
 
-  // ── MACHINE NAMES ─────────────────────────────────────────
+  // ── MACHINE NAME MAP ──────────────────────────────────────
   var MN = {
     '1050-B':'Ten Fifty B','7000':'Seven Thousand','VF-6':'V F Six',
     '5100-B':'Fifty One Hundred B','2500':'Twenty Five Hundred','PUMA-3':'Puma Three',
@@ -11171,333 +11162,334 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   function mn(m){ return MN[m] || m || 'a machine'; }
   function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
 
-  // ── FORMAT TIME ───────────────────────────────────────────
-  function fmtElapsed(seconds) {
-    var s = parseInt(seconds)||0;
-    if (s < 60)  return s + ' seconds';
-    if (s < 3600){ var m=Math.floor(s/60), sec=s%60; return m+' minute'+(m!==1?'s':'')+(sec>0?' and '+sec+' seconds':''); }
-    var h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
-    return h+' hour'+(h!==1?'s':'')+(m>0?' and '+m+' minute'+(m!==1?'s':''):'');
+  // ── FORMAT ELAPSED TIME ───────────────────────────────────
+  function fmtTime(seconds) {
+    var s = parseInt(seconds) || 0;
+    if (s < 60)   return s + ' seconds';
+    if (s < 3600) {
+      var m = Math.floor(s/60), r = s % 60;
+      return m + ' minute' + (m !== 1 ? 's' : '') + (r > 0 ? ' and ' + r + ' seconds' : '');
+    }
+    var h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+    return h + ' hour' + (h !== 1 ? 's' : '') + (m > 0 ? ' and ' + m + ' minute' + (m !== 1 ? 's' : '') : '');
   }
 
-  // ── GATHER LIVE FLOOR DATA ────────────────────────────────
-  function getFloorData() {
-    var d = { active:[], pending:[], inspections:[], floorSupport:[], machinist:[], totalActive:0 };
-    var now = Math.floor(Date.now()/1000);
-    var notes = window._lastActionable || [];
+  // ── GATHER SHOP FLOOR DATA ────────────────────────────────
+  function getFloor() {
+    var now    = Math.floor(Date.now() / 1000);
+    var notes  = window._lastActionable || [];
+    var result = { running:[], pending:[], machinist:[], inspection:[], floorSupport:[], onHold:[] };
 
-    notes.forEach(function(n){
+    notes.forEach(function(n) {
       if (n.resolved) return;
       var elapsed = (n.startedAt && n.startedAt.seconds) ? now - n.startedAt.seconds : 0;
       var rec = {
-        machine: mn(n.machine), rawMachine: n.machine,
-        operator: n.operator || 'the operator',
+        machine:   mn(n.machine),
         firstName: n.operator ? n.operator.split(' ')[0] : 'the operator',
-        wo: n.wo || '', op: n.op || '',
-        detail: n.detail || '',
-        elapsed: elapsed,
-        elapsedStr: elapsed > 0 ? fmtElapsed(elapsed) : '',
-        onHold: n.onHold || false,
+        operator:  n.operator || 'the operator',
+        wo:        n.wo  || '',
+        op:        n.op  || '',
+        detail:    n.detail || '',
+        elapsed:   elapsed,
+        elapsedStr: elapsed > 10 ? fmtTime(elapsed) : '',
         holdReason: n.holdReason || '',
-        type: n.type
+        type:      n.type
       };
-      if (n.inProgress || (n.startedAt && n.startedAt.seconds && !n.onHold)) {
-        d.active.push(rec);
-        d.totalActive++;
-      } else if (n.onHold)   { d.pending.push(rec); }
-      else if (n.type==='blue')  { d.pending.push(rec); }
-      else if (n.type==='red')   { d.inspections.push(rec); }
-      else if (n.type==='orange'){ d.floorSupport.push(rec); }
-      else if (n.type==='yellow'){ d.machinist.push(rec); }
+      if (n.onHold)                                         result.onHold.push(rec);
+      else if (n.inProgress || (n.startedAt && n.startedAt.seconds)) result.running.push(rec);
+      else if (n.type === 'blue')   result.pending.push(rec);
+      else if (n.type === 'yellow') result.machinist.push(rec);
+      else if (n.type === 'red')    result.inspection.push(rec);
+      else if (n.type === 'orange') result.floorSupport.push(rec);
     });
-    return d;
+    return result;
   }
 
-  // ── BUILD NATURAL SPEECH ──────────────────────────────────
-  function buildFloorReport() {
-    var d = getFloorData();
-    var lines = [];
-    var now = new Date();
-    var hour = now.getHours();
-    var timeOfDay = hour < 10 ? 'morning' : hour < 14 ? 'midday' : hour < 17 ? 'afternoon' : 'evening';
+  // ── BUILD FLOOR REPORT ────────────────────────────────────
+  function buildReport() {
+    var f    = getFloor();
+    var out  = [];
+    var total = f.running.length + f.pending.length + f.machinist.length
+              + f.inspection.length + f.floorSupport.length + f.onHold.length;
 
-    // Opener — rotates naturally
+    // Opener
     var openers = [
-      "Alright, here's what's going on across the floor right now.",
-      "Let me give you a quick rundown of what's happening out there.",
-      "Here's your floor update.",
-      "Okay, checking in on the shop.",
-      "Here's the situation on the floor.",
+      "Alright, here's what's happening on the floor right now.",
+      "Let me give you a rundown of the shop.",
+      "Checking in on the floor.",
+      "Here's your live floor update.",
+      "Okay, here's where things stand right now."
     ];
-    lines.push(pick(openers));
+    out.push(pick(openers));
 
-    // Active jobs
-    if (d.active.length === 0 && d.pending.length === 0) {
-      lines.push("Looks like it's quiet right now. No active jobs running at the moment.");
-    } else {
-      if (d.active.length > 0) {
-        if (d.active.length === 1) {
-          var j = d.active[0];
-          var t = j.elapsedStr ? "been running for " + j.elapsedStr : "just kicked off";
-          lines.push("We've got one job running — " + j.firstName + " is on " + j.machine + (j.wo ? ", work order " + j.wo : "") + (j.op ? ", operation " + j.op : "") + ". They've " + t + ".");
-        } else {
-          lines.push("We've got " + d.active.length + " jobs running right now.");
-          // Detail the longest running ones
-          var sorted = d.active.slice().sort(function(a,b){ return b.elapsed - a.elapsed; });
-          sorted.slice(0, Math.min(3, sorted.length)).forEach(function(j){
-            var t = j.elapsedStr ? "clocked in at " + j.elapsedStr : "just started";
-            lines.push(j.firstName + " on " + j.machine + (j.wo ? ", work order " + j.wo : "") + " — " + t + ".");
-          });
+    if (total === 0) {
+      out.push("Floor is clear right now. No active requests, no pending jobs. Good time to get ahead of something.");
+      return out.join(' ');
+    }
+
+    // Running jobs — most important
+    if (f.running.length > 0) {
+      if (f.running.length === 1) {
+        var j = f.running[0];
+        var t = j.elapsedStr ? "They've been at it for " + j.elapsedStr + "." : "Just got started.";
+        out.push(
+          "We've got one job running right now. " + j.firstName + " on " + j.machine
+          + (j.wo ? ", work order " + j.wo : "")
+          + (j.op ? ", operation " + j.op : "")
+          + ". " + t
+        );
+      } else {
+        out.push("We've got " + f.running.length + " jobs running right now.");
+        // Sort by longest running first
+        var sorted = f.running.slice().sort(function(a,b){ return b.elapsed - a.elapsed; });
+        sorted.forEach(function(j, i) {
+          if (i > 2) return; // max 3 details
+          var t = j.elapsedStr ? j.elapsedStr + " on the clock" : "just started";
+          out.push(
+            j.firstName + " on " + j.machine
+            + (j.wo ? ", work order " + j.wo : "")
+            + (j.op ? ", operation " + j.op : "")
+            + " — " + t + "."
+          );
+        });
+        if (f.running.length > 3) {
+          out.push("Plus " + (f.running.length - 3) + " more running across the floor.");
         }
       }
-
-      // Pending / waiting for setup
-      if (d.pending.length > 0) {
-        if (d.pending.length === 1) {
-          var p = d.pending[0];
-          if (p.onHold) {
-            lines.push("One job is on hold right now — " + p.machine + (p.holdReason ? ". The reason is: " + p.holdReason : ". Waiting to resume."));
-          } else {
-            lines.push("There's one job sitting and waiting for setup — " + p.machine + (p.wo ? ", work order " + p.wo : "") + ". " + p.firstName + " needs somebody over there.");
-          }
-        } else {
-          var holds = d.pending.filter(function(p){ return p.onHold; });
-          var waiting = d.pending.filter(function(p){ return !p.onHold; });
-          if (waiting.length > 0) lines.push(waiting.length + " machine" + (waiting.length>1?"s are":"is") + " sitting idle waiting on setup. Let's get those moving.");
-          if (holds.length > 0)   lines.push(holds.length + " job" + (holds.length>1?"s are":"is") + " currently on hold.");
-        }
-      }
     }
 
-    // Inspections
-    if (d.inspections.length > 0) {
-      var ins = d.inspections[0];
-      lines.push("Quality team — heads up. " + ins.firstName + " on " + ins.machine + " has parts ready for inspection" + (ins.wo ? ", work order " + ins.wo : "") + ". Don't let that one sit too long.");
-    }
-
-    // Floor support
-    if (d.floorSupport.length > 0) {
-      var fs = d.floorSupport[0];
-      lines.push("Also, floor support is needed at " + fs.machine + ". " + fs.firstName + " is waiting." + (fs.detail ? " They said: " + fs.detail : ""));
-    }
-
-    // Machinist requests
-    if (d.machinist.length > 0) {
-      d.machinist.slice(0,2).forEach(function(r){
-        lines.push(r.firstName + " at " + r.machine + " put in a machinist request" + (r.detail ? " — " + r.detail : "") + ". Somebody go take care of that.");
+    // On hold
+    if (f.onHold.length > 0) {
+      f.onHold.forEach(function(j) {
+        out.push(
+          j.machine + " is on hold right now"
+          + (j.holdReason ? " — " + j.holdReason : "")
+          + ". " + j.firstName + " is waiting to get back on it."
+        );
       });
     }
 
-    // Closing
-    var closers = [
-      "That's everything for now. I'll check back in a few.",
-      "Alright, that's your floor update. Keep it moving out there.",
-      "That's the rundown. Stay sharp.",
-      "Okay, that's what's going on. I'll be back with another update shortly.",
-    ];
-    lines.push(pick(closers));
+    // Pending setup
+    if (f.pending.length > 0) {
+      if (f.pending.length === 1) {
+        var p = f.pending[0];
+        out.push(
+          "One machine sitting idle waiting on setup — " + p.machine
+          + (p.wo ? ", work order " + p.wo : "")
+          + (p.op ? ", operation " + p.op : "")
+          + ". " + p.firstName + " needs somebody over there."
+        );
+      } else {
+        out.push(f.pending.length + " machines waiting on setup. Let's get those moving.");
+        f.pending.forEach(function(p) {
+          out.push(
+            p.machine
+            + (p.wo ? ", work order " + p.wo : "")
+            + " — " + p.firstName + " is waiting."
+          );
+        });
+      }
+    }
 
-    return lines.join(' ');
+    // Machinist requests
+    if (f.machinist.length > 0) {
+      f.machinist.forEach(function(r) {
+        out.push(
+          r.firstName + " at " + r.machine + " put in a machinist request"
+          + (r.detail ? " — they need " + r.detail : "")
+          + (r.wo ? ", work order " + r.wo : "")
+          + ". Someone go take care of that."
+        );
+      });
+    }
+
+    // Floor support
+    if (f.floorSupport.length > 0) {
+      f.floorSupport.forEach(function(r) {
+        out.push(
+          "Floor support needed at " + r.machine + ". " + r.firstName + " is waiting"
+          + (r.detail ? " — " + r.detail : "") + "."
+        );
+      });
+    }
+
+    // Inspections
+    if (f.inspection.length > 0) {
+      f.inspection.forEach(function(r) {
+        out.push(
+          "Quality team — " + r.firstName + " on " + r.machine
+          + " has parts ready for inspection"
+          + (r.wo ? ", work order " + r.wo : "")
+          + ". Don't let that sit."
+        );
+      });
+    }
+
+    // Closer
+    var closers = [
+      "That's everything for now. I'll check back in a bit.",
+      "Alright, that's the floor. Keep it moving.",
+      "That's your update. Stay on it.",
+      "Okay, that's where we're at. I'll be back shortly."
+    ];
+    out.push(pick(closers));
+
+    return out.join(' ');
   }
 
-  // ── SPEAK VIA ELEVENLABS (real human AI voice) ───────────
-  // Uses ElevenLabs REST API directly — same as their SDK but works in browser
+  // ── ELEVENLABS VIA CLOUDFLARE WORKER (bypasses Safari CORS) ──
   async function speakElevenLabs(text) {
     if (!ELEVEN_API_KEY) return false;
     try {
-      // Route through Cloudflare Worker to bypass Safari CORS block
-      var res = await fetch(
-        'https://hill-dnx-alerts.miguelstulsa.workers.dev/speak',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text:    text,
-            apiKey:  ELEVEN_API_KEY,
-            voiceId: ELEVEN_VOICE_ID
-          })
-        }
-      );
-
-      if (!res.ok) {
-        var errText = await res.text().catch(function(){ return 'unknown'; });
-        console.warn('ElevenLabs error:', res.status, errText);
-        return false;
-      }
-
-      // Convert the MP3 response to a blob URL and play it
+      var res = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, apiKey: ELEVEN_API_KEY, voiceId: ELEVEN_VOICE_ID })
+      });
+      if (!res.ok) return false;
       var blob  = await res.blob();
       var url   = URL.createObjectURL(blob);
       var audio = new Audio(url);
       audio.volume = 1.0;
-
       return new Promise(function(resolve) {
-        audio.onended = function() {
-          URL.revokeObjectURL(url);
-          resolve(true);
-        };
-        audio.onerror = function(e) {
-          console.warn('ElevenLabs playback error:', e);
-          URL.revokeObjectURL(url);
-          resolve(false);
-        };
-        audio.play().catch(function(e) {
-          console.warn('ElevenLabs play() blocked:', e);
-          resolve(false);
-        });
+        audio.onended = function(){ URL.revokeObjectURL(url); resolve(true); };
+        audio.onerror = function(){ URL.revokeObjectURL(url); resolve(false); };
+        audio.play().catch(function(){ resolve(false); });
       });
-
-    } catch(e) {
-      // ElevenLabs unavailable (CORS or network) — fall through to browser voice
-      return false;
-    }
+    } catch(e) { return false; }
   }
 
-  // ── SPEAK VIA BROWSER TTS (fallback — tuned to sound human) ─
+  // ── BROWSER VOICE FALLBACK (tuned to sound human) ─────────
   function speakBrowser(text) {
-    return new Promise(function(resolve){
+    return new Promise(function(resolve) {
       var synth = window.speechSynthesis;
       if (!synth) { resolve(); return; }
       synth.cancel();
 
-      // Break into sentences for more natural pacing
+      // Split into sentences for natural pacing
       var sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
       var idx = 0;
 
-      function speakNext() {
+      function next() {
         if (idx >= sentences.length) { resolve(); return; }
-        var utt = new SpeechSynthesisUtterance(sentences[idx].trim());
-
-        // Pick best available voice
+        var utt  = new SpeechSynthesisUtterance(sentences[idx].trim());
         var voices = synth.getVoices();
-        var preferred = ['Google US English','Microsoft Guy Online (Natural)','Samantha','Alex','Daniel','en-US'];
+        // Best available voices in priority order
+        var names = ['Google US English', 'Microsoft Guy Online (Natural)', 'Alex', 'Samantha', 'Daniel'];
         var v = null;
-        for (var pi = 0; pi < preferred.length; pi++) {
-          v = voices.find(function(x){ return x.name === preferred[pi] || x.lang === preferred[pi]; });
+        for (var i = 0; i < names.length; i++) {
+          v = voices.find(function(x){ return x.name === names[i]; });
           if (v) break;
         }
         if (!v) v = voices.find(function(x){ return x.lang && x.lang.startsWith('en'); });
         if (v) utt.voice = v;
-
-        // Vary rate and pitch slightly per sentence for naturalness
-        utt.rate  = 0.88 + (Math.random() * 0.08); // 0.88-0.96
-        utt.pitch = 0.9  + (Math.random() * 0.15); // 0.9-1.05
+        utt.rate   = 0.88 + Math.random() * 0.07; // subtle variation per sentence
+        utt.pitch  = 0.90 + Math.random() * 0.12;
         utt.volume = 1;
-
-        utt.onend = function(){
-          idx++;
-          // Small random pause between sentences (sounds more human)
-          setTimeout(speakNext, 120 + Math.random()*180);
-        };
-        utt.onerror = function(){ idx++; speakNext(); };
+        utt.onend  = function(){ idx++; setTimeout(next, 100 + Math.random() * 150); };
+        utt.onerror= function(){ idx++; next(); };
         synth.speak(utt);
       }
-      speakNext();
+      next();
     });
   }
 
-  // ── MAIN SPEAK FUNCTION ───────────────────────────────────
+  // ── MAIN SPEAK ────────────────────────────────────────────
   async function jim(text, urgent) {
     if (!_active && !urgent) return;
-    if (_speaking) {
-      _queue.push({ text: text, urgent: urgent });
+    if (!text) return;
+    var now = Date.now();
+    if (!urgent && (now - _lastSpoke) < _MIN_GAP) {
+      // Queue it for later instead of dropping
+      _queue.push(text);
       return;
     }
-    var now = Date.now();
-    if (!urgent && (now - _lastSpoke) < _MIN_GAP) return;
+    if (_speaking) { _queue.push(text); return; }
 
     _speaking  = true;
-    _lastSpoke = now;
-
-    // Try ElevenLabs first, fall back to browser
-    var success = await speakElevenLabs(text);
-    if (!success) await speakBrowser(text);
-
-    _speaking = false;
     _lastSpoke = Date.now();
 
-    // Process queue
+    var ok = await speakElevenLabs(text);
+    if (!ok) await speakBrowser(text);
+
+    _speaking  = false;
+    _lastSpoke = Date.now();
+
     if (_queue.length > 0) {
       var next = _queue.shift();
-      setTimeout(function(){ jim(next.text, next.urgent); }, 500);
+      setTimeout(function(){ jim(next, false); }, 800);
     }
   }
 
-  // ── AUTO FLOOR REPORTS ────────────────────────────────────
-  function startAutoReports() {
+  // ── AUTO REPORTS ──────────────────────────────────────────
+  function startAuto() {
     if (_autoTimer) clearInterval(_autoTimer);
-    _autoTimer = setInterval(function(){
+    _autoTimer = setInterval(function() {
       if (!_active) return;
-      var d = getFloorData();
-      // Only speak if there's actually something happening
-      var total = d.active.length + d.pending.length + d.inspections.length + d.floorSupport.length + d.machinist.length;
-      if (total === 0) return;
-      jim(buildFloorReport(), false);
+      var f = getFloor();
+      var total = f.running.length + f.pending.length + f.machinist.length
+                + f.inspection.length + f.floorSupport.length + f.onHold.length;
+      if (total === 0) return; // stay quiet when floor is clear
+      jim(buildReport(), false);
     }, _AUTO_EVERY);
   }
 
-  // ── ACTIVATE JIM ─────────────────────────────────────────
-  function activateJim() {
+  // ── GREET ON ACTIVATE ─────────────────────────────────────
+  function greetAndStart() {
     if (_active) return;
     _active = true;
-
-    // Auto-start greeting after short delay (let page load)
-    setTimeout(function(){
-      var now   = new Date();
-      var hour  = now.getHours();
-      var tod   = hour < 10 ? 'morning' : hour < 14 ? 'afternoon' : hour < 17 ? 'afternoon' : 'evening';
-      var d     = getFloorData();
-      var total = d.active.length + d.pending.length + d.inspections.length + d.floorSupport.length + d.machinist.length;
-
-      var greet;
-      if (total === 0) {
-        greet = "Good " + tod + ", this is Jim. I'm monitoring the floor at Hill Manufacturing. Looks quiet right now — I'll let you know the moment something comes in.";
-      } else {
-        greet = "Good " + tod + ", this is Jim. I'm live on the floor at Hill Manufacturing. " + buildFloorReport();
-      }
-      jim(greet, true);
-      startAutoReports();
+    setTimeout(function() {
+      var h   = new Date().getHours();
+      var tod = h < 10 ? 'morning' : h < 14 ? 'afternoon' : h < 17 ? 'afternoon' : 'evening';
+      var f   = getFloor();
+      var total = f.running.length + f.pending.length + f.machinist.length
+                + f.inspection.length + f.floorSupport.length + f.onHold.length;
+      var greeting = total === 0
+        ? "Good " + tod + ", this is Jim. I'm monitoring the floor at Hill Manufacturing. Nothing active right now — I'll let you know the moment something comes in."
+        : "Good " + tod + ", this is Jim. I'm live at Hill Manufacturing. " + buildReport();
+      jim(greeting, true);
+      startAuto();
     }, 3000);
   }
 
-  // ── AUTO-START when user is logged in ────────────────────
-  var _startCheck = setInterval(function(){
+  // ── AUTO-START ON LOGIN ───────────────────────────────────
+  var _check = setInterval(function() {
     if (window.currentUser || window._isAdmin) {
-      clearInterval(_startCheck);
-      activateJim();
+      clearInterval(_check);
+      greetAndStart();
     }
   }, 1000);
 
-  // ── EVENT HOOKS ───────────────────────────────────────────
+  // ── EVENT TRIGGERS ────────────────────────────────────────
 
-  // New request submitted
+  // New request from floor
   window._djAnnounceNew = function(n) {
     if (!n) return;
     var machine = mn(n.machine);
     var name    = n.operator ? n.operator.split(' ')[0] : 'someone';
-    var wo      = n.wo  ? 'work order ' + n.wo  : '';
-    var opn     = n.op  ? 'operation ' + n.op   : '';
+    var wo      = n.wo ? 'work order ' + n.wo : '';
+    var opn     = n.op ? 'operation '  + n.op : '';
     var detail  = n.detail || '';
 
     var lines = {
       blue: [
-        "Hey, new setup request just came in. " + name + " over at " + machine + " has " + wo + " ready to go" + (opn ? ', ' + opn : '') + ". Tooling crew, that one needs you.",
-        "Setup needed at " + machine + ". " + name + " is loaded up and waiting. " + wo + " " + opn + ". Let's get that machine running.",
-        "Got a pending job at " + machine + " from " + name + ". " + (wo||'') + " " + (opn||'') + ". Who's on tooling right now?",
+        "New setup request just came in. " + name + " on " + machine + " has " + wo + " ready" + (opn ? ', ' + opn : '') + ". Tooling, that one is waiting on you.",
+        "Setup needed at " + machine + ". " + name + " is loaded up and waiting on " + (wo||'a job') + (opn ? ', ' + opn : '') + ". Who is on tooling?",
+        "Hey, " + machine + " has a pending job. " + name + " needs setup on " + (wo||'their work order') + (opn ? ', ' + opn : '') + ". Go get them running."
       ],
       yellow: [
-        name + " at " + machine + " is calling for help. " + (detail ? 'They need ' + detail + '.' : '') + " " + (wo||'') + ". Somebody get over there.",
-        "Machinist request from " + machine + ". " + name + " says " + (detail||'they need something') + ". " + (wo||'') + ".",
-        "Quick one — " + machine + " needs attention. " + name + " put in a request" + (detail ? ': ' + detail : '') + ".",
+        name + " at " + machine + " put in a machinist request" + (detail ? ' — they need ' + detail : '') + ". " + (wo||'') + " Someone go help them out.",
+        "Machinist request from " + machine + ". " + name + (detail ? ' says they need ' + detail : ' needs assistance') + ". " + (wo||''),
+        "Quick heads up — " + machine + " needs something. " + name + (detail ? ' is asking for ' + detail : ' put in a request') + ". Go take care of it."
       ],
       orange: [
-        "Floor support needed at " + machine + " right now. " + name + " is waiting." + (detail ? ' They said: ' + detail : ''),
-        "Hey floor support — " + machine + " is calling. " + name + (detail ? ' says: ' + detail : ' needs a hand') + ". Go check it out.",
+        "Floor support needed at " + machine + " right now. " + name + " is waiting" + (detail ? ' — ' + detail : '') + ". Go check it out.",
+        machine + " is calling for floor support. " + name + (detail ? ' says: ' + detail : ' needs a hand') + ". Head over there."
       ],
       red: [
-        "Quality team — " + name + " on " + machine + " has parts ready for inspection. " + (wo||'') + ". Don't let that one sit.",
-        "Inspection request from " + machine + ". " + name + " is waiting on quality. " + (wo||'') + ".",
-      ],
+        "Quality team — " + name + " on " + machine + " has parts ready for inspection. " + (wo||'') + " Don't let that one sit too long.",
+        "Inspection request from " + machine + ". " + name + " is waiting on quality. " + (wo||'')
+      ]
     };
     var pool = lines[n.type] || lines.yellow;
     jim(pick(pool), n.type === 'red' || n.type === 'orange');
@@ -11511,18 +11503,17 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var wo      = n.wo ? 'work order ' + n.wo : 'the job';
     var opn     = n.op ? ', operation ' + n.op : '';
     var lines = [
-      "Timer started. Miguel is on " + machine + " right now — setting up " + wo + opn + ". " + name + ", you should be cutting soon.",
-      "Setup is underway on " + machine + ". Miguel just clocked in on " + wo + opn + ". " + name + " — stand by.",
-      "Alright, " + machine + " is getting set up. Miguel's on it — " + wo + opn + ". " + name + ", get ready to run.",
-      "Miguel just kicked off setup on " + machine + " for " + wo + opn + ". Clock's running. " + name + ", you're up next.",
+      "Timer started. Miguel is on " + machine + " right now setting up " + wo + opn + ". " + name + ", you should be cutting soon.",
+      "Setup is underway on " + machine + ". Miguel just clocked in on " + wo + opn + ". " + name + ", stand by.",
+      machine + " is getting set up right now. Miguel is on it — " + wo + opn + ". " + name + ", get ready to run.",
+      "Miguel just kicked off setup on " + machine + " — " + wo + opn + ". " + name + ", you are up next."
     ];
     jim(pick(lines), false);
   };
 
-  // Pending (same as new)
   window._djAnnouncePending = window._djAnnounceNew;
 
-  // Comment in live feed
+  // Comment posted in live feed
   window._djAnnounceComment = function(noteId, text, machine, wo, author) {
     if (!text || text.length < 3) return;
     var machineName = mn(machine);
@@ -11532,20 +11523,20 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if (isAdmin) {
       lines = [
         "Message from Miguel to " + machineName + ": " + text,
-        "Miguel just sent a note to " + machineName + " — " + text,
-        "Hey " + machineName + ", Miguel says: " + text,
+        "Miguel sent a note to " + machineName + " — " + text,
+        machineName + ", Miguel says: " + text
       ];
     } else {
       lines = [
         "Update from " + machineName + " — " + name + " says: " + text,
-        name + " at " + machineName + " just sent a message: " + text,
-        "Incoming from " + machineName + ". " + name + " says: " + text,
+        name + " at " + machineName + " says: " + text,
+        "Incoming from " + machineName + ". " + name + " says: " + text
       ];
     }
     jim(pick(lines), false);
   };
 
-  // Manual triggers
+  // Manual controls (admin panel buttons)
   window._djToggle = function() {
     _active = !_active;
     var btn   = document.getElementById('dj-toggle-btn');
@@ -11553,35 +11544,36 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if (_active) {
       if (btn)   { btn.textContent = 'Jim ON AIR'; btn.style.background = 'linear-gradient(135deg,#dc2626,#ef4444)'; }
       if (badge) badge.style.display = 'inline-block';
-      activateJim();
+      greetAndStart();
     } else {
       if (window.speechSynthesis) window.speechSynthesis.cancel();
       clearInterval(_autoTimer);
+      _queue = [];
       if (btn)   { btn.textContent = 'Activate Jim'; btn.style.background = 'linear-gradient(135deg,#7c3aed,#8b5cf6)'; }
       if (badge) badge.style.display = 'none';
     }
   };
 
-  window._djNow    = function(){ jim(buildFloorReport(), true); };
-  window._djSetInterval = function(mins){
-    _AUTO_EVERY = (parseInt(mins)||2) * 60000;
-    if (_active){ clearInterval(_autoTimer); startAutoReports(); }
+  window._djNow = function() { jim(buildReport(), true); };
+
+  window._djSetInterval = function(mins) {
+    _AUTO_EVERY = (parseInt(mins) || 2) * 60000;
+    if (_active) { clearInterval(_autoTimer); startAuto(); }
   };
 
-  // Expose for ElevenLabs key entry from admin
   window._jimSetKey = function(key, voiceId) {
-    ELEVEN_API_KEY = key || '';
-    if (voiceId) ELEVEN_VOICE_ID = voiceId;
-    localStorage.setItem('jimElevenKey', ELEVEN_API_KEY);
-    localStorage.setItem('jimElevenVoice', ELEVEN_VOICE_ID);
-    if(window.showToast) window.showToast('green', 'Jim upgraded', ELEVEN_API_KEY ? 'Using ElevenLabs AI voice' : 'Using browser voice');
+    ELEVEN_API_KEY  = key   || ELEVEN_API_KEY;
+    ELEVEN_VOICE_ID = voiceId || ELEVEN_VOICE_ID;
+    localStorage.setItem('jimKey',   ELEVEN_API_KEY);
+    localStorage.setItem('jimVoice', ELEVEN_VOICE_ID);
+    if (window.showToast) window.showToast('green', 'Jim updated', key ? 'ElevenLabs voice active' : 'Using browser voice');
   };
 
-  // Load saved ElevenLabs key
-  var _savedKey   = localStorage.getItem('jimElevenKey')   || '';
-  var _savedVoice = localStorage.getItem('jimElevenVoice') || '';
-  if (_savedKey)   ELEVEN_API_KEY  = _savedKey;
-  if (_savedVoice) ELEVEN_VOICE_ID = _savedVoice;
+  // Load any saved key override
+  var _sk = localStorage.getItem('jimKey');
+  var _sv = localStorage.getItem('jimVoice');
+  if (_sk) ELEVEN_API_KEY  = _sk;
+  if (_sv) ELEVEN_VOICE_ID = _sv;
 
 })();
 </script>
