@@ -1178,11 +1178,8 @@
     </div>
 
     <!-- ── SPARKY BUTTON ── -->
-    <!-- Hidden YouTube Music Player -->
-    <iframe id="sparky-yt" width="1" height="1" frameborder="0"
-      allow="autoplay; encrypted-media"
-      style="position:absolute;opacity:0;pointer-events:none;"
-      src=""></iframe>
+    <!-- Hidden Audio Player for background music -->
+    <audio id="sparky-audio" preload="none" style="display:none;"></audio>
 
     <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;background:linear-gradient(135deg,#1a0033,#2d0060);border:2px solid rgba(139,92,246,0.6);border-radius:14px;padding:12px 16px;cursor:pointer;box-shadow:0 4px 20px rgba(139,92,246,0.2);">
       <!-- Sparky Icon -->
@@ -11079,50 +11076,62 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var ELEVEN_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
 
   // ── MUSIC BETWEEN SPARKY ──────────────────────────────────
-  var _musicOn      = true;  // admin can toggle
-  var _musicBetween = 45;    // seconds of music between Sparky segments
+  var _musicOn      = true;
+  var _musicBetween = 45;   // seconds of music between Sparky
   var _currentSong  = 0;
+  var _audioEl      = null;
 
-  // 24/7 YouTube music streams — rotates through genres
+  // Free direct MP3 streams — no CORS issues, no iframe needed
   var MUSIC_PLAYLIST = [
-    { id:'OPEEsVEHAeE', name:'Classic Rock Radio 24/7' },
-    { id:'jfKfPfyJRdk', name:'Lofi Hip Hop Radio' },
-    { id:'Hnj-l2bHpFQ', name:'Country Music 24/7' },
-    { id:'4OEFNMHCMhw', name:'80s Hits Nonstop' },
-    { id:'Dx5qFachd3A', name:'Smooth Jazz 24/7' },
-    { id:'olT6hJTGNzU', name:'Hip Hop Radio 24/7' },
-    { id:'yXoHLJURQqQ', name:'Pop Hits 24/7' },
-    { id:'WBupia9wnJk', name:'Blues Radio 24/7' },
+    { url:'https://stream.rockantenne.de/classic-rock/stream/mp3',  name:'Classic Rock' },
+    { url:'https://stream.rockantenne.de/80er/stream/mp3',           name:'80s Rock' },
+    { url:'https://stream.rockantenne.de/metal/stream/mp3',          name:'Metal Zone' },
+    { url:'https://liveradio.swr.de/sw282p3/swr1bw/play.mp3',       name:'Easy Mix' },
+    { url:'https://stream.srg-ssr.ch/drs3/mp3_128.m3u',             name:'Pop Hits' },
+    { url:'https://radios.rtbf.be/musiq3-128.mp3',                  name:'Smooth Jazz' },
   ];
+
+  function getAudio() {
+    if (!_audioEl) {
+      _audioEl = document.getElementById('sparky-audio');
+      if (!_audioEl) {
+        _audioEl = new Audio();
+        _audioEl.id = 'sparky-audio';
+        document.body.appendChild(_audioEl);
+      }
+    }
+    return _audioEl;
+  }
 
   function playMusic() {
     if (!_musicOn) return;
     var song = MUSIC_PLAYLIST[_currentSong % MUSIC_PLAYLIST.length];
-    var iframe = document.getElementById('sparky-yt');
-    if (!iframe) return;
-    iframe.src = 'https://www.youtube.com/embed/' + song.id
-      + '?autoplay=1&controls=0&modestbranding=1&rel=0&mute=0&start='
-      + Math.floor(Math.random()*120); // start at random point in stream
-    // Update status
+    var audio = getAudio();
+    audio.src    = song.url;
+    audio.volume = 0.7;
+    audio.play().catch(function(e){ console.log('Music play failed:', e.message); });
     var statusEl = document.getElementById('sparky-status-text');
-    if (statusEl) statusEl.textContent = '♪ Playing: ' + song.name + ' — Sparky back in ' + _musicBetween + 's';
-    _currentSong++;
+    if (statusEl) statusEl.textContent = '♪ ' + song.name + ' — Sparky back in ' + _musicBetween + 's';
   }
 
   function stopMusic() {
-    var iframe = document.getElementById('sparky-yt');
-    if (iframe) iframe.src = '';
+    var audio = getAudio();
+    try { audio.pause(); audio.src = ''; } catch(e){}
+    var statusEl = document.getElementById('sparky-status-text');
+    if (statusEl) statusEl.textContent = '🎙️ Sparky is talking...';
   }
 
-  function nextSong() { _currentSong = (_currentSong + 1) % MUSIC_PLAYLIST.length; }
-
-  // Expose music controls
   window._sparkyMusicToggle = function() {
     _musicOn = !_musicOn;
     if (!_musicOn) stopMusic();
-    if (window.showToast) window.showToast(_musicOn?'green':'yellow', _musicOn?'Music ON':'Music OFF', _musicOn?'Playing between Sparky updates':'Sparky only mode');
+    else playMusic();
+    if (window.showToast) window.showToast(_musicOn?'green':'yellow', _musicOn?'Music ON':'Music OFF', '');
   };
-  window._sparkyNextSong = function() { stopMusic(); nextSong(); playMusic(); };
+  window._sparkyNextSong = function() {
+    _currentSong = (_currentSong + 1) % MUSIC_PLAYLIST.length;
+    stopMusic();
+    setTimeout(playMusic, 300);
+  };
   window._sparkySetMusicTime = function(secs) { _musicBetween = parseInt(secs)||45; };
 
   var _active    = false;
