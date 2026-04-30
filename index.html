@@ -11081,14 +11081,19 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _currentSong  = 0;
   var _audioEl      = null;
 
-  // Free direct MP3 streams — no CORS issues, no iframe needed
+  // All music routed through Cloudflare worker to bypass CORS
+  var W = 'https://hill-dnx-alerts.miguelstulsa.workers.dev/music?s=';
   var MUSIC_PLAYLIST = [
-    { url:'https://stream.rockantenne.de/classic-rock/stream/mp3',  name:'Classic Rock' },
-    { url:'https://stream.rockantenne.de/80er/stream/mp3',           name:'80s Rock' },
-    { url:'https://stream.rockantenne.de/metal/stream/mp3',          name:'Metal Zone' },
-    { url:'https://liveradio.swr.de/sw282p3/swr1bw/play.mp3',       name:'Easy Mix' },
-    { url:'https://stream.srg-ssr.ch/drs3/mp3_128.m3u',             name:'Pop Hits' },
-    { url:'https://radios.rtbf.be/musiq3-128.mp3',                  name:'Smooth Jazz' },
+    { url: W+'rock',    name:'Classic Rock' },
+    { url: W+'country', name:'Country' },
+    { url: W+'80s',     name:'80s Hits' },
+    { url: W+'metal',   name:'Metal Zone' },
+    { url: W+'jazz',    name:'Smooth Jazz' },
+    { url: W+'pop',     name:'Pop Groove' },
+    { url: W+'reggae',  name:'Reggae' },
+    { url: W+'chill',   name:'Chill Beats' },
+    { url: W+'blues',   name:'Blues' },
+    { url: W+'70s',     name:'70s Hits' },
   ];
 
   function getAudio() {
