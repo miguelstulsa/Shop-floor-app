@@ -11342,6 +11342,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if (!_active && !urgent) return;
     if (!text) return;
     var now = Date.now();
+
+    // Urgent = new floor request — cut in immediately, clear queue
+    if (urgent) {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      _queue = [];
+      _speaking  = false;
+      _lastSpoke = 0;
+    }
+
     if (!urgent && (now - _lastSpoke) < _MIN_GAP) {
       // Queue it for later instead of dropping
       _queue.push(text);
@@ -11565,39 +11574,30 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── AUTO REPORT ROTATION ─────────────────────────────────
   // Cycle: floor → weather → sports → news → small talk → floor → ...
   var _broadcastCycle = 0;
-  var _broadcastTypes = ['floor', 'weather', 'sports', 'news', 'floor', 'smalltalk'];
+  // Interleave floor checks with weather / sports / news / smalltalk
+  var _broadcastTypes = ['floor', 'weather', 'floor', 'sports', 'floor', 'news', 'floor', 'smalltalk'];
 
   async function runBroadcast() {
     if (!_active) return;
-    var f = getFloor();
-    var total = f.running.length + f.pending.length + f.machinist.length
-              + f.inspection.length + f.floorSupport.length + f.onHold.length;
 
-    // Always do floor report if there's active stuff
-    if (total > 0) {
-      sparky(buildReport(), false);
-      _broadcastCycle++;
-      return;
-    }
-
-    // Rotate through weather / sports / news / small talk when floor is quiet
     var slot = _broadcastTypes[_broadcastCycle % _broadcastTypes.length];
     _broadcastCycle++;
 
     var text = null;
     if (slot === 'floor') {
-      text = buildReport();
+      var f = getFloor();
+      var total = f.running.length + f.pending.length + f.machinist.length
+                + f.inspection.length + f.floorSupport.length + f.onHold.length;
+      text = total > 0 ? buildReport() : buildSmallTalk();
     } else if (slot === 'weather') {
       text = await fetchWeather();
     } else if (slot === 'sports') {
       text = await fetchSports();
     } else if (slot === 'news') {
       text = await fetchNews();
-    } else {
-      text = buildSmallTalk();
     }
 
-    if (!text) text = buildSmallTalk(); // fallback if fetch fails
+    if (!text) text = buildSmallTalk(); // fallback if any fetch fails
     sparky(text, false);
   }
 
@@ -11667,7 +11667,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       ]
     };
     var pool = lines[n.type] || lines.yellow;
-    sparky(pick(pool), n.type === 'red' || n.type === 'orange');
+    // All incoming requests are urgent — bypass gap timer and active check
+    sparky(pick(pool), true);
   };
 
   // Admin hit START
