@@ -11305,26 +11305,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   async function speakElevenLabs(text) {
     if (!ELEVEN_API_KEY) return false;
     try {
-      // Call the text-to-speech convert endpoint (matches SDK's textToSpeech.convert)
+      // Route through Cloudflare Worker to bypass Safari CORS block
       var res = await fetch(
-        'https://api.elevenlabs.io/v1/text-to-speech/' + ELEVEN_VOICE_ID,
+        'https://hill-dnx-alerts.miguelstulsa.workers.dev/speak',
         {
           method: 'POST',
-          headers: {
-            'xi-api-key':   ELEVEN_API_KEY,
-            'Content-Type': 'application/json',
-            'Accept':       'audio/mpeg'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            text:          text,
-            model_id:      'eleven_multilingual_v2',   // best quality model
-            output_format: 'mp3_44100_128',
-            voice_settings: {
-              stability:        0.40,  // lower = more expressive, animated
-              similarity_boost: 0.88,  // how closely it matches the voice
-              style:            0.40,  // style exaggeration — adds personality
-              use_speaker_boost: true  // enhances clarity
-            }
+            text:    text,
+            apiKey:  ELEVEN_API_KEY,
+            voiceId: ELEVEN_VOICE_ID
           })
         }
       );
@@ -11358,7 +11348,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       });
 
     } catch(e) {
-      console.warn('ElevenLabs fetch failed:', e.message);
+      // ElevenLabs unavailable (CORS or network) — fall through to browser voice
       return false;
     }
   }
