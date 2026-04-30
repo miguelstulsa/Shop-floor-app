@@ -1178,6 +1178,12 @@
     </div>
 
     <!-- ── SPARKY BUTTON ── -->
+    <!-- Hidden YouTube Music Player -->
+    <iframe id="sparky-yt" width="1" height="1" frameborder="0"
+      allow="autoplay; encrypted-media"
+      style="position:absolute;opacity:0;pointer-events:none;"
+      src=""></iframe>
+
     <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;background:linear-gradient(135deg,#1a0033,#2d0060);border:2px solid rgba(139,92,246,0.6);border-radius:14px;padding:12px 16px;cursor:pointer;box-shadow:0 4px 20px rgba(139,92,246,0.2);">
       <!-- Sparky Icon -->
       <div id="sparky-avatar" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:2px solid rgba(196,181,253,0.5);position:relative;box-shadow:0 0 16px rgba(139,92,246,0.4);">
@@ -1191,9 +1197,11 @@
         </div>
         <div id="sparky-status-text" style="font-size:11px;color:#7c3aed;">TAP TO ACTIVATE YOUR SHOP VOICE</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-        <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;">SPEAK</button>
-        <button id="sparky-main-toggle" onclick="event.stopPropagation();if(window._djToggle)window._djToggle();" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;min-width:40px;">OFF</button>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+        <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">SPEAK</button>
+        <button onclick="event.stopPropagation();if(window._sparkyNextSong)window._sparkyNextSong();" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Next song">&#9654;&#9654;</button>
+        <button onclick="event.stopPropagation();if(window._sparkyMusicToggle)window._sparkyMusicToggle();" id="sparky-music-btn" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Toggle music">&#127925;</button>
+        <button id="sparky-main-toggle" onclick="event.stopPropagation();if(window._djToggle)window._djToggle();" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;min-width:38px;">OFF</button>
       </div>
     </div>
     <style>
@@ -11070,6 +11078,53 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var ELEVEN_API_KEY  = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
   var ELEVEN_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
 
+  // ── MUSIC BETWEEN SPARKY ──────────────────────────────────
+  var _musicOn      = true;  // admin can toggle
+  var _musicBetween = 45;    // seconds of music between Sparky segments
+  var _currentSong  = 0;
+
+  // 24/7 YouTube music streams — rotates through genres
+  var MUSIC_PLAYLIST = [
+    { id:'OPEEsVEHAeE', name:'Classic Rock Radio 24/7' },
+    { id:'jfKfPfyJRdk', name:'Lofi Hip Hop Radio' },
+    { id:'Hnj-l2bHpFQ', name:'Country Music 24/7' },
+    { id:'4OEFNMHCMhw', name:'80s Hits Nonstop' },
+    { id:'Dx5qFachd3A', name:'Smooth Jazz 24/7' },
+    { id:'olT6hJTGNzU', name:'Hip Hop Radio 24/7' },
+    { id:'yXoHLJURQqQ', name:'Pop Hits 24/7' },
+    { id:'WBupia9wnJk', name:'Blues Radio 24/7' },
+  ];
+
+  function playMusic() {
+    if (!_musicOn) return;
+    var song = MUSIC_PLAYLIST[_currentSong % MUSIC_PLAYLIST.length];
+    var iframe = document.getElementById('sparky-yt');
+    if (!iframe) return;
+    iframe.src = 'https://www.youtube.com/embed/' + song.id
+      + '?autoplay=1&controls=0&modestbranding=1&rel=0&mute=0&start='
+      + Math.floor(Math.random()*120); // start at random point in stream
+    // Update status
+    var statusEl = document.getElementById('sparky-status-text');
+    if (statusEl) statusEl.textContent = '♪ Playing: ' + song.name + ' — Sparky back in ' + _musicBetween + 's';
+    _currentSong++;
+  }
+
+  function stopMusic() {
+    var iframe = document.getElementById('sparky-yt');
+    if (iframe) iframe.src = '';
+  }
+
+  function nextSong() { _currentSong = (_currentSong + 1) % MUSIC_PLAYLIST.length; }
+
+  // Expose music controls
+  window._sparkyMusicToggle = function() {
+    _musicOn = !_musicOn;
+    if (!_musicOn) stopMusic();
+    if (window.showToast) window.showToast(_musicOn?'green':'yellow', _musicOn?'Music ON':'Music OFF', _musicOn?'Playing between Sparky updates':'Sparky only mode');
+  };
+  window._sparkyNextSong = function() { stopMusic(); nextSong(); playMusic(); };
+  window._sparkySetMusicTime = function(secs) { _musicBetween = parseInt(secs)||45; };
+
   var _active    = false;
   var _speaking  = false;
   var _queue     = [];
@@ -11465,15 +11520,32 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _speaking = false;
   }
 
-  // Simple loop — finish talking, wait 5 seconds, talk again. Forever.
+  // Loop: Sparky talks → music plays → Sparky talks → repeat
   async function sparkyLoop(){
-    if(!_active)return;
+    if(!_active) return;
+
+    // 1. Stop music, Sparky talks
+    stopMusic();
+    var statusEl = document.getElementById('sparky-status-text');
+    if (statusEl) statusEl.textContent = '🎙️ Sparky is talking...';
+
     var report = await buildNextReport();
     await sparky(report, true);
-    // Wait 5 seconds then go again
-    setTimeout(function(){
+
+    if(!_active) return;
+
+    // 2. Play music for _musicBetween seconds
+    if (_musicOn) {
+      playMusic();
+    } else {
+      if (statusEl) statusEl.textContent = 'Live — Sparky back in 5 seconds';
+    }
+
+    // 3. Wait then loop
+    var waitTime = _musicOn ? (_musicBetween * 1000) : 5000;
+    _autoTimer = setTimeout(function(){
       if(_active) sparkyLoop();
-    }, 5000);
+    }, waitTime);
   }
 
   function startAuto(){
