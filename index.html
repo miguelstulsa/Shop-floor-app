@@ -1053,10 +1053,10 @@
       </div>
     </div>
 
-    <!-- ── SHOP DJ — SPARKY ── -->
+    <!-- ── SHOP DJ — JIM ── -->
     <div class="admin-section" style="background:linear-gradient(135deg,#1a0033,#2a0050);border-top:2px solid rgba(139,92,246,0.4);">
-      <div class="admin-section-title" style="color:#c4b5fd;">&#127897; SPARKY — SHOP VOICE</div>
-      <div style="font-size:11px;color:#6d28d9;margin-bottom:8px;">Sparky auto-starts when you log in and reads floor activity live. For a real human voice, add your ElevenLabs API key below (free at elevenlabs.io — 10,000 chars/month).</div>
+      <div class="admin-section-title" style="color:#c4b5fd;">&#127897; JIM — SHOP VOICE</div>
+      <div style="font-size:11px;color:#6d28d9;margin-bottom:8px;">Jim auto-starts when you log in and reads floor activity live. For a real human voice, add your ElevenLabs API key below (free at elevenlabs.io — 10,000 chars/month).</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
         <input id="eleven-key-input" placeholder="ElevenLabs API key (optional)" type="password"
           style="background:rgba(255,255,255,0.05);border:1px solid #1e3a5f;border-radius:8px;padding:8px 10px;color:#f0f4f8;font-size:12px;"
@@ -1070,36 +1070,36 @@
           <option value="EXAVITQu4vr4xnSDxMaL">Sarah (warm female)</option>
           <option value="21m00Tcm4TlvDq8ikWAM">Rachel (calm female)</option>
         </select>
-        <button onclick="window._sparkySetKey(document.getElementById('eleven-key-input').value,document.getElementById('eleven-voice-select').value)"
-          style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:13px;">SAVE VOICE</button>
+        <button onclick="window._jimSetKey(document.getElementById('eleven-key-input').value,document.getElementById('eleven-voice-select').value)"
+          style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:13px;">SAVE &amp; UPGRADE VOICE</button>
       </div>
-      <div style="font-size:11px;color:#7c3aed;line-height:1.6;margin-bottom:14px;">Sparky reads live shop floor activity out loud — new requests, setups, comments, machine shoutouts, and hype. Activate him and he handles the rest.</div>
+      <div style="font-size:11px;color:#7c3aed;line-height:1.6;margin-bottom:14px;">Jim reads live shop floor activity out loud — new requests, setups, comments, machine shoutouts, and hype. Activate him and he handles the rest.</div>
 
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
         <div id="dj-status-dot" style="width:10px;height:10px;border-radius:50%;background:#334155;flex-shrink:0;transition:background .3s;"></div>
-        <div id="dj-status-text" style="font-size:12px;color:#475569;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">SPARKY IS OFF</div>
+        <div id="dj-status-text" style="font-size:12px;color:#475569;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">JIM IS OFF</div>
         <span id="dj-live-badge" style="display:none;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);border-radius:999px;padding:2px 10px;font-size:10px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">&#11044; ON AIR</span>
       </div>
 
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
-        <button id="dj-toggle-btn" onclick="window._djToggle()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:11px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;flex:1;">&#127897; ACTIVATE SPARKY</button>
+        <button id="dj-toggle-btn" onclick="window._djToggle()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:11px 18px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;flex:1;">&#127897; ACTIVATE JIM</button>
         <button onclick="window._djNow()" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:10px;padding:11px 14px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;">SPEAK NOW</button>
       </div>
 
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <div style="font-size:11px;color:#6d28d9;letter-spacing:1px;white-space:nowrap;">SPARKY TALKS EVERY</div>
+        <div style="font-size:11px;color:#6d28d9;letter-spacing:1px;white-space:nowrap;">AUTO SHOUTOUT EVERY</div>
         <select id="dj-interval-select" onchange="window._djSetInterval(this.value)" style="background:rgba(0,0,0,0.4);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;font-size:12px;flex:1;">
-          <option value="0.5" selected>30 seconds</option>
-          <option value="1">1 minute</option>
-          <option value="2">2 minutes</option>
           <option value="3">3 minutes</option>
           <option value="5">5 minutes</option>
+          <option value="8" selected>8 minutes</option>
           <option value="10">10 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="20">20 minutes</option>
         </select>
       </div>
 
       <div style="background:rgba(0,0,0,0.3);border-radius:10px;padding:12px;font-size:11px;color:#475569;line-height:1.9;">
-        <div style="color:#8b5cf6;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;margin-bottom:4px;">SPARKY ANNOUNCES IN REAL TIME:</div>
+        <div style="color:#8b5cf6;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;margin-bottom:4px;">JIM ANNOUNCES IN REAL TIME:</div>
         &#128308; New inspection requests &nbsp;&bull;&nbsp; &#127939; Machinist &amp; floor support requests<br>
         &#9654; When you hit START — machine, WO#, op#, operator name<br>
         &#9208; When a job is put on hold — reads the reason<br>
@@ -2993,33 +2993,15 @@
     if (!username || !password) { setMsg('loginMsg', 'Please fill in all fields.', 'error'); return; }
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) { loginSuccess({ username: ADMIN_USERNAME, name: 'Admin', role: 'admin' }, remember); return; }
     if (username === ADMIN_USERNAME) { setMsg('loginMsg', 'Wrong password for admin account.', 'error'); return; }
-    setMsg('loginMsg', 'Signing in...', 'pending');
+    setMsg('loginMsg', 'Signing in...', '');
     try {
-      // Wait up to 5 seconds for Firebase to finish loading
-      if (!window.fbLogin) {
-        setMsg('loginMsg', 'Connecting to database…', 'pending');
-        await new Promise(function(resolve, reject) {
-          var waited = 0;
-          var check = setInterval(function() {
-            waited += 200;
-            if (window.fbLogin) { clearInterval(check); resolve(); }
-            else if (waited >= 5000) { clearInterval(check); reject(new Error('timeout')); }
-          }, 200);
-        });
-      }
+      if (!window.fbLogin) { setMsg('loginMsg', 'App still loading, please try again.', 'error'); return; }
       const result = await window.fbLogin(username, password);
       if (result.error)    { setMsg('loginMsg', result.error, 'error'); return; }
       if (result.pending)  { setMsg('loginMsg', 'Your account is awaiting admin approval.', 'pending'); return; }
       if (result.rejected) { setMsg('loginMsg', 'Your access request was not approved. Contact your manager.', 'error'); return; }
       loginSuccess(result.user, remember);
-    } catch(e) {
-      if (e.message === 'timeout') {
-        setMsg('loginMsg', 'Could not reach database. Check your connection and try again.', 'error');
-      } else {
-        setMsg('loginMsg', 'Error connecting. Try again.', 'error');
-      }
-      console.error(e);
-    }
+    } catch(e) { setMsg('loginMsg', 'Error connecting. Try again.', 'error'); console.error(e); }
   }
   window.doLogin = doLogin;
 
@@ -3077,8 +3059,12 @@
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
       var switchBtn = document.getElementById('shopSwitchBtn');
+      if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
+      // Show QMI switch button for admin
+      var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) {
         switchBtn.classList.add('visible');
+        // Update this URL once QMI is deployed to GitHub Pages
         var qmiUrl = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor';
         switchBtn.href = qmiUrl;
       }
@@ -11054,24 +11040,28 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
 
 
-<!-- ═══ SPARKY — HILL MANUFACTURING SHOP VOICE ═══ -->
+<!-- ═══ SPARKY — HILL MANUFACTURING SHOP LEGEND ═══ -->
 <script>
 (function(){
 
-  // ── CONFIG ────────────────────────────────────────────────
-  var ELEVEN_API_KEY  = 'auq43ws1oslv0tO4BDa7';
-  var ELEVEN_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // George — deep natural male
+  var ELEVEN_API_KEY  = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
+  var ELEVEN_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
 
-  // ── STATE ─────────────────────────────────────────────────
   var _active    = false;
   var _speaking  = false;
   var _queue     = [];
   var _autoTimer = null;
   var _lastSpoke = 0;
-  var _MIN_GAP   = 28000;   // 28s minimum between any two Sparky speaks
-  var _AUTO_EVERY= 30000;   // auto floor report / small talk every 30 seconds
+  var _MIN_GAP   = 20000;
+  var _AUTO_EVERY= 90000;
+  var _turn      = 0;
 
-  // ── MACHINE NAME MAP ──────────────────────────────────────
+  // ── WEATHER & SPORTS CACHE ─────────────────────────────────
+  var _weather  = null;
+  var _sports   = null;
+  var _lastWeatherFetch = 0;
+  var _lastSportsFetch  = 0;
+
   var MN = {
     '1050-B':'Ten Fifty B','7000':'Seven Thousand','VF-6':'V F Six',
     '5100-B':'Fifty One Hundred B','2500':'Twenty Five Hundred','PUMA-3':'Puma Three',
@@ -11083,254 +11073,352 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     'TWIN':'Twin','2500-Y':'Twenty Five Hundred Y','SAW-1':'Saw One','SAW-2':'Saw Two',
     '5000':'Five Thousand','SH-403':'S H Four Oh Three'
   };
-  function mn(m){ return MN[m] || m || 'a machine'; }
+  function mn(m){ return MN[m]||m||'a machine'; }
   function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
-
-  // ── FORMAT ELAPSED TIME ───────────────────────────────────
-  function fmtTime(seconds) {
-    var s = parseInt(seconds) || 0;
-    if (s < 60)   return s + ' seconds';
-    if (s < 3600) {
-      var m = Math.floor(s/60), r = s % 60;
-      return m + ' minute' + (m !== 1 ? 's' : '') + (r > 0 ? ' and ' + r + ' seconds' : '');
-    }
-    var h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
-    return h + ' hour' + (h !== 1 ? 's' : '') + (m > 0 ? ' and ' + m + ' minute' + (m !== 1 ? 's' : '') : '');
+  function fmtTime(s){
+    s=parseInt(s)||0;
+    if(s<60) return s+' seconds';
+    if(s<3600){ var m=Math.floor(s/60),r=s%60; return m+' minute'+(m!==1?'s':'')+(r>0?' and '+r+' seconds':''); }
+    var h=Math.floor(s/3600),m=Math.floor((s%3600)/60);
+    return h+' hour'+(h!==1?'s':'')+(m>0?' and '+m+' minute'+(m!==1?'s':''):'');
   }
 
-  // ── GATHER SHOP FLOOR DATA ────────────────────────────────
-  function getFloor() {
-    var now    = Math.floor(Date.now() / 1000);
-    var notes  = window._lastActionable || [];
-    var result = { running:[], pending:[], machinist:[], inspection:[], floorSupport:[], onHold:[] };
+  // ── MACHINIST JOKES ────────────────────────────────────────
+  var JOKES = [
+    "Why did the machinist break up with the mill? Because it kept taking too many cuts. Sound familiar?",
+    "A machinist walks into a bar and orders to within point zero zero one of a beer. The bartender says, sorry, we only go to point zero zero five. The machinist says, that is unacceptable.",
+    "Why do machinists make great musicians? Because they know how to find the groove.",
+    "What did the drill press say to the end mill? Stop boring me.",
+    "A machinist's idea of a perfect date: a datum that is actually flat.",
+    "Why did the CNC programmer get kicked out of the restaurant? He kept trying to run a program with no coolant.",
+    "How do you know a machinist is lying? His tolerances are loose.",
+    "What is a machinist's favorite song? Cutting me softly.",
+    "Why do machinists hate math jokes? Because they already deal with enough problems.",
+    "What did one tap say to the other? Stop being so hard to follow.",
+    "Why did the machinist get promoted? He had the right thread.",
+    "What do you call a machinist who never makes mistakes? A liar. And a good one at that.",
+    "A machinist told me he could hold point zero zero one all day. I said, so can my torque wrench. He did not speak to me for a week.",
+    "Why do machinists always carry a sharpie? In case they need to mark their territory — also known as the spindle.",
+    "What is the difference between a machinist and a surgeon? A surgeon only makes one cut. Ha.",
+    "Why did the endmill go to therapy? Too many broken relationships with the workpiece.",
+    "What do you call a machinist with no calluses? An engineer. No offense to the engineers out there.",
+    "How does a machinist propose? He gets down on one knee and says, will you be my datum?",
+    "Why did the machinist stare at the orange juice for an hour? The label said concentrate.",
+    "What is a machinist's least favorite movie? Loose Change."
+  ];
 
-    notes.forEach(function(n) {
-      if (n.resolved) return;
-      var elapsed = (n.startedAt && n.startedAt.seconds) ? now - n.startedAt.seconds : 0;
-      var rec = {
-        machine:   mn(n.machine),
-        firstName: n.operator ? n.operator.split(' ')[0] : 'the operator',
-        operator:  n.operator || 'the operator',
-        wo:        n.wo  || '',
-        op:        n.op  || '',
-        detail:    n.detail || '',
-        elapsed:   elapsed,
-        elapsedStr: elapsed > 10 ? fmtTime(elapsed) : '',
-        holdReason: n.holdReason || '',
-        type:      n.type
+  // ── WEATHER FETCH (Open-Meteo — free, no key) ─────────────
+  async function fetchWeather() {
+    var now = Date.now();
+    if (_weather && (now - _lastWeatherFetch) < 1800000) return; // cache 30 min
+    try {
+      // Tulsa, OK coordinates
+      var res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=36.154&longitude=-95.993&current=temperature_2m,weathercode,windspeed_10m,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=America/Chicago&forecast_days=3');
+      if (!res.ok) return;
+      var data = await res.json();
+      var cur  = data.current;
+      var day0 = { max: data.daily.temperature_2m_max[0], min: data.daily.temperature_2m_min[0], code: data.daily.weathercode[0], rain: data.daily.precipitation_sum[0] };
+      var day1 = { max: data.daily.temperature_2m_max[1], min: data.daily.temperature_2m_min[1], code: data.daily.weathercode[1], rain: data.daily.precipitation_sum[1] };
+      var day2 = { max: data.daily.temperature_2m_max[2], min: data.daily.temperature_2m_min[2], code: data.daily.weathercode[2], rain: data.daily.precipitation_sum[2] };
+
+      function codeToDesc(c) {
+        if (c<=1)  return 'clear skies';
+        if (c<=3)  return 'partly cloudy';
+        if (c<=49) return 'foggy';
+        if (c<=59) return 'drizzly';
+        if (c<=69) return 'rainy';
+        if (c<=79) return 'snowy';
+        if (c<=84) return 'rain showers';
+        if (c<=99) return 'thunderstorms';
+        return 'mixed conditions';
+      }
+
+      var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      var now2 = new Date();
+      _weather = {
+        temp:  Math.round(cur.temperature_2m),
+        wind:  Math.round(cur.windspeed_10m),
+        desc:  codeToDesc(cur.weathercode),
+        todayHigh: Math.round(day0.max),
+        todayLow:  Math.round(day0.min),
+        todayRain: day0.rain > 0.1,
+        tomorrowName: days[(now2.getDay()+1)%7],
+        tomorrowHigh: Math.round(day1.max),
+        tomorrowDesc: codeToDesc(day1.code),
+        tomorrowRain: day1.rain > 0.1,
+        day2Name: days[(now2.getDay()+2)%7],
+        day2High: Math.round(day2.max),
+        day2Desc: codeToDesc(day2.code)
       };
-      if (n.onHold)                                         result.onHold.push(rec);
-      else if (n.inProgress || (n.startedAt && n.startedAt.seconds)) result.running.push(rec);
-      else if (n.type === 'blue')   result.pending.push(rec);
-      else if (n.type === 'yellow') result.machinist.push(rec);
-      else if (n.type === 'red')    result.inspection.push(rec);
-      else if (n.type === 'orange') result.floorSupport.push(rec);
-    });
-    return result;
+      _lastWeatherFetch = now;
+    } catch(e) { _weather = null; }
   }
 
-  // ── BUILD FLOOR REPORT ────────────────────────────────────
-  function buildReport() {
-    var f    = getFloor();
-    var out  = [];
-    var total = f.running.length + f.pending.length + f.machinist.length
-              + f.inspection.length + f.floorSupport.length + f.onHold.length;
+  function buildWeatherReport() {
+    if (!_weather) return "I tried to pull the Tulsa weather but the connection timed out. Check your phone for the forecast.";
+    var w = _weather;
+    var lines = [];
+    lines.push(pick(["Alright, let me give you the Tulsa weather real quick.","Weather check for Tulsa, Oklahoma.","Here is your local forecast."]));
+    lines.push("Right now it is "+w.temp+" degrees outside with "+w.desc+(w.wind>10?" and winds around "+w.wind+" miles per hour":"")+". Today's high is "+w.todayHigh+", low of "+w.todayLow+"."+(w.todayRain?" Heads up, there is some rain in the forecast today, so plan accordingly if you are heading out.":""));
+    lines.push("Tomorrow, "+w.tomorrowName+", looking at "+w.tomorrowHigh+" degrees and "+w.tomorrowDesc+(w.tomorrowRain?". Bring an umbrella.":".")+" "+w.day2Name+" coming in at "+w.day2High+" and "+w.day2Desc+".");
+    lines.push(pick(["Stay hydrated out there on the floor.","Good weather or bad, the machines keep running.","That is your forecast. Now back to making parts."]));
+    return lines.join(' ');
+  }
 
-    // Opener
-    var openers = [
-      "Alright, here's what's happening on the floor right now.",
-      "Let me give you a rundown of the shop.",
-      "Checking in on the floor.",
-      "Here's your live floor update.",
-      "Okay, here's where things stand right now."
-    ];
-    out.push(pick(openers));
-
-    if (total === 0) {
-      out.push("Floor is clear right now. No active requests, no pending jobs. Good time to get ahead of something.");
-      return out.join(' ');
-    }
-
-    // Running jobs — most important
-    if (f.running.length > 0) {
-      if (f.running.length === 1) {
-        var j = f.running[0];
-        var t = j.elapsedStr ? "They've been at it for " + j.elapsedStr + "." : "Just got started.";
-        out.push(
-          "We've got one job running right now. " + j.firstName + " on " + j.machine
-          + (j.wo ? ", work order " + j.wo : "")
-          + (j.op ? ", operation " + j.op : "")
-          + ". " + t
-        );
-      } else {
-        out.push("We've got " + f.running.length + " jobs running right now.");
-        // Sort by longest running first
-        var sorted = f.running.slice().sort(function(a,b){ return b.elapsed - a.elapsed; });
-        sorted.forEach(function(j, i) {
-          if (i > 2) return; // max 3 details
-          var t = j.elapsedStr ? j.elapsedStr + " on the clock" : "just started";
-          out.push(
-            j.firstName + " on " + j.machine
-            + (j.wo ? ", work order " + j.wo : "")
-            + (j.op ? ", operation " + j.op : "")
-            + " — " + t + "."
-          );
-        });
-        if (f.running.length > 3) {
-          out.push("Plus " + (f.running.length - 3) + " more running across the floor.");
-        }
-      }
-    }
-
-    // On hold
-    if (f.onHold.length > 0) {
-      f.onHold.forEach(function(j) {
-        out.push(
-          j.machine + " is on hold right now"
-          + (j.holdReason ? " — " + j.holdReason : "")
-          + ". " + j.firstName + " is waiting to get back on it."
-        );
-      });
-    }
-
-    // Pending setup
-    if (f.pending.length > 0) {
-      if (f.pending.length === 1) {
-        var p = f.pending[0];
-        out.push(
-          "One machine sitting idle waiting on setup — " + p.machine
-          + (p.wo ? ", work order " + p.wo : "")
-          + (p.op ? ", operation " + p.op : "")
-          + ". " + p.firstName + " needs somebody over there."
-        );
-      } else {
-        out.push(f.pending.length + " machines waiting on setup. Let's get those moving.");
-        f.pending.forEach(function(p) {
-          out.push(
-            p.machine
-            + (p.wo ? ", work order " + p.wo : "")
-            + " — " + p.firstName + " is waiting."
-          );
+  // ── SPORTS FETCH (ESPN public API) ───────────────────────
+  async function fetchSports() {
+    var now = Date.now();
+    if (_sports && (now - _lastSportsFetch) < 3600000) return; // cache 1 hour
+    try {
+      var results = [];
+      // NBA
+      var nba = await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard');
+      if (nba.ok) {
+        var nd = await nba.json();
+        (nd.events||[]).slice(0,3).forEach(function(e){
+          var c = e.competitions && e.competitions[0];
+          if (!c) return;
+          var teams = c.competitors||[];
+          if (teams.length<2) return;
+          var home = teams.find(function(t){ return t.homeAway==='home'; })||teams[1];
+          var away = teams.find(function(t){ return t.homeAway==='away'; })||teams[0];
+          var status = c.status&&c.status.type&&c.status.type.description||'';
+          var completed = c.status&&c.status.type&&c.status.type.completed;
+          if (completed||status==='Final') {
+            results.push({sport:'NBA',line:away.team.displayName+' '+away.score+', '+home.team.displayName+' '+home.score+' — final'});
+          } else if (status==='In Progress') {
+            results.push({sport:'NBA',line:away.team.displayName+' '+away.score+', '+home.team.displayName+' '+home.score+' — live right now'});
+          } else {
+            results.push({sport:'NBA',line:away.team.displayName+' at '+home.team.displayName+' coming up'});
+          }
         });
       }
-    }
+      // MLB
+      var mlb = await fetch('https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard');
+      if (mlb.ok) {
+        var md = await mlb.json();
+        (md.events||[]).slice(0,2).forEach(function(e){
+          var c = e.competitions&&e.competitions[0];
+          if (!c) return;
+          var teams=c.competitors||[];
+          if (teams.length<2) return;
+          var home=teams.find(function(t){return t.homeAway==='home';})||teams[1];
+          var away=teams.find(function(t){return t.homeAway==='away';})||teams[0];
+          var completed=c.status&&c.status.type&&c.status.type.completed;
+          var status=c.status&&c.status.type&&c.status.type.description||'';
+          if (completed||status==='Final') {
+            results.push({sport:'MLB',line:away.team.displayName+' '+away.score+', '+home.team.displayName+' '+home.score+' — final'});
+          } else if (status==='In Progress') {
+            results.push({sport:'MLB',line:away.team.displayName+' at '+home.team.displayName+' going on right now'});
+          } else {
+            results.push({sport:'MLB',line:away.team.displayName+' vs '+home.team.displayName+' on the schedule'});
+          }
+        });
+      }
+      _sports = results;
+      _lastSportsFetch = now;
+    } catch(e){ _sports = null; }
+  }
 
-    // Machinist requests
-    if (f.machinist.length > 0) {
-      f.machinist.forEach(function(r) {
-        out.push(
-          r.firstName + " at " + r.machine + " put in a machinist request"
-          + (r.detail ? " — they need " + r.detail : "")
-          + (r.wo ? ", work order " + r.wo : "")
-          + ". Someone go take care of that."
-        );
+  function buildSportsReport() {
+    if (!_sports||_sports.length===0) return pick(["I tried to pull the scores but the sports feed is not loading right now. Catch the games on your phone tonight.","No scores available at the moment. Check ESPN for the latest."]);
+    var lines=[];
+    lines.push(pick(["Alright, sports update for the shop.","Quick scores while you are working.","Here is what is happening in the sports world today."]));
+    var nba=_sports.filter(function(s){return s.sport==='NBA';});
+    var mlb=_sports.filter(function(s){return s.sport==='MLB';});
+    if (nba.length>0){
+      lines.push("In the NBA: "+nba.map(function(s){return s.line;}).join('. ')+".");
+    }
+    if (mlb.length>0){
+      lines.push("On the baseball side: "+mlb.map(function(s){return s.line;}).join('. ')+".");
+    }
+    lines.push(pick(["Now get back to work.","That is your sports minute. Back to making parts.","Alright, enough sports. Let us check the floor."]));
+    return lines.join(' ');
+  }
+
+  // ── STATS ─────────────────────────────────────────────────
+  function getStats(){
+    var all=window._allDashRequests||window._lastActionable||[];
+    var now=new Date();
+    var todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000;
+    var weekStart=todayStart-(now.getDay()||7)*86400;
+    var monthStart=new Date(now.getFullYear(),now.getMonth(),1).getTime()/1000;
+    var s={today:0,week:0,month:0,completedToday:0,operatorCounts:{}};
+    all.forEach(function(n){
+      var ts=n.createdAt&&n.createdAt.seconds?n.createdAt.seconds:0;
+      if(!ts)return;
+      if(ts>=todayStart){s.today++;if(n.resolved)s.completedToday++;}
+      if(ts>=weekStart)s.week++;
+      if(ts>=monthStart)s.month++;
+      if(n.operator){var f=n.operator.split(' ')[0];s.operatorCounts[f]=(s.operatorCounts[f]||0)+1;}
+    });
+    var top='',topN=0;
+    Object.keys(s.operatorCounts).forEach(function(k){if(s.operatorCounts[k]>topN){top=k;topN=s.operatorCounts[k];}});
+    s.topOperator=top; s.topOperatorCount=topN;
+    s.minutesSaved=s.completedToday*5;
+    s.dollarsSaved=Math.round(s.completedToday*5*(95/60));
+    return s;
+  }
+
+  // ── FLOOR DATA ────────────────────────────────────────────
+  function getFloor(){
+    var now=Math.floor(Date.now()/1000);
+    var notes=window._lastActionable||[];
+    var r={running:[],pending:[],machinist:[],inspection:[],floorSupport:[],onHold:[]};
+    notes.forEach(function(n){
+      if(n.resolved)return;
+      var elapsed=(n.startedAt&&n.startedAt.seconds)?now-n.startedAt.seconds:0;
+      var rec={machine:mn(n.machine),rawMachine:n.machine,
+        firstName:n.operator?n.operator.split(' ')[0]:'the operator',
+        operator:n.operator||'',wo:n.wo||'',op:n.op||'',
+        detail:n.detail||'',elapsed:elapsed,
+        elapsedStr:elapsed>10?fmtTime(elapsed):'',
+        holdReason:n.holdReason||'',type:n.type};
+      if(n.onHold)r.onHold.push(rec);
+      else if(n.inProgress||(n.startedAt&&n.startedAt.seconds))r.running.push(rec);
+      else if(n.type==='blue')r.pending.push(rec);
+      else if(n.type==='yellow')r.machinist.push(rec);
+      else if(n.type==='red')r.inspection.push(rec);
+      else if(n.type==='orange')r.floorSupport.push(rec);
+    });
+    return r;
+  }
+
+  // ── FLOOR REPORT ──────────────────────────────────────────
+  function buildFloorReport(){
+    var f=getFloor(), s=getStats();
+    var total=f.running.length+f.pending.length+f.machinist.length+f.inspection.length+f.floorSupport.length+f.onHold.length;
+    var out=[];
+    out.push(pick(["Alright, floor check.","Here is the floor situation.","Let me give you a rundown on the shop.","Checking in on the floor.","Here is what is going on out there."]));
+    if(total===0){out.push("Floor is clean right now. Nothing active. Enjoy it — it never lasts long."); return out.join(' ');}
+    if(f.running.length>0){
+      out.push("We have got "+f.running.length+" job"+(f.running.length!==1?'s':'')+' running.');
+      var sorted=f.running.slice().sort(function(a,b){return b.elapsed-a.elapsed;});
+      sorted.forEach(function(j,i){
+        if(i>2)return;
+        out.push(j.firstName+' on '+j.machine+(j.wo?' work order '+j.wo:'')+(j.op?' operation '+j.op:'')+(j.elapsedStr?' — '+j.elapsedStr+' on the clock.':'.'));
       });
+      if(f.running.length>3)out.push('Plus '+(f.running.length-3)+' more across the floor.');
     }
-
-    // Floor support
-    if (f.floorSupport.length > 0) {
-      f.floorSupport.forEach(function(r) {
-        out.push(
-          "Floor support needed at " + r.machine + ". " + r.firstName + " is waiting"
-          + (r.detail ? " — " + r.detail : "") + "."
-        );
-      });
+    if(f.onHold.length>0)f.onHold.forEach(function(j){out.push(j.machine+' is on hold'+(j.holdReason?' — '+j.holdReason:'')+'. '+j.firstName+' is waiting to get back on it.');});
+    if(f.pending.length>0){
+      if(f.pending.length===1){var p=f.pending[0];out.push('One machine waiting on setup — '+p.machine+(p.wo?' work order '+p.wo:'')+(p.op?' operation '+p.op:'')+'. '+p.firstName+' needs somebody over there.');}
+      else{out.push(f.pending.length+' machines sitting idle waiting on setup. '+f.pending.map(function(p){return p.firstName+' on '+p.machine;}).join(', ')+'.');}
     }
-
-    // Inspections
-    if (f.inspection.length > 0) {
-      f.inspection.forEach(function(r) {
-        out.push(
-          "Quality team — " + r.firstName + " on " + r.machine
-          + " has parts ready for inspection"
-          + (r.wo ? ", work order " + r.wo : "")
-          + ". Don't let that sit."
-        );
-      });
-    }
-
-    // Closer
-    var closers = [
-      "That's everything for now. I'll check back in a bit.",
-      "Alright, that's the floor. Keep it moving.",
-      "That's your update. Stay on it.",
-      "Okay, that's where we're at. I'll be back shortly."
-    ];
-    out.push(pick(closers));
-
+    if(f.machinist.length>0)f.machinist.forEach(function(r){out.push(r.firstName+' at '+r.machine+' needs '+(r.detail||'something')+(r.wo?' work order '+r.wo:'')+'. Someone go handle that.');});
+    if(f.floorSupport.length>0)f.floorSupport.forEach(function(r){out.push('Floor support at '+r.machine+'. '+r.firstName+' is waiting'+(r.detail?' — '+r.detail:'')+'.'); });
+    if(f.inspection.length>0)f.inspection.forEach(function(r){out.push('Quality — '+r.firstName+' on '+r.machine+' has parts ready'+(r.wo?' work order '+r.wo:'')+'. Don\'t let that sit.');});
+    out.push(pick(['Keep it moving.','That is the floor.','Stay on it.','I will check back soon.']));
     return out.join(' ');
   }
 
-  // ── ELEVENLABS VIA CLOUDFLARE WORKER (bypasses Safari CORS) ──
-  async function speakElevenLabs(text) {
-    if (!ELEVEN_API_KEY) return false;
-    try {
-      var res = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/speak', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text, apiKey: ELEVEN_API_KEY, voiceId: ELEVEN_VOICE_ID })
-      });
-      if (!res.ok) return false;
-      var blob  = await res.blob();
-      var url   = URL.createObjectURL(blob);
-      var audio = new Audio(url);
-      audio.volume = 1.0;
-      return new Promise(function(resolve) {
-        audio.onended = function(){ URL.revokeObjectURL(url); resolve(true); };
-        audio.onerror = function(){ URL.revokeObjectURL(url); resolve(false); };
-        audio.play().catch(function(){ resolve(false); });
-      });
-    } catch(e) { return false; }
+  // ── STATS REPORT ─────────────────────────────────────────
+  function buildStatsReport(){
+    var s=getStats(), f=getFloor();
+    var out=[];
+    out.push(pick(['Let me pull up the numbers.','Here is the scoreboard.','Alright, stat time at Hill Manufacturing.','Let me tell you how the shop is performing.']));
+    if(s.today>0){
+      out.push('We have handled '+s.today+' request'+(s.today!==1?'s':'')+' today, '+s.week+' this week, and '+s.month+' this month.');
+      if(s.completedToday>0)out.push(s.completedToday+' of those are fully wrapped up. That is '+s.minutesSaved+' minutes of machine time saved today — roughly '+s.dollarsSaved+' dollars at shop rate.');
+    }else{out.push('No requests logged yet today. Day is just getting started.');}
+    if(s.week>0){var wd=Math.round(s.week*5*(95/60));out.push('Week to date we are sitting at about '+wd+' dollars in documented time savings. That is real money.');}
+    if(f.running.length>0)out.push('Right now '+f.running.length+' machine'+(f.running.length!==1?'s are':' is')+' running.');
+    if(f.pending.length>0)out.push(f.pending.length+' still waiting on setup. Let us not leave them hanging.');
+    return out.join(' ');
   }
 
-  // ── BROWSER VOICE FALLBACK (tuned to sound human) ─────────
-  function speakBrowser(text) {
-    return new Promise(function(resolve) {
-      var synth = window.speechSynthesis;
-      if (!synth) { resolve(); return; }
+  // ── SHOUTOUT REPORT ───────────────────────────────────────
+  function buildShoutoutReport(){
+    var s=getStats(), f=getFloor();
+    var out=[];
+    if(s.topOperator&&s.topOperatorCount>=2){
+      out.push(pick(['Alright, I am giving out a shoutout.','Shoutout time at Hill Manufacturing.','Before I get into the floor — let me give credit where it is due.','Hey, I want to recognize somebody real quick.']));
+      out.push(s.topOperator+' is leading the charge with '+s.topOperatorCount+' request'+(s.topOperatorCount!==1?'s':'')+' tracked. '+pick(['That is how you use the app. Keep going '+s.topOperator+'.','That is top of the leaderboard right there.','Every one of those requests is machine time documented. Nice work '+s.topOperator+'.','Hill Manufacturing MVP right there.']));
+      var others=Object.keys(s.operatorCounts).filter(function(k){return k!==s.topOperator&&s.operatorCounts[k]>=1;});
+      if(others.length>0)out.push('Also keeping the floor moving: '+others.slice(0,3).join(', ')+'. Appreciate you all staying on top of it.');
+    }else{
+      out.push('Not enough data yet for the leaderboard. Get those requests logged and Sparky will start calling out the top performers.');
+    }
+    var total=f.running.length+f.pending.length;
+    if(total>0)out.push('On the floor: '+f.running.length+' running, '+f.pending.length+' pending setup.');
+    return out.join(' ');
+  }
+
+  // ── JOKE BREAK ────────────────────────────────────────────
+  function buildJokeReport(){
+    var f=getFloor();
+    var out=[];
+    out.push(pick(['Alright, Sparky has got a joke for the shop.','Real quick, I have got one for you.','Machine shop humor — here we go.','This one is for the machinists.']));
+    out.push(pick(JOKES));
+    var total=f.running.length+f.pending.length+f.machinist.length;
+    if(total>0)out.push('Okay, back to the floor. '+f.running.length+' jobs running, '+f.pending.length+' pending.');
+    else out.push('Alright, back to it. Floor is looking clean right now.');
+    return out.join(' ');
+  }
+
+  // ── MASTER ROTATION ───────────────────────────────────────
+  var _rotationOrder = ['floor','floor','stats','shoutout','floor','joke','weather','floor','sports','floor','floor','joke','stats','floor','shoutout','weather'];
+  var _rotIdx = 0;
+
+  async function buildNextReport(){
+    var type = _rotationOrder[_rotIdx % _rotationOrder.length];
+    _rotIdx++;
+    if(type==='floor')    return buildFloorReport();
+    if(type==='stats')    return buildStatsReport();
+    if(type==='shoutout') return buildShoutoutReport();
+    if(type==='joke')     return buildJokeReport();
+    if(type==='weather'){
+      await fetchWeather();
+      return buildWeatherReport();
+    }
+    if(type==='sports'){
+      await fetchSports();
+      return buildSportsReport();
+    }
+    return buildFloorReport();
+  }
+
+  // ── ELEVENLABS VIA WORKER ─────────────────────────────────
+  async function speakElevenLabs(text){
+    if(!ELEVEN_API_KEY)return false;
+    try{
+      var res=await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/speak',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({text:text,apiKey:ELEVEN_API_KEY,voiceId:ELEVEN_VOICE_ID})
+      });
+      if(!res.ok)return false;
+      var blob=await res.blob(),url=URL.createObjectURL(blob),audio=new Audio(url);
+      audio.volume=1.0;
+      return new Promise(function(resolve){
+        audio.onended=function(){URL.revokeObjectURL(url);resolve(true);};
+        audio.onerror=function(){URL.revokeObjectURL(url);resolve(false);};
+        audio.play().catch(function(){resolve(false);});
+      });
+    }catch(e){return false;}
+  }
+
+  // ── BROWSER FALLBACK ──────────────────────────────────────
+  function speakBrowser(text){
+    return new Promise(function(resolve){
+      var synth=window.speechSynthesis;
+      if(!synth){resolve();return;}
       synth.cancel();
-
-      // Split into sentences for natural pacing
-      var sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
-      var idx = 0;
-
-      function next() {
-        if (idx >= sentences.length) { resolve(); return; }
-        var utt  = new SpeechSynthesisUtterance(sentences[idx].trim());
-        var voices = synth.getVoices();
-        var v = null;
-
-        // Check if admin selected a female ElevenLabs voice ID
-        var femaleVoiceIds = ['EXAVITQu4vr4xnSDxMaL', '21m00Tcm4TlvDq8ikWAM'];
-        var wantFemale = femaleVoiceIds.indexOf(ELEVEN_VOICE_ID) !== -1;
-
-        if (wantFemale) {
-          // Female voice priority
-          var femaleNames = ['Microsoft Zira Online (Natural)', 'Google US English', 'Samantha', 'Karen', 'Victoria'];
-          for (var i = 0; i < femaleNames.length; i++) {
-            v = voices.find(function(x){ return x.name === femaleNames[i]; });
-            if (v) break;
-          }
-          if (!v) v = voices.find(function(x){ return x.lang && x.lang.startsWith('en') && x.name.match(/zira|female|woman/i); });
-        } else {
-          // Male voice priority — default for Sparky
-          var maleNames = ['Microsoft Guy Online (Natural)', 'Microsoft David Online (Natural)', 'Alex', 'Daniel', 'Google UK English Male', 'Fred'];
-          for (var i = 0; i < maleNames.length; i++) {
-            v = voices.find(function(x){ return x.name === maleNames[i]; });
-            if (v) break;
-          }
-          if (!v) v = voices.find(function(x){ return x.lang && x.lang.startsWith('en') && x.name.match(/male|guy|david|alex|daniel|fred/i); });
-        }
-
-        // Final fallback — any English voice
-        if (!v) v = voices.find(function(x){ return x.lang && x.lang.startsWith('en'); });
-        if (v) utt.voice = v;
-
-        utt.rate   = 0.88 + Math.random() * 0.07; // subtle variation per sentence
-        utt.pitch  = wantFemale ? (1.0 + Math.random() * 0.1) : (0.85 + Math.random() * 0.08);
-        utt.volume = 1;
-        utt.onend  = function(){ idx++; setTimeout(next, 100 + Math.random() * 150); };
-        utt.onerror= function(){ idx++; next(); };
+      var sentences=text.match(/[^.!?]+[.!?]+/g)||[text];
+      var idx=0;
+      function next(){
+        if(idx>=sentences.length){resolve();return;}
+        var utt=new SpeechSynthesisUtterance(sentences[idx].trim());
+        var voices=synth.getVoices();
+        var names=['Google US English','Microsoft Guy Online (Natural)','Alex','Samantha','Daniel'];
+        var v=null;
+        for(var i=0;i<names.length;i++){v=voices.find(function(x){return x.name===names[i];});if(v)break;}
+        if(!v)v=voices.find(function(x){return x.lang&&x.lang.startsWith('en');});
+        if(v)utt.voice=v;
+        utt.rate=0.88+Math.random()*0.07;
+        utt.pitch=0.90+Math.random()*0.12;
+        utt.volume=1;
+        utt.onend=function(){idx++;setTimeout(next,100+Math.random()*150);};
+        utt.onerror=function(){idx++;next();};
         synth.speak(utt);
       }
       next();
@@ -11338,421 +11426,122 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── MAIN SPEAK ────────────────────────────────────────────
-  async function sparky(text, urgent) {
-    if (!_active && !urgent) return;
-    if (!text) return;
-    var now = Date.now();
-
-    // Urgent = new floor request — cut in immediately, clear queue
-    if (urgent) {
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      _queue = [];
-      _speaking  = false;
-      _lastSpoke = 0;
-    }
-
-    if (!urgent && (now - _lastSpoke) < _MIN_GAP) {
-      // Queue it for later instead of dropping
-      _queue.push(text);
-      return;
-    }
-    if (_speaking) { _queue.push(text); return; }
-
-    _speaking  = true;
-    _lastSpoke = Date.now();
-
-    var ok = await speakElevenLabs(text);
-    if (!ok) await speakBrowser(text);
-
-    _speaking  = false;
-    _lastSpoke = Date.now();
-
-    if (_queue.length > 0) {
-      var next = _queue.shift();
-      setTimeout(function(){ sparky(next, false); }, 800);
-    }
+  async function sparky(text,urgent){
+    if(!_active&&!urgent)return;
+    if(!text)return;
+    var now=Date.now();
+    if(!urgent&&(now-_lastSpoke)<_MIN_GAP){_queue.push({t:text,u:false});return;}
+    if(_speaking){_queue.push({t:text,u:urgent});return;}
+    _speaking=true;_lastSpoke=Date.now();
+    var ok=await speakElevenLabs(text);
+    if(!ok)await speakBrowser(text);
+    _speaking=false;_lastSpoke=Date.now();
+    if(_queue.length>0){var nx=_queue.shift();setTimeout(function(){sparky(nx.t,nx.u);},600);}
   }
 
-  // ── SMALL TALK POOL ──────────────────────────────────────
-  var _smallTalkIdx = 0;
-  var _smallTalkLines = [
-    "Hey, quick reminder — if you're finishing up a work order, make sure it gets logged in ProShop before you move on. Keeps the board clean.",
-    "Don't forget to add your completed jobs to ProShop. It only takes a second and it keeps everyone in the loop.",
-    "Heads up — ProShop only works if we feed it. If you ran a job today, log it in.",
-    "Just a reminder to keep ProShop up to date. Operations, cycle times, completions — all of it helps the team plan better.",
-    "If you haven't entered today's work in ProShop yet, now's a good time. Keeps the production log accurate.",
-    "Quick one — make sure your work orders are updated in ProShop. Admin can see everything from there.",
-    "Reminder: ProShop entries help schedule the next jobs. If you finished something, mark it done.",
-    "Hey shop — log your work in ProShop when you get a second. It makes scheduling a lot easier on everybody.",
-    "If you're between jobs right now, take a second and update your ProShop entries. Appreciate it.",
-    "Let's keep the ProShop board accurate, folks. If a job's done, mark it done.",
-    "Safety check — make sure your machine area is clean and your guards are in place. Let's keep it safe out there.",
-    "Good reminder to check your coolant levels if you haven't already. Keeps your tools happy.",
-    "If you're waiting on material, flag it in ProShop so scheduling knows. Don't let a job sit without a status.",
-    "End of shift coming up — make sure your work orders are entered before you clock out. Helps the next shift hit the ground running.",
-    "Quick tip — if a work order has a note or issue, add it in ProShop so the team knows what's going on before they pick it up.",
-    "How's everyone doing out there? Floor's quiet right now — good time to tidy up your station.",
-    "Nothing on the board right now. Good time to prep tooling for the next job.",
-    "Slow moment on the floor. Use it — clean up, check your tools, get ahead of the next setup.",
-    "Floor's clear right now. If you've got a pending setup, now's a great time to get ahead of it.",
-    "Reminder from Sparky — if you see something off on the floor, say something. Safety first, always.",
-  ];
-
-  function buildSmallTalk() {
-    var line = _smallTalkLines[_smallTalkIdx % _smallTalkLines.length];
-    _smallTalkIdx++;
-    return line;
+  function startAuto(){
+    if(_autoTimer)clearInterval(_autoTimer);
+    _autoTimer=setInterval(async function(){
+      if(!_active)return;
+      var report=await buildNextReport();
+      sparky(report,false);
+    },_AUTO_EVERY);
   }
 
-  // ── LIVE DATA CACHE ───────────────────────────────────────
-  var _liveCache = { weather: null, sports: null, news: null,
-                     weatherTs: 0,  sportsTs: 0,  newsTs: 0 };
-  var CACHE_TTL = 10 * 60 * 1000; // 10 minutes
-
-  // Tulsa, OK coordinates
-  var TULSA_LAT = 36.154;
-  var TULSA_LON = -95.993;
-
-  async function fetchWeather() {
-    var now = Date.now();
-    if (_liveCache.weather && (now - _liveCache.weatherTs) < CACHE_TTL) return _liveCache.weather;
-    try {
-      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + TULSA_LAT +
-        '&longitude=' + TULSA_LON +
-        '&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,precipitation&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=1';
-      var res = await fetch(url);
-      if (!res.ok) return null;
-      var d = await res.json();
-      var c = d.current;
-      var code = c.weathercode;
-      var desc = weatherDesc(code);
-      var text = "Alright, here's the weather for Tulsa right now. " +
-        desc + ". Temperature is " + Math.round(c.temperature_2m) + " degrees, " +
-        "feels like " + Math.round(c.apparent_temperature) + ". " +
-        "Winds at " + Math.round(c.windspeed_10m) + " miles per hour. " +
-        (c.precipitation > 0 ? "We've got " + c.precipitation.toFixed(2) + " inches of precip recorded. Might want to keep that in mind if you're heading out. " : "No precipitation right now. ") +
-        "Stay safe out there.";
-      _liveCache.weather = text;
-      _liveCache.weatherTs = now;
-      return text;
-    } catch(e) { return null; }
-  }
-
-  function weatherDesc(code) {
-    if (code === 0) return "Clear skies out there";
-    if (code <= 2)  return "Mostly clear, a few clouds";
-    if (code === 3) return "Overcast skies right now";
-    if (code <= 49) return "Foggy conditions in the area";
-    if (code <= 57) return "Light drizzle falling";
-    if (code <= 67) return "Rain in the area, watch your commute";
-    if (code <= 77) return "Snow falling out there, be careful on the roads";
-    if (code <= 82) return "Rain showers coming through";
-    if (code <= 86) return "Snow showers in the mix";
-    if (code <= 99) return "Thunderstorms in the area — stay inside if you can";
-    return "Mixed conditions outside";
-  }
-
-  async function fetchSports() {
-    var now = Date.now();
-    if (_liveCache.sports && (now - _liveCache.sportsTs) < CACHE_TTL) return _liveCache.sports;
-    try {
-      // Try NBA first, then MLB depending on season, then NFL
-      var leagues = [
-        { id: 'nba', name: 'NBA', url: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard' },
-        { id: 'mlb', name: 'MLB', url: 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard' },
-        { id: 'nfl', name: 'NFL', url: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard' }
-      ];
-      var lines = [];
-      for (var li = 0; li < leagues.length; li++) {
-        try {
-          var lr = await fetch(leagues[li].url);
-          if (!lr.ok) continue;
-          var ld = await lr.json();
-          var events = (ld.events || []).slice(0, 4);
-          if (events.length === 0) continue;
-          var leagueLines = [];
-          for (var ei = 0; ei < events.length; ei++) {
-            var ev = events[ei];
-            var comp = ev.competitions && ev.competitions[0];
-            if (!comp) continue;
-            var comps = comp.competitors || [];
-            if (comps.length < 2) continue;
-            var h = comps.find(function(x){ return x.homeAway === 'home'; }) || comps[0];
-            var a = comps.find(function(x){ return x.homeAway === 'away'; }) || comps[1];
-            var hName = (h.team && h.team.shortDisplayName) || (h.team && h.team.name) || 'Home';
-            var aName = (a.team && a.team.shortDisplayName) || (a.team && a.team.name) || 'Away';
-            var status = ev.status && ev.status.type && ev.status.type.description;
-            var hScore = h.score;
-            var aScore = a.score;
-            if (status === 'Final' || status === 'STATUS_FINAL') {
-              var winner = parseInt(hScore) >= parseInt(aScore) ? hName : aName;
-              leagueLines.push(aName + " versus " + hName + " — final score " + aScore + " to " + hScore + ". " + winner + " get the win.");
-            } else if (status && status.toLowerCase().includes('progress')) {
-              leagueLines.push(aName + " at " + hName + " — in progress, " + aScore + " to " + hScore + ".");
-            } else if (status === 'Scheduled' || status === 'STATUS_SCHEDULED') {
-              var ds = ev.status && ev.status.type && ev.status.type.shortDetail;
-              leagueLines.push(aName + " at " + hName + (ds ? ', scheduled for ' + ds : ' coming up') + ".");
-            }
-          }
-          if (leagueLines.length > 0) {
-            lines.push(leagues[li].name + " update: " + leagueLines.join(' '));
-          }
-        } catch(le) { /* skip league */ }
-      }
-      if (lines.length === 0) return null;
-      var openers = [
-        "Taking a quick break from the floor — here's what's going on in sports.",
-        "Alright, here's your sports check-in.",
-        "Sports update, courtesy of Sparky.",
-        "Quick look at the scores while things are quiet."
-      ];
-      var text = pick(openers) + ' ' + lines.join(' ') + " That's your sports update. Back to the floor.";
-      _liveCache.sports = text;
-      _liveCache.sportsTs = now;
-      return text;
-    } catch(e) { return null; }
-  }
-
-  async function fetchNews() {
-    var now = Date.now();
-    if (_liveCache.news && (now - _liveCache.newsTs) < CACHE_TTL) return _liveCache.news;
-    try {
-      // Use GNews free tier — no key needed for basic headlines
-      var res = await fetch('https://gnews.io/api/v4/top-headlines?category=general&lang=en&country=us&max=4&apikey=pub_none', { mode: 'cors' });
-      // GNews may block without key — fallback to RSS via allorigins
-      if (!res.ok) throw new Error('gnews fail');
-      var d = await res.json();
-      var articles = d.articles || [];
-      if (articles.length === 0) throw new Error('no articles');
-      var headlines = articles.slice(0, 3).map(function(a){ return a.title.replace(/\s*[-–|].*$/, '').trim(); });
-      var text = buildNewsScript(headlines);
-      _liveCache.news = text;
-      _liveCache.newsTs = now;
-      return text;
-    } catch(e) {
-      // Fallback: fetch top stories from NPR RSS via allorigins proxy
-      try {
-        var rssUrl = 'https://feeds.npr.org/1001/rss.xml';
-        var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rssUrl);
-        var r2 = await fetch(proxyUrl);
-        if (!r2.ok) return null;
-        var d2 = await r2.json();
-        var xml = d2.contents || '';
-        var items = xml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g) || xml.match(/<title>(.*?)<\/title>/g) || [];
-        // strip first item (it's the feed title)
-        var headlines = items.slice(1, 4).map(function(s){
-          return s.replace(/<title><!\[CDATA\[/, '').replace(/<title>/, '').replace(/\]\]><\/title>/, '').replace(/<\/title>/, '').trim();
-        }).filter(function(s){ return s.length > 10; });
-        if (headlines.length === 0) return null;
-        var text2 = buildNewsScript(headlines);
-        _liveCache.news = text2;
-        _liveCache.newsTs = now;
-        return text2;
-      } catch(e2) { return null; }
-    }
-  }
-
-  function buildNewsScript(headlines) {
-    var openers = [
-      "Here's a quick news rundown while you work.",
-      "Sparky's got a few headlines for you.",
-      "Taking a second for some news.",
-      "Quick news break from Sparky."
-    ];
-    var closers = [
-      "That's the news. Back to the floor.",
-      "Stay informed out there. Now back to it.",
-      "Alright, that's headlines. Eyes back on the machines.",
-      "And that's the latest. Sparky's watching the floor."
-    ];
-    return pick(openers) + ' ' + headlines.map(function(h, i){
-      var intros = ['Story one — ', 'Also — ', 'And — ', 'Next — '];
-      return (intros[i] || 'Also — ') + h + '.';
-    }).join(' ') + ' ' + pick(closers);
-  }
-
-  // ── AUTO REPORT ROTATION ─────────────────────────────────
-  // Cycle: floor → weather → sports → news → small talk → floor → ...
-  var _broadcastCycle = 0;
-  // Interleave floor checks with weather / sports / news / smalltalk
-  var _broadcastTypes = ['floor', 'weather', 'floor', 'sports', 'floor', 'news', 'floor', 'smalltalk'];
-
-  async function runBroadcast() {
-    if (!_active) return;
-
-    var slot = _broadcastTypes[_broadcastCycle % _broadcastTypes.length];
-    _broadcastCycle++;
-
-    var text = null;
-    if (slot === 'floor') {
-      var f = getFloor();
-      var total = f.running.length + f.pending.length + f.machinist.length
-                + f.inspection.length + f.floorSupport.length + f.onHold.length;
-      text = total > 0 ? buildReport() : buildSmallTalk();
-    } else if (slot === 'weather') {
-      text = await fetchWeather();
-    } else if (slot === 'sports') {
-      text = await fetchSports();
-    } else if (slot === 'news') {
-      text = await fetchNews();
-    }
-
-    if (!text) text = buildSmallTalk(); // fallback if any fetch fails
-    sparky(text, false);
-  }
-
-  // ── AUTO REPORTS ──────────────────────────────────────────
-  function startAuto() {
-    if (_autoTimer) clearInterval(_autoTimer);
-    _autoTimer = setInterval(function() {
-      runBroadcast();
-    }, _AUTO_EVERY);
-  }
-
-  // ── GREET ON ACTIVATE ─────────────────────────────────────
-  function greetAndStart() {
-    if (_active) return;
-    _active = true;
-    setTimeout(function() {
-      var h   = new Date().getHours();
-      var tod = h < 10 ? 'morning' : h < 14 ? 'afternoon' : h < 17 ? 'afternoon' : 'evening';
-      var f   = getFloor();
-      var total = f.running.length + f.pending.length + f.machinist.length
-                + f.inspection.length + f.floorSupport.length + f.onHold.length;
-      var greeting = total === 0
-        ? "Good " + tod + ", this is Sparky, Hill's mascot. I'm monitoring the floor at Hill Manufacturing. Nothing active right now — I'll let you know the moment something comes in."
-        : "Good " + tod + ", this is Sparky, Hill's mascot. I'm live at Hill Manufacturing. " + buildReport();
-      sparky(greeting, true);
+  async function greetAndStart(){
+    if(_active)return;
+    _active=true;
+    await fetchWeather();
+    await fetchSports();
+    setTimeout(async function(){
+      var h=new Date().getHours();
+      var tod=h<10?'morning':h<14?'afternoon':h<17?'afternoon':'evening';
+      var s=getStats();
+      var greeting='Good '+tod+' Hill Manufacturing. This is Sparky, your shop voice. I am live and ready. ';
+      if(s.today>0)greeting+='We have already got '+s.today+' request'+(s.today!==1?'s':'')+' on the board today. ';
+      greeting+=buildFloorReport();
+      sparky(greeting,true);
       startAuto();
-    }, 3000);
+    },3000);
   }
 
-  // ── AUTO-START ON LOGIN ───────────────────────────────────
-  var _check = setInterval(function() {
-    if (window.currentUser || window._isAdmin) {
-      clearInterval(_check);
-      greetAndStart();
-    }
-  }, 1000);
+  var _chk=setInterval(function(){
+    if(window.currentUser||window._isAdmin){clearInterval(_chk);greetAndStart();}
+  },1000);
 
-  // ── EVENT TRIGGERS ────────────────────────────────────────
-
-  // New request from floor
-  window._djAnnounceNew = function(n) {
-    if (!n) return;
-    var machine = mn(n.machine);
-    var name    = n.operator ? n.operator.split(' ')[0] : 'someone';
-    var wo      = n.wo ? 'work order ' + n.wo : '';
-    var opn     = n.op ? 'operation '  + n.op : '';
-    var detail  = n.detail || '';
-
-    var lines = {
-      blue: [
-        "New setup request just came in. " + name + " on " + machine + " has " + wo + " ready" + (opn ? ', ' + opn : '') + ". Tooling, that one is waiting on you.",
-        "Setup needed at " + machine + ". " + name + " is loaded up and waiting on " + (wo||'a job') + (opn ? ', ' + opn : '') + ". Who is on tooling?",
-        "Hey, " + machine + " has a pending job. " + name + " needs setup on " + (wo||'their work order') + (opn ? ', ' + opn : '') + ". Go get them running."
-      ],
-      yellow: [
-        name + " at " + machine + " put in a machinist request" + (detail ? ' — they need ' + detail : '') + ". " + (wo||'') + " Someone go help them out.",
-        "Machinist request from " + machine + ". " + name + (detail ? ' says they need ' + detail : ' needs assistance') + ". " + (wo||''),
-        "Quick heads up — " + machine + " needs something. " + name + (detail ? ' is asking for ' + detail : ' put in a request') + ". Go take care of it."
-      ],
-      orange: [
-        "Floor support needed at " + machine + " right now. " + name + " is waiting" + (detail ? ' — ' + detail : '') + ". Go check it out.",
-        machine + " is calling for floor support. " + name + (detail ? ' says: ' + detail : ' needs a hand') + ". Head over there."
-      ],
-      red: [
-        "Quality team — " + name + " on " + machine + " has parts ready for inspection. " + (wo||'') + " Don't let that one sit too long.",
-        "Inspection request from " + machine + ". " + name + " is waiting on quality. " + (wo||'')
-      ]
+  // ── EVENT HOOKS ───────────────────────────────────────────
+  window._djAnnounceNew=function(n){
+    if(!n)return;
+    var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'someone';
+    var wo=n.wo?'work order '+n.wo:'',opn=n.op?'operation '+n.op:'',detail=n.detail||'';
+    var lines={
+      blue:["New setup request. "+name+" on "+machine+" has "+wo+" ready"+(opn?', '+opn:'')+". Tooling — that one is waiting on you.","Setup needed at "+machine+". "+name+" is loaded up on "+(wo||'a job')+(opn?', '+opn:'')+". Who is getting over there?",name+" on "+machine+" needs setup. "+wo+" "+(opn||'')+". Go get them running."],
+      yellow:[name+" at "+machine+" put in a machinist request"+(detail?' — they need '+detail:'')+". "+(wo||'')+" Someone go help.",machine+" is calling for help. "+name+(detail?' needs '+detail:' put in a request')+". "+(wo||''),machine+" — machinist request from "+name+(detail?': '+detail:'')+". "+(wo||'')+" Handle that."],
+      orange:["Floor support at "+machine+" right now. "+name+" is calling"+(detail?' — '+detail:'')+". Get over there.",machine+" needs floor support. "+name+(detail?' says: '+detail:' needs help')+"."],
+      red:["Quality team — "+name+" on "+machine+" has parts ready for inspection. "+(wo||'')+" Do not let that sit.","Inspection at "+machine+". "+name+" is waiting on quality. "+(wo||'')]
     };
-    var pool = lines[n.type] || lines.yellow;
-    // All incoming requests are urgent — bypass gap timer and active check
-    sparky(pick(pool), true);
+    sparky(pick(lines[n.type]||lines.yellow),n.type==='red'||n.type==='orange');
   };
 
-  // Admin hit START
-  window._djAnnounceStart = function(n) {
-    if (!n) return;
-    var machine = mn(n.machine);
-    var name    = n.operator ? n.operator.split(' ')[0] : 'the operator';
-    var wo      = n.wo ? 'work order ' + n.wo : 'the job';
-    var opn     = n.op ? ', operation ' + n.op : '';
-    var lines = [
-      "Timer started. " + name + " is now on " + machine + " setting up " + wo + opn + ". Stand by — cutting soon.",
-      "Setup is underway on " + machine + ". " + name + " just clocked in on " + wo + opn + ". Stand by.",
-      machine + " is getting set up right now. " + name + " is on it — " + wo + opn + ". Get ready to run.",
-      "Setup kicked off on " + machine + " — " + wo + opn + ". " + name + ", you are up next."
-    ];
-    sparky(pick(lines), false);
+  window._djAnnounceStart=function(n){
+    if(!n)return;
+    var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'the operator';
+    var wo=n.wo?'work order '+n.wo:'the job',opn=n.op?', operation '+n.op:'';
+    var s=getStats();
+    var extra=s.today>0?' That puts us at '+s.today+' requests on the board today.':'';
+    sparky(pick([
+      "Timer started. Miguel is on "+machine+" — setting up "+wo+opn+". "+name+", you will be cutting soon."+extra,
+      "Setup is underway on "+machine+". Miguel clocked in on "+wo+opn+". "+name+", stand by.",
+      machine+" getting set up right now. Miguel is on it — "+wo+opn+". "+name+", get ready."+extra,
+      "Miguel kicked off setup on "+machine+" — "+wo+opn+". "+name+", you are next."
+    ]),false);
   };
 
-  window._djAnnouncePending = window._djAnnounceNew;
+  window._djAnnouncePending=window._djAnnounceNew;
 
-  // Comment posted in live feed
-  window._djAnnounceComment = function(noteId, text, machine, wo, author) {
-    if (!text || text.length < 3) return;
-    var machineName = mn(machine);
-    var isAdmin = !!(window._isAdmin || window.currentUser === 'hilladmin');
-    var name    = author ? author.split(' ')[0] : 'someone';
-    var lines;
-    if (isAdmin) {
-      lines = [
-        "Message from Sparky to " + machineName + ": " + text,
-        "Sparky sent a note to " + machineName + " — " + text,
-        machineName + ", Sparky says: " + text
-      ];
-    } else {
-      lines = [
-        "Update from " + machineName + " — " + name + " says: " + text,
-        name + " at " + machineName + " says: " + text,
-        "Incoming from " + machineName + ". " + name + " says: " + text
-      ];
-    }
-    sparky(pick(lines), false);
+  window._djAnnounceComment=function(noteId,text,machine,wo,author){
+    if(!text||text.length<3)return;
+    var m=mn(machine),isAdmin=!!(window._isAdmin||window.currentUser==='hilladmin');
+    var name=author?author.split(' ')[0]:'someone';
+    sparky(pick(isAdmin?[
+      "Message from Miguel to "+m+": "+text,
+      "Miguel sent a note to "+m+" — "+text,
+      m+", Miguel says: "+text
+    ]:[
+      "Update from "+m+" — "+name+" says: "+text,
+      name+" at "+m+": "+text,
+      "Incoming from "+m+". "+name+" says: "+text
+    ]),false);
   };
 
-  // Manual controls (admin panel buttons)
-  window._djToggle = function() {
-    _active = !_active;
-    var btn   = document.getElementById('dj-toggle-btn');
-    var badge = document.getElementById('dj-live-badge');
-    if (_active) {
-      if (btn)   { btn.textContent = 'SPARKY ON AIR'; btn.style.background = 'linear-gradient(135deg,#dc2626,#ef4444)'; }
-      if (badge) badge.style.display = 'inline-block';
+  window._djToggle=function(){
+    _active=!_active;
+    var btn=document.getElementById('dj-toggle-btn'),badge=document.getElementById('dj-live-badge');
+    if(_active){
+      if(btn){btn.textContent='Sparky ON AIR';btn.style.background='linear-gradient(135deg,#dc2626,#ef4444)';}
+      if(badge)badge.style.display='inline-block';
       greetAndStart();
-    } else {
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
-      clearInterval(_autoTimer);
-      _queue = [];
-      if (btn)   { btn.textContent = 'Activate Sparky'; btn.style.background = 'linear-gradient(135deg,#7c3aed,#8b5cf6)'; }
-      if (badge) badge.style.display = 'none';
+    }else{
+      if(window.speechSynthesis)window.speechSynthesis.cancel();
+      clearInterval(_autoTimer);_queue=[];
+      if(btn){btn.textContent='Activate Sparky';btn.style.background='linear-gradient(135deg,#7c3aed,#8b5cf6)';}
+      if(badge)badge.style.display='none';
     }
   };
 
-  window._djNow = function() { sparky(buildReport(), true); };
-
-  window._djSetInterval = function(mins) {
-    _AUTO_EVERY = Math.round((parseFloat(mins) || 0.5) * 60000);
-    if (_active) { clearInterval(_autoTimer); startAuto(); }
+  window._djNow=function(){ buildNextReport().then(function(r){sparky(r,true);}); };
+  window._djSetInterval=function(mins){_AUTO_EVERY=(parseInt(mins)||2)*60000;if(_active){clearInterval(_autoTimer);startAuto();}};
+  window._jimSetKey=function(key,voiceId){
+    ELEVEN_API_KEY=key||ELEVEN_API_KEY;ELEVEN_VOICE_ID=voiceId||ELEVEN_VOICE_ID;
+    localStorage.setItem('jimKey',ELEVEN_API_KEY);localStorage.setItem('jimVoice',ELEVEN_VOICE_ID);
+    if(window.showToast)window.showToast('green','Sparky updated',key?'ElevenLabs voice active':'Browser voice');
   };
-
-  window._sparkySetKey = function(key, voiceId) {
-    ELEVEN_API_KEY  = key   || ELEVEN_API_KEY;
-    ELEVEN_VOICE_ID = voiceId || ELEVEN_VOICE_ID;
-    localStorage.setItem('jimKey',   ELEVEN_API_KEY);
-    localStorage.setItem('jimVoice', ELEVEN_VOICE_ID);
-    if (window.showToast) window.showToast('green', 'Sparky updated', key ? 'ElevenLabs voice active' : 'Using browser voice');
-  };
-  window._jimSetKey = window._sparkySetKey; // backward compat
-
-  // Load any saved key override
-  var _sk = localStorage.getItem('jimKey');
-  var _sv = localStorage.getItem('jimVoice');
-  if (_sk) ELEVEN_API_KEY  = _sk;
-  if (_sv) ELEVEN_VOICE_ID = _sv;
+  var _sk=localStorage.getItem('jimKey'),_sv=localStorage.getItem('jimVoice');
+  if(_sk)ELEVEN_API_KEY=_sk;if(_sv)ELEVEN_VOICE_ID=_sv;
 
 })();
 </script>
+
+
 </body>
 </html>
