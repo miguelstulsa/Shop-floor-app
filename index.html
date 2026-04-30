@@ -1178,22 +1178,22 @@
     </div>
 
     <!-- ── SPARKY BUTTON ── -->
-    <div id="sparky-btn-wrap" style="display:flex;align-items:center;gap:10px;margin-bottom:8px;background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:12px;padding:10px 14px;cursor:pointer;" onclick="window._sparkyButtonTap()">
-      <!-- Sparky Avatar -->
-      <div id="sparky-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#c4b5fd);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:2px solid rgba(196,181,253,0.4);position:relative;">
+    <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;background:linear-gradient(135deg,#1a0033,#2d0060);border:2px solid rgba(139,92,246,0.6);border-radius:14px;padding:12px 16px;cursor:pointer;box-shadow:0 4px 20px rgba(139,92,246,0.2);">
+      <!-- Sparky Icon -->
+      <div id="sparky-avatar" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:2px solid rgba(196,181,253,0.5);position:relative;box-shadow:0 0 16px rgba(139,92,246,0.4);">
         🎙️
-        <div id="sparky-pulse" style="display:none;position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(139,92,246,0.6);animation:sparkypulse 1.5s infinite;"></div>
+        <div id="sparky-pulse" style="display:none;position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(139,92,246,0.7);animation:sparkypulse 1.4s ease-out infinite;"></div>
       </div>
       <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:6px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#c4b5fd;letter-spacing:2px;">SPARKY</div>
-          <span id="sparky-onair" style="display:none;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.5);border-radius:999px;padding:1px 7px;font-size:9px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">&#11044; ON AIR</span>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#c4b5fd;letter-spacing:2px;">SPARKY</div>
+          <span id="sparky-onair" style="display:none;background:rgba(239,68,68,0.25);border:1px solid rgba(239,68,68,0.6);border-radius:999px;padding:2px 8px;font-size:10px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">&#11044; ON AIR</span>
         </div>
-        <div id="sparky-status-text" style="font-size:10px;color:#6d28d9;letter-spacing:0.5px;">Tap to activate your shop voice</div>
+        <div id="sparky-status-text" style="font-size:11px;color:#7c3aed;">TAP TO ACTIVATE YOUR SHOP VOICE</div>
       </div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button onclick="event.stopPropagation();window._djNow&&window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:8px;padding:5px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">SPEAK</button>
-        <button id="sparky-main-toggle" onclick="event.stopPropagation();window._djToggle&&window._djToggle();" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">OFF</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+        <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;">SPEAK</button>
+        <button id="sparky-main-toggle" onclick="event.stopPropagation();if(window._djToggle)window._djToggle();" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;min-width:40px;">OFF</button>
       </div>
     </div>
     <style>
@@ -11075,7 +11075,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _queue     = [];
   var _autoTimer = null;
   var _lastSpoke = 0;
-  var _MIN_GAP   = 2000; // 2 seconds
+  var _MIN_GAP   = 0; // no gap — loop handles timing
   var _AUTO_EVERY= 120000; // 2 minutes
   var _turn      = 0;
 
@@ -11426,54 +11426,59 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }catch(e){return false;}
   }
 
-  // ── BROWSER FALLBACK ──────────────────────────────────────
+  // ── BROWSER VOICE (reliable, immediate) ──────────────────
   function speakBrowser(text){
     return new Promise(function(resolve){
       var synth=window.speechSynthesis;
       if(!synth){resolve();return;}
       synth.cancel();
-      var sentences=text.match(/[^.!?]+[.!?]+/g)||[text];
-      var idx=0;
-      function next(){
-        if(idx>=sentences.length){resolve();return;}
-        var utt=new SpeechSynthesisUtterance(sentences[idx].trim());
-        var voices=synth.getVoices();
-        var names=['Google US English','Microsoft Guy Online (Natural)','Alex','Samantha','Daniel'];
-        var v=null;
-        for(var i=0;i<names.length;i++){v=voices.find(function(x){return x.name===names[i];});if(v)break;}
-        if(!v)v=voices.find(function(x){return x.lang&&x.lang.startsWith('en');});
-        if(v)utt.voice=v;
-        utt.rate=0.88+Math.random()*0.07;
-        utt.pitch=0.90+Math.random()*0.12;
-        utt.volume=1;
-        utt.onend=function(){idx++;setTimeout(next,100+Math.random()*150);};
-        utt.onerror=function(){idx++;next();};
-        synth.speak(utt);
-      }
-      next();
+      var utt=new SpeechSynthesisUtterance(text);
+      // Pick best voice
+      var voices=synth.getVoices();
+      var v=voices.find(function(x){return x.name==='Google US English';})
+         ||voices.find(function(x){return x.name==='Alex';})
+         ||voices.find(function(x){return x.name==='Samantha';})
+         ||voices.find(function(x){return x.lang&&x.lang.startsWith('en')&&!x.name.toLowerCase().includes('india');})
+         ||null;
+      if(v) utt.voice=v;
+      utt.rate=0.9;
+      utt.pitch=1.0;
+      utt.volume=1.0;
+      utt.onend=function(){resolve();};
+      utt.onerror=function(e){console.log('TTS error:',e.error);resolve();};
+      synth.speak(utt);
+      // Safari sometimes needs a kick
+      setTimeout(function(){
+        if(synth.paused) synth.resume();
+      },100);
     });
   }
 
   // ── MAIN SPEAK ────────────────────────────────────────────
-  async function sparky(text,urgent){
-    if(!text)return;
-    var now=Date.now();
-    if(!urgent&&(now-_lastSpoke)<_MIN_GAP){_queue.push({t:text,u:false});return;}
-    if(_speaking){_queue.push({t:text,u:urgent});return;}
-    _speaking=true;_lastSpoke=Date.now();
-    var ok=await speakElevenLabs(text);
-    if(!ok)await speakBrowser(text);
-    _speaking=false;_lastSpoke=Date.now();
-    if(_queue.length>0){var nx=_queue.shift();setTimeout(function(){sparky(nx.t,nx.u);},600);}
+  async function sparky(text, urgent){
+    if(!text) return;
+    if(_speaking) return; // skip if already talking
+    _speaking = true;
+    var ok = false;
+    if(ELEVEN_API_KEY){ ok = await speakElevenLabs(text); }
+    if(!ok) await speakBrowser(text);
+    _speaking = false;
+  }
+
+  // Simple loop — finish talking, wait 5 seconds, talk again. Forever.
+  async function sparkyLoop(){
+    if(!_active)return;
+    var report = await buildNextReport();
+    await sparky(report, true);
+    // Wait 5 seconds then go again
+    setTimeout(function(){
+      if(_active) sparkyLoop();
+    }, 5000);
   }
 
   function startAuto(){
-    if(_autoTimer)clearInterval(_autoTimer);
-    _autoTimer=setInterval(async function(){
-      if(!_active)return;
-      var report=await buildNextReport();
-      sparky(report,false);
-    },_AUTO_EVERY);
+    if(_autoTimer) clearTimeout(_autoTimer);
+    sparkyLoop();
   }
 
   async function greetAndStart(){
@@ -11600,18 +11605,25 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   window._sparkyButtonTap = function() {
-    // First tap unlocks audio AND activates
     if (!_active) {
-      // Unlock audio context with user gesture
+      // Force voices to load (required on some browsers)
+      if(window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.getVoices();
+      }
+      // Unlock AudioContext
       try {
-        var ctx = new (window.AudioContext||window.webkitAudioContext)();
-        var buf = ctx.createBuffer(1,1,22050);
-        var src = ctx.createBufferSource();
-        src.buffer=buf; src.connect(ctx.destination); src.start(0);
+        var ctx=new (window.AudioContext||window.webkitAudioContext)();
+        var buf=ctx.createBuffer(1,1,22050);
+        var src=ctx.createBufferSource();
+        src.buffer=buf;src.connect(ctx.destination);src.start(0);
       } catch(e){}
       greetAndStart();
-      updateSparkyBtn();
+    } else {
+      // Already active — speak now on demand
+      buildNextReport().then(function(r){ sparky(r,true); });
     }
+    updateSparkyBtn();
   };
   window._djSetInterval=function(mins){_AUTO_EVERY=(parseInt(mins)||2)*60000;if(_active){clearInterval(_autoTimer);startAuto();}};
   window._jimSetKey=function(key,voiceId){
