@@ -11089,7 +11089,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 (function(){
 
   var ELEVEN_API_KEY  = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
-  var ELEVEN_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb';
+  var ELEVEN_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL'; // Sarah — warm natural female
 
   // ── MUSIC BETWEEN SPARKY — Local blob (works instantly) ────
   var _musicOn      = true;
@@ -11573,45 +11573,106 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── MAIN SPEAK ────────────────────────────────────────────
   async function sparky(text, urgent){
-    if(!text) return;
-    if(_speaking) return; // skip if already talking
+    if (!text) return;
+    if (_speaking) return;
     _speaking = true;
+    // Pause music while talking
+    var audio = getAudio();
+    var wasPlaying = audio.src && !audio.paused;
+    if (wasPlaying) audio.pause();
     var ok = false;
-    if(ELEVEN_API_KEY){ ok = await speakElevenLabs(text); }
-    if(!ok) await speakBrowser(text);
+    if (ELEVEN_API_KEY) { ok = await speakElevenLabs(text); }
+    if (!ok) await speakBrowser(text);
     _speaking = false;
+    // Don't resume — the loop handles what plays next
   }
 
-  // Loop: Sparky talks → music plays → Sparky talks → repeat
+  // ── ANNOUNCER LOOP ────────────────────────────────────────
+  // Sparky introduces song → full song plays → Sparky reports → repeat
   async function sparkyLoop(){
-    if(!_active) return;
+    if (!_active) return;
 
-    // 1. Stop music, Sparky talks
-    stopMusic();
     var statusEl = document.getElementById('sparky-status-text');
-    if (statusEl) statusEl.textContent = '🎙️ Sparky is talking...';
 
-    var report = await buildNextReport();
-    await sparky(report, true);
+    if (_musicOn && _songList.length > 0) {
+      // ── Pick next song ──
+      var song = _songList[_currentSong % _songList.length];
+      _currentSong = (_currentSong + 1) % _songList.length;
 
-    if(!_active) return;
+      // ── Sparky introduces the song ──
+      var floorData = getFloor();
+      var statsData = getStats();
+      var intro = buildSongIntro(song.name, floorData, statsData);
+      if (statusEl) statusEl.textContent = '🎙️ Sparky is talking...';
+      await sparky(intro, true);
+      if (!_active) return;
 
-    // 2. Play music for _musicBetween seconds
-    if (_musicOn) {
-      playMusic();
+      // ── Play the song — wait for it to finish ──
+      var audio = getAudio();
+      audio.src    = song.url;
+      audio.volume = 0.8;
+
+      if (statusEl) statusEl.textContent = '♪ ' + song.name;
+
+      await new Promise(function(resolve){
+        audio.onended = function(){ resolve(); };
+        audio.onerror = function(){ resolve(); };
+        audio.play().catch(function(){ resolve(); });
+        // Safety timeout — if song hasn't ended in 10 min, move on
+        _autoTimer = setTimeout(resolve, 600000);
+      });
+
+      if (!_active) return;
+      clearTimeout(_autoTimer);
+
+      // ── Sparky does floor report after the song ──
+      stopMusic();
+      if (statusEl) statusEl.textContent = '🎙️ Sparky is talking...';
+      var report = await buildNextReport();
+      await sparky(report, true);
+
     } else {
-      if (statusEl) statusEl.textContent = 'Live — Sparky back in 5 seconds';
+      // No music — just talk every 2 minutes
+      if (statusEl) statusEl.textContent = '🎙️ Sparky is talking...';
+      var report = await buildNextReport();
+      await sparky(report, true);
+      if (statusEl) statusEl.textContent = 'Live — next update in 2 minutes';
+      await new Promise(function(resolve){ _autoTimer = setTimeout(resolve, 120000); });
     }
 
-    // 3. Wait then loop
-    var waitTime = _musicOn ? (_musicBetween * 1000) : 5000;
-    _autoTimer = setTimeout(function(){
-      if(_active) sparkyLoop();
-    }, waitTime);
+    if (_active) sparkyLoop();
+  }
+
+  // Build a song intro that also mentions floor activity
+  function buildSongIntro(songName, f, s) {
+    var intros = [
+      "Alright Hill Manufacturing, this next one goes out to the whole floor. Here is " + songName + ".",
+      "Coming up next — " + songName + ". Keep those machines running.",
+      "This one is for you Hill fam. " + songName + " — coming at you right now.",
+      "You are listening to Hill Radio. Next up — " + songName + ".",
+      "Sparky here, keeping the floor moving. This next track is " + songName + ". Let it ride.",
+      "Hill Manufacturing, do not stop now. Here comes " + songName + ".",
+    ];
+
+    var picked = pick(intros);
+
+    // Add a quick floor mention sometimes
+    if (Math.random() < 0.6) {
+      if (f.running.length > 0) {
+        var j = f.running[Math.floor(Math.random()*f.running.length)];
+        picked += " And a shoutout to " + j.firstName + " on " + j.machine + " — keep it going.";
+      } else if (f.pending.length > 0) {
+        picked += " Quick note — " + f.pending.length + " machine" + (f.pending.length>1?"s":"") + " still waiting on setup. Tooling crew, let's move.";
+      } else if (s.today > 0) {
+        picked += " " + s.today + " requests handled today. Good work out there.";
+      }
+    }
+
+    return picked;
   }
 
   function startAuto(){
-    if(_autoTimer) clearTimeout(_autoTimer);
+    if (_autoTimer) clearTimeout(_autoTimer);
     sparkyLoop();
   }
 
