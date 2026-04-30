@@ -1070,8 +1070,8 @@
           <option value="EXAVITQu4vr4xnSDxMaL">Sarah (warm female)</option>
           <option value="21m00Tcm4TlvDq8ikWAM">Rachel (calm female)</option>
         </select>
-        <button onclick="window._jimSetKey(document.getElementById('eleven-key-input').value,document.getElementById('eleven-voice-select').value)"
-          style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:13px;">SAVE &amp; UPGRADE VOICE</button>
+        <button onclick="window._sparkySetKey(document.getElementById('eleven-key-input').value,document.getElementById('eleven-voice-select').value)"
+          style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;font-size:13px;">SAVE VOICE</button>
       </div>
       <div style="font-size:11px;color:#7c3aed;line-height:1.6;margin-bottom:14px;">Sparky reads live shop floor activity out loud — new requests, setups, comments, machine shoutouts, and hype. Activate him and he handles the rest.</div>
 
@@ -1087,14 +1087,14 @@
       </div>
 
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <div style="font-size:11px;color:#6d28d9;letter-spacing:1px;white-space:nowrap;">AUTO SHOUTOUT EVERY</div>
+        <div style="font-size:11px;color:#6d28d9;letter-spacing:1px;white-space:nowrap;">SPARKY TALKS EVERY</div>
         <select id="dj-interval-select" onchange="window._djSetInterval(this.value)" style="background:rgba(0,0,0,0.4);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;font-size:12px;flex:1;">
+          <option value="0.5" selected>30 seconds</option>
+          <option value="1">1 minute</option>
+          <option value="2">2 minutes</option>
           <option value="3">3 minutes</option>
           <option value="5">5 minutes</option>
-          <option value="8" selected>8 minutes</option>
           <option value="10">10 minutes</option>
-          <option value="15">15 minutes</option>
-          <option value="20">20 minutes</option>
         </select>
       </div>
 
@@ -11068,8 +11068,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _queue     = [];
   var _autoTimer = null;
   var _lastSpoke = 0;
-  var _MIN_GAP   = 30000;   // 30s minimum between any two Sparky speaks
-  var _AUTO_EVERY= 120000;  // auto floor report every 2 minutes
+  var _MIN_GAP   = 28000;   // 28s minimum between any two Sparky speaks
+  var _AUTO_EVERY= 30000;   // auto floor report / small talk every 30 seconds
 
   // ── MACHINE NAME MAP ──────────────────────────────────────
   var MN = {
@@ -11298,17 +11298,36 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         if (idx >= sentences.length) { resolve(); return; }
         var utt  = new SpeechSynthesisUtterance(sentences[idx].trim());
         var voices = synth.getVoices();
-        // Best available voices in priority order
-        var names = ['Google US English', 'Microsoft Guy Online (Natural)', 'Alex', 'Samantha', 'Daniel'];
         var v = null;
-        for (var i = 0; i < names.length; i++) {
-          v = voices.find(function(x){ return x.name === names[i]; });
-          if (v) break;
+
+        // Check if admin selected a female ElevenLabs voice ID
+        var femaleVoiceIds = ['EXAVITQu4vr4xnSDxMaL', '21m00Tcm4TlvDq8ikWAM'];
+        var wantFemale = femaleVoiceIds.indexOf(ELEVEN_VOICE_ID) !== -1;
+
+        if (wantFemale) {
+          // Female voice priority
+          var femaleNames = ['Microsoft Zira Online (Natural)', 'Google US English', 'Samantha', 'Karen', 'Victoria'];
+          for (var i = 0; i < femaleNames.length; i++) {
+            v = voices.find(function(x){ return x.name === femaleNames[i]; });
+            if (v) break;
+          }
+          if (!v) v = voices.find(function(x){ return x.lang && x.lang.startsWith('en') && x.name.match(/zira|female|woman/i); });
+        } else {
+          // Male voice priority — default for Sparky
+          var maleNames = ['Microsoft Guy Online (Natural)', 'Microsoft David Online (Natural)', 'Alex', 'Daniel', 'Google UK English Male', 'Fred'];
+          for (var i = 0; i < maleNames.length; i++) {
+            v = voices.find(function(x){ return x.name === maleNames[i]; });
+            if (v) break;
+          }
+          if (!v) v = voices.find(function(x){ return x.lang && x.lang.startsWith('en') && x.name.match(/male|guy|david|alex|daniel|fred/i); });
         }
+
+        // Final fallback — any English voice
         if (!v) v = voices.find(function(x){ return x.lang && x.lang.startsWith('en'); });
         if (v) utt.voice = v;
+
         utt.rate   = 0.88 + Math.random() * 0.07; // subtle variation per sentence
-        utt.pitch  = 0.90 + Math.random() * 0.12;
+        utt.pitch  = wantFemale ? (1.0 + Math.random() * 0.1) : (0.85 + Math.random() * 0.08);
         utt.volume = 1;
         utt.onend  = function(){ idx++; setTimeout(next, 100 + Math.random() * 150); };
         utt.onerror= function(){ idx++; next(); };
@@ -11345,6 +11364,37 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
   }
 
+  // ── SMALL TALK POOL ──────────────────────────────────────
+  var _smallTalkIdx = 0;
+  var _smallTalkLines = [
+    "Hey, quick reminder — if you're finishing up a work order, make sure it gets logged in ProShop before you move on. Keeps the board clean.",
+    "Don't forget to add your completed jobs to ProShop. It only takes a second and it keeps everyone in the loop.",
+    "Heads up — ProShop only works if we feed it. If you ran a job today, log it in.",
+    "Just a reminder to keep ProShop up to date. Operations, cycle times, completions — all of it helps the team plan better.",
+    "If you haven't entered today's work in ProShop yet, now's a good time. Keeps the production log accurate.",
+    "Quick one — make sure your work orders are updated in ProShop. Admin can see everything from there.",
+    "Reminder: ProShop entries help schedule the next jobs. If you finished something, mark it done.",
+    "Hey shop — log your work in ProShop when you get a second. It makes scheduling a lot easier on everybody.",
+    "If you're between jobs right now, take a second and update your ProShop entries. Appreciate it.",
+    "Let's keep the ProShop board accurate, folks. If a job's done, mark it done.",
+    "Safety check — make sure your machine area is clean and your guards are in place. Let's keep it safe out there.",
+    "Good reminder to check your coolant levels if you haven't already. Keeps your tools happy.",
+    "If you're waiting on material, flag it in ProShop so scheduling knows. Don't let a job sit without a status.",
+    "End of shift coming up — make sure your work orders are entered before you clock out. Helps the next shift hit the ground running.",
+    "Quick tip — if a work order has a note or issue, add it in ProShop so the team knows what's going on before they pick it up.",
+    "How's everyone doing out there? Floor's quiet right now — good time to tidy up your station.",
+    "Nothing on the board right now. Good time to prep tooling for the next job.",
+    "Slow moment on the floor. Use it — clean up, check your tools, get ahead of the next setup.",
+    "Floor's clear right now. If you've got a pending setup, now's a great time to get ahead of it.",
+    "Reminder from Sparky — if you see something off on the floor, say something. Safety first, always.",
+  ];
+
+  function buildSmallTalk() {
+    var line = _smallTalkLines[_smallTalkIdx % _smallTalkLines.length];
+    _smallTalkIdx++;
+    return line;
+  }
+
   // ── AUTO REPORTS ──────────────────────────────────────────
   function startAuto() {
     if (_autoTimer) clearInterval(_autoTimer);
@@ -11353,8 +11403,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var f = getFloor();
       var total = f.running.length + f.pending.length + f.machinist.length
                 + f.inspection.length + f.floorSupport.length + f.onHold.length;
-      if (total === 0) return; // stay quiet when floor is clear
-      sparky(buildReport(), false);
+      if (total > 0) {
+        sparky(buildReport(), false);
+      } else {
+        sparky(buildSmallTalk(), false);
+      }
     }, _AUTO_EVERY);
   }
 
@@ -11481,17 +11534,18 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   window._djNow = function() { sparky(buildReport(), true); };
 
   window._djSetInterval = function(mins) {
-    _AUTO_EVERY = (parseInt(mins) || 2) * 60000;
+    _AUTO_EVERY = Math.round((parseFloat(mins) || 0.5) * 60000);
     if (_active) { clearInterval(_autoTimer); startAuto(); }
   };
 
-  window._jimSetKey = function(key, voiceId) {
+  window._sparkySetKey = function(key, voiceId) {
     ELEVEN_API_KEY  = key   || ELEVEN_API_KEY;
     ELEVEN_VOICE_ID = voiceId || ELEVEN_VOICE_ID;
     localStorage.setItem('jimKey',   ELEVEN_API_KEY);
     localStorage.setItem('jimVoice', ELEVEN_VOICE_ID);
     if (window.showToast) window.showToast('green', 'Sparky updated', key ? 'ElevenLabs voice active' : 'Using browser voice');
   };
+  window._jimSetKey = window._sparkySetKey; // backward compat
 
   // Load any saved key override
   var _sk = localStorage.getItem('jimKey');
