@@ -11395,19 +11395,217 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return line;
   }
 
+  // ── LIVE DATA CACHE ───────────────────────────────────────
+  var _liveCache = { weather: null, sports: null, news: null,
+                     weatherTs: 0,  sportsTs: 0,  newsTs: 0 };
+  var CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+  // Tulsa, OK coordinates
+  var TULSA_LAT = 36.154;
+  var TULSA_LON = -95.993;
+
+  async function fetchWeather() {
+    var now = Date.now();
+    if (_liveCache.weather && (now - _liveCache.weatherTs) < CACHE_TTL) return _liveCache.weather;
+    try {
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + TULSA_LAT +
+        '&longitude=' + TULSA_LON +
+        '&current=temperature_2m,apparent_temperature,weathercode,windspeed_10m,precipitation&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timezone=America%2FChicago&forecast_days=1';
+      var res = await fetch(url);
+      if (!res.ok) return null;
+      var d = await res.json();
+      var c = d.current;
+      var code = c.weathercode;
+      var desc = weatherDesc(code);
+      var text = "Alright, here's the weather for Tulsa right now. " +
+        desc + ". Temperature is " + Math.round(c.temperature_2m) + " degrees, " +
+        "feels like " + Math.round(c.apparent_temperature) + ". " +
+        "Winds at " + Math.round(c.windspeed_10m) + " miles per hour. " +
+        (c.precipitation > 0 ? "We've got " + c.precipitation.toFixed(2) + " inches of precip recorded. Might want to keep that in mind if you're heading out. " : "No precipitation right now. ") +
+        "Stay safe out there.";
+      _liveCache.weather = text;
+      _liveCache.weatherTs = now;
+      return text;
+    } catch(e) { return null; }
+  }
+
+  function weatherDesc(code) {
+    if (code === 0) return "Clear skies out there";
+    if (code <= 2)  return "Mostly clear, a few clouds";
+    if (code === 3) return "Overcast skies right now";
+    if (code <= 49) return "Foggy conditions in the area";
+    if (code <= 57) return "Light drizzle falling";
+    if (code <= 67) return "Rain in the area, watch your commute";
+    if (code <= 77) return "Snow falling out there, be careful on the roads";
+    if (code <= 82) return "Rain showers coming through";
+    if (code <= 86) return "Snow showers in the mix";
+    if (code <= 99) return "Thunderstorms in the area — stay inside if you can";
+    return "Mixed conditions outside";
+  }
+
+  async function fetchSports() {
+    var now = Date.now();
+    if (_liveCache.sports && (now - _liveCache.sportsTs) < CACHE_TTL) return _liveCache.sports;
+    try {
+      // Try NBA first, then MLB depending on season, then NFL
+      var leagues = [
+        { id: 'nba', name: 'NBA', url: 'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard' },
+        { id: 'mlb', name: 'MLB', url: 'https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard' },
+        { id: 'nfl', name: 'NFL', url: 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard' }
+      ];
+      var lines = [];
+      for (var li = 0; li < leagues.length; li++) {
+        try {
+          var lr = await fetch(leagues[li].url);
+          if (!lr.ok) continue;
+          var ld = await lr.json();
+          var events = (ld.events || []).slice(0, 4);
+          if (events.length === 0) continue;
+          var leagueLines = [];
+          for (var ei = 0; ei < events.length; ei++) {
+            var ev = events[ei];
+            var comp = ev.competitions && ev.competitions[0];
+            if (!comp) continue;
+            var comps = comp.competitors || [];
+            if (comps.length < 2) continue;
+            var h = comps.find(function(x){ return x.homeAway === 'home'; }) || comps[0];
+            var a = comps.find(function(x){ return x.homeAway === 'away'; }) || comps[1];
+            var hName = (h.team && h.team.shortDisplayName) || (h.team && h.team.name) || 'Home';
+            var aName = (a.team && a.team.shortDisplayName) || (a.team && a.team.name) || 'Away';
+            var status = ev.status && ev.status.type && ev.status.type.description;
+            var hScore = h.score;
+            var aScore = a.score;
+            if (status === 'Final' || status === 'STATUS_FINAL') {
+              var winner = parseInt(hScore) >= parseInt(aScore) ? hName : aName;
+              leagueLines.push(aName + " versus " + hName + " — final score " + aScore + " to " + hScore + ". " + winner + " get the win.");
+            } else if (status && status.toLowerCase().includes('progress')) {
+              leagueLines.push(aName + " at " + hName + " — in progress, " + aScore + " to " + hScore + ".");
+            } else if (status === 'Scheduled' || status === 'STATUS_SCHEDULED') {
+              var ds = ev.status && ev.status.type && ev.status.type.shortDetail;
+              leagueLines.push(aName + " at " + hName + (ds ? ', scheduled for ' + ds : ' coming up') + ".");
+            }
+          }
+          if (leagueLines.length > 0) {
+            lines.push(leagues[li].name + " update: " + leagueLines.join(' '));
+          }
+        } catch(le) { /* skip league */ }
+      }
+      if (lines.length === 0) return null;
+      var openers = [
+        "Taking a quick break from the floor — here's what's going on in sports.",
+        "Alright, here's your sports check-in.",
+        "Sports update, courtesy of Sparky.",
+        "Quick look at the scores while things are quiet."
+      ];
+      var text = pick(openers) + ' ' + lines.join(' ') + " That's your sports update. Back to the floor.";
+      _liveCache.sports = text;
+      _liveCache.sportsTs = now;
+      return text;
+    } catch(e) { return null; }
+  }
+
+  async function fetchNews() {
+    var now = Date.now();
+    if (_liveCache.news && (now - _liveCache.newsTs) < CACHE_TTL) return _liveCache.news;
+    try {
+      // Use GNews free tier — no key needed for basic headlines
+      var res = await fetch('https://gnews.io/api/v4/top-headlines?category=general&lang=en&country=us&max=4&apikey=pub_none', { mode: 'cors' });
+      // GNews may block without key — fallback to RSS via allorigins
+      if (!res.ok) throw new Error('gnews fail');
+      var d = await res.json();
+      var articles = d.articles || [];
+      if (articles.length === 0) throw new Error('no articles');
+      var headlines = articles.slice(0, 3).map(function(a){ return a.title.replace(/\s*[-–|].*$/, '').trim(); });
+      var text = buildNewsScript(headlines);
+      _liveCache.news = text;
+      _liveCache.newsTs = now;
+      return text;
+    } catch(e) {
+      // Fallback: fetch top stories from NPR RSS via allorigins proxy
+      try {
+        var rssUrl = 'https://feeds.npr.org/1001/rss.xml';
+        var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rssUrl);
+        var r2 = await fetch(proxyUrl);
+        if (!r2.ok) return null;
+        var d2 = await r2.json();
+        var xml = d2.contents || '';
+        var items = xml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/g) || xml.match(/<title>(.*?)<\/title>/g) || [];
+        // strip first item (it's the feed title)
+        var headlines = items.slice(1, 4).map(function(s){
+          return s.replace(/<title><!\[CDATA\[/, '').replace(/<title>/, '').replace(/\]\]><\/title>/, '').replace(/<\/title>/, '').trim();
+        }).filter(function(s){ return s.length > 10; });
+        if (headlines.length === 0) return null;
+        var text2 = buildNewsScript(headlines);
+        _liveCache.news = text2;
+        _liveCache.newsTs = now;
+        return text2;
+      } catch(e2) { return null; }
+    }
+  }
+
+  function buildNewsScript(headlines) {
+    var openers = [
+      "Here's a quick news rundown while you work.",
+      "Sparky's got a few headlines for you.",
+      "Taking a second for some news.",
+      "Quick news break from Sparky."
+    ];
+    var closers = [
+      "That's the news. Back to the floor.",
+      "Stay informed out there. Now back to it.",
+      "Alright, that's headlines. Eyes back on the machines.",
+      "And that's the latest. Sparky's watching the floor."
+    ];
+    return pick(openers) + ' ' + headlines.map(function(h, i){
+      var intros = ['Story one — ', 'Also — ', 'And — ', 'Next — '];
+      return (intros[i] || 'Also — ') + h + '.';
+    }).join(' ') + ' ' + pick(closers);
+  }
+
+  // ── AUTO REPORT ROTATION ─────────────────────────────────
+  // Cycle: floor → weather → sports → news → small talk → floor → ...
+  var _broadcastCycle = 0;
+  var _broadcastTypes = ['floor', 'weather', 'sports', 'news', 'floor', 'smalltalk'];
+
+  async function runBroadcast() {
+    if (!_active) return;
+    var f = getFloor();
+    var total = f.running.length + f.pending.length + f.machinist.length
+              + f.inspection.length + f.floorSupport.length + f.onHold.length;
+
+    // Always do floor report if there's active stuff
+    if (total > 0) {
+      sparky(buildReport(), false);
+      _broadcastCycle++;
+      return;
+    }
+
+    // Rotate through weather / sports / news / small talk when floor is quiet
+    var slot = _broadcastTypes[_broadcastCycle % _broadcastTypes.length];
+    _broadcastCycle++;
+
+    var text = null;
+    if (slot === 'floor') {
+      text = buildReport();
+    } else if (slot === 'weather') {
+      text = await fetchWeather();
+    } else if (slot === 'sports') {
+      text = await fetchSports();
+    } else if (slot === 'news') {
+      text = await fetchNews();
+    } else {
+      text = buildSmallTalk();
+    }
+
+    if (!text) text = buildSmallTalk(); // fallback if fetch fails
+    sparky(text, false);
+  }
+
   // ── AUTO REPORTS ──────────────────────────────────────────
   function startAuto() {
     if (_autoTimer) clearInterval(_autoTimer);
     _autoTimer = setInterval(function() {
-      if (!_active) return;
-      var f = getFloor();
-      var total = f.running.length + f.pending.length + f.machinist.length
-                + f.inspection.length + f.floorSupport.length + f.onHold.length;
-      if (total > 0) {
-        sparky(buildReport(), false);
-      } else {
-        sparky(buildSmallTalk(), false);
-      }
+      runBroadcast();
     }, _AUTO_EVERY);
   }
 
