@@ -11096,7 +11096,13 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _musicBetween = 45;
   var _currentSong  = 0;
   var _audioEl      = null;
-  var _songList     = []; // { name, url (blob URL) }
+  var _songList = [
+    { name: 'Song 1', url: 'https://ooccoc.epsiloncloud.org/api/v1/download?sig=Qlya6K7KzfaqVjcGWbzWJeBzNIPv0nNUOh0Nqr%2Fln0if5dO1L0ilz8iV2x0B%2BL2Hq1njMjPl3JU6yapa3gAeoM1zzRqgwsoVwUVsDLKF4v%2FqQ6psqRA9ZoXEMogrD4qMAd0G48Sm8ARe%2FAYSnKyANxLeCVSCHFhhcUaJPJ%2FuzVSuRIsvcg6xk%2B0iz49heGUGTky8Lvh9%2BzguqBmMguQ3TilkMGeLh75Ayyy5fjYl861PqytDNowfM1y0j8xzinX0DrwwbnkGDUXqFLRopod%2FhMgGD7FYpVn3Aa8uMknFnDgGUtsnOnjjjuP%2BKMXNRVF02E57mzyNBbwNXFWbCiwnyw%3D%3D&s=2&v=DY0nSVvxZCY&f=mp3' },
+    { name: 'Song 2', url: 'https://ccoocc.epsiloncloud.org/api/v1/download?sig=l6%2FZmMImUznu9Xw%2FNDsGG1hBNX6nyOTrFQ%2FT5FK680z3DZ52%2BtH8a%2FyTfRsDAeJpvfIZWXhfItY56VOPBfIsM6zWI3Kz54mtBzX3jK8%2FGk3AG%2BCxGit34Z%2FmLJpUNjdhIDszlzM4JBDIbiWrTnjgvbgrbEe6UEHfIkUbNCrbNUsgeliQwFZZgLWqPp77ByTE9XSzOCc%2FmGZi30hIRB3tvHQnqrvoMjUJw%2F2kzYoDdhDhGXEuCFtorPyygslqChCzlRxFvmkwKqxhBGRNMGcZtrkAbPy3xy%2F3Jm8td34FWJVTcIdRtMZWZKC49egnlr73hBGrvBJ%2FiX2SsLuMT4nUYw%3D%3D&s=2&v=CxKWTzr-k6s&f=mp3' },
+    { name: 'Song 3', url: 'https://ccccoo.epsiloncloud.org/api/v1/download?sig=ZN60A4fhgv%2Bvi%2FaxN6uD2HBzphP%2F3bonNhbv4yvKLaxTOXEFYHOINLwLcX%2FIxYAi4OqC1bXQspOzJ4klqaWZfD2DctwB1ZKdmIXVosiTraQS8hkRH6cVcmJ2sKEAfrZo10rfkvn3npzS2G0zSTjaCYieNha0K%2FvMIxXvGdotEq4mUrhQTKncDgETuNsr2eIviVAlB%2FXo04qPWwmubewZnFvk%2BlflNjfp9jTRAjw747NicpP4Gs6%2FAVVm7Tm5SqSQEG5OWGEyri0TRWTAPhtS8YwoH%2BU5xoENlAVQOFz%2FpMTvQZtaDOI%2Bkf6iKTaiTOmpVh5MJBOFG9UV6rImpfOgww%3D%3D&s=2&v=AxFdeZER8Eg&f=mp3' },
+    { name: 'Song 4', url: 'https://cococo.epsiloncloud.org/api/v1/download?sig=XnCmhuPK04FKVeJS2rUsZmGvY9LHsaEIgKtKEnwxytosK8mn3qYOgDnb%2FWmcubDBjZfSiVlRzhA91IzViGy15N9x8FRN8i55SoAMiOOKF0EmqcRUwlZJ2q7ZZUZE7hZbcTYtxqiObMziDkVPorKM3ZmiUB6N1Ql2omxsB0pxFTH1MR8vAiBGLdncwDvx0AcKG6E%2FigZK6j%2BrLNEEbCRtFGks2ctrn8u9QStzBAB1m29kYxrNkTKhyixDFIPDZCA1gEOKeBxrqR%2FS2qSdLm8jXYQm5QjO7BgOYmI2K6SBMGNUFudbv6L%2Fvi%2BPBLtCVLJB1UtfUrmFDxSm43DPMvk4kA%3D%3D&s=2&v=fJ9rUzIMcZQ&f=mp3' },
+    { name: 'Song 5', url: 'https://ccococ.epsiloncloud.org/api/v1/download?sig=pZ%2FJT3XACuR746b1xb7%2BrV%2Fza3E4nQmi%2B4moWGiNrhJQh28VYX5YLQKqmKVOe%2FWTPmzOZHhX666es0tgKH5dhsId8T2e%2FxxHcjJSrbRiBw1iHQaqlhJiMe2sD7nU8NIYzrPSTXg2NcZV88aH1qu8zz3vyGvq%2FykyhlD2%2ByYaOhAqpAM%2FCki4Q6hUpCkw3E73amANtZ4o%2F4Z6I53DXf0yG9O%2F5DQIV3HMvRe%2BYJmuTbnE5acgPIj%2FYUtdPo%2B27GgaZpb6nrVDeujCmfAvTsbXbeJRY8nKjDxTPP5XsjxiIi8TvCcqen3jC7oaamiAivVt2khjoVNntgrJZ%2BUJWo6%2BwQ%3D%3D&s=2&v=_JZom_gVfuw&f=mp3' }
+  ];
 
   function getAudio() {
     if (!_audioEl) {
