@@ -11382,8 +11382,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         var voices = synth.getVoices();
         var preferred = ['Google US English','Microsoft Guy Online (Natural)','Samantha','Alex','Daniel','en-US'];
         var v = null;
-        for (var p of preferred) {
-          v = voices.find(function(x){ return x.name === p || x.lang === p; });
+        for (var pi = 0; pi < preferred.length; pi++) {
+          v = voices.find(function(x){ return x.name === preferred[pi] || x.lang === preferred[pi]; });
           if (v) break;
         }
         if (!v) v = voices.find(function(x){ return x.lang && x.lang.startsWith('en'); });
@@ -11581,8 +11581,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // Expose for ElevenLabs key entry from admin
   window._jimSetKey = function(key, voiceId) {
     ELEVEN_API_KEY = key || '';
-    if (voiceId) 
-  ELEVEN_VOICE_ID = voiceId;
+    if (voiceId) ELEVEN_VOICE_ID = voiceId;
     localStorage.setItem('jimElevenKey', ELEVEN_API_KEY);
     localStorage.setItem('jimElevenVoice', ELEVEN_VOICE_ID);
     if(window.showToast) window.showToast('green', 'Jim upgraded', ELEVEN_API_KEY ? 'Using ElevenLabs AI voice' : 'Using browser voice');
