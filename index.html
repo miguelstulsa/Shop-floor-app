@@ -11554,26 +11554,31 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return new Promise(function(resolve){
       var synth=window.speechSynthesis;
       if(!synth){resolve();return;}
-      synth.cancel();
-      var utt=new SpeechSynthesisUtterance(text);
-      // Pick best voice
-      var voices=synth.getVoices();
-      var v=voices.find(function(x){return x.name==='Google US English';})
-         ||voices.find(function(x){return x.name==='Alex';})
-         ||voices.find(function(x){return x.name==='Samantha';})
-         ||voices.find(function(x){return x.lang&&x.lang.startsWith('en')&&!x.name.toLowerCase().includes('india');})
-         ||null;
-      if(v) utt.voice=v;
-      utt.rate=0.9;
-      utt.pitch=1.0;
-      utt.volume=1.0;
-      utt.onend=function(){resolve();};
-      utt.onerror=function(e){console.log('TTS error:',e.error);resolve();};
-      synth.speak(utt);
-      // Safari sometimes needs a kick
+      // Only cancel if already speaking — calling cancel() unconditionally
+      // resolves any pending onend promise and causes back-to-back repeats
+      if(synth.speaking||synth.pending) synth.cancel();
+      // Small delay lets the cancel settle before queuing a new utterance
       setTimeout(function(){
-        if(synth.paused) synth.resume();
-      },100);
+        var utt=new SpeechSynthesisUtterance(text);
+        // Pick best voice
+        var voices=synth.getVoices();
+        var v=voices.find(function(x){return x.name==='Google US English';})
+           ||voices.find(function(x){return x.name==='Alex';})
+           ||voices.find(function(x){return x.name==='Samantha';})
+           ||voices.find(function(x){return x.lang&&x.lang.startsWith('en')&&!x.name.toLowerCase().includes('india');})
+           ||null;
+        if(v) utt.voice=v;
+        utt.rate=0.9;
+        utt.pitch=1.0;
+        utt.volume=1.0;
+        utt.onend=function(){resolve();};
+        utt.onerror=function(e){console.log('TTS error:',e.error);resolve();};
+        synth.speak(utt);
+        // Safari sometimes needs a kick
+        setTimeout(function(){
+          if(synth.paused) synth.resume();
+        },100);
+      }, synth.speaking||synth.pending ? 300 : 0);
     });
   }
 
