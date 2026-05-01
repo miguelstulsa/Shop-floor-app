@@ -11116,13 +11116,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   ];
 
   // ── SONGS ─────────────────────────────────────────────────
-  var _songList = [
-    { url: 'https://ooccoc.epsiloncloud.org/api/v1/download?sig=Qlya6K7KzfaqVjcGWbzWJeBzNIPv0nNUOh0Nqr%2Fln0if5dO1L0ilz8iV2x0B%2BL2Hq1njMjPl3JU6yapa3gAeoM1zzRqgwsoVwUVsDLKF4v%2FqQ6psqRA9ZoXEMogrD4qMAd0G48Sm8ARe%2FAYSnKyANxLeCVSCHFhhcUaJPJ%2FuzVSuRIsvcg6xk%2B0iz49heGUGTky8Lvh9%2BzguqBmMguQ3TilkMGeLh75Ayyy5fjYl861PqytDNowfM1y0j8xzinX0DrwwbnkGDUXqFLRopod%2FhMgGD7FYpVn3Aa8uMknFnDgGUtsnOnjjjuP%2BKMXNRVF02E57mzyNBbwNXFWbCiwnyw%3D%3D&s=2&v=DY0nSVvxZCY&f=mp3' },
-    { url: 'https://ccoocc.epsiloncloud.org/api/v1/download?sig=l6%2FZmMImUznu9Xw%2FNDsGG1hBNX6nyOTrFQ%2FT5FK680z3DZ52%2BtH8a%2FyTfRsDAeJpvfIZWXhfItY56VOPBfIsM6zWI3Kz54mtBzX3jK8%2FGk3AG%2BCxGit34Z%2FmLJpUNjdhIDszlzM4JBDIbiWrTnjgvbgrbEe6UEHfIkUbNCrbNUsgeliQwFZZgLWqPp77ByTE9XSzOCc%2FmGZi30hIRB3tvHQnqrvoMjUJw%2F2kzYoDdhDhGXEuCFtorPyygslqChCzlRxFvmkwKqxhBGRNMGcZtrkAbPy3xy%2F3Jm8td34FWJVTcIdRtMZWZKC49egnlr73hBGrvBJ%2FiX2SsLuMT4nUYw%3D%3D&s=2&v=CxKWTzr-k6s&f=mp3' },
-    { url: 'https://ccccoo.epsiloncloud.org/api/v1/download?sig=ZN60A4fhgv%2Bvi%2FaxN6uD2HBzphP%2F3bonNhbv4yvKLaxTOXEFYHOINLwLcX%2FIxYAi4OqC1bXQspOzJ4klqaWZfD2DctwB1ZKdmIXVosiTraQS8hkRH6cVcmJ2sKEAfrZo10rfkvn3npzS2G0zSTjaCYieNha0K%2FvMIxXvGdotEq4mUrhQTKncDgETuNsr2eIviVAlB%2FXo04qPWwmubewZnFvk%2BlflNjfp9jTRAjw747NicpP4Gs6%2FAVVm7Tm5SqSQEG5OWGEyri0TRWTAPhtS8YwoH%2BU5xoENlAVQOFz%2FpMTvQZtaDOI%2Bkf6iKTaiTOmpVh5MJBOFG9UV6rImpfOgww%3D%3D&s=2&v=AxFdeZER8Eg&f=mp3' },
-    { url: 'https://cococo.epsiloncloud.org/api/v1/download?sig=XnCmhuPK04FKVeJS2rUsZmGvY9LHsaEIgKtKEnwxytosK8mn3qYOgDnb%2FWmcubDBjZfSiVlRzhA91IzViGy15N9x8FRN8i55SoAMiOOKF0EmqcRUwlZJ2q7ZZUZE7hZbcTYtxqiObMziDkVPorKM3ZmiUB6N1Ql2omxsB0pxFTH1MR8vAiBGLdncwDvx0AcKG6E%2FigZK6j%2BrLNEEbCRtFGks2ctrn8u9QStzBAB1m29kYxrNkTKhyixDFIPDZCA1gEOKeBxrqR%2FS2qSdLm8jXYQm5QjO7BgOYmI2K6SBMGNUFudbv6L%2Fvi%2BPBLtCVLJB1UtfUrmFDxSm43DPMvk4kA%3D%3D&s=2&v=fJ9rUzIMcZQ&f=mp3' },
-    { url: 'https://ccococ.epsiloncloud.org/api/v1/download?sig=pZ%2FJT3XACuR746b1xb7%2BrV%2Fza3E4nQmi%2B4moWGiNrhJQh28VYX5YLQKqmKVOe%2FWTPmzOZHhX666es0tgKH5dhsId8T2e%2FxxHcjJSrbRiBw1iHQaqlhJiMe2sD7nU8NIYzrPSTXg2NcZV88aH1qu8zz3vyGvq%2FykyhlD2%2ByYaOhAqpAM%2FCki4Q6hUpCkw3E73amANtZ4o%2F4Z6I53DXf0yG9O%2F5DQIV3HMvRe%2BYJmuTbnE5acgPIj%2FYUtdPo%2B27GgaZpb6nrVDeujCmfAvTsbXbeJRY8nKjDxTPP5XsjxiIi8TvCcqen3jC7oaamiAivVt2khjoVNntgrJZ%2BUJWo6%2BwQ%3D%3D&s=2&v=_JZom_gVfuw&f=mp3' }
-  ];
+  var _songList = []; // Populated when you upload songs via the button below
 
   // ── WEATHER & SPORTS CACHE ────────────────────────────────
   var _weather = null;
@@ -11288,23 +11282,24 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return s;
   }
 
-  // ── CREATIVE SONG INTROS ──────────────────────────────────
+  // ── CREATIVE SONG INTROS WITH REAL TITLE + ARTIST ─────────
   var _introTurn = 0;
-  function buildSongIntro(f, s){
-    var emp = pickEmployee();
+  function buildSongIntro(song, f, s){
+    var emp   = pickEmployee();
+    var title  = song.title  || 'this next track';
+    var artist = song.artist || '';
+    var songLine = artist ? title+' by '+artist : title;
     _introTurn = (_introTurn + 1) % 8;
 
-    // Different intro styles — all creative, sound like a real radio host
     var intros = [
-      // Employee request style
-      emp.name+' from '+emp.city+' has a request going out to the entire staff at Hill Manufacturing. '+emp.name+' says, keep grinding, keep pushing, this one is for you.',
-      'This next one comes in from upper management here at Hill Manufacturing. They said — and I quote — keep those machines running and enjoy the music.',
-      'We got a special request coming in. '+emp.name+' from '+emp.city+' says this one goes out to everyone on the floor today. You know who you are.',
-      'Upper management just called it in. They want the whole Hill Manufacturing crew to hear this one. No requests, no complaints, just good music.',
-      emp.name+' from down in '+emp.city+' phoned it in just for you all. '+emp.name+' says, Hill Manufacturing does not stop, and neither does the music.',
-      'This one is dedicated to every machinist, every operator, every person keeping this shop moving today. From Hill Manufacturing management — this is for you.',
-      'Alright, we got a call from '+emp.name+' out of '+emp.city+'. '+emp.name+' says the crew at Hill has been putting in serious work and deserves a good track. Here it is.',
-      'Management checked in and said the floor is looking good today. So as a thank you — this next one is on us.',
+      emp.name+' from '+emp.city+' has a request going out to the entire staff at Hill Manufacturing. Up next — '+songLine+'. '+emp.name+' says, this one is for you.',
+      'Coming up next on Hill Manufacturing Radio — '+songLine+'. This one goes out to every person keeping this shop moving today.',
+      'We got a special dedication coming in. '+emp.name+' out of '+emp.city+' requested '+songLine+' for the whole Hill crew. Here it is.',
+      'Upper management just called it in. They want everyone on the floor to hear '+songLine+'. No complaints — just good music.',
+      emp.name+' from '+emp.city+' phoned it in. The request is '+songLine+'. '+emp.name+' says Hill Manufacturing does not stop, and neither does the music.',
+      'This next one is dedicated to every machinist, every operator, every person on this floor. '+songLine+' — coming at you right now.',
+      'Alright, '+emp.name+' out of '+emp.city+' says the crew has been putting in serious work. So here you go — '+songLine+'.',
+      'Hill Manufacturing Radio, keeping the floor moving. Next up — '+songLine+'.',
     ];
 
     var intro = intros[_introTurn % intros.length];
@@ -11312,16 +11307,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     // Add a quick floor mention
     if(f.running.length > 0){
       var j = f.running[Math.floor(Math.random()*f.running.length)];
-      var floorLines = [
-        ' And a shoutout to '+j.firstName+' on '+j.machine+(j.wo?' working work order '+j.wo:'')+' — keep it up.',
-        ' '+j.firstName+' on '+j.machine+' is still going strong'+(j.elapsedStr?' — '+j.elapsedStr+' in':'')+'. That is the grind.',
-        ' Quick shoutout to '+j.firstName+' holding it down on '+j.machine+'. Do your thing.',
-      ];
-      intro += pick(floorLines);
+      intro += pick([
+        ' Shoutout to '+j.firstName+' on '+j.machine+(j.wo?', work order '+j.wo:'')+' — keep it going.',
+        ' '+j.firstName+' on '+j.machine+' is still putting in work'+(j.elapsedStr?', '+j.elapsedStr+' in':'')+'. That is dedication.',
+        ' Quick one — '+j.firstName+' on '+j.machine+', you are doing great out there.',
+      ]);
     } else if(f.pending.length > 0){
-      intro += ' Hey, we do have '+f.pending.length+' machine'+(f.pending.length>1?'s':'')+' waiting on setup. Tooling crew, let us get those moving after this track.';
+      intro += ' And hey — '+f.pending.length+' machine'+(f.pending.length>1?'s are':' is')+' waiting on setup. Tooling crew, let us knock those out.';
     } else if(s.today > 0){
-      intro += ' '+s.today+' requests handled so far today. Solid work out there.';
+      intro += ' '+s.today+' requests handled today. Keep it up.';
     }
 
     return intro;
@@ -11490,7 +11484,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var f=getFloor(), s=getStats();
 
       // Sparky introduces the song
-      var intro=buildSongIntro(f, s);
+      var intro=buildSongIntro(song, f, s);
       updateStatus('🎙️ Sparky is talking...');
       await sparky(intro);
       if(!_active) return;
@@ -11502,22 +11496,26 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       audio.load();
       updateStatus('♪ Playing song...');
       await new Promise(function(resolve){
-        audio.oncanplaythrough=function(){
-          audio.oncanplaythrough=null;
-          audio.play().catch(function(){resolve();});
-        };
-        audio.onended=function(){resolve();};
-        audio.onerror=function(e){
-          console.log('Song error:',e);
-          resolve();
-        };
-        // Load timeout
-        setTimeout(function(){
-          if(!audio.paused) return; // still playing, let it finish
-          resolve();
-        }, 600000); // 10 min max
-        // Also load the audio
-        audio.load();
+        var resolved = false;
+        function done(){ if(!resolved){resolved=true;resolve();} }
+
+        audio.onended = done;
+        audio.onerror = function(e){ console.log('Song error:',e.type); done(); };
+
+        // Try playing immediately — blob URLs don't need to wait for canplay
+        var playPromise = audio.play();
+        if(playPromise && playPromise.then){
+          playPromise.then(function(){
+            // Playing — wait for onended
+            console.log('Song playing:', song.title||'track');
+          }).catch(function(e){
+            console.log('Song play() rejected:',e.message);
+            done();
+          });
+        }
+
+        // Safety — max 10 minutes per song
+        setTimeout(done, 600000);
       });
       if(!_active) return;
 
@@ -11625,29 +11623,46 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._djSetInterval=function(){};
 
-  // Upload songs
+  // Upload songs — parse real title and artist from filename
   window._uploadSparkyMusic=function(files){
     if(!files||!files.length) return;
     var added=0;
     for(var i=0;i<files.length;i++){
       var file=files[i];
       if(!file.type.startsWith('audio/')) continue;
-      _songList.push({url:URL.createObjectURL(file)});
+      var url=URL.createObjectURL(file);
+      // Parse filename into title + artist
+      var raw=file.name.replace(/\.[^.]+$/,'').replace(/_/g,' ').replace(/\s*\(Official.*$/i,'').replace(/\s*\[.*\]/g,'').replace(/\s*4K\s*/gi,'').trim();
+      var title=raw, artist='';
+      // Try to split "Artist - Title" or "Title - Artist"
+      var dash=raw.indexOf(' - ');
+      if(dash>0){
+        artist=raw.slice(0,dash).trim();
+        title=raw.slice(dash+3).trim();
+      }
+      // Remove leading numbers like "1777636708137_"
+      title=title.replace(/^\d+_/,'').replace(/^\d+\s/,'').trim();
+      artist=artist.replace(/^\d+_/,'').trim();
+      _songList.push({url:url, title:title, artist:artist, name:file.name});
       added++;
     }
     _updateSongListUI();
-    if(added>0&&window.showToast) window.showToast('green','♪ '+added+' song'+(added>1?'s':'')+' added!','Sparky will play them on rotation');
+    if(added>0&&window.showToast) window.showToast('green','♪ '+added+' song'+(added>1?'s':'')+' added!','Sparky will announce each one by name');
   };
 
   function _updateSongListUI(){
     var el=document.getElementById('sparky-song-list');
     if(!el) return;
-    if(_songList.length===0){el.innerHTML='<div style="font-size:11px;color:#334155;padding:4px 0;">No songs loaded</div>';return;}
+    if(_songList.length===0){
+      el.innerHTML='<div style="font-size:11px;color:#334155;padding:4px 0;">No songs — tap UPLOAD SONGS above</div>';
+      return;
+    }
     el.innerHTML=_songList.map(function(s,i){
-      return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(30,58,92,0.3);">'
-        +'<span style="font-size:11px;">&#127925;</span>'
-        +'<span style="font-size:11px;color:#94a3b8;flex:1;">Track '+(i+1)+'</span>'
-        +'<button onclick="window._removeSong('+i+')" style="background:none;border:none;color:#475569;cursor:pointer;">&#10005;</button>'
+      var display = s.title ? (s.title+(s.artist?' — '+s.artist:'')) : ('Track '+(i+1));
+      return '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(30,58,92,0.3);">'
+        +'<span style="font-size:13px;">&#127925;</span>'
+        +'<span style="font-size:11px;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+display+'</span>'
+        +'<button onclick="event.stopPropagation();window._removeSong('+i+')" style="background:none;border:none;color:#475569;cursor:pointer;font-size:13px;">&#10005;</button>'
         +'</div>';
     }).join('');
   }
