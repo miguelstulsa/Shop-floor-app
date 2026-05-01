@@ -11529,27 +11529,45 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── LOAD SONGS FROM FIREBASE STORAGE ─────────────────────
+  // Hardcoded song list — songs served from GitHub repo /music/ folder
+  // To add songs: upload MP3s to miguelstulsa.github.io/Shop-floor-app/music/
+  var GITHUB_SONGS = [
+    { title:'Bohemian Rhapsody', artist:'Queen',               url:'https://miguelstulsa.github.io/Shop-floor-app/music/song1.mp3' },
+    { title:'Neon Moon',         artist:'Brooks and Dunn',      url:'https://miguelstulsa.github.io/Shop-floor-app/music/song2.mp3' },
+    { title:'Even Flow',         artist:'Pearl Jam',            url:'https://miguelstulsa.github.io/Shop-floor-app/music/song3.mp3' },
+    { title:'I Never Lie',       artist:'Zach Top',             url:'https://miguelstulsa.github.io/Shop-floor-app/music/song4.mp3' },
+    { title:'Juicy',             artist:'The Notorious B.I.G.', url:'https://miguelstulsa.github.io/Shop-floor-app/music/song5.mp3' },
+  ];
+
   async function _loadSongsFromFirebase(){
+    // Try Firebase Storage first, fall back to GitHub
     var storage=window.fbStorage, mods=window.fbStorageModules;
-    if(!storage||!mods) return;
-    try{
-      var musicRef=mods.ref(storage,'music/');
-      var list=await mods.listAll(musicRef);
-      if(!list.items||!list.items.length) return;
-      var loaded=[];
-      for(var i=0;i<list.items.length;i++){
-        try{
-          var url=await mods.getDownloadURL(list.items[i]);
-          var info=_parseTrackName(list.items[i].name);
-          loaded.push({title:info.title,artist:info.artist,url:url});
-        }catch(e){}
-      }
-      if(loaded.length>0){
-        _songList=loaded.sort(function(){return Math.random()-0.5;});
-        _updateSongListUI();
-        console.log('Sparky: loaded',_songList.length,'songs from Firebase Storage');
-      }
-    }catch(e){console.log('Storage load:',e.message);}
+    var loaded = [];
+
+    if(storage && mods){
+      try{
+        var musicRef=mods.ref(storage,'music/');
+        var list=await mods.listAll(musicRef);
+        for(var i=0;i<(list.items||[]).length;i++){
+          try{
+            var url=await mods.getDownloadURL(list.items[i]);
+            var info=_parseTrackName(list.items[i].name);
+            loaded.push({title:info.title,artist:info.artist,url:url});
+          }catch(e){}
+        }
+      }catch(e){}
+    }
+
+    // If Firebase has no songs, use GitHub-hosted songs
+    if(loaded.length===0){
+      loaded = GITHUB_SONGS.slice();
+    }
+
+    if(loaded.length>0){
+      _songList=loaded.sort(function(){return Math.random()-0.5;});
+      _updateSongListUI();
+      console.log('Sparky: loaded',_songList.length,'songs');
+    }
   }
 
   function _parseTrackName(filename){
