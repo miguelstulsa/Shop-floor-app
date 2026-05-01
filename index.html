@@ -1057,16 +1057,18 @@
     <div class="admin-section" style="background:linear-gradient(135deg,#1a0033,#2a0050);border-top:2px solid rgba(139,92,246,0.4);">
       <div class="admin-section-title" style="color:#c4b5fd;">&#127897; SPARKY — SHOP VOICE &amp; MUSIC</div>
       <div style="font-size:11px;color:#475569;margin-bottom:8px;line-height:1.6;">Upload MP3s here — Sparky plays them between floor updates. Any audio file works. They go into Firebase Storage and play on all devices.</div>
+      <div style="font-size:11px;color:#475569;margin-bottom:8px;line-height:1.6;">Songs upload ONCE to Firebase and play for <strong style="color:#f5c842;">everyone</strong> forever. No re-uploading needed.</div>
       <label style="display:flex;align-items:center;gap:8px;background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.3);border-radius:8px;padding:10px 12px;cursor:pointer;margin-bottom:6px;">
         <span style="font-size:18px;">&#127925;</span>
         <div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#f5c842;letter-spacing:1px;">UPLOAD SONGS FOR SPARKY</div>
-          <div style="font-size:10px;color:#475569;">Pick MP3s from your phone — plays between updates</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#f5c842;letter-spacing:1px;">&#8679; UPLOAD SONGS TO HILL RADIO</div>
+          <div style="font-size:10px;color:#475569;">MP3, WAV — saved permanently, plays for all devices</div>
         </div>
         <input type="file" accept="audio/*" multiple onchange="window._uploadSparkyMusic(this.files)" style="display:none;">
       </label>
-      <div id="sparky-song-list" style="max-height:120px;overflow-y:auto;padding:4px 0;">
-        <div style="font-size:11px;color:#334155;padding:6px 0;">No songs loaded — tap UPLOAD SONGS above</div>
+      <div style="font-size:10px;color:#334155;margin-bottom:6px;">&#9888; Requires Firebase Storage rules: <span style="color:#f59e0b;">allow read, write: if true</span> on /music/ path</div>
+      <div id="sparky-song-list" style="max-height:140px;overflow-y:auto;padding:4px 0;">
+        <div style="font-size:11px;color:#334155;padding:4px 0;">Loading songs from Firebase...</div>
       </div>
       <div style="font-size:11px;color:#6d28d9;margin-bottom:8px;">Jim auto-starts when you log in and reads floor activity live. For a real human voice, add your ElevenLabs API key below (free at elevenlabs.io — 10,000 chars/month).</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
@@ -11116,7 +11118,13 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   ];
 
   // ── SONGS ─────────────────────────────────────────────────
-  var _songList = []; // Populated when you upload songs via the button below
+  var _songList = [
+    { title: 'Bohemian Rhapsody', artist: 'Queen',               url: 'https://miguelstulsa.github.io/hill-music/song1.mp3' },
+    { title: 'Neon Moon',         artist: 'Brooks and Dunn',      url: 'https://miguelstulsa.github.io/hill-music/song2.mp3' },
+    { title: 'Even Flow',         artist: 'Pearl Jam',            url: 'https://miguelstulsa.github.io/hill-music/song3.mp3' },
+    { title: 'I Never Lie',       artist: 'Zach Top',             url: 'https://miguelstulsa.github.io/hill-music/song4.mp3' },
+    { title: 'Juicy',             artist: 'The Notorious B.I.G.', url: 'https://miguelstulsa.github.io/hill-music/song5.mp3' },
+  ];
 
   // ── WEATHER & SPORTS CACHE ────────────────────────────────
   var _weather = null;
@@ -11569,6 +11577,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(_active) return;
     _active=true;
     updateSparkyBtn();
+    // Load songs from Firebase Storage — permanent library
+    await _loadSongsFromFirebase();
     // Pre-fetch weather and sports
     await fetchWeather();
     await fetchSports();
@@ -11625,32 +11635,102 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._djSetInterval=function(){};
 
-  // Upload songs — parse real title and artist from filename
-  window._uploadSparkyMusic=function(files){
+  // ── FIREBASE STORAGE MUSIC SYSTEM ───────────────────────
+  // Upload once → stays forever → plays for everyone
+
+  function _parseTrackName(filename){
+    var raw = filename.replace(/\.[^.]+$/, '').replace(/_/g, ' ')
+      .replace(/\s*\(Official.*$/i, '').replace(/\s*\[.*?\]/g, '')
+      .replace(/\s*4K\s*/gi, '').replace(/^\d+\s*/, '').trim();
+    var title = raw, artist = '';
+    var dash = raw.indexOf(' - ');
+    if(dash > 0){ artist = raw.slice(0,dash).trim(); title = raw.slice(dash+3).trim(); }
+    return { title: title, artist: artist };
+  }
+
+  // Upload to Firebase Storage — permanent, shared with everyone
+  window._uploadSparkyMusic = async function(files) {
     if(!files||!files.length) return;
-    var added=0;
-    for(var i=0;i<files.length;i++){
-      var file=files[i];
-      if(!file.type.startsWith('audio/')) continue;
-      var url=URL.createObjectURL(file);
-      // Parse filename into title + artist
-      var raw=file.name.replace(/\.[^.]+$/,'').replace(/_/g,' ').replace(/\s*\(Official.*$/i,'').replace(/\s*\[.*\]/g,'').replace(/\s*4K\s*/gi,'').trim();
-      var title=raw, artist='';
-      // Try to split "Artist - Title" or "Title - Artist"
-      var dash=raw.indexOf(' - ');
-      if(dash>0){
-        artist=raw.slice(0,dash).trim();
-        title=raw.slice(dash+3).trim();
-      }
-      // Remove leading numbers like "1777636708137_"
-      title=title.replace(/^\d+_/,'').replace(/^\d+\s/,'').trim();
-      artist=artist.replace(/^\d+_/,'').trim();
-      _songList.push({url:url, title:title, artist:artist, name:file.name});
-      added++;
+    var storage = window.fbStorage;
+    var mods    = window.fbStorageModules;
+
+    if(!storage || !mods){
+      if(window.showToast) window.showToast('red','Storage not ready','Check Firebase Storage rules — see Admin Panel');
+      return;
     }
+
+    var added = 0;
+    var total = Array.from(files).filter(function(f){ return f.type.startsWith('audio/'); }).length;
+
+    for(var i = 0; i < files.length; i++){
+      var file = files[i];
+      if(!file.type.startsWith('audio/')) continue;
+      var info = _parseTrackName(file.name);
+
+      if(window.showToast) window.showToast('blue', '⬆ Uploading...', info.title + ' ('+(added+1)+'/'+total+')');
+
+      try {
+        var fileRef = mods.ref(storage, 'music/' + file.name);
+        await mods.uploadBytes(fileRef, file, { contentType: 'audio/mpeg' });
+        var url = await mods.getDownloadURL(fileRef);
+
+        // Save metadata to Firestore so everyone knows about this song
+        var db2 = window.fbDb, fbmods = window._fbModules;
+        if(db2 && fbmods){
+          await fbmods.setDoc(fbmods.doc(db2, 'hillSettings', 'music_' + file.name.replace(/[^a-z0-9]/gi,'_')), {
+            title: info.title,
+            artist: info.artist,
+            filename: file.name,
+            url: url,
+            addedAt: fbmods.serverTimestamp()
+          });
+        }
+
+        _songList.push({ title: info.title, artist: info.artist, url: url });
+        added++;
+        if(window.showToast) window.showToast('green', '✓ ' + info.title, 'Saved permanently to Hill Manufacturing Radio');
+      } catch(e) {
+        console.error('Upload error:', e);
+        if(window.showToast) window.showToast('red', 'Upload failed', e.message + ' — Check Firebase Storage rules');
+      }
+    }
+
     _updateSongListUI();
-    if(added>0&&window.showToast) window.showToast('green','♪ '+added+' song'+(added>1?'s':'')+' added!','Sparky will announce each one by name');
   };
+
+  // Load all songs from Firebase on startup — so everyone hears the same library
+  async function _loadSongsFromFirebase(){
+    var db2 = window.fbDb, fbmods = window._fbModules;
+    var storage = window.fbStorage, smods = window.fbStorageModules;
+    if(!db2 || !fbmods || !storage || !smods) return;
+
+    try {
+      // Load from Storage directly
+      var musicRef = smods.ref(storage, 'music/');
+      var list = await smods.listAll(musicRef);
+      if(list.items.length === 0) return;
+
+      var loaded = [];
+      for(var i = 0; i < list.items.length; i++){
+        var item = list.items[i];
+        try {
+          var url = await smods.getDownloadURL(item);
+          var info = _parseTrackName(item.name);
+          loaded.push({ title: info.title, artist: info.artist, url: url });
+        } catch(e) {}
+      }
+
+      if(loaded.length > 0){
+        _songList = loaded;
+        // Shuffle so it doesn't always play in the same order
+        _songList.sort(function(){ return Math.random() - 0.5; });
+        _updateSongListUI();
+        console.log('Sparky: loaded', _songList.length, 'songs from Firebase Storage');
+      }
+    } catch(e) {
+      console.log('Could not load songs from Firebase:', e.message);
+    }
+  }
 
   function _updateSongListUI(){
     var el=document.getElementById('sparky-song-list');
