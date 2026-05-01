@@ -11102,11 +11102,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── SONGS ─────────────────────────────────────────────────
   var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var SONGS = [
-    {title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen+Bohemian+Rhapsody+(Official+Video+Remastered).mp3',     url2:BASE+'Queen%20Bohemian%20Rhapsody%20(Official%20Video%20Remastered).mp3'},
-    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks+%26+Dunn+-+Neon+Moon+(Official+Audio).mp3',           url2:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20(Official%20Audio).mp3'},
-    {title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl+Jam+-+Even+Flow+(Official+Video).mp3',                 url2:BASE+'Pearl%20Jam%20-%20Even%20Flow%20(Official%20Video).mp3'},
-    {title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach+Top+-+I+Never+Lie+(Lyrics).mp3',                       url2:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20(Lyrics).mp3'},
-    {title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The+Notorious+B.I.G.+-+Juicy+(Official+Video)+%5B4K%5D.mp3', url2:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20(Official%20Video)%20%5B4K%5D.mp3'},
+    {title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen%20Bohemian%20Rhapsody%20%28Official%20Video%20Remastered%29.mp3'},
+    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20%28Official%20Audio%29.mp3'},
+    {title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl%20Jam%20-%20Even%20Flow%20%28Official%20Video%29.mp3'},
+    {title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20%28Lyrics%29.mp3'},
+    {title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20%28Official%20Video%29%20%5B4K%5D.mp3'},
   ];
 
   // ── HELPERS ───────────────────────────────────────────────
@@ -11170,33 +11170,19 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── MUSIC — use the persistent _audio element (unlocked on tap) ──
-  function playSong(song, onDone, useUrl2){
+  function playSong(song, onDone){
     if(!_audio){if(onDone)onDone();return;}
-    var url = (useUrl2 && song.url2) ? song.url2 : song.url;
-    console.log('Loading song:', song.title, url.slice(-30));
+    console.log('Loading:', song.title);
     var done=false;
     function finish(){if(!done){done=true;if(onDone)onDone();}}
-    _audio.onended=finish;
-    _audio.onerror=function(e){
-      console.log('Audio error on',song.title,e.type||'');
-      // Try alternate URL if first one failed
-      if(!useUrl2 && song.url2){
-        console.log('Trying alternate URL for',song.title);
-        playSong(song, onDone, true);
-      } else {
-        console.log('Both URLs failed for',song.title,'— skipping');
-        finish();
-      }
-    };
-    _audio.volume=_muted?0:0.8;
-    _audio.src=url;
+    _audio.onended  = finish;
+    _audio.onerror  = function(e){ console.log('Song error:',song.title,e.type); finish(); };
+    _audio.volume   = _muted?0:0.8;
+    _audio.src      = song.url;
     _audio.load();
-    _audio.oncanplay=function(){
-      _audio.oncanplay=null;
-      _audio.play().catch(function(e){
-        console.log('play() blocked:',e.message);
-        finish();
-      });
+    _audio.oncanplay = function(){
+      _audio.oncanplay = null;
+      _audio.play().catch(function(e){ console.log('play blocked:',e.message); finish(); });
     };
     setTimeout(finish, 600000);
   }
@@ -11218,8 +11204,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       if(f.supp.length>0)f.supp.forEach(function(r){out.push('Floor support at '+r.machine+'. '+r.name+' is waiting.');});
       if(f.insp.length>0)f.insp.forEach(function(r){out.push('Quality — '+r.name+' on '+r.machine+' has parts ready. Do not let that sit.');});
     }
-    if(_turn===1&&s.td>0)out.push(s.td+' requests today, '+s.wk+' this week. '+s.done+' completed — '+s.saved+' minutes saved, about '+s.dol+' dollars at shop rate.');
-    if(_turn===2&&s.top&&s.topN>=2)out.push('Shoutout to '+s.top+' — '+s.topN+' requests logged. Top of the board. Keep it up.');
+    if(_turn===1&&s.td>0)out.push(s.td+' request'+(s.td!==1?'s':'')+' handled today, '+s.wk+' this week. '+s.done+' completed. Solid work out there.');
+    if(_turn===2&&s.top&&s.topN>=2)out.push('Shoutout to '+s.top+' — '+s.topN+' request'+(s.topN!==1?'s':'')+' logged. Leading the floor. Keep it up, '+s.top+'.');
     if(_turn===3&&_wx)out.push('Tulsa weather — '+_wx.temp+' degrees, '+_wx.desc.toLowerCase()+'. High '+_wx.hi+', low '+_wx.lo+'. Tomorrow '+_wx.tmr+', '+_wx.tmrHi+'.');
     if(_turn===4&&_sp&&_sp.length)out.push('Sports. '+_sp.slice(0,2).join(' '));
     if(_turn===5)out.push(pick(JOKES));
