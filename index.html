@@ -11489,38 +11489,41 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       await sparky(intro);
       if(!_active) return;
 
-      // Play song — wait for it to finish
-      var audio=getAudio();
-      audio.src=song.url;
-      audio.volume=0.8;
-      audio.load();
-      updateStatus('♪ Playing song...');
+      // Play song — wait for it to finish naturally
+      updateStatus('\u266a ' + (song.title||'Playing...'));
       await new Promise(function(resolve){
         var resolved = false;
-        function done(){ if(!resolved){resolved=true;resolve();} }
+        function done(){ if(!resolved){ resolved=true; resolve(); } }
 
-        audio.onended = done;
-        audio.onerror = function(e){ console.log('Song error:',e.type); done(); };
+        // Create fresh Audio element each time — avoids stale state
+        var audio = new Audio();
+        audio.volume = 0.85;
+        audio.preload = 'auto';
 
-        // Try playing immediately — blob URLs don't need to wait for canplay
-        var playPromise = audio.play();
-        if(playPromise && playPromise.then){
-          playPromise.then(function(){
-            // Playing — wait for onended
-            console.log('Song playing:', song.title||'track');
+        audio.addEventListener('ended',  done);
+        audio.addEventListener('error',  function(e){ console.log('Audio error:', e.message||e.type); done(); });
+        audio.addEventListener('canplay', function(){
+          audio.play().then(function(){
+            console.log('Now playing:', song.title||'track');
           }).catch(function(e){
-            console.log('Song play() rejected:',e.message);
+            console.log('play() blocked:', e.message);
             done();
           });
-        }
+        });
 
-        // Safety — max 10 minutes per song
+        audio.src = song.url;
+        audio.load();
+
+        // Store ref so we can stop it if needed
+        _audioEl = audio;
+
+        // 10 min safety timeout
         setTimeout(done, 600000);
       });
       if(!_active) return;
 
-      // Stop song, fetch fresh data
-      try{audio.pause();audio.src='';}catch(e){}
+      // Stop song cleanly
+      try{ if(_audioEl){ _audioEl.pause(); _audioEl.src=''; } }catch(e){}
       var f2=getFloor(), s2=getStats();
 
       // Between-song report
@@ -11606,8 +11609,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       _active=false;
       if(_autoTimer){clearTimeout(_autoTimer);_autoTimer=null;}
       if(window.speechSynthesis) window.speechSynthesis.cancel();
-      var audio=getAudio();
-      try{audio.pause();audio.src='';}catch(e){}
+      try{ if(_audioEl){ _audioEl.pause(); _audioEl.src=''; } }catch(e){}
     } else {
       startSparky();
     }
