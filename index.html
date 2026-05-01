@@ -11091,692 +11091,284 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 <script>
 (function(){
 
-  var ELEVEN_API_KEY  = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
-  var ELEVEN_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
+  var EL_KEY   = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
+  var EL_VOICE = '21m00Tcm4TlvDq8ikWAM';
+  var _on      = false;
+  var _muted   = false;
+  var _audio   = null;   // ONE persistent audio element — created on first tap
+  var _idx     = 0;
+  var _busy    = false;
 
-  var _active    = false;
-  var _speaking  = false;
-  var _songList  = [];
-  var _currentSong = 0;
-  var _audioEl   = null;
-  var _loopTimer = null;
-
-  var EMPLOYEES = [
-    {name:'Jimmy',   city:'Wagoner, Oklahoma'},
-    {name:'Steven',  city:'Tulsa, Oklahoma'},
-    {name:'Keith',   city:'Broken Arrow, Oklahoma'},
-    {name:'Marcus',  city:'Owasso, Oklahoma'},
-    {name:'Carlos',  city:'Claremore, Oklahoma'},
-    {name:'Tyler',   city:'Jenks, Oklahoma'},
-    {name:'Jose',    city:'Sand Springs, Oklahoma'},
-    {name:'Ray',     city:'Skiatook, Oklahoma'},
+  // ── SONGS ─────────────────────────────────────────────────
+  var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
+  var SONGS = [
+    {title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen%20Bohemian%20Rhapsody%20%28Official%20Video%20Remastered%29.mp3'},
+    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20%28Official%20Audio%29.mp3'},
+    {title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl%20Jam%20-%20Even%20Flow%20%28Official%20Video%29.mp3'},
+    {title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20%28Lyrics%29.mp3'},
+    {title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20%28Official%20Video%29%20%5B4K%5D.mp3'},
   ];
 
-  var MN = {
-    '1050-B':'Ten Fifty B','7000':'Seven Thousand','VF-6':'V F Six',
-    '5100-B':'Fifty One Hundred B','2500':'Twenty Five Hundred','PUMA-3':'Puma Three',
-    'ST35':'S T Thirty Five','VF-3':'V F Three','VF-2':'V F Two','PUMA-2':'Puma Two',
-    '403-A':'Four Oh Three A','403-B':'Four Oh Three B','403-C':'Four Oh Three C',
-    '5100-A':'Fifty One Hundred A','3000-C':'Three Thousand C','3000-A':'Three Thousand A',
-    '2G':'Two G','PUMA-1':'Puma One','303-B':'Three Oh Three B',
-    'TWIN':'Twin','5000':'Five Thousand','SH-403':'S H Four Oh Three'
-  };
-
-  function mn(m){ return MN[m]||m||'a machine'; }
-  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
-  function pickEmp(){ return EMPLOYEES[Math.floor(Math.random()*EMPLOYEES.length)]; }
-
-  function fmtTime(s){
-    s=parseInt(s)||0;
-    if(s<60) return s+' seconds';
-    if(s<3600){ var m=Math.floor(s/60),r=s%60; return m+' minute'+(m!==1?'s':'')+(r?' and '+r+' seconds':''); }
-    var h=Math.floor(s/3600),m=Math.floor((s%3600)/60);
-    return h+' hour'+(h!==1?'s':'')+(m?' and '+m+' minute'+(m!==1?'s':''):'');
-  }
+  // ── HELPERS ───────────────────────────────────────────────
+  var MN={'1050-B':'Ten Fifty B','7000':'Seven Thousand','VF-6':'V F Six','5100-B':'Fifty One Hundred B','2500':'Twenty Five Hundred','PUMA-3':'Puma Three','ST35':'S T Thirty Five','VF-3':'V F Three','VF-2':'V F Two','PUMA-2':'Puma Two','403-A':'Four Oh Three A','403-B':'Four Oh Three B','403-C':'Four Oh Three C','5100-A':'Fifty One Hundred A','3000-C':'Three Thousand C','3000-A':'Three Thousand A','2G':'Two G','PUMA-1':'Puma One','303-B':'Three Oh Three B','TWIN':'Twin','5000':'Five Thousand'};
+  function mn(m){return MN[m]||m||'a machine';}
+  function pick(a){return a[Math.floor(Math.random()*a.length)];}
+  function fmtT(s){s=parseInt(s)||0;if(s<60)return s+' seconds';if(s<3600){var m=Math.floor(s/60);return m+' minute'+(m!==1?'s':'');}return Math.floor(s/3600)+' hours';}
+  var EMPS=[{n:'Jimmy',c:'Wagoner'},{n:'Steven',c:'Tulsa'},{n:'Keith',c:'Broken Arrow'},{n:'Marcus',c:'Owasso'},{n:'Carlos',c:'Claremore'},{n:'Tyler',c:'Jenks'},{n:'Ray',c:'Skiatook'}];
+  function emp(){return EMPS[Math.floor(Math.random()*EMPS.length)];}
+  var JOKES=['Why did the machinist break up with the mill? Too many cuts.','A machinist orders to within point zero zero one of a beer. Bartender says we go to point zero zero five. Machinist says, unacceptable.','Why do machinists make great musicians? They always find the groove.','What did the drill press say to the end mill? Stop boring me.','CNC programmers never get lost. They always know their home position.'];
 
   // ── FLOOR DATA ────────────────────────────────────────────
-  function getFloor(){
-    var now=Math.floor(Date.now()/1000);
-    var notes=window._lastActionable||[];
-    var r={running:[],pending:[],machinist:[],inspection:[],floorSupport:[],onHold:[]};
+  function flr(){
+    var now=Math.floor(Date.now()/1000),notes=window._lastActionable||[];
+    var r={run:[],pend:[],mach:[],insp:[],supp:[],hold:[]};
     notes.forEach(function(n){
-      if(n.resolved) return;
-      var elapsed=(n.startedAt&&n.startedAt.seconds)?now-n.startedAt.seconds:0;
-      var rec={machine:mn(n.machine),firstName:n.operator?n.operator.split(' ')[0]:'the operator',
-        wo:n.wo||'',op:n.op||'',detail:n.detail||'',elapsed:elapsed,
-        elapsedStr:elapsed>10?fmtTime(elapsed):'',holdReason:n.holdReason||'',type:n.type};
-      if(n.onHold) r.onHold.push(rec);
-      else if(n.inProgress||(n.startedAt&&n.startedAt.seconds)) r.running.push(rec);
-      else if(n.type==='blue') r.pending.push(rec);
-      else if(n.type==='yellow') r.machinist.push(rec);
-      else if(n.type==='red') r.inspection.push(rec);
-      else if(n.type==='orange') r.floorSupport.push(rec);
+      if(n.resolved)return;
+      var e=(n.startedAt&&n.startedAt.seconds)?now-n.startedAt.seconds:0;
+      var rec={machine:mn(n.machine),name:n.operator?n.operator.split(' ')[0]:'the operator',wo:n.wo||'',op:n.op||'',detail:n.detail||'',e:e,et:e>10?fmtT(e):'',hr:n.holdReason||''};
+      if(n.onHold)r.hold.push(rec);
+      else if(n.inProgress||(n.startedAt&&n.startedAt.seconds))r.run.push(rec);
+      else if(n.type==='blue')r.pend.push(rec);
+      else if(n.type==='yellow')r.mach.push(rec);
+      else if(n.type==='red')r.insp.push(rec);
+      else if(n.type==='orange')r.supp.push(rec);
     });
     return r;
   }
-
-  function getStats(){
+  function sts(){
     var all=window._allDashRequests||window._lastActionable||[];
-    var now=new Date();
-    var todayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000;
-    var weekStart=todayStart-(now.getDay()||7)*86400;
-    var s={today:0,week:0,completedToday:0,operatorCounts:{}};
-    all.forEach(function(n){
-      var ts=n.createdAt&&n.createdAt.seconds?n.createdAt.seconds:0;
-      if(!ts)return;
-      if(ts>=todayStart){s.today++;if(n.resolved)s.completedToday++;}
-      if(ts>=weekStart) s.week++;
-      if(n.operator){var f=n.operator.split(' ')[0];s.operatorCounts[f]=(s.operatorCounts[f]||0)+1;}
-    });
-    var top='',topN=0;
-    Object.keys(s.operatorCounts).forEach(function(k){if(s.operatorCounts[k]>topN){top=k;topN=s.operatorCounts[k];}});
-    s.topOperator=top; s.topOperatorCount=topN;
-    s.minutesSaved=s.completedToday*5;
-    s.dollarsSaved=Math.round(s.completedToday*5*(95/60));
-    return s;
+    var now=new Date(),ts=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000;
+    var ws=ts-(now.getDay()||7)*86400;
+    var s={td:0,wk:0,done:0,ops:{}};
+    all.forEach(function(n){var t=n.createdAt&&n.createdAt.seconds?n.createdAt.seconds:0;if(!t)return;if(t>=ts){s.td++;if(n.resolved)s.done++;}if(t>=ws)s.wk++;if(n.operator){var f=n.operator.split(' ')[0];s.ops[f]=(s.ops[f]||0)+1;}});
+    var top='',topN=0;Object.keys(s.ops).forEach(function(k){if(s.ops[k]>topN){top=k;topN=s.ops[k];}});
+    s.top=top;s.topN=topN;s.saved=s.done*5;s.dol=Math.round(s.done*5*(95/60));return s;
   }
 
-  // ── WEATHER ───────────────────────────────────────────────
-  var _weather=null, _lastWeatherFetch=0;
-  async function fetchWeather(){
-    if(_weather&&(Date.now()-_lastWeatherFetch)<1800000) return;
-    try{
-      var r=await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/weather?city=Tulsa+Oklahoma');
-      if(!r.ok) return;
-      var d=await r.json();
-      var cur=d.current_condition&&d.current_condition[0];
-      var today=d.weather&&d.weather[0];
-      var tom=d.weather&&d.weather[1];
-      if(!cur||!today) return;
-      var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-      var nd=new Date();
-      _weather={
-        temp:parseInt(cur.temp_F)||70,
-        feelsLike:parseInt(cur.FeelsLikeF)||70,
-        wind:parseInt(cur.windspeedMiles)||0,
-        desc:(cur.weatherDesc&&cur.weatherDesc[0]&&cur.weatherDesc[0].value)||'partly cloudy',
-        todayHigh:parseInt(today.maxtempF)||75,
-        todayLow:parseInt(today.mintempF)||55,
-        tomorrowName:days[(nd.getDay()+1)%7],
-        tomorrowHigh:tom?parseInt(tom.maxtempF)||75:75,
-      };
-      _lastWeatherFetch=Date.now();
-    }catch(e){}
+  // ── WEATHER / SPORTS ──────────────────────────────────────
+  var _wx=null,_sp=null;
+  fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/weather?city=Tulsa+Oklahoma').then(function(r){return r.json();}).then(function(d){var c=d.current_condition&&d.current_condition[0],t=d.weather&&d.weather[0],tm=d.weather&&d.weather[1];if(c&&t){var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];_wx={temp:parseInt(c.temp_F)||70,desc:(c.weatherDesc&&c.weatherDesc[0]&&c.weatherDesc[0].value)||'clear',hi:parseInt(t.maxtempF)||75,lo:parseInt(t.mintempF)||55,tmr:days[(new Date().getDay()+1)%7],tmrHi:tm?parseInt(tm.maxtempF)||75:75};}}).catch(function(){});
+  fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/sports?leagues=nba,mlb').then(function(r){return r.json();}).then(function(d){var res=[];function pr(evs,sp){(evs||[]).slice(0,2).forEach(function(e){var c=e.competitions&&e.competitions[0];if(!c)return;var t=c.competitors||[];if(t.length<2)return;var h=t.find(function(x){return x.homeAway==='home';})||t[1],aw=t.find(function(x){return x.homeAway==='away';})||t[0];var done=c.status&&c.status.type&&c.status.type.completed;var hn=(h.team&&h.team.shortDisplayName)||'Home',an=(aw.team&&aw.team.shortDisplayName)||'Away';if(done)res.push(sp+': '+an+' '+aw.score+', '+hn+' '+h.score+' final.');else res.push(sp+': '+an+' vs '+hn+'.');});}if(d.nba)pr(d.nba.events,'NBA');if(d.mlb)pr(d.mlb.events,'Baseball');_sp=res;}).catch(function(){});
+
+  // ── SPEECH — browser TTS, reliable on all phones ──────────
+  function say(text, onDone){
+    var synth=window.speechSynthesis;
+    if(!synth){if(onDone)onDone();return;}
+    synth.cancel();
+    var utt=new SpeechSynthesisUtterance(text);
+    var voices=synth.getVoices();
+    var pref=['Samantha','Google US English','Karen','Moira','Fiona','Victoria'];
+    var v=null;
+    for(var i=0;i<pref.length;i++){v=voices.find(function(x){return x.name===pref[i];});if(v)break;}
+    if(!v)v=voices.find(function(x){return x.lang&&x.lang.startsWith('en');});
+    if(v)utt.voice=v;
+    utt.rate=0.88;utt.pitch=1.05;utt.volume=_muted?0:1;
+    utt.onend=function(){if(onDone)onDone();};
+    utt.onerror=function(){if(onDone)onDone();};
+    synth.speak(utt);
+    setTimeout(function(){if(synth.paused)synth.resume();},300);
   }
 
-  // ── SPORTS ────────────────────────────────────────────────
-  var _sports=null, _lastSportsFetch=0;
-  async function fetchSports(){
-    if(_sports&&(Date.now()-_lastSportsFetch)<3600000) return;
-    try{
-      var r=await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/sports?leagues=nba,mlb');
-      if(!r.ok) return;
-      var d=await r.json();
-      var results=[];
-      function parse(events,sport){
-        (events||[]).slice(0,2).forEach(function(e){
-          var c=e.competitions&&e.competitions[0];
-          if(!c) return;
-          var teams=c.competitors||[];
-          if(teams.length<2) return;
-          var home=teams.find(function(t){return t.homeAway==='home';})||teams[1];
-          var away=teams.find(function(t){return t.homeAway==='away';})||teams[0];
-          var done=c.status&&c.status.type&&c.status.type.completed;
-          var live=c.status&&c.status.type&&c.status.type.description==='In Progress';
-          var hn=(home.team&&home.team.shortDisplayName)||'Home';
-          var an=(away.team&&away.team.shortDisplayName)||'Away';
-          if(done) results.push(sport+': '+an+' '+away.score+', '+hn+' '+home.score+' — final.');
-          else if(live) results.push(sport+' live now: '+an+' '+away.score+', '+hn+' '+home.score+'.');
-          else results.push(sport+': '+an+' at '+hn+' coming up.');
-        });
-      }
-      if(d.nba) parse(d.nba.events,'NBA');
-      if(d.mlb) parse(d.mlb.events,'Baseball');
-      _sports=results;
-      _lastSportsFetch=Date.now();
-    }catch(e){_sports=null;}
-  }
-
-  // ── SPEAK ─────────────────────────────────────────────────
-  async function speakElevenLabs(text){
-    if(!ELEVEN_API_KEY) return false;
-    try{
-      var r=await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/speak',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({text:text,apiKey:ELEVEN_API_KEY,voiceId:ELEVEN_VOICE_ID})
+  // ── MUSIC — use the persistent _audio element (unlocked on tap) ──
+  function playSong(song, onDone){
+    if(!_audio){if(onDone)onDone();return;}
+    _audio.onended=function(){if(onDone)onDone();};
+    _audio.onerror=function(){if(onDone)onDone();};
+    _audio.volume=_muted?0:0.8;
+    _audio.src=song.url;
+    _audio.load();
+    // oncanplay fires when buffer is ready
+    _audio.oncanplay=function(){
+      _audio.oncanplay=null;
+      _audio.play().catch(function(e){
+        console.log('play failed:',e.message);
+        if(onDone)onDone();
       });
-      if(!r.ok) return false;
-      var blob=await r.blob();
-      var url=URL.createObjectURL(blob);
-      return new Promise(function(resolve){
-        var a=new Audio(url);
-        a.volume=1.0;
-        a.onended=function(){URL.revokeObjectURL(url);resolve(true);};
-        a.onerror=function(){URL.revokeObjectURL(url);resolve(false);};
-        a.play().catch(function(){resolve(false);});
-      });
-    }catch(e){return false;}
+    };
+    // Timeout safety
+    setTimeout(function(){if(_audio.paused&&onDone){var cb=onDone;onDone=null;cb();}},600000);
   }
 
-  function speakBrowser(text){
-    return new Promise(function(resolve){
-      var synth=window.speechSynthesis;
-      if(!synth){resolve();return;}
-      synth.cancel();
-      var utt=new SpeechSynthesisUtterance(text);
-      var voices=synth.getVoices();
-      var preferred=['Samantha','Google US English','Karen','Moira','Victoria','Fiona'];
-      var v=null;
-      for(var i=0;i<preferred.length;i++){
-        v=voices.find(function(x){return x.name===preferred[i];});
-        if(v) break;
-      }
-      if(!v) v=voices.find(function(x){return x.lang&&x.lang.startsWith('en');});
-      if(v) utt.voice=v;
-      utt.rate=0.88; utt.pitch=1.05; utt.volume=1.0;
-      utt.onend=function(){resolve();};
-      utt.onerror=function(){resolve();};
-      synth.speak(utt);
-      // Safari kick
-      setTimeout(function(){if(synth.paused)synth.resume();},200);
-    });
-  }
-
-  // Main speak — ElevenLabs first, browser fallback
-  async function speak(text){
-    if(!text) return;
-    _speaking=true;
-    updateStatus('🎙️ Sparky is talking...');
-    var ok=await speakElevenLabs(text);
-    if(!ok) await speakBrowser(text);
-    _speaking=false;
-  }
-
-  // ── CONTENT BUILDERS ─────────────────────────────────────
-  var _reportTurn=0;
-  var _jokes=[
-    'Quick joke for the shop. Why did the machinist break up with the mill? It kept taking too many cuts. Sound familiar?',
-    'Here is one for you. A machinist walks into a bar and orders to within point zero zero one of a beer. The bartender says, we only go to point zero zero five. The machinist says, unacceptable.',
-    'Why do machinists make great musicians? Because they always find the groove.',
-    'What did the drill press say to the end mill? Stop boring me.',
-    'Why do CNC programmers never get lost? They always know their home position.',
-    'What is a machinists favorite movie? The Cutting Edge. Obviously.',
-    'Why did the machinist stare at the orange juice? The label said concentrate.',
-  ];
-
-  function buildFloorReport(){
-    var f=getFloor(), s=getStats();
+  // ── CONTENT ───────────────────────────────────────────────
+  var _turn=0;
+  function report(){
+    var f=flr(),s=sts();
     var out=[];
-    var total=f.running.length+f.pending.length+f.machinist.length+f.inspection.length+f.floorSupport.length+f.onHold.length;
-
-    out.push(pick([
-      'Here is your floor update.',
-      'Let me check in on the shop.',
-      'Alright, here is what is happening on the floor.',
-      'Quick floor check for Hill Manufacturing.',
-      'This is Sparky. Here is the rundown.',
-    ]));
-
-    if(total===0){
-      out.push(pick(['Floor is clean right now. Nothing active.','No open requests on the board. Quiet moment.','Everything is clear. Enjoy it.']));
-    } else {
-      if(f.running.length>0){
-        var sorted=f.running.slice().sort(function(a,b){return b.elapsed-a.elapsed;});
-        if(f.running.length===1){
-          var j=sorted[0];
-          out.push(j.firstName+' is running on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.op?', operation '+j.op:'')+(j.elapsedStr?' — '+j.elapsedStr+' so far.':'.'));
-        } else {
-          out.push(f.running.length+' jobs running right now.');
-          sorted.slice(0,3).forEach(function(j){
-            out.push(j.firstName+' on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.elapsedStr?', '+j.elapsedStr+' in':'')+'.');
-          });
-        }
-      }
-      if(f.onHold.length>0) f.onHold.forEach(function(j){
-        out.push(j.machine+' is on hold'+(j.holdReason?' — '+j.holdReason:'')+'. '+j.firstName+' is waiting.');
-      });
-      if(f.pending.length>0){
-        var names=f.pending.map(function(p){return p.firstName+' on '+p.machine;}).join(', ');
-        out.push(f.pending.length+' machine'+(f.pending.length>1?'s':'')+' waiting on setup — '+names+'. Tooling crew, that is yours.');
-      }
-      if(f.machinist.length>0) f.machinist.forEach(function(r){
-        out.push(r.firstName+' at '+r.machine+' needs '+(r.detail||'something')+(r.wo?', work order '+r.wo:'')+'. Someone go help.');
-      });
-      if(f.floorSupport.length>0) f.floorSupport.forEach(function(r){
-        out.push('Floor support at '+r.machine+'. '+r.firstName+' is waiting'+(r.detail?' — '+r.detail:'')+'. Go check it out.');
-      });
-      if(f.inspection.length>0) f.inspection.forEach(function(r){
-        out.push('Quality team — '+r.firstName+' on '+r.machine+' has parts ready'+(r.wo?', work order '+r.wo:'')+'. Do not let that sit.');
-      });
+    _turn=(_turn+1)%7;
+    out.push(pick(['Floor update.','Here is what is happening.','Checking in on the shop.','Your floor report.','This is Sparky.']));
+    var tot=f.run.length+f.pend.length+f.mach.length+f.insp.length+f.supp.length+f.hold.length;
+    if(tot===0){out.push(pick(['Floor is clear. Nothing active.','No open requests right now.','Clean board. Enjoy it.']));}
+    else{
+      if(f.run.length>0){var sr=f.run.slice().sort(function(a,b){return b.e-a.e;});if(f.run.length===1){var j=sr[0];out.push(j.name+' running on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.et?', '+j.et+' so far':'')+'.');}else{out.push(f.run.length+' jobs running.');sr.slice(0,3).forEach(function(j){out.push(j.name+' on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.et?', '+j.et:'')+'.');});}}
+      if(f.hold.length>0)f.hold.forEach(function(j){out.push(j.machine+' on hold'+(j.hr?' — '+j.hr:'')+'. '+j.name+' waiting.');});
+      if(f.pend.length>0)out.push(f.pend.length+' machine'+(f.pend.length>1?'s':'')+' waiting on setup — '+f.pend.map(function(p){return p.name+' on '+p.machine;}).join(', ')+'. Tooling, that is yours.');
+      if(f.mach.length>0)f.mach.forEach(function(r){out.push(r.name+' at '+r.machine+' needs '+(r.detail||'something')+'. Someone go help.');});
+      if(f.supp.length>0)f.supp.forEach(function(r){out.push('Floor support at '+r.machine+'. '+r.name+' is waiting.');});
+      if(f.insp.length>0)f.insp.forEach(function(r){out.push('Quality — '+r.name+' on '+r.machine+' has parts ready. Do not let that sit.');});
     }
-
-    // Rotate: stats, shoutout, weather, sports, joke
-    _reportTurn=(_reportTurn+1)%6;
-    if(_reportTurn===1&&s.today>0){
-      out.push(s.today+' requests handled today, '+s.week+' this week. '+s.completedToday+' closed out. That is '+s.minutesSaved+' minutes of machine time saved and about '+s.dollarsSaved+' dollars at shop rate.');
-    }
-    if(_reportTurn===2&&s.topOperator&&s.topOperatorCount>=2){
-      out.push('Shoutout to '+s.topOperator+' — '+s.topOperatorCount+' requests logged. Leading the board. Keep it up.');
-    }
-    if(_reportTurn===3&&_weather){
-      out.push('Tulsa weather — '+_weather.temp+' degrees right now, '+_weather.desc.toLowerCase()+'. High of '+_weather.todayHigh+', low of '+_weather.todayLow+'. Tomorrow '+_weather.tomorrowName+' looking at '+_weather.tomorrowHigh+'.');
-    }
-    if(_reportTurn===4&&_sports&&_sports.length>0){
-      out.push('Sports update. '+_sports.slice(0,2).join(' '));
-    }
-    if(_reportTurn===5){
-      out.push(pick(_jokes));
-    }
-
-    out.push(pick(['That is the update.','Keep it moving.','Stay on it.','Back to work.','That is the floor.']));
+    if(_turn===1&&s.td>0)out.push(s.td+' requests today, '+s.wk+' this week. '+s.done+' completed — '+s.saved+' minutes saved, about '+s.dol+' dollars at shop rate.');
+    if(_turn===2&&s.top&&s.topN>=2)out.push('Shoutout to '+s.top+' — '+s.topN+' requests logged. Top of the board. Keep it up.');
+    if(_turn===3&&_wx)out.push('Tulsa weather — '+_wx.temp+' degrees, '+_wx.desc.toLowerCase()+'. High '+_wx.hi+', low '+_wx.lo+'. Tomorrow '+_wx.tmr+', '+_wx.tmrHi+'.');
+    if(_turn===4&&_sp&&_sp.length)out.push('Sports. '+_sp.slice(0,2).join(' '));
+    if(_turn===5)out.push(pick(JOKES));
+    out.push(pick(['That is the update.','Keep moving.','Stay on it.','Back to it.']));
     return out.join(' ');
   }
 
-  var _introTurn=0;
-  function buildSongIntro(song){
-    var f=getFloor(), s=getStats();
-    var emp=pickEmp();
-    var title=song.title||'this next track';
-    var artist=song.artist||'';
-    var songLine=artist?title+' by '+artist:title;
-    _introTurn=(_introTurn+1)%8;
-
-    var intros=[
-      emp.name+' from '+emp.city+' has a request for the whole Hill Manufacturing crew. Up next — '+songLine+'. '+emp.name+' says keep pushing, this one is for you.',
-      'Next up on Hill Manufacturing Radio — '+songLine+'. This one goes out to every person on the floor today.',
-      'We got a dedication coming in. '+emp.name+' out of '+emp.city+' requested '+songLine+' for the Hill crew. Here it is.',
-      'Upper management just called it in. They want everyone to hear '+songLine+'. No complaints — just good music.',
-      emp.name+' from '+emp.city+' phoned it in. The request is '+songLine+'. Hill Manufacturing does not stop, and neither does the music.',
-      'Dedicated to every machinist and operator keeping this shop moving. '+songLine+' — coming at you right now.',
-      'Alright, '+emp.name+' says the crew has been putting in serious work. So here you go — '+songLine+'.',
-      'Hill Manufacturing Radio, keeping the floor moving. Next up — '+songLine+'.',
+  var _it=0;
+  function intro(song){
+    var f=flr(),s=sts(),e=emp();
+    var sl=song.title+(song.artist?' by '+song.artist:'');
+    _it=(_it+1)%8;
+    var lines=[
+      e.n+' from '+e.c+' Oklahoma has a request for Hill Manufacturing. Coming up — '+sl+'. '+e.n+' says keep pushing, this one is for you.',
+      'Next on Hill Manufacturing Radio — '+sl+'. Goes out to every person on the floor today.',
+      e.n+' out of '+e.c+' requested '+sl+' for the Hill crew. Here it is.',
+      'Upper management called it in. Everyone needs to hear '+sl+'. No complaints, just good music.',
+      'This one is for every machinist and operator keeping Hill running. '+sl+' — coming at you.',
+      e.n+' from '+e.c+' says the crew has been putting in work. So here you go — '+sl+'.',
+      'Hill Manufacturing Radio. Next track — '+sl+'.',
+      'Dedicated to the whole Hill floor. '+sl+' — let it ride.',
     ];
-
-    var intro=intros[_introTurn%intros.length];
-
-    if(f.running.length>0){
-      var j=f.running[Math.floor(Math.random()*f.running.length)];
-      intro+=pick([
-        ' Shoutout to '+j.firstName+' on '+j.machine+(j.wo?', work order '+j.wo:'')+' — keep it going.',
-        ' '+j.firstName+' on '+j.machine+' is putting in work'+(j.elapsedStr?', '+j.elapsedStr+' in':'')+'. That is dedication.',
-      ]);
-    } else if(s.today>0){
-      intro+=' '+s.today+' requests handled today. Good work out there.';
-    }
-    return intro;
-  }
-
-  // ── AUDIO PLAY ────────────────────────────────────────────
-  function playAudio(url){
-    return new Promise(function(resolve){
-      // Stop any existing audio
-      if(_audioEl){try{_audioEl.pause();_audioEl.src='';}catch(e){}}
-
-      var audio=new Audio();
-      _audioEl=audio;
-      audio.volume=0.8;
-      audio.preload='auto';
-
-      var done=false;
-      function finish(){if(!done){done=true;resolve();}}
-
-      audio.addEventListener('ended', finish);
-      audio.addEventListener('error', function(e){
-        console.log('Song error:',e.type||e.message);
-        finish();
-      });
-      audio.addEventListener('canplay', function(){
-        audio.play().then(function(){
-          console.log('Playing song');
-        }).catch(function(e){
-          console.log('play() failed:',e.message);
-          finish();
-        });
-      });
-
-      audio.src=url;
-      audio.load();
-
-      // Max 10 min per song
-      setTimeout(finish, 600000);
-    });
+    var txt=lines[_it%lines.length];
+    if(f.run.length>0){var j=f.run[0];txt+=' Shoutout to '+j.name+' on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.et?', '+j.et+' in':'')+'. Keep going.';}
+    else if(s.td>0){txt+=' '+s.td+' requests handled today. Good work.';}
+    return txt;
   }
 
   // ── MAIN LOOP ─────────────────────────────────────────────
-  async function radioLoop(){
-    if(!_active) return;
-
-    if(_songList.length>0){
-      // Get next song
-      var song=_songList[_currentSong%_songList.length];
-      _currentSong=(_currentSong+1)%_songList.length;
-
-      // Introduce song
-      var intro=buildSongIntro(song);
-      await speak(intro);
-      if(!_active) return;
-
-      // Play full song
-      updateStatus('♪ '+songLine(song));
-      await playAudio(song.url);
-      if(!_active) return;
-
-      // Floor report after song
-      var report=buildFloorReport();
-      await speak(report);
-
-    } else {
-      // No songs — just talk, then wait 2 minutes
-      var report=buildFloorReport();
-      await speak(report);
-      updateStatus('Next update in 2 minutes');
-      await new Promise(function(resolve){
-        _loopTimer=setTimeout(resolve, 120000);
-      });
-    }
-
-    if(_active) radioLoop();
-  }
-
-  function songLine(s){ return s.title+(s.artist?' — '+s.artist:''); }
-
-  // ── UI ────────────────────────────────────────────────────
-  function updateStatus(txt){
-    var el=document.getElementById('sparky-status-text');
-    if(el) el.textContent=txt;
-  }
-
-  function updateSparkyBtn(){
-    var onair=document.getElementById('sparky-onair');
-    var pulse=document.getElementById('sparky-pulse');
-    var toggle=document.getElementById('sparky-main-toggle');
-    if(_active){
-      if(onair) onair.style.display='inline-block';
-      if(pulse)  pulse.style.display='block';
-      if(toggle){toggle.textContent='ON';toggle.style.background='linear-gradient(135deg,#dc2626,#ef4444)';}
-      updateStatus('🎙️ Sparky is starting...');
-    } else {
-      if(onair) onair.style.display='none';
-      if(pulse)  pulse.style.display='none';
-      if(toggle){toggle.textContent='OFF';toggle.style.background='linear-gradient(135deg,#7c3aed,#8b5cf6)';}
-      updateStatus('TAP TO ACTIVATE SPARKY');
-    }
-  }
-
-  // ── STARTUP ───────────────────────────────────────────────
-  async function startSparky(){
-    if(_active) return;
-    _active=true;
-    updateSparkyBtn();
-
-    // Try loading songs from Firebase Storage
-    await _loadSongsFromFirebase();
-
-    // Fetch weather and sports in background
-    fetchWeather().catch(function(){});
-    fetchSports().catch(function(){});
-
-    // Greet immediately
-    var h=new Date().getHours();
-    var tod=h<10?'morning':h<14?'afternoon':h<17?'afternoon':'evening';
-    var s=getStats();
-    var greeting='Good '+tod+'. You are listening to Hill Manufacturing Radio. I am Sparky, your host. ';
-    if(s.today>0) greeting+='We have handled '+s.today+' request'+(s.today!==1?'s':'')+' today. ';
-    if(_songList.length>0) greeting+='I have got '+_songList.length+' song'+(s.today!==1?'s':'')+' in the rotation for you. ';
-    greeting+='Let me give you the floor update and then we will get the music going.';
-
-    await speak(greeting);
-    radioLoop();
-  }
-
-  // ── LOAD SONGS FROM FIREBASE STORAGE ─────────────────────
-  var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
-
-  // ── KNOWN SONGS (Sparky announces these by name) ──────────
-  // To add a song: upload the MP3 to GitHub AND add a line here
-  var KNOWN_SONGS = [
-    { title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen%20Bohemian%20Rhapsody%20%28Official%20Video%20Remastered%29.mp3' },
-    { title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20%28Official%20Audio%29.mp3' },
-    { title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl%20Jam%20-%20Even%20Flow%20%28Official%20Video%29.mp3' },
-    { title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20%28Lyrics%29.mp3' },
-    { title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20%28Official%20Video%29%20%5B4K%5D.mp3' },
-    // ADD NEW SONGS BELOW — Sparky will announce them automatically:
-    // { title:'Song Title', artist:'Artist Name', url:BASE+'Encoded+Filename.mp3' },
-  ];
-
-  // Parses title/artist from filename for any song not in KNOWN_SONGS
-  function _parseFilename(fname){
-    var raw = decodeURIComponent(fname).replace(/\.mp3$/i,'').replace(/_/g,' ')
-      .replace(/\s*\(Official.*$/i,'').replace(/\s*\[.*?\]/g,'')
-      .replace(/\s*4K\s*/gi,'').replace(/\s*Lyrics\s*/gi,'')
-      .replace(/\s*Audio\s*/gi,'').replace(/\s*Video\s*/gi,'')
-      .replace(/^\d+\s*/,'').trim();
-    var title=raw, artist='';
-    var dash=raw.indexOf(' - ');
-    if(dash>0){artist=raw.slice(0,dash).trim();title=raw.slice(dash+3).trim();}
-    return {title:title||raw, artist:artist};
-  }
-
-  async function _loadSongsFromFirebase(){
-    var loaded = [];
-
-    // Try GitHub API — automatically picks up ANY new MP3 you upload to the repo
-    try{
-      var r = await fetch('https://api.github.com/repos/miguelstulsa/Shop-floor-app/contents/', {
-        headers:{'Accept':'application/vnd.github.v3+json'}
-      });
-      if(r.ok){
-        var files = await r.json();
-        var mp3s  = (Array.isArray(files)?files:[]).filter(function(f){
-          return f.name && f.name.toLowerCase().endsWith('.mp3');
+  function loop(){
+    if(!_on)return;
+    var song=SONGS[_idx%SONGS.length];
+    _idx=(_idx+1)%SONGS.length;
+    // Step 1: say intro
+    stat('🎙️ Sparky is talking...');
+    say(intro(song), function(){
+      if(!_on)return;
+      // Step 2: play song
+      stat('♪ '+song.title+' — '+song.artist);
+      playSong(song, function(){
+        if(!_on)return;
+        // Step 3: say report
+        stat('🎙️ Sparky is talking...');
+        say(report(), function(){
+          if(!_on)return;
+          // Step 4: next song
+          setTimeout(loop, 800);
         });
-        mp3s.forEach(function(f){
-          // Use known metadata if available, otherwise parse from filename
-          var known = KNOWN_SONGS.find(function(s){
-            return s.url.toLowerCase().indexOf(f.name.toLowerCase()) >= 0 ||
-                   s.url.indexOf(encodeURIComponent(f.name)) >= 0;
-          });
-          if(known){
-            loaded.push(known);
-          } else {
-            var info = _parseFilename(f.name);
-            loaded.push({title:info.title, artist:info.artist, url:BASE+encodeURIComponent(f.name)});
-          }
-        });
-        if(loaded.length>0) console.log('Sparky: auto-loaded',loaded.length,'songs from GitHub');
-      }
-    }catch(e){console.log('GitHub API fallback');}
-
-    // Fallback to known list if GitHub API fails
-    if(loaded.length===0) loaded = KNOWN_SONGS.slice();
-
-    if(loaded.length>0){
-      _songList=loaded.sort(function(){return Math.random()-0.5;});
-      _updateSongListUI();
-      console.log('Sparky: loaded',_songList.length,'songs');
-    }
-  }
-
-  function _parseTrackName(filename){
-    var raw=filename.replace(/\.[^.]+$/,'').replace(/_/g,' ')
-      .replace(/\s*\(Official.*$/i,'').replace(/\s*\[.*?\]/g,'')
-      .replace(/\s*4K\s*/gi,'').replace(/^\d+\s*_?\s*/,'').trim();
-    var title=raw,artist='';
-    var dash=raw.indexOf(' - ');
-    if(dash>0){artist=raw.slice(0,dash).trim();title=raw.slice(dash+3).trim();}
-    return{title:title,artist:artist};
-  }
-
-  // Upload songs to Firebase Storage
-  window._uploadSparkyMusic=async function(files){
-    if(!files||!files.length) return;
-    var storage=window.fbStorage,mods=window.fbStorageModules;
-    if(!storage||!mods){
-      if(window.showToast) window.showToast('red','Storage not ready','Check Firebase Storage rules');
-      return;
-    }
-    var added=0;
-    for(var i=0;i<files.length;i++){
-      var file=files[i];
-      if(!file.type.startsWith('audio/')) continue;
-      var info=_parseTrackName(file.name);
-      if(window.showToast) window.showToast('blue','Uploading...',''+info.title);
-      try{
-        var fileRef=mods.ref(storage,'music/'+file.name);
-        await mods.uploadBytes(fileRef,file,{contentType:'audio/mpeg'});
-        var url=await mods.getDownloadURL(fileRef);
-        _songList.push({title:info.title,artist:info.artist,url:url});
-        added++;
-        if(window.showToast) window.showToast('green','✓ Uploaded!',''+info.title+' — saved permanently');
-      }catch(e){
-        if(window.showToast) window.showToast('red','Upload failed',e.message);
-      }
-    }
-    if(added>0) _updateSongListUI();
-  };
-
-  function _updateSongListUI(){
-    var el=document.getElementById('sparky-song-list');
-    if(!el) return;
-    if(_songList.length===0){
-      el.innerHTML='<div style="font-size:11px;color:#334155;padding:4px 0;">No songs — upload MP3s above</div>';
-      return;
-    }
-    el.innerHTML=_songList.map(function(s,i){
-      return '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid rgba(30,58,92,0.3);">'
-        +'<span>&#127925;</span>'
-        +'<span style="font-size:11px;color:#94a3b8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
-        +s.title+(s.artist?' — '+s.artist:'')+'</span>'
-        +'<button onclick="event.stopPropagation();window._removeSong('+i+')" style="background:none;border:none;color:#475569;cursor:pointer;">&#10005;</button>'
-        +'</div>';
-    }).join('');
-  }
-
-  window._removeSong=function(idx){
-    _songList.splice(idx,1);
-    _updateSongListUI();
-  };
-
-  // ── MUTE (local only — others not affected) ─────────────
-  var _muted = false;
-  window._sparkyMute = function(){
-    _muted = !_muted;
-    if(_audioEl) _audioEl.volume = _muted ? 0 : 0.8;
-    var btn = document.getElementById('sparky-mute-btn');
-    if(btn) btn.textContent = _muted ? '🔇 UNMUTE' : '🔊 MUTE';
-    if(btn) btn.style.opacity = _muted ? '0.6' : '1';
-    if(window.showToast) window.showToast(_muted?'yellow':'green', _muted?'🔇 You are muted':'🔊 Unmuted', _muted?'Sparky keeps running for everyone else':'');
-  };
-
-  // ── FIREBASE SHARED STATE ─────────────────────────────────
-  // When admin taps Sparky → Firebase updates → all devices auto-start
-  function _pushState(on){
-    var db2=window.fbDb,mods=window._fbModules;
-    if(!db2||!mods) return;
-    mods.setDoc(mods.doc(db2,'hillSettings','sparkyState'),{
-      active:on, updatedAt:mods.serverTimestamp(), by:window.currentUser||'admin'
-    }).catch(function(){});
-  }
-
-  function _startListening(){
-    var db2=window.fbDb,mods=window._fbModules;
-    if(!db2||!mods){setTimeout(_startListening,1500);return;}
-    mods.onSnapshot(mods.doc(db2,'hillSettings','sparkyState'),function(snap){
-      if(!snap||!snap.exists||!snap.exists()) return;
-      var on=snap.data().active===true;
-      if(on&&!_active){
-        // Auto-start on all devices when admin activates
-        _unlockAndStart();
-      } else if(!on&&_active){
-        _active=false;
-        if(window.speechSynthesis) window.speechSynthesis.cancel();
-        if(_audioEl){try{_audioEl.pause();_audioEl.src='';}catch(e){}}
-        updateSparkyBtn();
-      }
+      });
     });
   }
 
-  function _unlockAndStart(){
-    try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var buf=ctx.createBuffer(1,1,22050);var src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);src.start(0);}catch(e){}
-    if(window.speechSynthesis) window.speechSynthesis.getVoices();
-    startSparky();
+  // ── UI ────────────────────────────────────────────────────
+  function stat(t){var el=document.getElementById('sparky-status-text');if(el)el.textContent=t;}
+  function badge(on){
+    var oa=document.getElementById('sparky-onair'),pu=document.getElementById('sparky-pulse'),tg=document.getElementById('sparky-main-toggle');
+    if(oa)oa.style.display=on?'inline-block':'none';
+    if(pu)pu.style.display=on?'block':'none';
+    if(tg){tg.textContent=on?'ON':'OFF';tg.style.background=on?'linear-gradient(135deg,#dc2626,#ef4444)':'linear-gradient(135deg,#7c3aed,#8b5cf6)';}
+    if(!on)stat('TAP TO ACTIVATE SPARKY');
   }
 
-  // Start Firebase listener as soon as ready
-  var _stateTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_stateTimer);_startListening();}},1000);
+  // ── ACTIVATE ──────────────────────────────────────────────
+  function start(){
+    if(_on)return;
+    _on=true;
+    badge(true);
+    var h=new Date().getHours();
+    var tod=h<10?'morning':h<14?'afternoon':h<17?'afternoon':'evening';
+    var s=sts(),f=flr();
+    var g='Good '+tod+'. Hill Manufacturing Radio, I am Sparky. ';
+    if(s.td>0)g+='We have handled '+s.td+' request'+(s.td!==1?'s':'')+' today. ';
+    if(f.run.length+f.pend.length>0)g+=(f.run.length+f.pend.length)+' jobs on the floor. ';
+    g+='Let me get the music started.';
+    stat('🎙️ Sparky is talking...');
+    say(g, function(){if(_on)loop();});
+  }
 
-  // ── BUTTON CONTROLS ───────────────────────────────────────
+  // ── FIREBASE SYNC ─────────────────────────────────────────
+  function pushState(on){var db=window.fbDb,m=window._fbModules;if(!db||!m)return;m.setDoc(m.doc(db,'hillSettings','sparkyState'),{active:on,updatedAt:m.serverTimestamp(),by:window.currentUser||'admin'}).catch(function(){});}
+  var _li=setInterval(function(){
+    var db=window.fbDb,m=window._fbModules;
+    if(!db||!m)return;
+    clearInterval(_li);
+    m.onSnapshot(m.doc(db,'hillSettings','sparkyState'),function(snap){
+      if(!snap||!snap.exists||!snap.exists())return;
+      var on=snap.data().active===true;
+      if(on&&!_on&&_audio){start();}
+      else if(!on&&_on){_on=false;if(window.speechSynthesis)window.speechSynthesis.cancel();if(_audio){_audio.pause();_audio.src='';}badge(false);}
+    });
+  },1000);
+
+  // ── CONTROLS ──────────────────────────────────────────────
   window._sparkyButtonTap=function(){
-    if(!_active){
-      _unlockAndStart();
-      _pushState(true);
+    // THIS is the user gesture — create and unlock audio RIGHT HERE
+    if(!_audio){
+      _audio=new Audio();
+      _audio.volume=0.8;
+      // Play a silent sound to unlock — THIS makes all future .play() calls work on Safari
+      _audio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      _audio.play().then(function(){_audio.src='';}).catch(function(){});
+    }
+    if(window.speechSynthesis) window.speechSynthesis.getVoices();
+    if(!_on){
+      start();
+      pushState(true);
     } else {
-      if(!_speaking) speak(buildFloorReport());
+      // Already on — trigger floor report
+      say(report(), function(){});
     }
   };
-  window._djNow=function(){
-    if(!_speaking) speak(buildFloorReport());
+
+  window._djToggle=function(){
+    if(_on){
+      _on=false;
+      if(window.speechSynthesis)window.speechSynthesis.cancel();
+      if(_audio){_audio.pause();_audio.src='';}
+      pushState(false);
+      badge(false);
+    } else {
+      window._sparkyButtonTap();
+    }
   };
 
+  window._djNow=function(){say(report(),function(){});};
   window._djSetInterval=function(){};
+  window._uploadSparkyMusic=function(){};
+  window._removeSong=function(){};
 
-  window._jimSetKey=function(key,voiceId){
-    ELEVEN_API_KEY=key||ELEVEN_API_KEY;
-    ELEVEN_VOICE_ID=voiceId||ELEVEN_VOICE_ID;
-    localStorage.setItem('jimKey',ELEVEN_API_KEY);
-    localStorage.setItem('jimVoice',ELEVEN_VOICE_ID);
-    if(window.showToast) window.showToast('green','Sparky voice updated','');
+  window._sparkyMute=function(){
+    _muted=!_muted;
+    if(_audio)_audio.volume=_muted?0:0.8;
+    var btn=document.getElementById('sparky-mute-btn');
+    if(btn)btn.textContent=_muted?'🔇 UNMUTE':'🔊 MUTE';
+    if(btn)btn.style.opacity=_muted?'0.5':'1';
+    if(window.showToast)window.showToast(_muted?'yellow':'green',_muted?'🔇 You are muted':'🔊 Unmuted','');
   };
 
-  var _sk=localStorage.getItem('jimKey'),_sv=localStorage.getItem('jimVoice');
-  if(_sk) ELEVEN_API_KEY=_sk;
-  if(_sv) ELEVEN_VOICE_ID=_sv;
-
-  // ── EVENT HOOKS (requests, start, comments) ───────────────
   window._djAnnounceNew=function(n){
-    if(!n||_speaking) return;
+    if(!n)return;
     var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'someone';
     var wo=n.wo?'work order '+n.wo:'',detail=n.detail||'';
-    var lines={
-      blue:['New setup request. '+name+' on '+machine+(wo?', '+wo:'')+' is ready to run. Tooling, you are up.',
-            name+' on '+machine+' needs setup'+(wo?', '+wo:'')+'. Who is getting over there?'],
-      yellow:[name+' at '+machine+' put in a machinist request'+(detail?' — '+detail:'')+'. '+(wo||'')+' Someone go help.',
-              machine+' needs something. '+name+(detail?' needs '+detail:' put in a request')+'.'],
-      orange:['Floor support at '+machine+'. '+name+' is calling'+(detail?' — '+detail:'')+'. Go now.'],
-      red:['Quality team — '+name+' on '+machine+' has parts ready for inspection. '+(wo||'')+' Do not let that sit.']
-    };
-    speak(pick(lines[n.type]||lines.yellow));
+    var lines={blue:['Setup request. '+name+' on '+machine+(wo?', '+wo:'')+' is ready. Tooling, you are up.'],yellow:[name+' at '+machine+' needs '+(detail||'something')+'. Someone go help.'],orange:['Floor support at '+machine+'. '+name+' is waiting.'],red:['Quality — '+name+' on '+machine+' has parts ready. Do not let that sit.']};
+    say(pick(lines[n.type]||lines.yellow),function(){});
   };
-
   window._djAnnounceStart=function(n){
-    if(!n||_speaking) return;
+    if(!n)return;
     var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'the operator';
-    var wo=n.wo?'work order '+n.wo:'the job',opn=n.op?', operation '+n.op:'';
-    speak(pick([
-      'Timer started. Miguel is on '+machine+' — setting up '+wo+opn+'. '+name+', you will be cutting soon.',
-      'Setup underway on '+machine+'. Miguel clocked in on '+wo+opn+'. '+name+', stand by.',
-      machine+' getting set up. Miguel is on it — '+wo+opn+'. '+name+', get ready.',
-    ]));
+    say(pick(['Timer started. Miguel on '+machine+', setting up '+(n.wo?'work order '+n.wo:'the job')+(n.op?', operation '+n.op:'')+'. '+name+', you will be cutting soon.','Setup underway on '+machine+'. Miguel clocked in. '+name+', stand by.']),function(){});
   };
-
   window._djAnnouncePending=window._djAnnounceNew;
-
   window._djAnnounceComment=function(noteId,text,machine,wo,author){
-    if(!text||text.length<3||_speaking) return;
-    var m=mn(machine),isAdmin=!!(window._isAdmin||window.currentUser==='hilladmin');
-    var name=author?author.split(' ')[0]:'someone';
-    speak(pick(isAdmin?[
-      'Message from Miguel to '+m+': '+text,
-      m+', Miguel says: '+text,
-    ]:[
-      name+' at '+m+' says: '+text,
-      'Update from '+m+'. '+name+' says: '+text,
-    ]));
+    if(!text||text.length<3)return;
+    var m=mn(machine),isAdmin=!!(window._isAdmin||window.currentUser==='hilladmin'),name=author?author.split(' ')[0]:'someone';
+    say(pick(isAdmin?['Message from Miguel to '+m+': '+text,m+', Miguel says: '+text]:[name+' at '+m+' says: '+text,'Update from '+m+'. '+name+': '+text]),function(){});
   };
+  window._jimSetKey=function(k,v){EL_KEY=k||EL_KEY;EL_VOICE=v||EL_VOICE;localStorage.setItem('jimKey',EL_KEY);localStorage.setItem('jimVoice',EL_VOICE);};
+  var _sk=localStorage.getItem('jimKey'),_sv=localStorage.getItem('jimVoice');
+  if(_sk)EL_KEY=_sk;if(_sv)EL_VOICE=_sv;
 
-  // Init
-  updateSparkyBtn();
-  _updateSongListUI();
+  badge(false);
 
 })();
 </script>
