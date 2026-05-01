@@ -11531,12 +11531,13 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── LOAD SONGS FROM FIREBASE STORAGE ─────────────────────
   // Hardcoded song list — songs served from GitHub repo /music/ folder
   // To add songs: upload MP3s to miguelstulsa.github.io/Shop-floor-app/music/
+  var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var GITHUB_SONGS = [
-    { title:'Bohemian Rhapsody', artist:'Queen',               url:'https://miguelstulsa.github.io/Shop-floor-app/music/song1.mp3' },
-    { title:'Neon Moon',         artist:'Brooks and Dunn',      url:'https://miguelstulsa.github.io/Shop-floor-app/music/song2.mp3' },
-    { title:'Even Flow',         artist:'Pearl Jam',            url:'https://miguelstulsa.github.io/Shop-floor-app/music/song3.mp3' },
-    { title:'I Never Lie',       artist:'Zach Top',             url:'https://miguelstulsa.github.io/Shop-floor-app/music/song4.mp3' },
-    { title:'Juicy',             artist:'The Notorious B.I.G.', url:'https://miguelstulsa.github.io/Shop-floor-app/music/song5.mp3' },
+    { title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen%20Bohemian%20Rhapsody%20%28Official%20Video%20Remastered%29.mp3' },
+    { title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20%28Official%20Audio%29.mp3' },
+    { title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl%20Jam%20-%20Even%20Flow%20%28Official%20Video%29.mp3' },
+    { title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20%28Lyrics%29.mp3' },
+    { title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20%28Official%20Video%29%20%5B4K%5D.mp3' },
   ];
 
   async function _loadSongsFromFirebase(){
