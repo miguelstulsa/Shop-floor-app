@@ -1212,6 +1212,7 @@
         <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">SPEAK</button>
         <button onclick="event.stopPropagation();if(window._sparkyNextSong)window._sparkyNextSong();" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Next song">&#9654;&#9654;</button>
         <button onclick="event.stopPropagation();if(window._sparkyMusicToggle)window._sparkyMusicToggle();" id="sparky-music-btn" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Toggle music">&#127925;</button>
+        <button id="sparky-mute-btn" onclick="event.stopPropagation();if(window._sparkyMute)window._sparkyMute();" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;letter-spacing:1px;">🔊 MUTE</button>
         <button id="sparky-main-toggle" onclick="event.stopPropagation();if(window._djToggle)window._djToggle();" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;min-width:38px;">OFF</button>
       </div>
     </div>
@@ -11529,40 +11530,65 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── LOAD SONGS FROM FIREBASE STORAGE ─────────────────────
-  // Hardcoded song list — songs served from GitHub repo /music/ folder
-  // To add songs: upload MP3s to miguelstulsa.github.io/Shop-floor-app/music/
   var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
-  var GITHUB_SONGS = [
+
+  // ── KNOWN SONGS (Sparky announces these by name) ──────────
+  // To add a song: upload the MP3 to GitHub AND add a line here
+  var KNOWN_SONGS = [
     { title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen%20Bohemian%20Rhapsody%20%28Official%20Video%20Remastered%29.mp3' },
     { title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20%28Official%20Audio%29.mp3' },
     { title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl%20Jam%20-%20Even%20Flow%20%28Official%20Video%29.mp3' },
     { title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20%28Lyrics%29.mp3' },
     { title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20%28Official%20Video%29%20%5B4K%5D.mp3' },
+    // ADD NEW SONGS BELOW — Sparky will announce them automatically:
+    // { title:'Song Title', artist:'Artist Name', url:BASE+'Encoded+Filename.mp3' },
   ];
 
+  // Parses title/artist from filename for any song not in KNOWN_SONGS
+  function _parseFilename(fname){
+    var raw = decodeURIComponent(fname).replace(/\.mp3$/i,'').replace(/_/g,' ')
+      .replace(/\s*\(Official.*$/i,'').replace(/\s*\[.*?\]/g,'')
+      .replace(/\s*4K\s*/gi,'').replace(/\s*Lyrics\s*/gi,'')
+      .replace(/\s*Audio\s*/gi,'').replace(/\s*Video\s*/gi,'')
+      .replace(/^\d+\s*/,'').trim();
+    var title=raw, artist='';
+    var dash=raw.indexOf(' - ');
+    if(dash>0){artist=raw.slice(0,dash).trim();title=raw.slice(dash+3).trim();}
+    return {title:title||raw, artist:artist};
+  }
+
   async function _loadSongsFromFirebase(){
-    // Try Firebase Storage first, fall back to GitHub
-    var storage=window.fbStorage, mods=window.fbStorageModules;
     var loaded = [];
 
-    if(storage && mods){
-      try{
-        var musicRef=mods.ref(storage,'music/');
-        var list=await mods.listAll(musicRef);
-        for(var i=0;i<(list.items||[]).length;i++){
-          try{
-            var url=await mods.getDownloadURL(list.items[i]);
-            var info=_parseTrackName(list.items[i].name);
-            loaded.push({title:info.title,artist:info.artist,url:url});
-          }catch(e){}
-        }
-      }catch(e){}
-    }
+    // Try GitHub API — automatically picks up ANY new MP3 you upload to the repo
+    try{
+      var r = await fetch('https://api.github.com/repos/miguelstulsa/Shop-floor-app/contents/', {
+        headers:{'Accept':'application/vnd.github.v3+json'}
+      });
+      if(r.ok){
+        var files = await r.json();
+        var mp3s  = (Array.isArray(files)?files:[]).filter(function(f){
+          return f.name && f.name.toLowerCase().endsWith('.mp3');
+        });
+        mp3s.forEach(function(f){
+          // Use known metadata if available, otherwise parse from filename
+          var known = KNOWN_SONGS.find(function(s){
+            return s.url.toLowerCase().indexOf(f.name.toLowerCase()) >= 0 ||
+                   s.url.indexOf(encodeURIComponent(f.name)) >= 0;
+          });
+          if(known){
+            loaded.push(known);
+          } else {
+            var info = _parseFilename(f.name);
+            loaded.push({title:info.title, artist:info.artist, url:BASE+encodeURIComponent(f.name)});
+          }
+        });
+        if(loaded.length>0) console.log('Sparky: auto-loaded',loaded.length,'songs from GitHub');
+      }
+    }catch(e){console.log('GitHub API fallback');}
 
-    // If Firebase has no songs, use GitHub-hosted songs
-    if(loaded.length===0){
-      loaded = GITHUB_SONGS.slice();
-    }
+    // Fallback to known list if GitHub API fails
+    if(loaded.length===0) loaded = KNOWN_SONGS.slice();
 
     if(loaded.length>0){
       _songList=loaded.sort(function(){return Math.random()-0.5;});
@@ -11631,40 +11657,63 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _updateSongListUI();
   };
 
+  // ── MUTE (local only — others not affected) ─────────────
+  var _muted = false;
+  window._sparkyMute = function(){
+    _muted = !_muted;
+    if(_audioEl) _audioEl.volume = _muted ? 0 : 0.8;
+    var btn = document.getElementById('sparky-mute-btn');
+    if(btn) btn.textContent = _muted ? '🔇 UNMUTE' : '🔊 MUTE';
+    if(btn) btn.style.opacity = _muted ? '0.6' : '1';
+    if(window.showToast) window.showToast(_muted?'yellow':'green', _muted?'🔇 You are muted':'🔊 Unmuted', _muted?'Sparky keeps running for everyone else':'');
+  };
+
+  // ── FIREBASE SHARED STATE ─────────────────────────────────
+  // When admin taps Sparky → Firebase updates → all devices auto-start
+  function _pushState(on){
+    var db2=window.fbDb,mods=window._fbModules;
+    if(!db2||!mods) return;
+    mods.setDoc(mods.doc(db2,'hillSettings','sparkyState'),{
+      active:on, updatedAt:mods.serverTimestamp(), by:window.currentUser||'admin'
+    }).catch(function(){});
+  }
+
+  function _startListening(){
+    var db2=window.fbDb,mods=window._fbModules;
+    if(!db2||!mods){setTimeout(_startListening,1500);return;}
+    mods.onSnapshot(mods.doc(db2,'hillSettings','sparkyState'),function(snap){
+      if(!snap||!snap.exists||!snap.exists()) return;
+      var on=snap.data().active===true;
+      if(on&&!_active){
+        // Auto-start on all devices when admin activates
+        _unlockAndStart();
+      } else if(!on&&_active){
+        _active=false;
+        if(window.speechSynthesis) window.speechSynthesis.cancel();
+        if(_audioEl){try{_audioEl.pause();_audioEl.src='';}catch(e){}}
+        updateSparkyBtn();
+      }
+    });
+  }
+
+  function _unlockAndStart(){
+    try{var ctx=new(window.AudioContext||window.webkitAudioContext)();var buf=ctx.createBuffer(1,1,22050);var src=ctx.createBufferSource();src.buffer=buf;src.connect(ctx.destination);src.start(0);}catch(e){}
+    if(window.speechSynthesis) window.speechSynthesis.getVoices();
+    startSparky();
+  }
+
+  // Start Firebase listener as soon as ready
+  var _stateTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_stateTimer);_startListening();}},1000);
+
   // ── BUTTON CONTROLS ───────────────────────────────────────
   window._sparkyButtonTap=function(){
     if(!_active){
-      // Unlock audio
-      try{
-        var ctx=new(window.AudioContext||window.webkitAudioContext)();
-        var buf=ctx.createBuffer(1,1,22050);
-        var src=ctx.createBufferSource();
-        src.buffer=buf;src.connect(ctx.destination);src.start(0);
-        ctx.resume();
-      }catch(e){}
-      // Load voices
-      if(window.speechSynthesis) window.speechSynthesis.getVoices();
-      startSparky();
+      _unlockAndStart();
+      _pushState(true);
     } else {
-      // Already on — speak right now
-      if(!_speaking){
-        speak(buildFloorReport());
-      }
+      if(!_speaking) speak(buildFloorReport());
     }
   };
-
-  window._djToggle=function(){
-    if(_active){
-      _active=false;
-      if(_loopTimer){clearTimeout(_loopTimer);_loopTimer=null;}
-      if(window.speechSynthesis) window.speechSynthesis.cancel();
-      if(_audioEl){try{_audioEl.pause();_audioEl.src='';}catch(e){}}
-    } else {
-      startSparky();
-    }
-    updateSparkyBtn();
-  };
-
   window._djNow=function(){
     if(!_speaking) speak(buildFloorReport());
   };
