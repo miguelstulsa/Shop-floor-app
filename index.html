@@ -11102,11 +11102,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── SONGS ─────────────────────────────────────────────────
   var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var SONGS = [
-    {title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen%20Bohemian%20Rhapsody%20%28Official%20Video%20Remastered%29.mp3'},
-    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20%28Official%20Audio%29.mp3'},
-    {title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl%20Jam%20-%20Even%20Flow%20%28Official%20Video%29.mp3'},
-    {title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20%28Lyrics%29.mp3'},
-    {title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20%28Official%20Video%29%20%5B4K%5D.mp3'},
+    {title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen+Bohemian+Rhapsody+(Official+Video+Remastered).mp3',     url2:BASE+'Queen%20Bohemian%20Rhapsody%20(Official%20Video%20Remastered).mp3'},
+    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks+%26+Dunn+-+Neon+Moon+(Official+Audio).mp3',           url2:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20(Official%20Audio).mp3'},
+    {title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl+Jam+-+Even+Flow+(Official+Video).mp3',                 url2:BASE+'Pearl%20Jam%20-%20Even%20Flow%20(Official%20Video).mp3'},
+    {title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach+Top+-+I+Never+Lie+(Lyrics).mp3',                       url2:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20(Lyrics).mp3'},
+    {title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The+Notorious+B.I.G.+-+Juicy+(Official+Video)+%5B4K%5D.mp3', url2:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20(Official%20Video)%20%5B4K%5D.mp3'},
   ];
 
   // ── HELPERS ───────────────────────────────────────────────
@@ -11170,23 +11170,35 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── MUSIC — use the persistent _audio element (unlocked on tap) ──
-  function playSong(song, onDone){
+  function playSong(song, onDone, useUrl2){
     if(!_audio){if(onDone)onDone();return;}
-    _audio.onended=function(){if(onDone)onDone();};
-    _audio.onerror=function(){if(onDone)onDone();};
+    var url = (useUrl2 && song.url2) ? song.url2 : song.url;
+    console.log('Loading song:', song.title, url.slice(-30));
+    var done=false;
+    function finish(){if(!done){done=true;if(onDone)onDone();}}
+    _audio.onended=finish;
+    _audio.onerror=function(e){
+      console.log('Audio error on',song.title,e.type||'');
+      // Try alternate URL if first one failed
+      if(!useUrl2 && song.url2){
+        console.log('Trying alternate URL for',song.title);
+        playSong(song, onDone, true);
+      } else {
+        console.log('Both URLs failed for',song.title,'— skipping');
+        finish();
+      }
+    };
     _audio.volume=_muted?0:0.8;
-    _audio.src=song.url;
+    _audio.src=url;
     _audio.load();
-    // oncanplay fires when buffer is ready
     _audio.oncanplay=function(){
       _audio.oncanplay=null;
       _audio.play().catch(function(e){
-        console.log('play failed:',e.message);
-        if(onDone)onDone();
+        console.log('play() blocked:',e.message);
+        finish();
       });
     };
-    // Timeout safety
-    setTimeout(function(){if(_audio.paused&&onDone){var cb=onDone;onDone=null;cb();}},600000);
+    setTimeout(finish, 600000);
   }
 
   // ── CONTENT ───────────────────────────────────────────────
