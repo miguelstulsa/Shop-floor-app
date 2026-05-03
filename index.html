@@ -11101,12 +11101,13 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── SONGS ─────────────────────────────────────────────────
   var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
+  var WORKER = 'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?n=';
   var SONGS = [
-    {title:'Bohemian Rhapsody', artist:'Queen',               url:BASE+'Queen%20Bohemian%20Rhapsody%20%28Official%20Video%20Remastered%29.mp3'},
-    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:BASE+'Brooks%20%26%20Dunn%20-%20Neon%20Moon%20%28Official%20Audio%29.mp3'},
-    {title:'Even Flow',         artist:'Pearl Jam',            url:BASE+'Pearl%20Jam%20-%20Even%20Flow%20%28Official%20Video%29.mp3'},
-    {title:'I Never Lie',       artist:'Zach Top',             url:BASE+'Zach%20Top%20-%20I%20Never%20Lie%20%28Lyrics%29.mp3'},
-    {title:'Juicy',             artist:'The Notorious B.I.G.', url:BASE+'The%20Notorious%20B.I.G.%20-%20Juicy%20%28Official%20Video%29%20%5B4K%5D.mp3'},
+    {title:'Bohemian Rhapsody', artist:'Queen',               url:WORKER+'Queen%20Bohemian%20Rhapsody'},
+    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:WORKER+'Brooks%20%26%20Dunn-%20neon%20moon'},
+    {title:'Even Flow',         artist:'Pearl Jam',            url:WORKER+'Pearl%20Jam%20-%20Even%20Flow'},
+    {title:'I Never Lie',       artist:'Zach Top',             url:WORKER+'Zach%20Top%20-%20I%20Never%20Lie'},
+    {title:'Juicy',             artist:'The Notorious B.I.G.', url:WORKER+'The%20Notorious%20B.I.G.%20-%20Juicy'},
   ];
 
   // ── HELPERS ───────────────────────────────────────────────
@@ -11171,19 +11172,41 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── MUSIC — use the persistent _audio element (unlocked on tap) ──
   function playSong(song, onDone){
+    console.log('Playing:', song.title);
     if(!_audio){if(onDone)onDone();return;}
-    console.log('Loading:', song.title);
     var done=false;
     function finish(){if(!done){done=true;if(onDone)onDone();}}
-    _audio.onended  = finish;
-    _audio.onerror  = function(e){ console.log('Song error:',song.title,e.type); finish(); };
-    _audio.volume   = _muted?0:0.8;
-    _audio.src      = song.url;
-    _audio.load();
-    _audio.oncanplay = function(){
-      _audio.oncanplay = null;
-      _audio.play().catch(function(e){ console.log('play blocked:',e.message); finish(); });
+
+    try{_audio.pause();}catch(e){}
+
+    // Clear handlers
+    _audio.onended   = null;
+    _audio.onerror   = null;
+    _audio.oncanplay = null;
+
+    _audio.volume    = _muted ? 0 : 0.8;
+
+    // Set src — Safari starts buffering automatically, no need to call load()
+    _audio.src = song.url;
+
+    _audio.onended = finish;
+    _audio.onerror = function(){
+      console.log('Error code:', _audio.error && _audio.error.code, 'URL:', song.url.slice(-60));
+      finish();
     };
+
+    // Use play() promise directly — it resolves when playback starts
+    var p = _audio.play();
+    if(p && p.catch){
+      p.catch(function(e){
+        console.log('play() failed:', e.message);
+        // One retry after a short delay
+        setTimeout(function(){
+          _audio.play().catch(function(){ finish(); });
+        }, 500);
+      });
+    }
+
     setTimeout(finish, 600000);
   }
 
