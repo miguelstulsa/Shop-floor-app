@@ -1252,7 +1252,7 @@
       <span class="sidebar-live-dot"></span>
       <span style="flex:1;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;">LIVE REQUEST FEED</span>
       <span id="sidebarCount" class="sidebar-count-badge" style="display:none">0</span>
-      <button onclick="scrollToSidebar()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:3px 10px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;margin-left:8px;flex-shrink:0;">✕ CLOSE</button>
+      <button onclick="window._closeSidebar()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:3px 10px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;margin-left:8px;flex-shrink:0;">✕ CLOSE</button>
     </div>
     <div id="notifBanner" class="notif-banner" onclick="enableNotifications()" style="display:none;">
       <p>📱 Enable phone notifications</p>
@@ -2738,7 +2738,21 @@
       if (p === 'granted') { document.getElementById('notifBanner').style.display = 'none'; showToast('green', '✅ Notifications enabled!', ''); }
     });
   }
-  function scrollToSidebar() {
+  window._closeSidebar = function(){
+    var sidebar = document.getElementById('sidebar');
+    if(sidebar){
+      sidebar.style.transform = '';
+      sidebar.style.display = 'none';
+      sidebar.classList.remove('active','open','visible','expanded');
+    }
+    var modal = document.getElementById('live-strip-modal');
+    if(modal) modal.style.display = 'none';
+    // Also close the live strip expanded state
+    var strip = document.querySelector('.live-strip');
+    if(strip) strip.classList.remove('expanded');
+  };
+
+    function scrollToSidebar() {
     var sidebar = document.getElementById('sidebar');
     var shopPage = document.getElementById('page-shop');
     if (!sidebar) return;
