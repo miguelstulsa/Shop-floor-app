@@ -3142,7 +3142,12 @@
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
       var annTab = document.getElementById('tab-announce');
-      if (annTab) annTab.style.display = '';
+      if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
+      // Force show after brief delay in case other code hides it
+      setTimeout(function(){
+        var a = document.getElementById('tab-announce');
+        if(a) a.style.display = 'flex';
+      }, 500);
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
       // Show QMI switch button for admin
