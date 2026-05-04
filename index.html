@@ -3141,6 +3141,8 @@
       // tab-mgmt, tab-proshop, tab-planner, tab-datanomix, tab-shoptv — demo only
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
+      var annTab = document.getElementById('tab-announce');
+      if (annTab) annTab.style.display = '';
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
       // Show QMI switch button for admin
@@ -11225,9 +11227,69 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── WEATHER / SPORTS ──────────────────────────────────────
-  var _wx=null,_sp=null;
-  fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/weather?city=Tulsa+Oklahoma').then(function(r){return r.json();}).then(function(d){var c=d.current_condition&&d.current_condition[0],t=d.weather&&d.weather[0],tm=d.weather&&d.weather[1];if(c&&t){var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];_wx={temp:parseInt(c.temp_F)||70,desc:(c.weatherDesc&&c.weatherDesc[0]&&c.weatherDesc[0].value)||'clear',hi:parseInt(t.maxtempF)||75,lo:parseInt(t.mintempF)||55,tmr:days[(new Date().getDay()+1)%7],tmrHi:tm?parseInt(tm.maxtempF)||75:75};}}).catch(function(){});
-  fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/sports?leagues=nba,mlb').then(function(r){return r.json();}).then(function(d){var res=[];function pr(evs,sp){(evs||[]).slice(0,2).forEach(function(e){var c=e.competitions&&e.competitions[0];if(!c)return;var t=c.competitors||[];if(t.length<2)return;var h=t.find(function(x){return x.homeAway==='home';})||t[1],aw=t.find(function(x){return x.homeAway==='away';})||t[0];var done=c.status&&c.status.type&&c.status.type.completed;var hn=(h.team&&h.team.shortDisplayName)||'Home',an=(aw.team&&aw.team.shortDisplayName)||'Away';if(done)res.push(sp+': '+an+' '+aw.score+', '+hn+' '+h.score+' final.');else res.push(sp+': '+an+' vs '+hn+'.');});}if(d.nba)pr(d.nba.events,'NBA');if(d.mlb)pr(d.mlb.events,'Baseball');_sp=res;}).catch(function(){});
+  var _wx=null,_sp=null,_wxFetched=0,_spFetched=0;
+
+  function fetchWeather(){ fetchData(); }
+  function fetchSports(){ fetchData(); }
+
+  var _dataFetched = 0;
+  function fetchData(){
+    if(Date.now()-_dataFetched < 600000) return;
+    _dataFetched = Date.now();
+
+    // First try to read cached data from Firebase (written by desktop/admin)
+    var db2=window.fbDb,mods=window._fbModules;
+    if(db2&&mods){
+      mods.getDoc(mods.doc(db2,'hillSettings','weatherSports')).then(function(snap){
+        if(snap&&snap.exists&&snap.exists()){
+          var d=snap.data();
+          if(d.wx){ _wx=d.wx; console.log('Weather from Firebase:',_wx.temp+'F'); }
+          if(d.sp){ _sp=d.sp; console.log('Sports from Firebase:',_sp.length,'items'); }
+        }
+      }).catch(function(){});
+    }
+
+    // Also try direct fetch (works on desktop, fails silently on iPhone due to CSP)
+    fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/data')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var wxData=null, spData=[];
+        if(d.wx){
+          var c=d.wx.current_condition&&d.wx.current_condition[0],t=d.wx.weather&&d.wx.weather[0],tm=d.wx.weather&&d.wx.weather[1];
+          if(c&&t){
+            var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            wxData={temp:parseInt(c.temp_F)||70,desc:(c.weatherDesc&&c.weatherDesc[0]&&c.weatherDesc[0].value)||'clear',hi:parseInt(t.maxtempF)||75,lo:parseInt(t.mintempF)||55,tmr:days[(new Date().getDay()+1)%7],tmrHi:tm?parseInt(tm.maxtempF)||75:75};
+            _wx=wxData;
+            console.log('Weather loaded:',_wx.temp+'F',_wx.desc);
+          }
+        }
+        if(d.sp){
+          var evs=(d.sp.events||[]);
+          evs.slice(0,3).forEach(function(e){
+            var c=e.competitions&&e.competitions[0];if(!c)return;
+            var t=c.competitors||[];if(t.length<2)return;
+            var h=t.find(function(x){return x.homeAway==='home';})||t[1],aw=t.find(function(x){return x.homeAway==='away';})||t[0];
+            var done=c.status&&c.status.type&&c.status.type.completed;
+            var hn=(h.team&&h.team.shortDisplayName)||'Home',an=(aw.team&&aw.team.shortDisplayName)||'Away';
+            if(done)spData.push('NBA: '+an+' '+aw.score+', '+hn+' '+h.score+' final.');
+            else spData.push('NBA: '+an+' vs '+hn+'.');
+          });
+          _sp=spData;
+        }
+        // Save to Firebase so phones can read it
+        if(db2&&mods&&(wxData||spData.length)){
+          mods.setDoc(mods.doc(db2,'hillSettings','weatherSports'),{
+            wx:wxData||_wx||null,
+            sp:spData.length?spData:(_sp||[]),
+            updatedAt:mods.serverTimestamp()
+          }).catch(function(){});
+        }
+      }).catch(function(e){ console.log('Data fetch (direct) failed:',e.message,'— using Firebase cache'); });
+  }
+
+  // Fetch on start and refresh every 10 min
+  fetchData();
+  setInterval(fetchData, 600000);
 
   // ── SPEECH — browser TTS, reliable on all phones ──────────
   function say(text, onDone){
@@ -11250,42 +11312,44 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── MUSIC — use the persistent _audio element (unlocked on tap) ──
   function playSong(song, onDone){
-    console.log('Playing:', song.title, '| url:', song.url ? song.url.slice(0,30) : 'MISSING');
-    if(!song.url){ console.log('No URL for',song.title,'— skipping'); if(onDone)onDone(); return; }
-    if(!_audio){if(onDone)onDone();return;}
+    console.log('Playing:', song.title);
+    if(!song.url){ if(onDone)onDone(); return; }
+    if(!_audio){ if(onDone)onDone(); return; }
+
     var done=false;
     function finish(){if(!done){done=true;if(onDone)onDone();}}
 
     try{_audio.pause();}catch(e){}
-
-    // Clear handlers
     _audio.onended   = null;
     _audio.onerror   = null;
     _audio.oncanplay = null;
 
-    _audio.volume    = _muted ? 0 : 0.8;
-
-    // Set src and load — needed for desktop browsers
-    _audio.src = song.url;
-    _audio.load();
-
+    _audio.volume = _muted ? 0 : 0.8;
+    _audio.src    = song.url;
     _audio.onended = finish;
     _audio.onerror = function(){
-      console.log('Error code:', _audio.error && _audio.error.code, 'URL:', song.url.slice(-60));
+      console.log('Song error:', song.title, _audio.error ? _audio.error.code : '');
       finish();
     };
 
-    // Use play() promise directly — it resolves when playback starts
-    var p = _audio.play();
-    if(p && p.catch){
-      p.catch(function(e){
-        console.log('play() failed:', e.message);
-        // One retry after a short delay
-        setTimeout(function(){
+    // iPhone: play() must be called directly after src set, no load() needed
+    // load() actually causes canplay to never fire on some tracks
+    _audio.play().then(function(){
+      console.log('Playing OK:', song.title);
+    }).catch(function(e){
+      console.log('play() failed:', e.message, '— trying with load()');
+      // Fallback: try with explicit load
+      _audio.load();
+      var tries = 0;
+      var iv = setInterval(function(){
+        tries++;
+        if(_audio.readyState >= 3){
+          clearInterval(iv);
           _audio.play().catch(function(){ finish(); });
-        }, 500);
-      });
-    }
+        }
+        if(tries > 20) { clearInterval(iv); finish(); }
+      }, 200);
+    });
 
     setTimeout(finish, 600000);
   }
@@ -11309,8 +11373,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
     if(_turn===1&&s.td>0)out.push(s.td+' request'+(s.td!==1?'s':'')+' handled today, '+s.wk+' this week. '+s.done+' completed. Solid work out there.');
     if(_turn===2&&s.top&&s.topN>=2)out.push('Shoutout to '+s.top+' — '+s.topN+' request'+(s.topN!==1?'s':'')+' logged. Leading the floor. Keep it up, '+s.top+'.');
-    if(_turn===3&&_wx)out.push('Tulsa weather — '+_wx.temp+' degrees, '+_wx.desc.toLowerCase()+'. High '+_wx.hi+', low '+_wx.lo+'. Tomorrow '+_wx.tmr+', '+_wx.tmrHi+'.');
-    if(_turn===4&&_sp&&_sp.length)out.push('Sports. '+_sp.slice(0,2).join(' '));
+    if(_turn===3){
+      if(_wx) out.push('Tulsa weather — '+_wx.temp+' degrees, '+_wx.desc.toLowerCase()+'. High '+_wx.hi+', low '+_wx.lo+'. Tomorrow '+_wx.tmr+', '+_wx.tmrHi+'.');
+      else { fetchWeather(); out.push('Checking Tulsa weather. Check back in a moment.'); }
+    }
+    if(_turn===4){
+      if(_sp&&_sp.length) out.push('Sports update. '+_sp.slice(0,2).join(' '));
+      else { fetchSports(); out.push('Checking sports scores. I will have them next update.'); }
+    }
     if(_turn===5)out.push(pick(JOKES));
     out.push(pick(['That is the update.','Keep moving.','Stay on it.','Back to it.']));
     return out.join(' ');
@@ -11382,6 +11452,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(_on)return;
     _on=true;
     badge(true);
+    fetchWeather(); fetchSports(); // refresh on every Sparky start
     var h=new Date().getHours();
     var tod=h<10?'morning':h<14?'afternoon':h<17?'afternoon':'evening';
     var s=sts(),f=flr();
