@@ -11102,13 +11102,54 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── SONGS ─────────────────────────────────────────────────
   var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var WORKER = 'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?n=';
+  var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var SONGS = [
-    {title:'Bohemian Rhapsody', artist:'Queen',               url:WORKER+'Queen%20Bohemian%20Rhapsody'},
-    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:WORKER+'Brooks%20%26%20Dunn-%20neon%20moon'},
-    {title:'Even Flow',         artist:'Pearl Jam',            url:WORKER+'Pearl%20Jam%20-%20Even%20Flow'},
-    {title:'I Never Lie',       artist:'Zach Top',             url:WORKER+'Zach%20Top%20-%20I%20Never%20Lie'},
-    {title:'Juicy',             artist:'The Notorious B.I.G.', url:WORKER+'The%20Notorious%20B.I.G.%20-%20Juicy'},
+    {title:'Bohemian Rhapsody', artist:'Queen',               url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_q'},
+    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_b'},
+    {title:'Even Flow',         artist:'Pearl Jam',            url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_p'},
+    {title:'I Never Lie',       artist:'Zach Top',             url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_z'},
+    {title:'Juicy',             artist:'The Notorious B.I.G.', url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_j'},
   ];
+  // Load audio data from songs.js
+  var _songsLoaded = false;
+  var _songsLoading = false;
+  var _songsCallbacks = [];
+
+  function _loadSongs(cb){
+    // Already loaded
+    if(_songsLoaded){cb();return;}
+    // Queue callback
+    _songsCallbacks.push(cb);
+    if(_songsLoading) return;
+    _songsLoading = true;
+
+    function _apply(){
+      if(window.HILL_SONGS && window.HILL_SONGS.length){
+        window.HILL_SONGS.forEach(function(s,i){
+          if(SONGS[i]) SONGS[i].url = s.b64;
+        });
+        _songsLoaded = true;
+        console.log('Songs loaded:', SONGS.map(function(s){return s.title+'='+(s.url?'OK':'MISSING');}));
+      }
+      var cbs = _songsCallbacks.slice();
+      _songsCallbacks = [];
+      cbs.forEach(function(fn){fn();});
+    }
+
+    // Already in window (loaded by another script tag)
+    if(window.HILL_SONGS){_apply();return;}
+
+    var sc = document.createElement('script');
+    sc.src = 'https://miguelstulsa.github.io/Shop-floor-app/songs.js';
+    sc.onload = function(){ _apply(); };
+    sc.onerror = function(){
+      console.log('songs.js failed to load');
+      _songsCallbacks.forEach(function(fn){fn();});
+      _songsCallbacks=[];
+    };
+    document.head.appendChild(sc);
+  }
+
 
   // ── HELPERS ───────────────────────────────────────────────
   var MN={'1050-B':'Ten Fifty B','7000':'Seven Thousand','VF-6':'V F Six','5100-B':'Fifty One Hundred B','2500':'Twenty Five Hundred','PUMA-3':'Puma Three','ST35':'S T Thirty Five','VF-3':'V F Three','VF-2':'V F Two','PUMA-2':'Puma Two','403-A':'Four Oh Three A','403-B':'Four Oh Three B','403-C':'Four Oh Three C','5100-A':'Fifty One Hundred A','3000-C':'Three Thousand C','3000-A':'Three Thousand A','2G':'Two G','PUMA-1':'Puma One','303-B':'Three Oh Three B','TWIN':'Twin','5000':'Five Thousand'};
@@ -11172,7 +11213,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── MUSIC — use the persistent _audio element (unlocked on tap) ──
   function playSong(song, onDone){
-    console.log('Playing:', song.title);
+    console.log('Playing:', song.title, '| url:', song.url ? song.url.slice(0,30) : 'MISSING');
+    if(!song.url){ console.log('No URL for',song.title,'— skipping'); if(onDone)onDone(); return; }
     if(!_audio){if(onDone)onDone();return;}
     var done=false;
     function finish(){if(!done){done=true;if(onDone)onDone();}}
