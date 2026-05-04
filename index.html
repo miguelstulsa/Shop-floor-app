@@ -1165,6 +1165,7 @@
   <nav class="nav-tabs" id="navTabsEl">
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
+  <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Floor Analytics</div>
@@ -1293,6 +1294,25 @@
 </div>
 
 <!-- BULLETIN BOARD PAGE -->
+<!-- ═══ ANNOUNCEMENTS PAGE ═══ -->
+<div class="page" id="page-announce" style="display:none;padding:16px;max-width:600px;margin:0 auto;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5c842;letter-spacing:2px;margin-bottom:4px;">📣 SPARKY ANNOUNCEMENTS</div>
+  <div style="font-size:12px;color:#475569;margin-bottom:16px;">Type a message — Sparky says it out loud to the entire floor right now.</div>
+
+  <textarea id="announce-text" placeholder="e.g. Attention everyone, safety meeting in 10 minutes..." style="width:100%;box-sizing:border-box;background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;color:#f0f4f8;font-size:15px;padding:12px;min-height:100px;resize:vertical;font-family:inherit;margin-bottom:10px;"></textarea>
+  <button onclick="window._sendAnnouncement()" style="width:100%;background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#000;border-radius:10px;padding:14px;font-size:18px;font-weight:bold;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-bottom:24px;">📣 SAY IT NOW</button>
+
+  <div style="border-top:1px solid #1e3a5f;padding-top:16px;margin-bottom:8px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#f5c842;letter-spacing:1px;margin-bottom:4px;">📌 PINNED MESSAGE</div>
+    <div style="font-size:12px;color:#475569;margin-bottom:10px;">Sparky reads this first every time anyone opens the app.</div>
+    <textarea id="pinned-text" placeholder="e.g. Good morning Hill crew. Safety glasses required at all times. Let's have a great day." style="width:100%;box-sizing:border-box;background:#0d1f35;border:1px solid rgba(245,200,0,0.3);border-radius:10px;color:#f0f4f8;font-size:15px;padding:12px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:10px;"></textarea>
+    <button onclick="window._savePinned()" style="width:100%;background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:10px;padding:12px;font-size:15px;font-weight:bold;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;margin-bottom:8px;">📌 SAVE PINNED MESSAGE</button>
+    <button onclick="window._clearPinned()" style="width:100%;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:10px;padding:10px;font-size:13px;cursor:pointer;">✕ Clear Pinned Message</button>
+  </div>
+
+  <div id="announce-history" style="margin-top:20px;"></div>
+</div>
+
 <div class="page active" id="page-board" style="display:none;">
   <div class="board-page">
     <div class="board-hero">
@@ -2565,7 +2585,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -2581,6 +2601,8 @@
     if (tab === 'shoptv') { initShopTV(); document.body.classList.remove('scrollable'); }
     else { stopShopTV(); }
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
+    var annEl = document.getElementById('page-announce'); if(annEl) annEl.style.display = tab === 'announce' ? 'block' : 'none';
+    if(tab === 'announce') window._loadAnnounceHistory && window._loadAnnounceHistory();
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
     if (tab === 'proshop') { var psFrame = document.getElementById('proshop-iframe'); if (psFrame && !psFrame.src) psFrame.src = PROSHOP_BASE + '/'; }
@@ -11243,8 +11265,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
     _audio.volume    = _muted ? 0 : 0.8;
 
-    // Set src — Safari starts buffering automatically, no need to call load()
+    // Set src and load — needed for desktop browsers
     _audio.src = song.url;
+    _audio.load();
 
     _audio.onended = finish;
     _audio.onerror = function(){
@@ -11367,7 +11390,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(f.run.length+f.pend.length>0)g+=(f.run.length+f.pend.length)+' jobs on the floor. ';
     g+='Let me get the music started.';
     stat('🎙️ Sparky is talking...');
-    say(g, function(){if(_on)loop();});
+    // Check for pinned announcement — read it FIRST before greeting
+    var pinned = window._readPinnedIfAny ? window._readPinnedIfAny() : null;
+    var fullGreeting = pinned ? (pinned + ' ... ' + g) : g;
+    say(fullGreeting, function(){if(_on)loop();});
   }
 
   // ── FIREBASE SYNC ─────────────────────────────────────────
@@ -11390,9 +11416,22 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!_audio){
       _audio=new Audio();
       _audio.volume=0.8;
-      // Play a silent sound to unlock — THIS makes all future .play() calls work on Safari
+      // Play a silent sound to unlock audio context on ALL browsers including desktop
       _audio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-      _audio.play().then(function(){_audio.src='';}).catch(function(){});
+      _audio.play().then(function(){
+        _audio.src='';
+        console.log('Audio unlocked successfully');
+      }).catch(function(e){
+        console.log('Audio unlock failed:', e.message);
+        // Try with AudioContext for desktop browsers
+        try{
+          var ctx=new(window.AudioContext||window.webkitAudioContext)();
+          ctx.resume().then(function(){console.log('AudioContext resumed');});
+        }catch(e2){}
+      });
+    } else {
+      // Already have audio element — make sure it's not stuck
+      try{ _audio.pause(); }catch(e){}
     }
     if(window.speechSynthesis) window.speechSynthesis.getVoices();
     if(!_on){
@@ -11468,5 +11507,143 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   <div style="font-size:13px;color:#475569;text-align:center;max-width:280px;line-height:1.6;">Sparky will start talking immediately and give you live floor updates every 5 seconds</div>
   <button onclick="window._sparkyUnlock()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:14px;padding:18px 40px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;cursor:pointer;box-shadow:0 8px 30px rgba(139,92,246,0.5);margin-top:8px;">LET SPARKY TALK</button>
 </div>
+<script>
+// ═══ ANNOUNCEMENTS ═══
+(function(){
+  var db = null, mods = null;
+
+  // Wait for Firebase
+  var _wait = setInterval(function(){
+    if(window.fbDb && window._fbModules){
+      db = window.fbDb; mods = window._fbModules;
+      clearInterval(_wait);
+      _loadPinnedIntoField();
+      _checkPinnedOnStart();
+    }
+  }, 800);
+
+  // Send announcement right now
+  window._sendAnnouncement = function(){
+    var text = (document.getElementById('announce-text').value || '').trim();
+    if(!text){ alert('Type something for Sparky to say.'); return; }
+    // Speak it
+    if(window._djNow){ window._djNow(); }
+    // Use Sparky's say function directly
+    _sparkySpeak(text);
+    // Save to Firebase history
+    if(db && mods){
+      mods.addDoc(mods.collection(db,'hillAnnouncements'),{
+        text: text,
+        by: window.currentUser || 'admin',
+        createdAt: mods.serverTimestamp()
+      });
+    }
+    document.getElementById('announce-text').value = '';
+    if(window.showToast) window.showToast('green','📣 Sparky is announcing','');
+    _loadAnnounceHistory();
+  };
+
+  // Save pinned message to Firebase
+  window._savePinned = function(){
+    var text = (document.getElementById('pinned-text').value || '').trim();
+    if(!text){ alert('Type a pinned message first.'); return; }
+    if(db && mods){
+      mods.setDoc(mods.doc(db,'hillSettings','pinnedAnnouncement'),{
+        text: text,
+        by: window.currentUser || 'admin',
+        updatedAt: mods.serverTimestamp()
+      }).then(function(){
+        if(window.showToast) window.showToast('green','📌 Pinned message saved','Sparky will say this when anyone opens the app');
+      });
+    }
+  };
+
+  // Clear pinned
+  window._clearPinned = function(){
+    if(!confirm('Clear the pinned announcement?')) return;
+    if(db && mods){
+      mods.deleteDoc(mods.doc(db,'hillSettings','pinnedAnnouncement')).then(function(){
+        document.getElementById('pinned-text').value = '';
+        if(window.showToast) window.showToast('yellow','Pinned message cleared','');
+      });
+    }
+  };
+
+  // Load pinned into field
+  function _loadPinnedIntoField(){
+    if(!db||!mods) return;
+    mods.getDoc(mods.doc(db,'hillSettings','pinnedAnnouncement')).then(function(snap){
+      if(snap && snap.exists && snap.exists()){
+        var txt = snap.data().text || '';
+        var field = document.getElementById('pinned-text');
+        if(field) field.value = txt;
+      }
+    }).catch(function(){});
+  }
+
+  // On app start — if there's a pinned message, Sparky reads it first
+  function _checkPinnedOnStart(){
+    if(!db||!mods) return;
+    mods.getDoc(mods.doc(db,'hillSettings','pinnedAnnouncement')).then(function(snap){
+      if(snap && snap.exists && snap.exists()){
+        var txt = snap.data().text || '';
+        if(txt){
+          // Wait for Sparky to start, then inject pinned message first
+          window._pendingPinned = txt;
+        }
+      }
+    }).catch(function(){});
+  }
+
+  // Sparky reads pinned message — called from Sparky start
+  window._readPinnedIfAny = function(){
+    if(window._pendingPinned){
+      var msg = window._pendingPinned;
+      window._pendingPinned = null;
+      return msg;
+    }
+    return null;
+  };
+
+  // Direct speak using Sparky's say function
+  function _sparkySpeak(text){
+    if(window.say){ window.say(text, function(){}); return; }
+    // Fallback to browser TTS
+    var synth = window.speechSynthesis;
+    if(!synth) return;
+    synth.cancel();
+    var utt = new SpeechSynthesisUtterance(text);
+    utt.rate = 0.88; utt.pitch = 1.05; utt.volume = 1.0;
+    synth.speak(utt);
+  }
+
+  // Load announcement history
+  window._loadAnnounceHistory = function(){
+    if(!db||!mods) return;
+    var hist = document.getElementById('announce-history');
+    if(!hist) return;
+    mods.getDocs(
+      mods.query(mods.collection(db,'hillAnnouncements'),
+      mods.orderBy('createdAt','desc'),
+      mods.limit(10))
+    ).then(function(snap){
+      if(!snap||!snap.docs||!snap.docs.length){
+        hist.innerHTML = '<div style="font-size:12px;color:#475569;">No announcements yet.</div>';
+        return;
+      }
+      hist.innerHTML = '<div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">RECENT ANNOUNCEMENTS</div>'
+        + snap.docs.map(function(d){
+          var data = d.data();
+          var ts = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+          return '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;padding:10px;margin-bottom:8px;">'
+            +'<div style="font-size:13px;color:#f0f4f8;">'+data.text+'</div>'
+            +'<div style="font-size:11px;color:#475569;margin-top:4px;">'+ts+' — '+(data.by||'admin')+'</div>'
+            +'</div>';
+        }).join('');
+    }).catch(function(){});
+  };
+
+})();
+</script>
 </body>
 </html>
