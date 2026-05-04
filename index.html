@@ -11109,6 +11109,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     {title:'Even Flow',         artist:'Pearl Jam',            url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_p'},
     {title:'I Never Lie',       artist:'Zach Top',             url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_z'},
     {title:'Juicy',             artist:'The Notorious B.I.G.', url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_j'},
+    {title:'Remote Control',    artist:'Roy D. Mercer',        url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_t', customIntro:true},
   ];
   // Load audio data from songs.js
   var _songsLoaded = false;
@@ -11293,6 +11294,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       'Hill Manufacturing Radio. Next track — '+sl+'.',
       'Dedicated to the whole Hill floor. '+sl+' — let it ride.',
     ];
+    // Custom intro for Roy D. Mercer
+    if(song.customIntro && song.artist==='Roy D. Mercer'){
+      var txt='Hey guys, this is a throwback for the boys at Hill Manufacturing. Roy D. Mercer — Remote Control. Rest in peace sir. How big a boy are you?';
+      if(f.run&&f.run.length>0){var j=f.run[0];txt+=' Shoutout to '+j.name+' on '+j.machine+'. Keep it going.';}
+      return txt;
+    }
     var txt=lines[_it%lines.length];
     if(f.run.length>0){var j=f.run[0];txt+=' Shoutout to '+j.name+' on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.et?', '+j.et+' in':'')+'. Keep going.';}
     else if(s.td>0){txt+=' '+s.td+' requests handled today. Good work.';}
