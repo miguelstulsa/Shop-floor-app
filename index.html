@@ -1253,11 +1253,11 @@
     </div>
   </div>
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-header" style="position:relative;display:flex;align-items:center;justify-content:space-between;">
+    <div class="sidebar-header" onclick="toggleSidebar()" ontouchend="event.preventDefault();toggleSidebar();" style="position:relative;display:flex;align-items:center;justify-content:space-between;cursor:pointer;min-height:48px;">
       <span class="sidebar-live-dot"></span>
       <span style="flex:1;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;">LIVE REQUEST FEED</span>
       <span id="sidebarCount" class="sidebar-count-badge" style="display:none">0</span>
-      <button onclick="window._closeSidebar()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:3px 10px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;margin-left:8px;flex-shrink:0;">✕ CLOSE</button>
+      <button onclick="toggleSidebar()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:3px 10px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;margin-left:8px;flex-shrink:0;">✕ CLOSE</button>
     </div>
     <div id="notifBanner" class="notif-banner" onclick="enableNotifications()" style="display:none;">
       <p>📱 Enable phone notifications</p>
@@ -3375,7 +3375,18 @@
     }, 300);
   });
 
-  function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+  function toggleSidebar() {
+    var sb = document.getElementById('sidebar');
+    if(!sb) return;
+    if(sb.classList.contains('open')){
+      sb.classList.remove('open');
+    } else {
+      sb.classList.add('open');
+      // Force reflow on iPhone
+      sb.style.display = 'flex';
+      void sb.offsetHeight;
+    }
+  }
   function updateSidebarBadge(count) {
     const badge = document.getElementById('sidebarCount');
     if (!badge) return;
@@ -11777,4 +11788,3 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 </script>
 </body>
 </html>
-    
