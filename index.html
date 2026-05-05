@@ -10686,6 +10686,19 @@ function updateLiveStrip() {
               + (n.startedAt&&n.startedAt.seconds ? _fmtElapsed(nowSecs-n.startedAt.seconds) : '▶')
               + '</span>'
             : '');
+      // Click chip = open modal and highlight that job
+      chip.style.cursor = 'pointer';
+      (function(noteId){
+        chip.onclick = function(e){
+          e.stopPropagation();
+          window._toggleLiveStrip();
+          // Scroll to this card after modal opens
+          setTimeout(function(){
+            var card = document.querySelector('[data-noteid="'+noteId+'"]');
+            if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+          }, 100);
+        };
+      })(n.id);
       strip.appendChild(chip);
     }
   });
@@ -10797,27 +10810,25 @@ function _renderModalContent() {
   // Show ALL active unresolved notes in the feed
   var inProgNotes = actionable.filter(function(n){ return !n.resolved; });
 
+  // Rebuild _activeJobs fresh from current notes every time
+  _activeJobs = {};
   inProgNotes.forEach(function(n) {
     _activeJobs[n.id] = {
       noteId:    n.id,
-      machine:   n.machine  || '',
-      cell:      n.cell     || '',
-      wo:        n.wo       || '',
-      detail:    n.detail   || '',
-      op:        n.op       || '',
-      operator:  n.operator || '',
-      type:      n.type     || '',
-      onHold:    n.onHold   || false,
-      holdReason:n.holdReason || '',
-      holdLog:   n.holdLog  || [],
-      startedAt: n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : (_activeJobs[n.id] ? _activeJobs[n.id].startedAt : Math.floor(Date.now()/1000))
+      machine:   n.machine   || '',
+      cell:      n.cell      || '',
+      wo:        n.wo        || '',
+      detail:    n.detail    || '',
+      op:        n.op        || '',
+      operator:  n.operator  || '',
+      type:      n.type      || '',
+      onHold:    n.onHold    || false,
+      holdReason:n.holdReason|| '',
+      holdLog:   n.holdLog   || [],
+      hillReqId: n.hillReqId || n.id,
+      assignedTo:n.assignedTo|| '',
+      startedAt: n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : Math.floor(Date.now()/1000)
     };
-  });
-
-  // Remove stale jobs — any job not in current actionable notes
-  var activeIds = inProgNotes.map(function(n){ return n.id; });
-  Object.keys(_activeJobs).forEach(function(id){
-    if(activeIds.indexOf(id) === -1) delete _activeJobs[id];
   });
 
   var jobs = Object.values(_activeJobs);
@@ -11766,3 +11777,4 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 </script>
 </body>
 </html>
+    
