@@ -1182,7 +1182,7 @@
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
     <!-- LIVE REQUEST STATUS STRIP -->
-    <div id="live-status-strip" onclick="window._toggleLiveStrip()" style="background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;padding:10px 14px;margin-bottom:8px;min-height:52px;display:flex;align-items:center;gap:10px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;cursor:pointer;transition:all .2s;">
+    <div id="live-status-strip" onclick="window._toggleLiveStrip()" ontouchend="event.preventDefault();window._toggleLiveStrip();" style="background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;padding:10px 14px;margin-bottom:8px;min-height:52px;display:flex;align-items:center;gap:10px;overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:rgba(245,200,0,0.2);">
       <div id="live-strip-content" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;width:100%;">
         <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
           <span style="font-size:11px;color:#334155;letter-spacing:2px;font-family:'Bebas Neue',sans-serif;">LIVE FEED</span>
@@ -1229,7 +1229,7 @@
             <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#f5d050;">⚡ LIVE REQUEST FEED</div>
             <div style="font-size:10px;color:#475569;letter-spacing:1px;">Updates in real time</div>
           </div>
-          <button onclick="window._closeLiveStrip()" style="background:rgba(255,255,255,0.06);border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 12px;font-family:'Bebas Neue',sans-serif;font-size:12px;cursor:pointer;letter-spacing:1px;">✕ CLOSE</button>
+          <button onclick="window._closeLiveStrip()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:10px 18px;font-family:'Bebas Neue',sans-serif;font-size:14px;cursor:pointer;letter-spacing:1px;min-width:80px;">✕ CLOSE</button>
         </div>
         <div id="live-strip-modal-content"></div>
       </div>
@@ -1427,6 +1427,26 @@
       <div style="display:flex;gap:8px;">
         <input type="text" id="woInput" placeholder="WO# (e.g. 26-0288)" style="flex:2;" />
         <input type="text" id="opInput" placeholder="OP# (e.g. 10)" style="flex:1;" />
+      </div>
+      <div id="assignField" style="display:none;margin-bottom:8px;">
+        <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Assign Machinist to Run</div>
+        <select id="assignedTo" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;">
+          <option value="">-- Assign machinist to run --</option>
+          <option>Bryan Sturman</option>
+          <option>Caleb Dooley</option>
+          <option>Chuck Whitfield</option>
+          <option>Dingo Mikles</option>
+          <option>Jacob Nail</option>
+          <option>Jared Stuart</option>
+          <option>Jimmy Pollard</option>
+          <option>Justin Gray</option>
+          <option>Keith Groden</option>
+          <option>Miguel Sanchez</option>
+          <option>Scott Smith</option>
+          <option>Sean Surratt</option>
+          <option>Steven Riggs</option>
+          <option>Tyler Stockham</option>
+        </select>
       </div>
       <textarea id="noteText" rows="3" placeholder="Additional details..."></textarea>
     </div>
@@ -1727,6 +1747,7 @@
           '<div class="req-cell">' + n.cell + '</div>' +
           '<div class="req-type-label">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
           (n.wo     ? '<div class="req-wo">WO: '      + n.wo     + '</div>' : '') +
+          (n.assignedTo ? '<div class="req-wo" style="color:#93c5fd;">🔧 Assigned to: ' + n.assignedTo + '</div>' : '') +
           (n.detail ? '<div class="req-detail">'      + n.detail + '</div>' : '') +
           (n.operator ? '<div class="req-operator">👤 ' + n.operator + '</div>' : '') +
           '<div class="req-time">⏱ Today at ' + timeStr + '</div>' +
@@ -2118,7 +2139,7 @@
       colorEl.style.background = 'var(--' + n.type + ')';
       const textEl = document.createElement('div');
       textEl.className = 'existing-note-text';
-      textEl.innerHTML = '<strong>' + typeLabels[n.type] + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — ' + n.wo : '') + (n.detail ? ' · ' + n.detail : '');
+      textEl.innerHTML = '<strong>' + typeLabels[n.type] + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — ' + n.wo : '') + (n.detail ? ' · ' + n.detail : '') + (n.assignedTo ? ' <span style="background:rgba(59,130,246,0.2);color:#93c5fd;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;">→ ' + n.assignedTo + '</span>' : '');
       const actionsEl = document.createElement('div');
       actionsEl.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
       if (n.type === 'blue') {
@@ -2658,6 +2679,9 @@
   function handleOverlayClick(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
   function selectType(type) {
     selectedType = type;
+    // Show assign field only for Pending WO (blue)
+    var assignField = document.getElementById('assignField');
+    if(assignField) assignField.style.display = type === 'blue' ? 'block' : 'none';
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('.note-type-btn.' + type).classList.add('selected');
   }
@@ -2672,7 +2696,9 @@
     const btn = document.querySelector('#modalOverlay .btn-submit');
     if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
     const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
-    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op };
+    const assignedTo = (document.getElementById('assignedTo') && selectedType === 'blue')
+      ? (document.getElementById('assignedTo').value || '') : '';
+    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op, assignedTo };
     try { await window.submitNoteToFirebase(note); }
     catch(err) {
       if (btn) { btn.disabled=false; btn.textContent='Submit'; }
