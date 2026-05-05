@@ -10794,9 +10794,8 @@ function _renderModalContent() {
 
   var actionable = window._lastActionable || [];
   // Show ALL active notes (inProgress OR on hold OR started) that aren't resolved
-  var inProgNotes = actionable.filter(function(n){
-    return (n.inProgress || n.onHold || (n.startedAt && n.startedAt.seconds)) && !n.resolved;
-  });
+  // Show ALL active unresolved notes in the feed
+  var inProgNotes = actionable.filter(function(n){ return !n.resolved; });
 
   inProgNotes.forEach(function(n) {
     _activeJobs[n.id] = {
@@ -10813,6 +10812,12 @@ function _renderModalContent() {
       holdLog:   n.holdLog  || [],
       startedAt: n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : (_activeJobs[n.id] ? _activeJobs[n.id].startedAt : Math.floor(Date.now()/1000))
     };
+  });
+
+  // Remove stale jobs — any job not in current actionable notes
+  var activeIds = inProgNotes.map(function(n){ return n.id; });
+  Object.keys(_activeJobs).forEach(function(id){
+    if(activeIds.indexOf(id) === -1) delete _activeJobs[id];
   });
 
   var jobs = Object.values(_activeJobs);
