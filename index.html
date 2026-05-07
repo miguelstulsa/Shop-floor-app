@@ -6132,12 +6132,13 @@
     var pending=0, running=0, completed=0, inspections=0, machinistReqs=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
-      // Count by type for the 4 stat cards
-      if (r.type === 'red')    { inspections++; }
+      // Count ALL blue requests (pending WO) regardless of resolved status
+      if (r.type === 'blue')   { pending++; }
+      // Count ALL yellow requests (machinist req)
       if (r.type === 'yellow') { machinistReqs++; }
-      if (r.type === 'blue')   { if(!r.resolved) pending++; }
-
-      // Completed = any request that is resolved
+      // Inspections = all red
+      if (r.type === 'red')    { inspections++; }
+      // Completed = any request resolved
       if (r.resolved) completed++;
 
       issueByMachine[r.machine||''] = (issueByMachine[r.machine||'']||0)+1;
@@ -6189,8 +6190,8 @@
       var h = '<div class="dash-weekly-card">';
       h += '<div class="dash-weekly-title"><span>📊 '+periodLabel+'</span><span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">'+periodAll.length+' total records</span></div>';
       h += '<div class="dash-weekly-grid">';
-      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+pending+'</div><div class="dash-weekly-stat-lbl">Pending WO</div></div>';
-      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#fbbf24;">'+machinistReqs+'</div><div class="dash-weekly-stat-lbl">Machinist Req</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+pending+'</div><div class="dash-weekly-stat-lbl">🔵 Pending WO</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#fbbf24;">'+machinistReqs+'</div><div class="dash-weekly-stat-lbl">🟡 Machinist Req</div></div>';
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#22c55e;">'+completed+'</div><div class="dash-weekly-stat-lbl">Completed</div></div>';
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#94a3b8;">'+periodAll.length+'</div><div class="dash-weekly-stat-lbl">Total Requests</div></div>';
       h += '</div>';
