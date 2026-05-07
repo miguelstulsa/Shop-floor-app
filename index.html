@@ -11240,7 +11240,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 (function(){
 
   var EL_KEY   = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
-  var EL_VOICE = '21m00Tcm4TlvDq8ikWAM';
+  var EL_VOICE = 'JBFqnCBsd6RMkjVDRZzb'; // George - Deep
   var _on      = false;
   var _muted   = false;
   var _audio   = null;   // ONE persistent audio element — created on first tap
@@ -11812,8 +11812,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     say(pick(isAdmin?['Message from Miguel to '+m+': '+text,m+', Miguel says: '+text]:[name+' at '+m+' says: '+text,'Update from '+m+'. '+name+': '+text]),function(){});
   };
   window._jimSetKey=function(k,v){EL_KEY=k||EL_KEY;EL_VOICE=v||EL_VOICE;localStorage.setItem('jimKey',EL_KEY);localStorage.setItem('jimVoice',EL_VOICE);};
-  var _sk=localStorage.getItem('jimKey'),_sv=localStorage.getItem('jimVoice');
-  if(_sk)EL_KEY=_sk;if(_sv)EL_VOICE=_sv;
+  var _sk=localStorage.getItem('jimKey');
+  if(_sk)EL_KEY=_sk;
+  // Voice locked to George — localStorage override disabled
+  localStorage.removeItem('jimVoice');
 
   badge(false);
 
