@@ -11721,7 +11721,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── FIREBASE SYNC ─────────────────────────────────────────
-  function pushState(on){var db=window.fbDb,m=window._fbModules;if(!db||!m)return;m.setDoc(m.doc(db,'hillSettings','sparkyState'),{active:on,updatedAt:m.serverTimestamp(),by:window.currentUser||'admin'}).catch(function(){});}
+  function pushState(on){var db=window.fbDb,m=window._fbModules;if(!db||!m||!m.setDoc)return;m.setDoc(m.doc(db,'hillSettings','sparkyState'),{active:on,updatedAt:m.serverTimestamp(),by:window.currentUser||'admin'}).catch(function(){});}
   var _li=setInterval(function(){
     var db=window.fbDb,m=window._fbModules;
     if(!db||!m)return;
@@ -11779,7 +11779,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
   };
 
-  window._djNow=function(){say(report(),function(){});};
+  window._djNow=function(){buildAIReport().then(function(t){say(t,function(){});});};
   window._djSetInterval=function(){};
   window._uploadSparkyMusic=function(){};
   window._removeSong=function(){};
