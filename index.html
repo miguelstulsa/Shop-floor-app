@@ -1181,6 +1181,9 @@
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
+    <div id="proshop-live-bar" style="display:none;background:rgba(0,7,26,0.9);border-bottom:1px solid #1e3a5c;padding:6px 16px;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;min-height:36px;">
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:10px;color:#475569;letter-spacing:2px;flex-shrink:0;">PROSHOP</span>
+    </div>
     <!-- LIVE REQUEST STATUS STRIP -->
     <div onclick="window._toggleLiveStrip()" style="background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.25);border-radius:8px;padding:6px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:11px;color:#f5c842;letter-spacing:2px;">⚡ LIVE FEED</span>
@@ -11421,6 +11424,135 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── CONTENT ───────────────────────────────────────────────
   var _turn=0;
+  var _lastAIReport = '';
+  var _lastAIIntro  = '';
+
+  // ── AI REPORT via Claude API ──────────────────────────────
+  async function buildAIReport(){
+    var f=flr(), s=sts();
+    var now = new Date();
+    var timeStr = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+    // Build floor context for Claude
+    var ctx = 'You are Sparky, the AI radio host and announcer for Hill Manufacturing in Tulsa Oklahoma. ';
+    ctx += 'You speak in a natural, upbeat radio DJ voice. Keep responses to 2-4 sentences max. No bullet points. ';
+    ctx += 'Current time: ' + timeStr + '. ';
+
+    var floorLines = [];
+    if(f.run.length > 0){
+      f.run.forEach(function(j){
+        floorLines.push(j.name + ' running ' + j.machine + (j.wo ? ' WO ' + j.wo : '') + (j.et ? ' for ' + j.et : ''));
+      });
+    }
+    if(f.pend.length > 0){
+      f.pend.forEach(function(j){
+        floorLines.push(j.name + ' on ' + j.machine + ' waiting on setup' + (j.wo ? ' WO ' + j.wo : ''));
+      });
+    }
+    if(f.mach.length > 0){
+      f.mach.forEach(function(j){
+        floorLines.push(j.name + ' at ' + j.machine + ' needs ' + (j.detail || 'machinist help'));
+      });
+    }
+    if(f.insp.length > 0){
+      f.insp.forEach(function(j){
+        floorLines.push('Quality needed at ' + j.machine + ' for ' + j.name + (j.wo ? ' WO ' + j.wo : ''));
+      });
+    }
+    if(f.supp.length > 0){
+      f.supp.forEach(function(j){
+        floorLines.push('Floor support needed at ' + j.machine);
+      });
+    }
+    if(f.hold.length > 0){
+      f.hold.forEach(function(j){
+        floorLines.push(j.machine + ' on hold' + (j.hr ? ': ' + j.hr : ''));
+      });
+    }
+
+    ctx += floorLines.length > 0
+      ? 'Current floor status: ' + floorLines.join('. ') + '. '
+      : 'Floor is clear right now. ';
+
+    ctx += 'Requests today: ' + s.td + ', this week: ' + s.wk + '. Completed today: ' + s.done + '. ';
+    if(s.top && s.topN >= 2) ctx += 'Top operator today: ' + s.top + ' with ' + s.topN + ' requests. ';
+    if(_wx) ctx += 'Tulsa weather: ' + _wx.temp + 'F, ' + _wx.desc + '. High ' + _wx.hi + ', low ' + _wx.lo + '. ';
+    if(_sp && _sp.length) ctx += 'Sports: ' + _sp.slice(0,2).join(' ') + '. ';
+
+    // Rotate what Sparky focuses on
+    _turn = (_turn+1) % 6;
+    var focus = [
+      'Give a quick floor update. Call out who is running and any machines that need attention.',
+      'Give a weather and sports update for the crew, then a quick floor check.',
+      'Give a motivational shoutout to the crew and mention any standout operators.',
+      'Tell a machinist joke then give a quick floor update.',
+      'Give a stats update — how many requests handled today and this week.',
+      'Give a general floor update. Be creative and entertaining like a real radio DJ.',
+    ][_turn];
+
+    ctx += 'Task: ' + focus;
+
+    try {
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: ctx }]
+        })
+      });
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+      if(text){ _lastAIReport = text; return text; }
+    } catch(e) {
+      console.log('AI report error:', e.message);
+    }
+    // Fallback to scripted
+    return report_scripted();
+  }
+
+  // ── AI SONG INTRO via Claude API ──────────────────────────
+  async function buildAIIntro(song){
+    var f=flr(), s=sts();
+    var ctx = 'You are Sparky, the AI radio host for Hill Manufacturing in Tulsa Oklahoma. ';
+    ctx += 'Introduce the next song in 2-3 sentences max like a real radio DJ. Be enthusiastic and mention the Hill Manufacturing crew. ';
+    ctx += 'Song: ' + song.title + (song.artist ? ' by ' + song.artist : '') + '. ';
+    if(f.run.length > 0){
+      var j = f.run[0];
+      ctx += 'Give a shoutout to ' + j.name + ' running ' + j.machine + (j.wo ? ' on work order ' + j.wo : '') + '. ';
+    }
+    if(s.td > 0) ctx += 'The crew has handled ' + s.td + ' requests today. ';
+    ctx += 'Introduce the song now.';
+
+    if(song.customIntro === 'roy'){
+      return 'Hey guys, this is a throwback for the boys at Hill Manufacturing. Roy D. Mercer — Remote Control. Rest in peace sir. How big a boy are you?';
+    }
+    if(song.customIntro === 'hill'){
+      return 'Alright Hill Manufacturing — this next one is for you and you only. Written and recorded by the crew right here. This is Sparky on the Floor. Turn it up.';
+    }
+
+    try {
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: ctx }]
+        })
+      });
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+      if(text){ _lastAIIntro = text; return text; }
+    } catch(e) {
+      console.log('AI intro error:', e.message);
+    }
+    return intro_scripted(song);
+  }
+
+  // Keep scripted versions as fallback
+  function report_scripted(){
   function report(){
     var f=flr(),s=sts();
     var out=[];
@@ -11451,8 +11583,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return out.join(' ');
   }
 
+  }
   var _it=0;
-  function intro(song){
+  function intro_scripted(song){
     var f=flr(),s=sts(),e=emp();
     var sl=song.title+(song.artist?' by '+song.artist:'');
     _it=(_it+1)%8;
@@ -11488,20 +11621,27 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!_on)return;
     var song=SONGS[_idx%SONGS.length];
     _idx=(_idx+1)%SONGS.length;
-    // Step 1: say intro
-    stat('🎙️ Sparky is talking...');
-    say(intro(song), function(){
+    stat('🎙️ Sparky is thinking...');
+    // Step 1: AI generates song intro
+    buildAIIntro(song).then(function(introText){
       if(!_on)return;
-      // Step 2: play song
-      stat('♪ '+song.title+' — '+song.artist);
-      playSong(song, function(){
+      stat('🎙️ Sparky is talking...');
+      say(introText, function(){
         if(!_on)return;
-        // Step 3: say report
-        stat('🎙️ Sparky is talking...');
-        say(report(), function(){
+        // Step 2: play song
+        stat('♪ '+song.title+(song.artist?' — '+song.artist:''));
+        playSong(song, function(){
           if(!_on)return;
-          // Step 4: next song
-          setTimeout(loop, 800);
+          stat('🎙️ Sparky is thinking...');
+          // Step 3: AI generates floor report
+          buildAIReport().then(function(reportText){
+            if(!_on)return;
+            stat('🎙️ Sparky is talking...');
+            say(reportText, function(){
+              if(!_on)return;
+              setTimeout(loop, 800);
+            });
+          });
         });
       });
     });
@@ -11535,6 +11675,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var pinned = window._readPinnedIfAny ? window._readPinnedIfAny() : null;
     var fullGreeting = pinned ? (pinned + ' ... ' + g) : g;
     say(fullGreeting, function(){if(_on)loop();});
+    // Pre-fetch first AI report in background
+    buildAIReport().then(function(){}).catch(function(){});
   }
 
   // ── FIREBASE SYNC ─────────────────────────────────────────
@@ -11631,6 +11773,41 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   window._jimSetKey=function(k,v){EL_KEY=k||EL_KEY;EL_VOICE=v||EL_VOICE;localStorage.setItem('jimKey',EL_KEY);localStorage.setItem('jimVoice',EL_VOICE);};
   var _sk=localStorage.getItem('jimKey'),_sv=localStorage.getItem('jimVoice');
   if(_sk)EL_KEY=_sk;if(_sv)EL_VOICE=_sv;
+
+  badge(false);
+
+  // ── PROSHOP LIVE DATA ────────────────────────────────────
+  function _startProShopListener(){
+    var db2=window.fbDb,mods=window._fbModules;
+    if(!db2||!mods) return;
+    mods.onSnapshot(mods.doc(db2,'hillSettings','proShopSync'), function(snap){
+      if(!snap||!snap.exists||!snap.exists()) return;
+      var data=snap.data();
+      window._proShopJobs=data.jobs||[];
+      _renderProShopBar();
+    });
+  }
+  function _renderProShopBar(){
+    var bar=document.getElementById('proshop-live-bar');
+    if(!bar) return;
+    var jobs=window._proShopJobs||[];
+    var active=jobs.filter(function(j){return j.active;});
+    if(!active.length){bar.style.display='none';return;}
+    bar.style.display='flex';
+    bar.innerHTML='<span style="font-size:10px;color:#475569;letter-spacing:2px;flex-shrink:0;margin-right:8px;">PROSHOP LIVE</span>'
+      +active.map(function(j){
+        var nm=j.name?j.name.split(' ')[0]:'';
+        var cat=j.category||'';
+        var color=cat.toLowerCase().indexOf('run')>=0?'#4ade80':cat.toLowerCase().indexOf('set')>=0?'#60a5fa':'#f5c842';
+        return '<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(0,0,0,0.3);border:1px solid '+color+'44;border-radius:16px;padding:3px 10px;flex-shrink:0;white-space:nowrap;">'
+          +'<span style="font-size:9px;color:'+color+';">●</span>'
+          +'<span style="font-size:10px;color:'+color+';font-weight:700;">'+nm+'</span>'
+          +'<span style="font-size:9px;color:#64748b;">'+j.wo+(j.op?' OP'+j.op:'')+'</span>'
+          +(j.elapsed?'<span style="font-size:9px;color:#334155;"> '+j.elapsed+'h</span>':'')
+          +'</div>';
+      }).join('');
+  }
+  var _psTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_psTimer);_startProShopListener();}},1000);
 
   badge(false);
 
