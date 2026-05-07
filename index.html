@@ -11538,12 +11538,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     ctx += 'Task: ' + focus;
 
     try {
-      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
           messages: [{ role: 'user', content: ctx }]
         })
       });
@@ -11578,12 +11576,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     try {
-      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
           messages: [{ role: 'user', content: ctx }]
         })
       });
@@ -11945,10 +11941,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       });
     }
 
-    if(_wx){
+    var wx = window._wx || null;
+    if(wx){
       lines.push('');
       lines.push('=== WEATHER ===');
-      lines.push('Tulsa: ' + _wx.temp + 'F, ' + _wx.desc + '. High ' + _wx.hi + ' Low ' + _wx.lo);
+      lines.push('Tulsa: ' + wx.temp + 'F, ' + wx.desc + '. High ' + wx.hi + ' Low ' + wx.lo);
     }
 
     return lines.join("\n");
@@ -11979,12 +11976,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
       var messages = _chatHistory.slice(-10); // last 10 messages for context
 
-      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
           system: systemPrompt,
           messages: messages
         })
