@@ -1166,6 +1166,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
+  <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Floor Analytics</div>
@@ -1226,7 +1227,20 @@
     </div>
     <style>
     @keyframes sparkypulse { 0%,100%{transform:scale(1);opacity:0.8;} 50%{transform:scale(1.2);opacity:0;} }
-    </style>
+  
+  /* AI Chat */
+  .ai-msg { display:flex; margin-bottom:4px; }
+  .ai-msg-user { justify-content:flex-end; }
+  .ai-msg-assistant { justify-content:flex-start; }
+  .ai-bubble { max-width:85%; padding:10px 14px; border-radius:16px; font-size:14px; line-height:1.5; white-space:pre-wrap; }
+  .ai-msg-user .ai-bubble { background:linear-gradient(135deg,#b8860b,#f5c842); color:#000; border-bottom-right-radius:4px; }
+  .ai-msg-assistant .ai-bubble { background:#0d1f35; border:1px solid #1e3a5f; color:#f0f4f8; border-bottom-left-radius:4px; }
+  .ai-typing { display:flex; gap:4px; padding:12px 16px; align-items:center; }
+  .ai-typing span { width:8px; height:8px; background:#f5c842; border-radius:50%; animation:aiDot 1.2s infinite; }
+  .ai-typing span:nth-child(2) { animation-delay:.2s; }
+  .ai-typing span:nth-child(3) { animation-delay:.4s; }
+  @keyframes aiDot { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+  </style>
 
     <!-- EXPANDED LIVE FEED OVERLAY -->
     <div id="live-strip-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;" onclick="window._closeLiveStrip()">
@@ -1301,6 +1315,33 @@
 </div>
 
 <!-- BULLETIN BOARD PAGE -->
+<!-- ═══ AI CHAT PAGE ═══ -->
+<div class="page" id="page-aichat" style="display:none;flex-direction:column;height:calc(100vh - 120px);max-width:700px;margin:0 auto;padding:0;">
+
+  <!-- Chat header -->
+  <div style="padding:12px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:2px;">🤖 HILL AI ASSISTANT</div>
+    <div style="font-size:11px;color:#475569;">Ask anything about your floor, jobs, machinists, or operations.</div>
+  </div>
+
+  <!-- Messages -->
+  <div id="ai-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
+    <div class="ai-msg ai-msg-assistant">
+      <div class="ai-bubble">Hey Miguel. I'm your Hill Manufacturing AI assistant. I have full visibility into your shop floor — active jobs, requests, machinist activity, and your ProShop data. Ask me anything.</div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div style="padding:12px 16px;border-top:1px solid #1e3a5f;flex-shrink:0;display:flex;gap:8px;align-items:flex-end;">
+    <textarea id="ai-input" placeholder="Ask anything... e.g. How long has VF-3 been running? Who has the most requests today?" 
+      style="flex:1;background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;color:#f0f4f8;font-size:14px;padding:10px 12px;resize:none;font-family:inherit;min-height:44px;max-height:120px;line-height:1.4;"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window._sendAIChat();}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+    <button onclick="window._sendAIChat()" 
+      style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#000;border-radius:10px;padding:10px 16px;font-size:18px;cursor:pointer;flex-shrink:0;height:44px;">➤</button>
+  </div>
+</div>
+
 <!-- ═══ ANNOUNCEMENTS PAGE ═══ -->
 <div class="page" id="page-announce" style="display:none;padding:16px;max-width:600px;margin:0 auto;">
   <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5c842;letter-spacing:2px;margin-bottom:4px;">📣 SPARKY ANNOUNCEMENTS</div>
@@ -2630,6 +2671,7 @@
     else { stopShopTV(); }
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     var annEl = document.getElementById('page-announce'); if(annEl) annEl.style.display = tab === 'announce' ? 'block' : 'none';
+    var aiEl = document.getElementById('page-aichat'); if(aiEl) aiEl.style.display = tab === 'aichat' ? 'flex' : 'none';
     if(tab === 'announce') window._loadAnnounceHistory && window._loadAnnounceHistory();
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
@@ -3176,10 +3218,13 @@
       if (inspTab) inspTab.style.display = '';
       var annTab = document.getElementById('tab-announce');
       if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
-      // Force show after brief delay in case other code hides it
+      var aiTab = document.getElementById('tab-aichat');
+      if (aiTab) aiTab.style.display = 'flex';
       setTimeout(function(){
         var a = document.getElementById('tab-announce');
         if(a) a.style.display = 'flex';
+        var b = document.getElementById('tab-aichat');
+        if(b) b.style.display = 'flex';
       }, 500);
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
@@ -11825,6 +11870,173 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   <div style="font-size:13px;color:#475569;text-align:center;max-width:280px;line-height:1.6;">Sparky will start talking immediately and give you live floor updates every 5 seconds</div>
   <button onclick="window._sparkyUnlock()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:14px;padding:18px 40px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;cursor:pointer;box-shadow:0 8px 30px rgba(139,92,246,0.5);margin-top:8px;">LET SPARKY TALK</button>
 </div>
+<script>
+// ═══ AI CHAT ═══
+(function(){
+  var _chatHistory = [];
+  var _chatThinking = false;
+
+  function buildFloorContext(){
+    var notes = window._lastActionable || [];
+    var now = Math.floor(Date.now()/1000);
+    var active = notes.filter(function(n){ return !n.resolved; });
+    var running = active.filter(function(n){ return n.inProgress || (n.startedAt && n.startedAt.seconds); });
+    var pending = active.filter(function(n){ return n.type === 'blue' && !n.inProgress; });
+    var machReq = active.filter(function(n){ return n.type === 'yellow'; });
+    var inspect = active.filter(function(n){ return n.type === 'red'; });
+    var onHold  = active.filter(function(n){ return n.onHold; });
+
+    var allNotes = window._allDashRequests || notes;
+    var today = new Date(); var todayStart = new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime()/1000;
+    var todayNotes = allNotes.filter(function(n){ return n.createdAt && n.createdAt.seconds >= todayStart; });
+    var completed  = todayNotes.filter(function(n){ return n.resolved; });
+
+    var lines = [];
+    lines.push('Current date/time: ' + new Date().toLocaleString('en-US',{weekday:'long',hour:'2-digit',minute:'2-digit'}));
+    lines.push('Shop: Hill Manufacturing, Tulsa Oklahoma');
+    lines.push('You are the AI assistant for Miguel Sanchez (admin/tooling manager)');
+    lines.push('');
+    lines.push('=== LIVE FLOOR STATUS ===');
+    if(running.length){
+      lines.push('RUNNING (' + running.length + '):');
+      running.forEach(function(n){
+        var elapsed = n.startedAt && n.startedAt.seconds ? Math.floor((now - n.startedAt.seconds)/60) : 0;
+        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | WO ' + (n.wo||'?') + ' OP ' + (n.op||'?') + ' | ' + elapsed + ' min running' + (n.detail?' | '+n.detail:''));
+      });
+    }
+    if(pending.length){
+      lines.push('PENDING SETUP (' + pending.length + '):');
+      pending.forEach(function(n){
+        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | WO ' + (n.wo||'?') + (n.assignedTo?' | Assigned to: '+n.assignedTo:''));
+      });
+    }
+    if(machReq.length){
+      lines.push('MACHINIST REQUESTS (' + machReq.length + '):');
+      machReq.forEach(function(n){
+        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | ' + (n.detail||'needs help'));
+      });
+    }
+    if(inspect.length){
+      lines.push('INSPECTIONS NEEDED (' + inspect.length + '):');
+      inspect.forEach(function(n){
+        lines.push('  ' + n.machine + ' | WO ' + (n.wo||'?') + ' | ' + (n.operator||'?'));
+      });
+    }
+    if(onHold.length){
+      lines.push('ON HOLD (' + onHold.length + '):');
+      onHold.forEach(function(n){
+        lines.push('  ' + n.machine + ' | ' + (n.holdReason||'reason unknown'));
+      });
+    }
+    lines.push('');
+    lines.push("=== TODAY'S STATS ===");
+    lines.push('Total requests today: ' + todayNotes.length);
+    lines.push('Completed: ' + completed.length);
+    lines.push('Still open: ' + (todayNotes.length - completed.length));
+
+    // ProShop data if available
+    var psJobs = window._proShopJobs || [];
+    var psActive = psJobs.filter(function(j){ return j.active; });
+    if(psActive.length){
+      lines.push('');
+      lines.push('=== PROSHOP ACTIVE LABOR ===');
+      psActive.forEach(function(j){
+        lines.push('  ' + j.name + ' | WO ' + j.wo + ' OP ' + j.op + ' | ' + j.category + ' | ' + j.elapsed + 'h elapsed' + (j.doing?' | '+j.doing:''));
+      });
+    }
+
+    if(_wx){
+      lines.push('');
+      lines.push('=== WEATHER ===');
+      lines.push('Tulsa: ' + _wx.temp + 'F, ' + _wx.desc + '. High ' + _wx.hi + ' Low ' + _wx.lo);
+    }
+
+    return lines.join("\n");
+  }
+
+  window._sendAIChat = async function(){
+    var input = document.getElementById('ai-input');
+    var msg = (input.value || '').trim();
+    if(!msg || _chatThinking) return;
+    input.value = '';
+    input.style.height = '44px';
+
+    // Add user message
+    addMessage('user', msg);
+    _chatHistory.push({role:'user', content: msg});
+
+    // Show typing indicator
+    _chatThinking = true;
+    var typingEl = addTyping();
+
+    try {
+      var systemPrompt = 'You are the AI assistant for Hill Manufacturing in Tulsa Oklahoma. '
+        + 'You help Miguel Sanchez (the tooling manager and admin) manage his shop floor. '
+        + 'You have real-time access to floor data. Be concise, direct, and helpful. '
+        + 'When relevant, reference specific machines, operators, work orders, and times from the floor data. '
+        + 'You can help with: floor status, job analysis, operator performance, time tracking, tooling decisions, and general manufacturing questions. '
+        + 'LIVE FLOOR DATA: ' + buildFloorContext();
+
+      var messages = _chatHistory.slice(-10); // last 10 messages for context
+
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: messages
+        })
+      });
+
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+
+      typingEl.remove();
+      _chatThinking = false;
+
+      if(text){
+        addMessage('assistant', text);
+        _chatHistory.push({role:'assistant', content: text});
+      } else {
+        addMessage('assistant', 'Sorry, I had trouble with that. Try again.');
+      }
+
+    } catch(e) {
+      typingEl.remove();
+      _chatThinking = false;
+      addMessage('assistant', 'Connection error: ' + e.message);
+    }
+  };
+
+  function addMessage(role, text){
+    var msgs = document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div = document.createElement('div');
+    div.className = 'ai-msg ai-msg-' + role;
+    var bubble = document.createElement('div');
+    bubble.className = 'ai-bubble';
+    bubble.textContent = text;
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function addTyping(){
+    var msgs = document.getElementById('ai-messages');
+    var div = document.createElement('div');
+    div.className = 'ai-msg ai-msg-assistant';
+    div.innerHTML = '<div class="ai-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+})();
+</script>
+
 <script>
 // ═══ ANNOUNCEMENTS ═══
 (function(){
