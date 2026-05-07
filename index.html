@@ -1182,6 +1182,7 @@
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
+    <div id="miguel-time-log" style="display:none;background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;padding:10px 14px;margin:6px 16px;"></div>
     <div id="proshop-live-bar" style="display:none;background:rgba(0,7,26,0.9);border-bottom:1px solid #1e3a5c;padding:6px 16px;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;min-height:36px;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:10px;color:#475569;letter-spacing:2px;flex-shrink:0;">PROSHOP</span>
     </div>
@@ -1833,6 +1834,74 @@
   };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
 
+  // ── MACHINIST COMPLETE JOB ──────────────────────────────────
+  window.completeJob = async function(noteId, hillReqId) {
+    var db2  = window.fbDb || window._db;
+    var mods = window._fbModules;
+    if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
+    if (!confirm('Mark this job as complete?')) return;
+
+    var now = new Date();
+    var elapsedMins = null, elapsedStr = 'unknown';
+
+    try {
+      var noteSnap = await mods.getDoc(mods.doc(db2, 'notes', noteId));
+      if (noteSnap && noteSnap.exists()) {
+        var nData = noteSnap.data();
+        // Calculate run time from when setup finished (resolvedAt on hillRequest)
+        if (nData.startedAt && nData.startedAt.seconds) {
+          var startTs = new Date(nData.startedAt.seconds * 1000);
+          elapsedMins = Math.round((now - startTs) / 60000);
+          elapsedStr  = elapsedMins >= 60
+            ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m'
+            : elapsedMins+'m';
+        }
+
+        // Log machinist run time
+        await mods.addDoc(mods.collection(db2, 'hillTimeLog'), {
+          person:      nData.assignedTo || window.currentUser || 'machinist',
+          role:        'run',
+          machine:     nData.machine || '',
+          wo:          nData.wo || '',
+          op:          nData.op || '',
+          detail:      nData.detail || '',
+          startedAt:   nData.startedAt || null,
+          finishedAt:  mods.serverTimestamp(),
+          elapsedMins: elapsedMins,
+          elapsedStr:  elapsedStr,
+          loggedAt:    mods.serverTimestamp(),
+        });
+      }
+    } catch(e) { console.warn('completeJob time log:', e.message); }
+
+    // Mark fully complete
+    try {
+      await mods.deleteDoc(mods.doc(db2, 'notes', noteId));
+    } catch(e) {}
+
+    try {
+      var hrId = hillReqId || noteId;
+      await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), {
+        resolved:    true,
+        resolvedAt:  mods.serverTimestamp(),
+        resolvedBy:  window.currentUser || 'machinist',
+        jobStatus:   'completed',
+        runTime:     elapsedStr,
+        runMins:     elapsedMins,
+        completedAt: mods.serverTimestamp(),
+      });
+    } catch(e) { console.warn('completeJob update:', e.message); }
+
+    if (window._removeActiveJob) window._removeActiveJob(noteId);
+    showToast('green', '🏁 Job Complete!', 'Run time: ' + elapsedStr);
+
+    // Sparky announces it
+    if (window._djAnnounceNew) {
+      var msg = (window.currentUser || 'The machinist') + ' completed the job. Run time: ' + elapsedStr + '. Good work.';
+      if (window.say) window.say(msg, function(){});
+    }
+  };
+
   // ── REQUEST TIMER — START / FINISH ──────────────────────────
   window.startRequest = async function(noteId, hillReqId) {
     if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
@@ -1998,16 +2067,47 @@
     // Remove from live banner immediately
     if (window._removeActiveJob) window._removeActiveJob(noteId);
 
+    // Step 3: Save Miguel's setup time separately before resolving
+    try {
+      var noteForType = window._lastFinishedNote || {};
+      var isSetup = noteForType.type === 'blue' || noteForType.type === 'yellow'; // Pending WO or Machinist Req
+      if(isSetup && elapsedMins !== null) {
+        await mods.addDoc(mods.collection(db2, 'hillTimeLog'), {
+          person:      window.currentUser || 'admin',
+          role:        'setup',
+          machine:     noteForType.machine || '',
+          wo:          noteForType.wo || '',
+          op:          noteForType.op || '',
+          detail:      noteForType.detail || '',
+          assignedTo:  noteForType.assignedTo || '',
+          startedAt:   noteForType.startedAt || null,
+          finishedAt:  mods.serverTimestamp(),
+          elapsedMins: elapsedMins,
+          elapsedStr:  elapsedStr,
+          loggedAt:    mods.serverTimestamp(),
+        });
+        var roleLabel = noteForType.type === 'blue' ? 'Setup' : 'Machinist Req'; showToast('green', '⏱ ' + roleLabel + ' time logged', 'Miguel: ' + elapsedStr + ' on ' + (noteForType.machine||'') + (noteForType.wo?' WO '+noteForType.wo:''));
+      }
+    } catch(e) { console.warn('Time log error:', e.message); }
+
     // Step 3: Mark hillRequests as resolved with elapsed time
+    // For pending/machinist requests — keep on board as green Running card
+    var noteForTypeCheck = window._lastFinishedNote || {};
+    var isToolingRequest = noteForTypeCheck.type === 'blue' || noteForTypeCheck.type === 'yellow';
+
     var resolvePayload = {
-      resolved: true,
-      resolvedAt: mods.serverTimestamp(),
+      resolved: isToolingRequest ? false : true,  // Keep tooling requests visible
+      resolvedAt: isToolingRequest ? null : mods.serverTimestamp(),
       resolvedBy: window.currentUser || 'admin',
       inProgress: false,
       elapsedMins: elapsedMins,
       elapsedStr: elapsedStr,
-      jobStatus: 'completed',
-      completedAt: mods.serverTimestamp()
+      setupBy:    window.currentUser || 'admin',
+      setupTime:  elapsedStr,
+      setupDoneAt: mods.serverTimestamp(),
+      jobStatus: isToolingRequest ? 'running' : 'completed',
+      type: isToolingRequest ? 'green' : noteForTypeCheck.type,  // Flip to green Running WO
+      completedAt: isToolingRequest ? null : mods.serverTimestamp()
     };
     try {
       var hrId = (hillReqId && hillReqId !== noteId && hillReqId !== '') ? hillReqId : null;
@@ -2071,15 +2171,19 @@
       var confirmedType = window._lastFinishedNote ? window._lastFinishedNote.type : (origData ? origData.type : null);
       if (confirmedType === 'blue') {
         var greenNote = {
-          machine:  origData.machine  || '',
-          cell:     origData.cell     || '',
-          type:     'green',
-          wo:       origData.wo       || '',
-          detail:   origData.detail   || '',
-          operator: origData.operator || '',
+          machine:    origData.machine    || '',
+          cell:       origData.cell       || '',
+          type:       'green',
+          wo:         origData.wo         || '',
+          op:         origData.op         || '',
+          detail:     origData.detail     || '',
+          operator:   origData.operator   || '',
+          assignedTo: origData.assignedTo || '',
           autoPosted: true,
-          setupBy:  window.currentUser || 'admin',
-          setupTime: elapsedStr
+          setupBy:    window.currentUser  || 'admin',
+          setupTime:  elapsedStr,
+          setupDoneAt: new Date().toISOString(),
+          originalType: confirmedType,
         };
         // Add to notes (shows on shop floor) and hillRequests (shows on dashboard)
         var greenReqRef = await mods.addDoc(mods.collection(db2, 'hillRequests'), {
@@ -2089,7 +2193,7 @@
         await mods.addDoc(mods.collection(db2, 'notes'), {
           ...greenNote, createdAt: mods.serverTimestamp(), hillReqId: greenReqRef.id
         });
-        showToast('green', '✅ Job Running on ' + (origData.machine||''), 'Setup time: ' + elapsedStr);
+        var typeLabel = confirmedType === 'yellow' ? 'Machinist Req' : 'Pending WO'; showToast('green', '✅ ' + typeLabel + ' done — ' + (origData.machine||''), 'Your time: ' + elapsedStr + (origData.assignedTo ? ' → ' + origData.assignedTo.split(' ')[0] + ' running' : ''));
       } else {
         showToast('green', 'Request Closed ✓', elapsedStr !== 'unknown' ? 'Time: ' + elapsedStr : 'Resolved');
       }
@@ -11818,6 +11922,61 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   localStorage.removeItem('jimVoice');
 
   badge(false);
+
+  // ── MIGUEL'S TIME LOG ─────────────────────────────────────
+  function _listenTimeLog(){
+    var db2=window.fbDb,mods=window._fbModules;
+    if(!db2||!mods) return;
+    var today = new Date();
+    var todayStart = new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    mods.onSnapshot(
+      mods.query(
+        mods.collection(db2,'hillTimeLog'),
+        mods.where('person','==','hilladmin'),
+        mods.orderBy('loggedAt','desc'),
+        mods.limit(20)
+      ),
+      function(snap){
+        if(!snap) return;
+        var logs = [];
+        snap.forEach(function(d){ var data=d.data(); data.id=d.id; logs.push(data); });
+        // Filter to today only
+        var todayLogs = logs.filter(function(l){
+          if(!l.loggedAt || !l.loggedAt.seconds) return false;
+          return l.loggedAt.seconds >= todayStart.getTime()/1000;
+        });
+        window._myTimeLogs = todayLogs;
+        _renderTimeLog(todayLogs);
+      }
+    );
+  }
+
+  function _renderTimeLog(logs){
+    var bar = document.getElementById('miguel-time-log');
+    if(!bar) return;
+    if(!logs || !logs.length){ bar.style.display='none'; return; }
+    bar.style.display='block';
+    var totalMins = logs.reduce(function(s,l){ return s+(l.elapsedMins||0); },0);
+    var totalStr = totalMins >= 60 ? Math.floor(totalMins/60)+'h '+(totalMins%60)+'m' : totalMins+'m';
+    bar.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+      +'<span style="font-size:13px;color:#f5c842;letter-spacing:1px;">⏱ MY COMPLETED JOBS TODAY</span>'
+      +'<span style="font-size:11px;color:#475569;">Total: '+totalStr+'</span>'
+      +'</div>'
+      +logs.map(function(l){
+        var typeColor = l.role==='setup' ? '#60a5fa' : '#4ade80';
+        var typeLabel = l.role==='setup' ? 'Setup' : 'Run';
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #1e3a5c;">'
+          +'<span style="font-size:9px;background:'+typeColor+'22;color:'+typeColor+';border-radius:4px;padding:2px 6px;font-weight:700;">'+typeLabel+'</span>'
+          +'<span style="font-size:12px;color:#94a3b8;font-weight:700;">'+l.machine+'</span>'
+          +(l.wo?'<span style="font-size:11px;color:#475569;">WO '+l.wo+'</span>':'')
+          +(l.op?'<span style="font-size:11px;color:#334155;">OP '+l.op+'</span>':'')
+          +'<span style="font-size:12px;color:#f5c842;margin-left:auto;font-weight:700;">'+l.elapsedStr+'</span>'
+          +(l.assignedTo?'<span style="font-size:10px;color:#475569;">→ '+l.assignedTo.split(' ')[0]+'</span>':'')
+          +'</div>';
+      }).join('');
+  }
+
+  var _tlTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_tlTimer);_listenTimeLog();}},1500);
 
   // ── PROSHOP LIVE DATA ────────────────────────────────────
   function _startProShopListener(){
