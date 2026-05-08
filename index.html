@@ -11392,23 +11392,24 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var WORKER = 'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?n=';
   var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var SONGS = [
-    {title:'Bohemian Rhapsody', artist:'Queen',               url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_q'},
-    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_b'},
-    {title:'Even Flow',         artist:'Pearl Jam',            url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_p'},
-    {title:'I Never Lie',       artist:'Zach Top',             url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_z'},
-    {title:'Juicy',             artist:'The Notorious B.I.G.', url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_j'},
-    {title:'Remote Control',    artist:'Roy D. Mercer',        url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_t', customIntro:'roy'},
-    {title:'Sparky on the Floor', artist:'Hill Manufacturing',   url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_s', customIntro:'hill'},
-    {title:'Dirt Road Millionaire', artist:'Nelly',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_d'},
-    {title:'Tulsa Time',            artist:'Don Williams',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_w'},
-    {title:'Wondering Why',         artist:'Red Clay Strays',    url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_r1'},
-    {title:'Run-Around',            artist:'Blues Traveler',     url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_r2'},
-    {title:'Hook',                  artist:'Blues Traveler',     url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_h'},
-    {title:'Self Care',             artist:'Mac Miller',         url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_m'},
-    {title:'Broken Window Serenade',artist:'Whiskey Myers',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_bw'},
-    {title:'Friends in Low Places', artist:'Garth Brooks',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_g'},
-    {title:'Man of Constant Sorrow',artist:'Soggy Bottom Boys',  url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_cs'},
-    {title:'Rather Be',             artist:'Clean Bandit',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_cb'},
+    {title:'Bohemian Rhapsody',      artist:'Queen',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_q'},
+    {title:'Self Care',              artist:'Mac Miller',         url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_m'},
+    {title:'Friends in Low Places',  artist:'Garth Brooks',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_g'},
+    {title:'Remote Control',         artist:'Roy D. Mercer',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_t', customIntro:'roy'},
+    {title:'Run-Around',             artist:'Blues Traveler',     url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_r2'},
+    {title:'Neon Moon',              artist:'Brooks & Dunn',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_b'},
+    {title:'Sparky on the Floor',    artist:'Hill Manufacturing', url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_s', customIntro:'hill'},
+    {title:'Wondering Why',          artist:'Red Clay Strays',    url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_r1'},
+    {title:'Juicy',                  artist:'Notorious B.I.G.',   url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_j'},
+    {title:'Broken Window Serenade', artist:'Whiskey Myers',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_bw'},
+    {title:'Even Flow',              artist:'Pearl Jam',          url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_p'},
+    {title:'Septic Tank',            artist:'Roy D. Mercer',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_st', customIntro:'roy2'},
+    {title:'Tulsa Time',             artist:'Don Williams',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_w'},
+    {title:'Hook',                   artist:'Blues Traveler',     url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_h'},
+    {title:'I Never Lie',            artist:'Zach Top',           url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_z'},
+    {title:'Rather Be',              artist:'Clean Bandit',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_cb'},
+    {title:'Dirt Road Millionaire',  artist:'Nelly',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_d'},
+    {title:'Man of Constant Sorrow', artist:'Soggy Bottom Boys',  url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_cs'},
   ];
   // Load audio data from songs.js
   var _songsLoaded = false;
@@ -11718,6 +11719,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
     if(song.customIntro === 'roy'){
       return 'Hey guys, this is a throwback for the boys at Hill Manufacturing. Roy D. Mercer — Remote Control. Rest in peace sir. How big a boy are you?';
+    }
+    if(song.customIntro === 'roy2'){
+      return 'Alright boys, here is another throwback prank call from the one and only Roy D. Mercer. This one is called Septic Tank. Enjoy.';
     }
     if(song.customIntro === 'hill'){
       return 'Alright Hill Manufacturing — this next one is for you and you only. Written and recorded by the crew right here. This is Sparky on the Floor. Turn it up.';
@@ -12216,11 +12220,20 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     var wx = window._wx || null;
+    lines.push('');
+    lines.push('=== WEATHER ===');
     if(wx){
-      lines.push('');
-      lines.push('=== WEATHER ===');
       lines.push('Tulsa: ' + wx.temp + 'F, ' + wx.desc + '. High ' + wx.hi + ' Low ' + wx.lo);
+    } else {
+      lines.push('Tulsa Oklahoma weather data not yet loaded.');
     }
+
+    lines.push('');
+    lines.push('=== GENERAL CONTEXT ===');
+    lines.push('City: Tulsa, Oklahoma');
+    lines.push('Industry: CNC Machine Shop / Manufacturing');
+    lines.push('Current user: Miguel Sanchez (tooling manager / admin)');
+    lines.push('Manager: Corey Bartmier');
 
     return lines.join("\n");
   }
@@ -12274,14 +12287,60 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var first = name.split(' ')[0].toLowerCase();
       if(first.length > 3 && msgLower.indexOf(first) >= 0 && !foundMachinist) foundMachinist = name;
     });
-    if(foundMachinist && /receipt|history|requests|jobs|show|pull|lookup|how many|what has|time/i.test(msg)){
+    if(foundMachinist){
+      // Always fetch real data and pass to Claude for accurate answers
       _chatThinking = true;
       var typingEl2 = addTyping();
       var mReceipt = await _buildMachinistReceipt(foundMachinist);
-      typingEl2.remove();
-      _chatThinking = false;
-      addMachinistReceiptMessage(mReceipt);
-      _chatHistory.push({role:'assistant', content: 'Here is the receipt for ' + foundMachinist});
+      var reqs = mReceipt.requests || [];
+      var completed = reqs.filter(function(r){return r.resolved;});
+      var open = reqs.filter(function(r){return !r.resolved;});
+      var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
+      var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'no time tracked';
+      var machines = [...new Set(reqs.map(function(r){return r.machine;}).filter(Boolean))];
+      var byType = {blue:0,yellow:0,red:0,green:0};
+      reqs.forEach(function(r){ if(byType[r.type]!==undefined) byType[r.type]++; });
+      var recent = reqs.slice(0,5).map(function(r){
+        var d = r.createdAt&&r.createdAt.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString():'';
+        return d+' '+r.machine+' '+(r.type==='blue'?'Pending WO':r.type==='yellow'?'Machinist Req':r.type)+' '+(r.wo?'WO '+r.wo:'')+(r.resolved?' [done]':' [open]');
+      }).join('; ');
+
+      // Build context and let Claude answer naturally
+      var machinistContext = 'MACHINIST DATA FOR ' + foundMachinist + ': '
+        + 'Total requests: ' + reqs.length + '. '
+        + 'Completed: ' + completed.length + '. '
+        + 'Open: ' + open.length + '. '
+        + 'Pending WO: ' + byType.blue + '. '
+        + 'Machinist Requests: ' + byType.yellow + '. '
+        + 'Inspections: ' + byType.red + '. '
+        + 'Total time tracked: ' + totalStr + '. '
+        + 'Machines used: ' + (machines.join(', ')||'none recorded') + '. '
+        + 'Recent activity: ' + (recent||'none');
+
+      _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
+
+      try {
+        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
+            messages: _chatHistory.slice(-10)
+          })
+        });
+        var data2 = await resp2.json();
+        var text2 = data2.content && data2.content[0] && data2.content[0].text;
+        typingEl2.remove();
+        _chatThinking = false;
+        if(text2){
+          addMessage('assistant', text2);
+          _chatHistory.push({role:'assistant', content: text2});
+        }
+      } catch(e){
+        typingEl2.remove();
+        _chatThinking = false;
+        addMessage('assistant', 'Error fetching data for ' + foundMachinist);
+      }
       return;
     }
 
@@ -12290,12 +12349,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var typingEl = addTyping();
 
     try {
-      var systemPrompt = 'You are the AI assistant for Hill Manufacturing in Tulsa Oklahoma. '
-        + 'You help Miguel Sanchez (the tooling manager and admin) manage his shop floor. '
-        + 'You have real-time access to floor data. Be concise, direct, and helpful. '
-        + 'When relevant, reference specific machines, operators, work orders, and times from the floor data. '
-        + 'You can help with: floor status, job analysis, operator performance, time tracking, tooling decisions, and general manufacturing questions. '
-        + 'LIVE FLOOR DATA: ' + buildFloorContext();
+      var floorCtx = buildFloorContext();
+      var systemPrompt = 'You are the ultimate AI assistant for Miguel Sanchez at Hill Manufacturing in Tulsa Oklahoma. '
+        + 'You have web search capability and can answer ANYTHING — sports scores, weather, news, phone numbers, addresses, recipes, jokes, manufacturing questions, anything at all. '
+        + 'Use web search for: current events, sports scores, business info, phone numbers, addresses, weather, news, stock prices, or any real-time info. '
+        + 'NEVER make up data. Only report floor data that is explicitly in the LIVE FLOOR DATA section below. '
+        + 'If floor data is empty, say the floor is clear. Do not invent jobs or people. '
+        + 'HILL MANUFACTURING ROSTER: Brett Thompson, Bryan Sturman, Caleb Dooley, Chuck Whitfield, Corey Bartmier, Daniel McGarvey, Dingo Mikles, Hank Anglin, Jacob Nail, Jared Stuart, Jimmy Pollard, Justin Gray, Keith Groden, Matthew Carrico, Miguel Sanchez, Mike Payne, Rhett Dawson, Scott Smith, Sean Surratt, Steven Riggs, Tony Lang, Tyler Stockham. '
+        + 'Be direct, accurate, and conversational. This is the best shop floor app ever built. '
+        + '\nLIVE FLOOR DATA:\n' + floorCtx;
 
       var messages = _chatHistory.slice(-10); // last 10 messages for context
 
@@ -12484,9 +12546,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!db2||!mods) return {name:name, requests:[]};
     var requests = [];
     try {
-      // Search by operator name and assignedTo
+      var firstName = name.split(' ')[0];
+      var lastName = name.split(' ')[1] || '';
+      // Search by full name, first name only, and assignedTo
       var snaps = await Promise.all([
         mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
         mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
       ]);
       var seen = {};
