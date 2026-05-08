@@ -11483,7 +11483,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var now=new Date(),ts=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000;
     var ws=ts-(now.getDay()||7)*86400;
     var s={td:0,wk:0,done:0,ops:{}};
-    all.forEach(function(n){var t=n.createdAt&&n.createdAt.seconds?n.createdAt.seconds:0;if(!t)return;if(t>=ts){s.td++;if(n.resolved)s.done++;}if(t>=ws)s.wk++;if(n.operator){var f=n.operator.split(' ')[0];s.ops[f]=(s.ops[f]||0)+1;}});
+    var EXCL=['corey','bartmier']; all.forEach(function(n){var t=n.createdAt&&n.createdAt.seconds?n.createdAt.seconds:0;if(!t)return;if(t>=ts){s.td++;if(n.resolved)s.done++;}if(t>=ws)s.wk++;if(n.operator){var opL=n.operator.toLowerCase();if(EXCL.some(function(e){return opL.indexOf(e)>=0;}))return;var f=n.operator.split(' ')[0];s.ops[f]=(s.ops[f]||0)+1;}});
     var top='',topN=0;Object.keys(s.ops).forEach(function(k){if(s.ops[k]>topN){top=k;topN=s.ops[k];}});
     s.top=top;s.topN=topN;s.saved=s.done*5;s.dol=Math.round(s.done*5*(95/60));return s;
   }
@@ -11669,7 +11669,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       : 'Floor is clear right now. ';
 
     ctx += 'Requests today: ' + s.td + ', this week: ' + s.wk + '. Completed today: ' + s.done + '. ';
-    if(s.top && s.topN >= 2) ctx += 'Top operator today: ' + s.top + ' with ' + s.topN + ' requests. ';
+    if(s.top && s.topN >= 2 && s.top.toLowerCase().indexOf('corey')<0) ctx += 'Top operator today: ' + s.top + ' with ' + s.topN + ' requests. ';
     if(_wx) ctx += 'Tulsa weather: ' + _wx.temp + 'F, ' + _wx.desc + '. High ' + _wx.hi + ', low ' + _wx.lo + '. ';
     if(_sp && _sp.length) ctx += 'Sports: ' + _sp.slice(0,2).join(' ') + '. ';
 
@@ -11762,7 +11762,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       if(f.insp.length>0)f.insp.forEach(function(r){out.push('Quality — '+r.name+' on '+r.machine+' has parts ready. Do not let that sit.');});
     }
     if(_turn===1&&s.td>0)out.push(s.td+' request'+(s.td!==1?'s':'')+' handled today, '+s.wk+' this week. '+s.done+' completed. Solid work out there.');
-    if(_turn===2&&s.top&&s.topN>=2)out.push('Shoutout to '+s.top+' — '+s.topN+' request'+(s.topN!==1?'s':'')+' logged. Leading the floor. Keep it up, '+s.top+'.');
+    if(_turn===2&&s.top&&s.topN>=2){var topL=s.top.toLowerCase();if(topL.indexOf('corey')<0&&topL.indexOf('bartmier')<0)out.push('Shoutout to '+s.top+' — '+s.topN+' request'+(s.topN!==1?'s':'')+' logged. Leading the floor. Keep it up, '+s.top+'.');}
     if(_turn===3){
       if(_wx) out.push('Tulsa weather — '+_wx.temp+' degrees, '+_wx.desc.toLowerCase()+'. High '+_wx.hi+', low '+_wx.lo+'. Tomorrow '+_wx.tmr+', '+_wx.tmrHi+'.');
       else { fetchWeather(); out.push('Checking Tulsa weather. Check back in a moment.'); }
