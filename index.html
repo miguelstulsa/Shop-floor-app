@@ -11752,11 +11752,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _turn=(_turn+1)%7;
     out.push(pick(['Floor update.','Here is what is happening.','Checking in on the shop.','Your floor report.','This is Sparky.']));
     var tot=f.run.length+f.pend.length+f.mach.length+f.insp.length+f.supp.length+f.hold.length;
-    if(tot===0){out.push(pick(['Floor is clear. Nothing active.','No open requests right now.','Clean board. Enjoy it.']));}
+    var allNotes=window._lastActionable||[];
+    var pendingCount=allNotes.filter(function(n){return !n.resolved&&n.type==='blue';}).length;
+    var machCount=allNotes.filter(function(n){return !n.resolved&&n.type==='yellow';}).length;
+    var totalOpen=allNotes.filter(function(n){return !n.resolved;}).length;
+    if(tot===0&&totalOpen===0){out.push(pick(['Floor is clear. Nothing active.','No open requests right now.','Clean board. Enjoy it.']));}
+    else if(tot===0&&totalOpen>0){out.push('There '+( totalOpen===1?'is':'are')+' '+totalOpen+' open request'+(totalOpen!==1?'s':'')+' on the floor right now.');}
     else{
       if(f.run.length>0){var sr=f.run.slice().sort(function(a,b){return b.e-a.e;});if(f.run.length===1){var j=sr[0];out.push(j.name+' running on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.et?', '+j.et+' so far':'')+'.');}else{out.push(f.run.length+' jobs running.');sr.slice(0,3).forEach(function(j){out.push(j.name+' on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.et?', '+j.et:'')+'.');});}}
       if(f.hold.length>0)f.hold.forEach(function(j){out.push(j.machine+' on hold'+(j.hr?' — '+j.hr:'')+'. '+j.name+' waiting.');});
-      if(f.pend.length>0)out.push(f.pend.length+' machine'+(f.pend.length>1?'s':'')+' waiting on setup — '+f.pend.map(function(p){return p.name+' on '+p.machine;}).join(', ')+'. Tooling, that is yours.');
+      var showPend=f.pend.length>0?f.pend.length:pendingCount;if(showPend>0)out.push(showPend+' machine'+(showPend>1?'s':'')+' waiting on setup'+(f.pend.length>0?' — '+f.pend.map(function(p){return p.machine+(p.wo?' WO '+p.wo:'');}).join(', '):'')+'. Miguel, that is yours.');
       if(f.mach.length>0)f.mach.forEach(function(r){out.push(r.name+' at '+r.machine+' needs '+(r.detail||'something')+'. Someone go help.');});
       if(f.supp.length>0)f.supp.forEach(function(r){out.push('Floor support at '+r.machine+'. '+r.name+' is waiting.');});
       if(f.insp.length>0)f.insp.forEach(function(r){out.push('Quality — '+r.name+' on '+r.machine+' has parts ready. Do not let that sit.');});
