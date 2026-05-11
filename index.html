@@ -6134,8 +6134,10 @@
     periodAll.forEach(function(r) {
       // Count ALL blue requests (pending WO) regardless of resolved status
       if (r.type === 'blue')   { pending++; }
-      // Count ALL yellow requests (machinist req)
+      // Count ALL yellow requests (machinist req) regardless of resolved status
       if (r.type === 'yellow') { machinistReqs++; }
+      // Count ALL green requests as running
+      if (r.type === 'green')  { running++; }
       // Inspections = all red
       if (r.type === 'red')    { inspections++; }
       // Completed = any request resolved
