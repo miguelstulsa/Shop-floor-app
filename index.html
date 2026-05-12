@@ -11703,14 +11703,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     ctx += 'Task: ' + focus;
 
     try {
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: ctx }]
-        })
-      });
-      var data = await resp.json();
+      var data = await _callClaude({ messages: [{ role: 'user', content: ctx }] });
       var text = data.content && data.content[0] && data.content[0].text;
       if(text){ _lastAIReport = text; return text; }
     } catch(e) {
@@ -11744,14 +11737,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     try {
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: ctx }]
-        })
-      });
-      var data = await resp.json();
+      var data = await _callClaude({ messages: [{ role: 'user', content: ctx }] });
       var text = data.content && data.content[0] && data.content[0].text;
       if(text){ _lastAIIntro = text; return text; }
     } catch(e) {
@@ -12259,6 +12245,41 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return lines.join("\n");
   }
 
+  // Load API key from Firebase at runtime — never hardcoded in source
+  var _anthropicKey = null;
+  async function _getAnthropicKey() {
+    if (_anthropicKey) return _anthropicKey;
+    try {
+      var db2 = window.fbDb || window._db;
+      var mods = window._fbModules;
+      if (!db2 || !mods) return null;
+      var snap = await mods.getDoc(mods.doc(db2, 'hillSettings', 'apiConfig'));
+      if (snap && snap.exists && snap.exists()) {
+        _anthropicKey = snap.data().anthropicKey || null;
+      }
+    } catch(e) { console.warn('Key load failed:', e.message); }
+    return _anthropicKey;
+  }
+
+  async function _callClaude(body) {
+    var key = await _getAnthropicKey();
+    if (!key) throw new Error('API key not configured');
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-calls': 'true'
+      },
+      body: JSON.stringify(Object.assign({ model: 'claude-sonnet-4-5', max_tokens: 2048 }, body))
+    });
+    var data = await resp.json();
+    var text = '';
+    if (data.content) data.content.forEach(function(b) { if (b.type === 'text') text += b.text; });
+    return { content: [{ type: 'text', text: text || 'No response' }] };
+  }
+
   window._sendAIChat = async function(){
     var input = document.getElementById('ai-input');
     var msg = (input.value || '').trim();
@@ -12349,15 +12370,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
 
       try {
-        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
-            messages: _chatHistory.slice(-10)
-          })
+        var data2 = await _callClaude({
+          system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
+          messages: _chatHistory.slice(-10)
         });
-        var data2 = await resp2.json();
         var text2 = data2.content && data2.content[0] && data2.content[0].text;
         typingEl2.remove();
         _chatThinking = false;
@@ -12392,16 +12408,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
       var messages = _chatHistory.slice(-10); // last 10 messages for context
 
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system: systemPrompt,
-          messages: messages
-        })
-      });
-
-      var data = await resp.json();
+      var data = await _callClaude({ system: systemPrompt, messages: messages });
       var text = data.content && data.content[0] && data.content[0].text;
 
       typingEl.remove();
