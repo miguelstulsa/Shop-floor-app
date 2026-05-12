@@ -12350,7 +12350,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       try {
         var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
             messages: _chatHistory.slice(-10)
