@@ -11989,7 +11989,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         mods.collection(db2,'hillTimeLog'),
         mods.where('person','==','hilladmin'),
         mods.orderBy('loggedAt','desc'),
-        mods.limit(100)
+
       ),
       function(snap){
         if(!snap) return;
