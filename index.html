@@ -12287,9 +12287,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Check for "requests to me" / "sent to me" queries — only if no machinist name present
+    var _machinistList = ['Brett Thompson', 'Bryan Sturman', 'Caleb Dooley', 'Chuck Whitfield', 'Corey Bartmier', 'Daniel McGarvey', 'Dingo Mikles', 'Hank Anglin', 'Jacob Nail', 'Jared Stuart', 'Jimmy Pollard', 'Justin Gray', 'Keith Groden', 'Matthew Carrico', 'Miguel Sanchez', 'Mike Payne', 'Rhett Dawson', 'Scott Smith', 'Sean Surratt', 'Steven Riggs', 'Tony Lang', 'Tyler Stockham'];
     var _hasMachinistInMsg = (function(){
       var _ml = msg.toLowerCase();
-      return machinists.some(function(n){
+      return _machinistList.some(function(n){
         var f = n.split(' ')[0].toLowerCase();
         return _ml.indexOf(n.toLowerCase())>=0 || (f.length>3 && _ml.indexOf(f)>=0);
       });
