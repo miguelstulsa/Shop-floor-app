@@ -12286,8 +12286,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       }
     }
 
-    // Check for "requests to me" / "sent to me" queries
-    if(/sent to me|my requests|requests to me|how many.*sent|who sent|count.*requests/i.test(msg)){
+    // Check for "requests to me" / "sent to me" queries — only if no machinist name present
+    var _hasMachinistInMsg = (function(){
+      var _ml = msg.toLowerCase();
+      return machinists.some(function(n){
+        var f = n.split(' ')[0].toLowerCase();
+        return _ml.indexOf(n.toLowerCase())>=0 || (f.length>3 && _ml.indexOf(f)>=0);
+      });
+    })();
+    if(!_hasMachinistInMsg && /sent to me|my requests|requests to me|how many.*sent|who sent|count.*requests/i.test(msg)){
       _chatThinking = true;
       var typingEl3 = addTyping();
       var myReceipt = await _buildRequestsToMeReceipt();
@@ -12377,6 +12384,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         + 'NEVER make up data. Only report floor data that is explicitly in the LIVE FLOOR DATA section below. '
         + 'If floor data is empty, say the floor is clear. Do not invent jobs or people. '
         + 'HILL MANUFACTURING ROSTER: Brett Thompson, Bryan Sturman, Caleb Dooley, Chuck Whitfield, Corey Bartmier, Daniel McGarvey, Dingo Mikles, Hank Anglin, Jacob Nail, Jared Stuart, Jimmy Pollard, Justin Gray, Keith Groden, Matthew Carrico, Miguel Sanchez, Mike Payne, Rhett Dawson, Scott Smith, Sean Surratt, Steven Riggs, Tony Lang, Tyler Stockham. '
+        + 'Machinist names in Firebase may be stored as full name, first name only, lowercase, or uppercase — treat all variants as the same person. '
+        + 'Fields that store submitter name: operator, assignedTo, submittedBy, machinistName, name, by. '
         + 'Be direct, accurate, and conversational. This is the best shop floor app ever built. '
         + '\nLIVE FLOOR DATA:\n' + floorCtx;
 
@@ -12567,18 +12576,42 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!db2||!mods) return {name:name, requests:[]};
     var requests = [];
     try {
-      var firstName = name.split(' ')[0];
-      var lastName = name.split(' ')[1] || '';
-      // Search by full name, first name only, and assignedTo
-      var snaps = await Promise.all([
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
-      ]);
+      var firstName  = name.split(' ')[0];
+      var lastName   = name.split(' ')[1] || '';
+      // Build every plausible variant of the name that might be stored
+      var variants = [
+        name,                                           // "Corey Bartmier"
+        firstName,                                      // "Corey"
+        lastName,                                       // "Bartmier"
+        name.toLowerCase(),                             // "corey bartmier"
+        firstName.toLowerCase(),                        // "corey"
+        name.toUpperCase(),                             // "COREY BARTMIER"
+        firstName.toUpperCase(),                        // "COREY"
+        firstName[0].toUpperCase()+firstName.slice(1).toLowerCase(), // "Corey"
+        firstName.toLowerCase()+' '+lastName.toLowerCase(), // "corey bartmier"
+        lastName.toLowerCase()+', '+firstName.toLowerCase(), // "bartmier, corey"
+        name.replace(/\s+/g,''),                        // "CoreyBartmier"
+      ];
+      // Deduplicate variants
+      variants = variants.filter(function(v,i){ return v && variants.indexOf(v)===i; });
+
+      // Fields that might hold the submitter's name
+      var fields = ['operator','assignedTo','submittedBy','machinistName','name','by','user','mechanic'];
+
+      // Fan out queries across all field × variant combos, but cap at 20 parallel queries
+      var queryList = [];
+      fields.forEach(function(field){
+        variants.forEach(function(variant){
+          queryList.push(
+            mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where(field,'==',variant), mods.orderBy('createdAt','desc'), mods.limit(100)))
+              .catch(function(){ return null; })  // ignore index errors silently
+          );
+        });
+      });
+
+      var results = await Promise.all(queryList);
       var seen = {};
-      snaps.forEach(function(snap){
+      results.forEach(function(snap){
         if(!snap||snap.empty) return;
         snap.forEach(function(d){
           if(seen[d.id]) return;
@@ -12587,6 +12620,25 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           requests.push(r);
         });
       });
+
+      // Fallback: full scan and client-side filter if still nothing found
+      // (catches records where name is stored in an unexpected format)
+      if(requests.length === 0){
+        var allSnap = await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.orderBy('createdAt','desc'), mods.limit(500)));
+        var fnLower = firstName.toLowerCase();
+        var lnLower = lastName.toLowerCase();
+        allSnap.forEach(function(d){
+          if(seen[d.id]) return;
+          var r = d.data(); r.id = d.id;
+          // Check every string field for a match on first name (or full name)
+          var hay = JSON.stringify(r).toLowerCase();
+          if(hay.indexOf(fnLower) >= 0 && (lnLower.length < 3 || hay.indexOf(lnLower) >= 0)){
+            seen[d.id] = true;
+            requests.push(r);
+          }
+        });
+      }
+
       requests.sort(function(a,b){
         var at = a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
         var bt = b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;
@@ -12809,11 +12861,18 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // Clear pinned
   window._clearPinned = function(){
     if(!confirm('Clear the pinned announcement?')) return;
-    if(db && mods){
-      mods.deleteDoc(mods.doc(db,'hillSettings','pinnedAnnouncement')).then(function(){
-        document.getElementById('pinned-text').value = '';
+    var _db  = db  || window.fbDb  || window._db;
+    var _mods = mods || window._fbModules;
+    if(_db && _mods){
+      _mods.deleteDoc(_mods.doc(_db,'hillSettings','pinnedAnnouncement')).then(function(){
+        var f = document.getElementById('pinned-text');
+        if (f) f.value = '';
         if(window.showToast) window.showToast('yellow','Pinned message cleared','');
+      }).catch(function(e){
+        if(window.showToast) window.showToast('red','Clear failed',e.message);
       });
+    } else {
+      if(window.showToast) window.showToast('red','Not connected','Firebase not ready — try again in a moment');
     }
   };
 
@@ -12879,16 +12938,56 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         hist.innerHTML = '<div style="font-size:12px;color:#475569;">No announcements yet.</div>';
         return;
       }
-      hist.innerHTML = '<div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">RECENT ANNOUNCEMENTS</div>'
+      var ids = snap.docs.map(function(d){ return d.id; });
+      hist.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+        + '<div style="font-size:13px;color:#94a3b8;">RECENT ANNOUNCEMENTS</div>'
+        + (ids.length > 0 ? '<button onclick="window._clearAllAnnouncements()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;letter-spacing:1px;">✕ CLEAR ALL</button>' : '')
+        + '</div>'
         + snap.docs.map(function(d){
           var data = d.data();
           var ts = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-          return '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;padding:10px;margin-bottom:8px;">'
+          return '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px;">'
+            +'<div style="flex:1;">'
             +'<div style="font-size:13px;color:#f0f4f8;">'+data.text+'</div>'
             +'<div style="font-size:11px;color:#475569;margin-top:4px;">'+ts+' — '+(data.by||'admin')+'</div>'
+            +'</div>'
+            +'<button onclick="window._deleteAnnouncement(&quot;'+d.id+'&quot;)" style="background:none;border:none;color:#475569;font-size:16px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;" title="Delete">✕</button>'
             +'</div>';
         }).join('');
     }).catch(function(){});
+  };
+
+  // Delete a single announcement
+  window._deleteAnnouncement = function(docId) {
+    if (!db || !mods) return;
+    if (!confirm('Delete this announcement?')) return;
+    mods.deleteDoc(mods.doc(db, 'hillAnnouncements', docId))
+      .then(function() {
+        window._loadAnnounceHistory();
+        if (window.showToast) window.showToast('yellow', 'Announcement deleted', '');
+      })
+      .catch(function(e) {
+        if (window.showToast) window.showToast('red', 'Delete failed', e.message);
+      });
+  };
+
+  // Clear ALL announcements
+  window._clearAllAnnouncements = function() {
+    if (!db || !mods) return;
+    if (!confirm('Delete ALL announcements from history? This cannot be undone.')) return;
+    mods.getDocs(mods.collection(db, 'hillAnnouncements'))
+      .then(function(snap) {
+        var batch = [];
+        snap.forEach(function(d) { batch.push(mods.deleteDoc(mods.doc(db, 'hillAnnouncements', d.id))); });
+        return Promise.all(batch);
+      })
+      .then(function() {
+        window._loadAnnounceHistory();
+        if (window.showToast) window.showToast('green', 'All announcements cleared', '');
+      })
+      .catch(function(e) {
+        if (window.showToast) window.showToast('red', 'Clear failed', e.message);
+      });
   };
 
 })();
