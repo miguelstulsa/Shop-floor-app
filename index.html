@@ -1182,6 +1182,7 @@
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
+    <div id="miguel-time-log" style="display:none;background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;padding:10px 14px;margin:6px 16px;"></div>
     <div id="proshop-live-bar" style="display:none;background:rgba(0,7,26,0.9);border-bottom:1px solid #1e3a5c;padding:6px 16px;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;min-height:36px;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:10px;color:#475569;letter-spacing:2px;flex-shrink:0;">PROSHOP</span>
     </div>
@@ -11445,9 +11446,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     sc.src = 'https://miguelstulsa.github.io/Shop-floor-app/songs.js';
     sc.onload = function(){ _apply(); };
     sc.onerror = function(){
-      console.log('songs.js failed to load');
-      _songsCallbacks.forEach(function(fn){fn();});
+      console.log('songs.js failed to load — will retry next song');
+      _songsLoading = false; // reset so next call retries
+      var cbs = _songsCallbacks.slice();
       _songsCallbacks=[];
+      cbs.forEach(function(fn){fn();});
     };
     document.head.appendChild(sc);
   }
@@ -11688,16 +11691,29 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     ctx += 'Task: ' + focus;
 
     try {
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: ctx }]
-        })
-      });
-      var data = await resp.json();
-      var text = data.content && data.content[0] && data.content[0].text;
-      if(text){ _lastAIReport = text; return text; }
+      var arText = null;
+      try {
+        var arResp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: ctx }] })
+        });
+        var arData = await arResp.json();
+        arText = arData.content && arData.content[0] && arData.content[0].text;
+      } catch(e1) {
+        var arResp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [{ role: 'user', content: ctx }] })
+        });
+        var arData2 = await arResp2.json();
+        arText = arData2.content && arData2.content[0] && arData2.content[0].text;
+      }
+      if(arText){ _lastAIReport = arText; return arText; }
     } catch(e) {
       console.log('AI report error:', e.message);
     }
@@ -11729,16 +11745,29 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     try {
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: ctx }]
-        })
-      });
-      var data = await resp.json();
-      var text = data.content && data.content[0] && data.content[0].text;
-      if(text){ _lastAIIntro = text; return text; }
+      var aiIntroText = null;
+      try {
+        var aiIResp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: ctx }] })
+        });
+        var aiIData = await aiIResp.json();
+        aiIntroText = aiIData.content && aiIData.content[0] && aiIData.content[0].text;
+      } catch(e1) {
+        var aiIResp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [{ role: 'user', content: ctx }] })
+        });
+        var aiIData2 = await aiIResp2.json();
+        aiIntroText = aiIData2.content && aiIData2.content[0] && aiIData2.content[0].text;
+      }
+      if(aiIntroText){ _lastAIIntro = aiIntroText; return aiIntroText; }
     } catch(e) {
       console.log('AI intro error:', e.message);
     }
@@ -11827,18 +11856,20 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       stat('🎙️ Sparky is talking...');
       say(introText, function(){
         if(!_on)return;
-        // Step 2: play song
+        // Step 2: load songs then play
         stat('♪ '+song.title+(song.artist?' — '+song.artist:''));
-        playSong(song, function(){
-          if(!_on)return;
-          stat('🎙️ Sparky is thinking...');
-          // Step 3: AI generates floor report
-          buildAIReport().then(function(reportText){
+        _loadSongs(function(){
+          playSong(song, function(){
             if(!_on)return;
-            stat('🎙️ Sparky is talking...');
-            say(reportText, function(){
+            stat('🎙️ Sparky is thinking...');
+            // Step 3: AI generates floor report
+            buildAIReport().then(function(reportText){
               if(!_on)return;
-              setTimeout(loop, 800);
+              stat('🎙️ Sparky is talking...');
+              say(reportText, function(){
+                if(!_on)return;
+                setTimeout(loop, 800);
+              });
             });
           });
         });
@@ -11898,19 +11929,20 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!_audio){
       _audio=new Audio();
       _audio.volume=0.8;
-      // Play a silent sound to unlock audio context on ALL browsers including desktop
-      _audio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-      _audio.play().then(function(){
-        _audio.src='';
-        console.log('Audio unlocked successfully');
-      }).catch(function(e){
-        console.log('Audio unlock failed:', e.message);
-        // Try with AudioContext for desktop browsers
-        try{
-          var ctx=new(window.AudioContext||window.webkitAudioContext)();
-          ctx.resume().then(function(){console.log('AudioContext resumed');});
-        }catch(e2){}
-      });
+      // Unlock audio via silent oscillator — works on all browsers, no file needed
+      try{
+        var _uctx=new(window.AudioContext||window.webkitAudioContext)();
+        var _uosc=_uctx.createOscillator();
+        var _ugain=_uctx.createGain();
+        _ugain.gain.value=0;
+        _uosc.connect(_ugain);
+        _ugain.connect(_uctx.destination);
+        _uosc.start(0);
+        _uosc.stop(0.001);
+        _uctx.resume().then(function(){console.log('Audio unlocked via AudioContext');});
+      }catch(e){
+        console.log('AudioContext unlock failed:', e.message);
+      }
     } else {
       // Already have audio element — make sure it's not stuck
       try{ _audio.pause(); }catch(e){}
@@ -11976,6 +12008,130 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   localStorage.removeItem('jimVoice');
 
   badge(false);
+
+  // ── MIGUEL'S TIME LOG ─────────────────────────────────────
+  function _listenTimeLog(){
+    var db2=window.fbDb,mods=window._fbModules;
+    if(!db2||!mods) return;
+
+    // Listen to hillTimeLog (timed jobs going forward)
+    mods.onSnapshot(
+      mods.query(
+        mods.collection(db2,'hillTimeLog'),
+        mods.where('person','==','hilladmin'),
+        mods.orderBy('loggedAt','desc'),
+
+      ),
+      function(snap){
+        if(!snap) return;
+        var timedLogs = [];
+        snap.forEach(function(d){ var data=d.data(); data.id=d.id; data._source='timed'; timedLogs.push(data); });
+
+        // Also pull historical hillRequests resolved by hilladmin (blue + yellow types)
+        mods.getDocs(
+          mods.query(
+            mods.collection(db2,'hillRequests'),
+            mods.where('resolvedBy','==','hilladmin'),
+            mods.where('resolved','==',true),
+            mods.orderBy('resolvedAt','desc'),
+            mods.limit(200)
+          )
+        ).then(function(hrSnap){
+          var histLogs = [];
+          if(hrSnap && !hrSnap.empty){
+            hrSnap.forEach(function(d){
+              var r = d.data();
+              // Only blue (Pending WO) and yellow (Machinist Req)
+              if(r.type !== 'blue' && r.type !== 'yellow') return;
+              // Skip if already in timedLogs (same wo+machine combo recently)
+              var alreadyTimed = timedLogs.some(function(t){
+                return t.wo === r.wo && t.machine === r.machine;
+              });
+              histLogs.push({
+                id: d.id,
+                person: r.resolvedBy || 'hilladmin',
+                role: r.type === 'blue' ? 'setup' : 'machinist',
+                machine: r.machine || '',
+                wo: r.wo || '',
+                op: r.op || '',
+                detail: r.detail || '',
+                assignedTo: r.assignedTo || '',
+                elapsedMins: r.elapsedMins || null,
+                elapsedStr: r.elapsedStr || (alreadyTimed ? null : 'no time'),
+                loggedAt: r.resolvedAt || null,
+                _source: alreadyTimed ? 'duplicate' : 'historical'
+              });
+            });
+          }
+
+          // Merge: timed logs first, then historical (no duplicates)
+          var allLogs = timedLogs.concat(
+            histLogs.filter(function(h){ return h._source !== 'duplicate'; })
+          );
+
+          // Sort by date desc
+          allLogs.sort(function(a,b){
+            var at = a.loggedAt && a.loggedAt.seconds ? a.loggedAt.seconds : 0;
+            var bt = b.loggedAt && b.loggedAt.seconds ? b.loggedAt.seconds : 0;
+            return bt - at;
+          });
+
+          window._myTimeLogs = allLogs;
+          _renderTimeLog(allLogs);
+        }).catch(function(e){
+          // If historical pull fails, just show timed logs
+          window._myTimeLogs = timedLogs;
+          _renderTimeLog(timedLogs);
+        });
+      }
+    );
+  }
+
+  function _renderTimeLog(logs){
+    var bar = document.getElementById('miguel-time-log');
+    if(!bar) return;
+    if(!logs || !logs.length){ bar.style.display='none'; return; }
+    bar.style.display='block';
+    // Split into today vs previous
+    var today = new Date();
+    var todayStart = new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime()/1000;
+    var todayLogs = logs.filter(function(l){ return l.loggedAt && l.loggedAt.seconds >= todayStart; });
+    var prevLogs  = logs.filter(function(l){ return !l.loggedAt || l.loggedAt.seconds < todayStart; });
+
+    var todayMins = todayLogs.reduce(function(s,l){ return s+(l.elapsedMins||0); },0);
+    var allMins   = logs.reduce(function(s,l){ return s+(l.elapsedMins||0); },0);
+    var todayStr  = todayMins >= 60 ? Math.floor(todayMins/60)+'h '+(todayMins%60)+'m' : todayMins+'m';
+    var allStr    = allMins >= 60 ? Math.floor(allMins/60)+'h '+(allMins%60)+'m' : allMins+'m';
+
+    bar.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+      +'<span style="font-size:13px;color:#f5c842;letter-spacing:1px;">⏱ MY TIME LOG</span>'
+      +'<span style="font-size:11px;color:#475569;">Today: <b style="color:#f5c842;">'+todayStr+'</b> &nbsp; All: <b style="color:#94a3b8;">'+allStr+'</b></span>'
+      +'</div>'
+      +logs.map(function(l){
+        var isSetup = l.role==='setup' || l.role==='machinist';
+        var typeColor = l.role==='setup' ? '#60a5fa' : l.role==='machinist' ? '#fbbf24' : '#4ade80';
+        var typeLabel = l.role==='setup' ? 'Setup' : l.role==='machinist' ? 'Mach Req' : 'Run';
+        var timed = l.elapsedMins && l.elapsedMins > 0;
+        var timeColor = timed ? '#f5c842' : '#334155';
+        var timeStr = l.elapsedStr && l.elapsedStr !== 'no time' ? l.elapsedStr : '—';
+        var dateStr = '';
+        if(l.loggedAt && l.loggedAt.seconds){
+          var d = new Date(l.loggedAt.seconds*1000);
+          dateStr = (d.getMonth()+1)+'/'+d.getDate();
+        }
+        return '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #0d1f35;">'
+          +'<span style="font-size:9px;background:'+typeColor+'22;color:'+typeColor+';border-radius:4px;padding:2px 5px;font-weight:700;flex-shrink:0;">'+typeLabel+'</span>'
+          +(dateStr?'<span style="font-size:9px;color:#334155;flex-shrink:0;">'+dateStr+'</span>':'')
+          +'<span style="font-size:11px;color:#94a3b8;font-weight:700;">'+l.machine+'</span>'
+          +(l.wo?'<span style="font-size:10px;color:#475569;">WO '+l.wo+'</span>':'')
+          +(l.op?'<span style="font-size:10px;color:#334155;">OP '+l.op+'</span>':'')
+          +'<span style="font-size:11px;color:'+timeColor+';margin-left:auto;font-weight:700;flex-shrink:0;">'+timeStr+'</span>'
+          +(l.assignedTo?'<span style="font-size:9px;color:#475569;flex-shrink:0;">→ '+l.assignedTo.split(' ')[0]+'</span>':'')
+          +'</div>';
+      }).join('');
+  }
+
+  var _tlTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_tlTimer);_listenTimeLog();}},1500);
 
   // ── PROSHOP LIVE DATA ────────────────────────────────────
   function _startProShopListener(){
@@ -12201,26 +12357,37 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
       _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
 
+      var mText = null;
+      var mSystem = 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.';
       try {
-        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        var mResp = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
-            messages: _chatHistory.slice(-10)
-          })
+          headers: {
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: mSystem, messages: _chatHistory.slice(-10) })
         });
-        var data2 = await resp2.json();
-        var text2 = data2.content && data2.content[0] && data2.content[0].text;
-        typingEl2.remove();
-        _chatThinking = false;
-        if(text2){
-          addMessage('assistant', text2);
-          _chatHistory.push({role:'assistant', content: text2});
-        }
-      } catch(e){
-        typingEl2.remove();
-        _chatThinking = false;
+        var mData = await mResp.json();
+        mText = mData.content && mData.content[0] && mData.content[0].text;
+      } catch(e) {
+        try {
+          var mResp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ system: mSystem, messages: _chatHistory.slice(-10) })
+          });
+          var mData2 = await mResp2.json();
+          mText = mData2.content && mData2.content[0] && mData2.content[0].text;
+        } catch(e2) {}
+      }
+      typingEl2.remove();
+      _chatThinking = false;
+      if(mText){
+        addMessage('assistant', mText);
+        _chatHistory.push({role:'assistant', content: mText});
+      } else {
         addMessage('assistant', 'Error fetching data for ' + foundMachinist);
       }
       return;
@@ -12243,26 +12410,39 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
       var messages = _chatHistory.slice(-10); // last 10 messages for context
 
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system: systemPrompt,
-          messages: messages
-        })
-      });
-
-      var data = await resp.json();
-      var text = data.content && data.content[0] && data.content[0].text;
+      var aiText = null;
+      try {
+        var directResp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          },
+          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages: messages })
+        });
+        var directData = await directResp.json();
+        aiText = directData.content && directData.content[0] && directData.content[0].text;
+      } catch(e1) {
+        try {
+          var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ system: systemPrompt, messages: messages })
+          });
+          var data = await resp.json();
+          aiText = data.content && data.content[0] && data.content[0].text;
+        } catch(e2) {}
+      }
 
       typingEl.remove();
       _chatThinking = false;
 
-      if(text){
-        addMessage('assistant', text);
-        _chatHistory.push({role:'assistant', content: text});
+      if(aiText){
+        addMessage('assistant', aiText);
+        _chatHistory.push({role:'assistant', content: aiText});
       } else {
-        addMessage('assistant', 'Sorry, I had trouble with that. Try again.');
+        addMessage('assistant', 'Sorry, I had trouble connecting. Try again.');
       }
 
     } catch(e) {
