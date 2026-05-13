@@ -12072,10 +12072,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var todayStr  = todayMins >= 60 ? Math.floor(todayMins/60)+'h '+(todayMins%60)+'m' : todayMins+'m';
     var allStr    = allMins >= 60 ? Math.floor(allMins/60)+'h '+(allMins%60)+'m' : allMins+'m';
 
+    var isMin = localStorage.getItem('tlMinimized') === '1';
     bar.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
       +'<span style="font-size:13px;color:#f5c842;letter-spacing:1px;">⏱ MY TIME LOG</span>'
+      +'<span style="display:flex;align-items:center;gap:10px;">'
       +'<span style="font-size:11px;color:#475569;">Today: <b style="color:#f5c842;">'+todayStr+'</b> &nbsp; All: <b style="color:#94a3b8;">'+allStr+'</b></span>'
+      +'<button onclick="(function(){var m=localStorage.getItem(\'tlMinimized\')===\'1\';localStorage.setItem(\'tlMinimized\',m?\'0\':\'1\');var body=document.getElementById(\'tl-body\');if(body){body.style.display=m?\'block\':\'none\';}var btn=document.getElementById(\'tl-min-btn\');if(btn){btn.textContent=m?\'−\':\'+'+'\';};})()" id="tl-min-btn" style="background:rgba(255,255,255,0.08);border:1px solid #2a5a8c;border-radius:6px;color:#94a3b8;font-size:16px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;">'+(isMin?'+':'−')+'</button>'
+      +'</span>'
       +'</div>'
+      +'<div id="tl-body" style="display:'+(isMin?'none':'block')+';">'
       +logs.map(function(l){
         var isSetup = l.role==='setup' || l.role==='machinist';
         var typeColor = l.role==='setup' ? '#60a5fa' : l.role==='machinist' ? '#fbbf24' : '#4ade80';
@@ -12097,7 +12102,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           +'<span style="font-size:11px;color:'+timeColor+';margin-left:auto;font-weight:700;flex-shrink:0;">'+timeStr+'</span>'
           +(l.assignedTo?'<span style="font-size:9px;color:#475569;flex-shrink:0;">→ '+l.assignedTo.split(' ')[0]+'</span>':'')
           +'</div>';
-      }).join('');
+      }).join('')
+      +'</div>';
   }
 
   var _tlTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_tlTimer);_listenTimeLog();}},1500);
