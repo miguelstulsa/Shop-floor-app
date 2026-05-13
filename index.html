@@ -2066,8 +2066,6 @@
 
   window.finishRequest = async function(noteId, hillReqId) {
     if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
-    // Safety confirmation — prevents accidental finishes
-    if (!confirm('Mark this request as finished?\n\nThis will remove it from the live floor. An undo option will appear for 30 seconds.')) return;
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
     if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
@@ -2091,22 +2089,15 @@
 
     // Step 2: Cache note data then delete from live feed (removes card from screen)
     window._lastFinishedNote = null; // always clear first to prevent stale data bleed
-    var _undoNoteData = null;
-    var _undoHillReqId = hillReqId;
     try {
       var noteSnapForCache = await mods.getDoc(mods.doc(db2, 'notes', noteId));
       if (noteSnapForCache && noteSnapForCache.exists()) {
         window._lastFinishedNote = noteSnapForCache.data();
-        _undoNoteData = noteSnapForCache.data();
       }
       await mods.deleteDoc(mods.doc(db2, 'notes', noteId));
     } catch(e) { console.warn('finishRequest deleteNote:', e.message); }
     // Remove from live banner immediately
     if (window._removeActiveJob) window._removeActiveJob(noteId);
-    // Show undo toast — gives 30s to recover accidental finishes
-    if (_undoNoteData) {
-      window._showUndoFinish(_undoNoteData, _undoHillReqId);
-    }
 
     // Step 3: Save Miguel's setup time separately before resolving
     try {
@@ -6125,8 +6116,7 @@
     var clearWrap = document.getElementById('dash-clear-wrap');
     if (clearWrap) {
       clearWrap.innerHTML = (window._isAdmin || window.currentUser === 'hilladmin')
-        ? '<button onclick="window._openRestorePanel()" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.35);color:#f59e0b;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:12px;">↩ RESTORE JOBS FROM HISTORY (Admin Only)</button>'
-        + '<button onclick="clearDashboardRequests()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:6px;">🗑 CLEAR RESOLVED HISTORY (Admin Only) · 🔴 Inspections + Active Jobs protected</button>'
+        ? '<button onclick="clearDashboardRequests()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:10px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1.5px;cursor:pointer;width:100%;margin-top:12px;">🗑 CLEAR NON-INSPECTION HISTORY (Admin Only) · 🔴 Inspections kept forever</button>'
         : '';
     }
 
@@ -6425,21 +6415,17 @@
     var mods=window._fbModules,db2=window._db;
     mods.getDocs(mods.collection(db2,'hillRequests')).then(function(snap){
       var deleteCount = 0;
-      var skippedActive = 0;
       snap.forEach(function(d){
         var data = d.data();
         // NEVER delete inspection requests (type === 'red')
         if (data.type === 'red') return;
-        // NEVER delete unresolved (still-active) jobs — they are on the live floor
-        if (!data.resolved) { skippedActive++; return; }
         mods.deleteDoc(mods.doc(db2,'hillRequests',d.id));
         deleteCount++;
       });
-      // Keep inspection records and unresolved jobs in local state
-      dashRequests = dashRequests.filter(function(r){ return r.type === 'red' || !r.resolved; });
+      // Keep inspection records in local state too
+      dashRequests = dashRequests.filter(function(r){ return r.type === 'red'; });
       renderDashboard();
-      var skipMsg = skippedActive > 0 ? ' · ' + skippedActive + ' active job(s) protected' : '';
-      showToast('green', deleteCount + ' records cleared', (inspectionCount > 0 ? inspectionCount + ' inspection records kept' : 'History cleared') + skipMsg);
+      showToast('green', deleteCount + ' records cleared', inspectionCount > 0 ? inspectionCount + ' inspection records kept permanently' : 'History cleared');
     });
   }
   function renderDashCharts(data) {
@@ -11703,7 +11689,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     ctx += 'Task: ' + focus;
 
     try {
-      var data = await window._callClaude({ messages: [{ role: 'user', content: ctx }] });
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: ctx }]
+        })
+      });
+      var data = await resp.json();
       var text = data.content && data.content[0] && data.content[0].text;
       if(text){ _lastAIReport = text; return text; }
     } catch(e) {
@@ -11737,7 +11730,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     try {
-      var data = await window._callClaude({ messages: [{ role: 'user', content: ctx }] });
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: ctx }]
+        })
+      });
+      var data = await resp.json();
       var text = data.content && data.content[0] && data.content[0].text;
       if(text){ _lastAIIntro = text; return text; }
     } catch(e) {
@@ -12245,27 +12245,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return lines.join("\n");
   }
 
-  window._anthropicKey = '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';
-  window._getAnthropicKey = async function() { return window._anthropicKey; };
-  window._callClaude = async function(body) {
-    var key = window._anthropicKey;
-    if (!key) throw new Error('API key not configured');
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-calls': 'true'
-      },
-      body: JSON.stringify(Object.assign({ model: 'claude-sonnet-4-5', max_tokens: 2048 }, body))
-    });
-    var data = await resp.json();
-    var text = '';
-    if (data.content) data.content.forEach(function(b) { if (b.type === 'text') text += b.text; });
-    return { content: [{ type: 'text', text: text || 'No response' }] };
-  };
-
   window._sendAIChat = async function(){
     var input = document.getElementById('ai-input');
     var msg = (input.value || '').trim();
@@ -12293,16 +12272,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       }
     }
 
-    // Check for "requests to me" / "sent to me" queries — only if no machinist name present
-    var _machinistList = ['Brett Thompson', 'Bryan Sturman', 'Caleb Dooley', 'Chuck Whitfield', 'Corey Bartmier', 'Daniel McGarvey', 'Dingo Mikles', 'Hank Anglin', 'Jacob Nail', 'Jared Stuart', 'Jimmy Pollard', 'Justin Gray', 'Keith Groden', 'Matthew Carrico', 'Miguel Sanchez', 'Mike Payne', 'Rhett Dawson', 'Scott Smith', 'Sean Surratt', 'Steven Riggs', 'Tony Lang', 'Tyler Stockham'];
-    var _hasMachinistInMsg = (function(){
-      var _ml = msg.toLowerCase();
-      return _machinistList.some(function(n){
-        var f = n.split(' ')[0].toLowerCase();
-        return _ml.indexOf(n.toLowerCase())>=0 || (f.length>3 && _ml.indexOf(f)>=0);
-      });
-    })();
-    if(!_hasMachinistInMsg && /sent to me|my requests|requests to me|how many.*sent|who sent|count.*requests/i.test(msg)){
+    // Check for "requests to me" / "sent to me" queries
+    if(/sent to me|my requests|requests to me|how many.*sent|who sent|count.*requests/i.test(msg)){
       _chatThinking = true;
       var typingEl3 = addTyping();
       var myReceipt = await _buildRequestsToMeReceipt();
@@ -12356,10 +12327,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
 
       try {
-        var data2 = await window._callClaude({
-          system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
-          messages: _chatHistory.slice(-10)
+        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
+            messages: _chatHistory.slice(-10)
+          })
         });
+        var data2 = await resp2.json();
         var text2 = data2.content && data2.content[0] && data2.content[0].text;
         typingEl2.remove();
         _chatThinking = false;
@@ -12387,14 +12363,21 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         + 'NEVER make up data. Only report floor data that is explicitly in the LIVE FLOOR DATA section below. '
         + 'If floor data is empty, say the floor is clear. Do not invent jobs or people. '
         + 'HILL MANUFACTURING ROSTER: Brett Thompson, Bryan Sturman, Caleb Dooley, Chuck Whitfield, Corey Bartmier, Daniel McGarvey, Dingo Mikles, Hank Anglin, Jacob Nail, Jared Stuart, Jimmy Pollard, Justin Gray, Keith Groden, Matthew Carrico, Miguel Sanchez, Mike Payne, Rhett Dawson, Scott Smith, Sean Surratt, Steven Riggs, Tony Lang, Tyler Stockham. '
-        + 'Machinist names in Firebase may be stored as full name, first name only, lowercase, or uppercase — treat all variants as the same person. '
-        + 'Fields that store submitter name: operator, assignedTo, submittedBy, machinistName, name, by. '
         + 'Be direct, accurate, and conversational. This is the best shop floor app ever built. '
         + '\nLIVE FLOOR DATA:\n' + floorCtx;
 
       var messages = _chatHistory.slice(-10); // last 10 messages for context
 
-      var data = await window._callClaude({ system: systemPrompt, messages: messages });
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system: systemPrompt,
+          messages: messages
+        })
+      });
+
+      var data = await resp.json();
       var text = data.content && data.content[0] && data.content[0].text;
 
       typingEl.remove();
@@ -12570,42 +12553,18 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!db2||!mods) return {name:name, requests:[]};
     var requests = [];
     try {
-      var firstName  = name.split(' ')[0];
-      var lastName   = name.split(' ')[1] || '';
-      // Build every plausible variant of the name that might be stored
-      var variants = [
-        name,                                           // "Corey Bartmier"
-        firstName,                                      // "Corey"
-        lastName,                                       // "Bartmier"
-        name.toLowerCase(),                             // "corey bartmier"
-        firstName.toLowerCase(),                        // "corey"
-        name.toUpperCase(),                             // "COREY BARTMIER"
-        firstName.toUpperCase(),                        // "COREY"
-        firstName[0].toUpperCase()+firstName.slice(1).toLowerCase(), // "Corey"
-        firstName.toLowerCase()+' '+lastName.toLowerCase(), // "corey bartmier"
-        lastName.toLowerCase()+', '+firstName.toLowerCase(), // "bartmier, corey"
-        name.replace(/\s+/g,''),                        // "CoreyBartmier"
-      ];
-      // Deduplicate variants
-      variants = variants.filter(function(v,i){ return v && variants.indexOf(v)===i; });
-
-      // Fields that might hold the submitter's name
-      var fields = ['operator','assignedTo','submittedBy','machinistName','name','by','user','mechanic'];
-
-      // Fan out queries across all field × variant combos, but cap at 20 parallel queries
-      var queryList = [];
-      fields.forEach(function(field){
-        variants.forEach(function(variant){
-          queryList.push(
-            mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where(field,'==',variant), mods.orderBy('createdAt','desc'), mods.limit(100)))
-              .catch(function(){ return null; })  // ignore index errors silently
-          );
-        });
-      });
-
-      var results = await Promise.all(queryList);
+      var firstName = name.split(' ')[0];
+      var lastName = name.split(' ')[1] || '';
+      // Search by full name, first name only, and assignedTo
+      var snaps = await Promise.all([
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
+      ]);
       var seen = {};
-      results.forEach(function(snap){
+      snaps.forEach(function(snap){
         if(!snap||snap.empty) return;
         snap.forEach(function(d){
           if(seen[d.id]) return;
@@ -12614,25 +12573,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           requests.push(r);
         });
       });
-
-      // Fallback: full scan and client-side filter if still nothing found
-      // (catches records where name is stored in an unexpected format)
-      if(requests.length === 0){
-        var allSnap = await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.orderBy('createdAt','desc'), mods.limit(500)));
-        var fnLower = firstName.toLowerCase();
-        var lnLower = lastName.toLowerCase();
-        allSnap.forEach(function(d){
-          if(seen[d.id]) return;
-          var r = d.data(); r.id = d.id;
-          // Check every string field for a match on first name (or full name)
-          var hay = JSON.stringify(r).toLowerCase();
-          if(hay.indexOf(fnLower) >= 0 && (lnLower.length < 3 || hay.indexOf(lnLower) >= 0)){
-            seen[d.id] = true;
-            requests.push(r);
-          }
-        });
-      }
-
       requests.sort(function(a,b){
         var at = a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
         var bt = b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;
@@ -12855,18 +12795,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // Clear pinned
   window._clearPinned = function(){
     if(!confirm('Clear the pinned announcement?')) return;
-    var _db  = db  || window.fbDb  || window._db;
-    var _mods = mods || window._fbModules;
-    if(_db && _mods){
-      _mods.deleteDoc(_mods.doc(_db,'hillSettings','pinnedAnnouncement')).then(function(){
-        var f = document.getElementById('pinned-text');
-        if (f) f.value = '';
+    if(db && mods){
+      mods.deleteDoc(mods.doc(db,'hillSettings','pinnedAnnouncement')).then(function(){
+        document.getElementById('pinned-text').value = '';
         if(window.showToast) window.showToast('yellow','Pinned message cleared','');
-      }).catch(function(e){
-        if(window.showToast) window.showToast('red','Clear failed',e.message);
       });
-    } else {
-      if(window.showToast) window.showToast('red','Not connected','Firebase not ready — try again in a moment');
     }
   };
 
@@ -12932,248 +12865,19 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         hist.innerHTML = '<div style="font-size:12px;color:#475569;">No announcements yet.</div>';
         return;
       }
-      var ids = snap.docs.map(function(d){ return d.id; });
-      hist.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-        + '<div style="font-size:13px;color:#94a3b8;">RECENT ANNOUNCEMENTS</div>'
-        + (ids.length > 0 ? '<button onclick="window._clearAllAnnouncements()" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;letter-spacing:1px;">✕ CLEAR ALL</button>' : '')
-        + '</div>'
+      hist.innerHTML = '<div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">RECENT ANNOUNCEMENTS</div>'
         + snap.docs.map(function(d){
           var data = d.data();
           var ts = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-          return '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;padding:10px;margin-bottom:8px;display:flex;align-items:flex-start;gap:8px;">'
-            +'<div style="flex:1;">'
+          return '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;padding:10px;margin-bottom:8px;">'
             +'<div style="font-size:13px;color:#f0f4f8;">'+data.text+'</div>'
             +'<div style="font-size:11px;color:#475569;margin-top:4px;">'+ts+' — '+(data.by||'admin')+'</div>'
-            +'</div>'
-            +'<button onclick="window._deleteAnnouncement(&quot;'+d.id+'&quot;)" style="background:none;border:none;color:#475569;font-size:16px;cursor:pointer;padding:0 2px;line-height:1;flex-shrink:0;" title="Delete">✕</button>'
             +'</div>';
         }).join('');
     }).catch(function(){});
   };
 
-  // Delete a single announcement
-  window._deleteAnnouncement = function(docId) {
-    if (!db || !mods) return;
-    if (!confirm('Delete this announcement?')) return;
-    mods.deleteDoc(mods.doc(db, 'hillAnnouncements', docId))
-      .then(function() {
-        window._loadAnnounceHistory();
-        if (window.showToast) window.showToast('yellow', 'Announcement deleted', '');
-      })
-      .catch(function(e) {
-        if (window.showToast) window.showToast('red', 'Delete failed', e.message);
-      });
-  };
-
-  // Clear ALL announcements
-  window._clearAllAnnouncements = function() {
-    if (!db || !mods) return;
-    if (!confirm('Delete ALL announcements from history? This cannot be undone.')) return;
-    mods.getDocs(mods.collection(db, 'hillAnnouncements'))
-      .then(function(snap) {
-        var batch = [];
-        snap.forEach(function(d) { batch.push(mods.deleteDoc(mods.doc(db, 'hillAnnouncements', d.id))); });
-        return Promise.all(batch);
-      })
-      .then(function() {
-        window._loadAnnounceHistory();
-        if (window.showToast) window.showToast('green', 'All announcements cleared', '');
-      })
-      .catch(function(e) {
-        if (window.showToast) window.showToast('red', 'Clear failed', e.message);
-      });
-  };
-
 })();
 </script>
-<script>
-// ── UNDO FINISH + RESTORE FROM HISTORY ─────────────────────────────────────
-(function(){
-  var _undoTimer = null;
-  var _undoToastEl = null;
-
-  // Called immediately after a note is deleted by finishRequest
-  window._showUndoFinish = function(noteData, hillReqId) {
-    // Store for restore-from-history too
-    if (!window._recentlyFinished) window._recentlyFinished = [];
-    window._recentlyFinished.unshift({ noteData: noteData, hillReqId: hillReqId, finishedAt: Date.now() });
-    if (window._recentlyFinished.length > 20) window._recentlyFinished.pop();
-
-    // Remove any existing undo toast
-    if (_undoToastEl && _undoToastEl.parentNode) _undoToastEl.parentNode.removeChild(_undoToastEl);
-    clearTimeout(_undoTimer);
-
-    // Build undo toast
-    var el = document.createElement('div');
-    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;background:#0f2338;border:2px solid #f59e0b;border-radius:14px;padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,0.7);min-width:280px;max-width:90vw;';
-    var label = noteData.machine ? (noteData.machine + (noteData.wo ? ' — WO ' + noteData.wo : '')) : 'Last request';
-    el.innerHTML = '<div style="flex:1;"><div style="font-size:12px;font-weight:700;color:#f59e0b;letter-spacing:1px;margin-bottom:2px;">✓ FINISHED</div><div style="font-size:13px;color:#f0f4f8;">' + label + '</div><div style="font-size:11px;color:#64748b;margin-top:2px;">Undo available for <span id="_undoCountdown">30</span>s</div></div>'
-      + '<button id="_undoFinishBtn" style="background:#f59e0b;color:#0f2338;border:none;border-radius:8px;padding:10px 18px;font-family:Bebas Neue,sans-serif;font-size:15px;letter-spacing:1.5px;cursor:pointer;flex-shrink:0;">UNDO</button>';
-    document.body.appendChild(el);
-    _undoToastEl = el;
-
-    // Countdown
-    var seconds = 30;
-    var countEl = el.querySelector('#_undoCountdown');
-    var interval = setInterval(function(){
-      seconds--;
-      if (countEl) countEl.textContent = seconds;
-      if (seconds <= 0) { clearInterval(interval); }
-    }, 1000);
-
-    // Undo button
-    el.querySelector('#_undoFinishBtn').addEventListener('click', function(){
-      clearTimeout(_undoTimer);
-      clearInterval(interval);
-      if (_undoToastEl && _undoToastEl.parentNode) _undoToastEl.parentNode.removeChild(_undoToastEl);
-      _undoToastEl = null;
-      _restoreNote(noteData, hillReqId);
-    });
-
-    // Auto-dismiss after 30s
-    _undoTimer = setTimeout(function(){
-      clearInterval(interval);
-      if (_undoToastEl && _undoToastEl.parentNode) { _undoToastEl.parentNode.removeChild(_undoToastEl); _undoToastEl = null; }
-    }, 30000);
-  };
-
-  // Re-add the note to Firebase (restores to live floor)
-  function _restoreNote(noteData, hillReqId) {
-    var db2  = window.fbDb || window._db;
-    var mods = window._fbModules;
-    if (!mods || !db2) { alert('Cannot restore — not connected to database.'); return; }
-    // Strip server-generated fields before re-inserting
-    var clean = Object.assign({}, noteData);
-    delete clean.id;
-    // Reset progress state — it was being finished, so put it back as-is
-    clean.inProgress = noteData.inProgress || false;
-    clean.onHold     = noteData.onHold || false;
-    // Re-add to notes collection (live floor)
-    mods.addDoc(mods.collection(db2, 'notes'), Object.assign({}, clean, { createdAt: mods.serverTimestamp(), restoredAt: mods.serverTimestamp(), hillReqId: hillReqId || noteData.hillReqId || '' }))
-      .then(function(ref) {
-        // If there's a hillRequests record, un-resolve it so it shows as active again
-        var hrId = hillReqId && hillReqId !== '' ? hillReqId : (noteData.hillReqId || null);
-        if (hrId) {
-          mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), {
-            resolved: false, resolvedAt: null, inProgress: clean.inProgress, jobStatus: 'active'
-          }).catch(function(){});
-        }
-        if (window.showToast) window.showToast('green', '↩ Restored', (noteData.machine || 'Request') + ' is back on the floor');
-      })
-      .catch(function(e) {
-        if (window.showToast) window.showToast('red', 'Restore failed', e.message);
-      });
-  }
-
-  // ── RESTORE FROM HISTORY PANEL ────────────────────────────────────────────
-  // Renders a panel listing recent hillRequests that were resolved today so
-  // admin can one-tap restore any of them back to the live floor.
-  window._openRestorePanel = function() {
-    var db2  = window.fbDb || window._db;
-    var mods = window._fbModules;
-    if (!mods || !db2) { alert('Not connected.'); return; }
-
-    // Build panel
-    var existing = document.getElementById('_restorePanel');
-    if (existing) { existing.remove(); }
-
-    var overlay = document.createElement('div');
-    overlay.id = '_restorePanel';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:9100;display:flex;align-items:flex-start;justify-content:center;padding-top:60px;overflow-y:auto;';
-    overlay.innerHTML = '<div style="background:#0f2338;border:1px solid #2a5a8c;border-radius:16px;padding:0;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.8);">'
-      + '<div style="padding:20px 24px 14px;border-bottom:1px solid #1e3a5f;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#0f2338;border-radius:16px 16px 0 0;">'
-      + '<div><div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;color:#f59e0b;">↩ RESTORE FROM HISTORY</div>'
-      + '<div style="font-size:11px;color:#64748b;letter-spacing:1.5px;margin-top:2px;">Tap any resolved job to put it back on the live floor</div></div>'
-      + '<button onclick="document.getElementById(&quot;_restorePanel&quot;).remove()" style="background:rgba(255,255,255,0.08);border:1px solid #2a5a8c;border-radius:8px;color:#94a3b8;font-size:20px;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">✕</button>'
-      + '</div>'
-      + '<div id="_restorePanelList" style="overflow-y:auto;padding:14px 20px;flex:1;"><div style="color:#475569;font-size:13px;text-align:center;padding:20px;">Loading recent jobs…</div></div>'
-      + '</div>';
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
-
-    // Load resolved records from today (and yesterday as buffer)
-    var yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1); yesterday.setHours(0,0,0,0);
-    var listEl = document.getElementById('_restorePanelList');
-
-    mods.getDocs(mods.query(
-      mods.collection(db2, 'hillRequests'),
-      mods.orderBy('createdAt', 'desc'),
-      mods.limit(60)
-    )).then(function(snap) {
-      var records = [];
-      snap.forEach(function(d) {
-        var data = d.data();
-        // Only resolved, non-inspection (inspections have their own archive)
-        if (!data.resolved) return;
-        if (data.type === 'red') return;
-        records.push({ id: d.id, data: data });
-      });
-
-      if (records.length === 0) {
-        listEl.innerHTML = '<div style="color:#475569;font-size:13px;text-align:center;padding:30px;">No resolved jobs found in recent history.<br><span style="font-size:11px;">Active jobs cannot be restored here — they are already on the floor.</span></div>';
-        return;
-      }
-
-      var typeColors = { blue:'#3b82f6', yellow:'#eab308', green:'#22c55e', red:'#ef4444' };
-      var typeLabels = { blue:'Pending WO', yellow:'Machinist Req', green:'Running WO', red:'Inspection' };
-
-      listEl.innerHTML = records.map(function(r) {
-        var d = r.data;
-        var ts = d.resolvedAt && d.resolvedAt.seconds ? new Date(d.resolvedAt.seconds*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : (d.createdAt && d.createdAt.seconds ? new Date(d.createdAt.seconds*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '');
-        var color = typeColors[d.type] || '#64748b';
-        var label = typeLabels[d.type] || d.type;
-        return '<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(42,90,140,0.5);border-left:4px solid '+color+';border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">'
-          + '<div style="flex:1;min-width:0;">'
-          + '<div style="font-size:11px;font-weight:700;color:'+color+';letter-spacing:1px;margin-bottom:2px;">'+label+'</div>'
-          + '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:#f5d050;letter-spacing:1px;">'+(d.machine||'?')+'</div>'
-          + (d.wo ? '<div style="font-size:12px;color:#94a3b8;">WO '+d.wo+(d.op?' · Op '+d.op:'')+'</div>' : '')
-          + (d.detail ? '<div style="font-size:11px;color:#64748b;margin-top:1px;">'+d.detail+'</div>' : '')
-          + '<div style="font-size:10px;color:#334155;margin-top:4px;">'+(d.resolvedBy?'Finished by '+d.resolvedBy+' · ':'')+ts+'</div>'
-          + '</div>'
-          + '<button onclick="window._restoreFromHistory(&quot;'+r.id+'&quot;,this)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#f59e0b;border-radius:8px;padding:8px 14px;font-family:Bebas Neue,sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;flex-shrink:0;">RESTORE</button>'
-          + '</div>';
-      }).join('');
-    }).catch(function(e) {
-      listEl.innerHTML = '<div style="color:#ef4444;font-size:13px;text-align:center;padding:20px;">Error loading history: '+e.message+'</div>';
-    });
-  };
-
-  // Restore a specific hillRequests record back to the live floor
-  window._restoreFromHistory = function(hrId, btn) {
-    var db2  = window.fbDb || window._db;
-    var mods = window._fbModules;
-    if (!mods || !db2) return;
-    if (btn) { btn.disabled = true; btn.textContent = '…'; }
-    mods.getDoc(mods.doc(db2, 'hillRequests', hrId)).then(function(snap) {
-      if (!snap || !snap.exists()) { if(btn){btn.textContent='Not found';} return; }
-      var data = snap.data();
-      // Un-resolve the hillRequests record
-      mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), {
-        resolved: false, resolvedAt: null, jobStatus: 'active', inProgress: false
-      }).catch(function(){});
-      // Re-add to notes (live floor)
-      var clean = Object.assign({}, data);
-      delete clean.id;
-      clean.inProgress = false;
-      clean.onHold = false;
-      clean.hillReqId = hrId;
-      mods.addDoc(mods.collection(db2, 'notes'), Object.assign({}, clean, {
-        createdAt: mods.serverTimestamp(),
-        restoredAt: mods.serverTimestamp()
-      })).then(function() {
-        if (btn) { btn.textContent = '✓ RESTORED'; btn.style.background = 'rgba(34,197,94,0.2)'; btn.style.borderColor = '#22c55e'; btn.style.color = '#4ade80'; }
-        if (window.showToast) window.showToast('green', '↩ Restored to floor', (data.machine||'Job') + ' is active again');
-      }).catch(function(e) {
-        if (btn) { btn.textContent = 'FAILED'; }
-        if (window.showToast) window.showToast('red', 'Restore failed', e.message);
-      });
-    }).catch(function(e) {
-      if (btn) { btn.textContent = 'ERROR'; }
-    });
-  };
-
-})();
-</script>
-
 </body>
 </html>
