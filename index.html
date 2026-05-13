@@ -11446,11 +11446,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     sc.src = 'https://miguelstulsa.github.io/Shop-floor-app/songs.js';
     sc.onload = function(){ _apply(); };
     sc.onerror = function(){
-      console.log('songs.js failed to load — will retry next song');
-      _songsLoading = false; // reset so next call retries
-      var cbs = _songsCallbacks.slice();
+      console.log('songs.js failed to load');
+      _songsCallbacks.forEach(function(fn){fn();});
       _songsCallbacks=[];
-      cbs.forEach(function(fn){fn();});
     };
     document.head.appendChild(sc);
   }
@@ -11691,29 +11689,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     ctx += 'Task: ' + focus;
 
     try {
-      var arText = null;
-      try {
-        var arResp = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-          },
-          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: ctx }] })
-        });
-        var arData = await arResp.json();
-        arText = arData.content && arData.content[0] && arData.content[0].text;
-      } catch(e1) {
-        var arResp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: [{ role: 'user', content: ctx }] })
-        });
-        var arData2 = await arResp2.json();
-        arText = arData2.content && arData2.content[0] && arData2.content[0].text;
-      }
-      if(arText){ _lastAIReport = arText; return arText; }
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: ctx }]
+        })
+      });
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+      if(text){ _lastAIReport = text; return text; }
     } catch(e) {
       console.log('AI report error:', e.message);
     }
@@ -11745,29 +11730,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     try {
-      var aiIntroText = null;
-      try {
-        var aiIResp = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-          },
-          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: ctx }] })
-        });
-        var aiIData = await aiIResp.json();
-        aiIntroText = aiIData.content && aiIData.content[0] && aiIData.content[0].text;
-      } catch(e1) {
-        var aiIResp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: [{ role: 'user', content: ctx }] })
-        });
-        var aiIData2 = await aiIResp2.json();
-        aiIntroText = aiIData2.content && aiIData2.content[0] && aiIData2.content[0].text;
-      }
-      if(aiIntroText){ _lastAIIntro = aiIntroText; return aiIntroText; }
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: ctx }]
+        })
+      });
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+      if(text){ _lastAIIntro = text; return text; }
     } catch(e) {
       console.log('AI intro error:', e.message);
     }
@@ -11856,20 +11828,18 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       stat('🎙️ Sparky is talking...');
       say(introText, function(){
         if(!_on)return;
-        // Step 2: load songs then play
+        // Step 2: play song
         stat('♪ '+song.title+(song.artist?' — '+song.artist:''));
-        _loadSongs(function(){
-          playSong(song, function(){
+        playSong(song, function(){
+          if(!_on)return;
+          stat('🎙️ Sparky is thinking...');
+          // Step 3: AI generates floor report
+          buildAIReport().then(function(reportText){
             if(!_on)return;
-            stat('🎙️ Sparky is thinking...');
-            // Step 3: AI generates floor report
-            buildAIReport().then(function(reportText){
+            stat('🎙️ Sparky is talking...');
+            say(reportText, function(){
               if(!_on)return;
-              stat('🎙️ Sparky is talking...');
-              say(reportText, function(){
-                if(!_on)return;
-                setTimeout(loop, 800);
-              });
+              setTimeout(loop, 800);
             });
           });
         });
@@ -11929,20 +11899,19 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!_audio){
       _audio=new Audio();
       _audio.volume=0.8;
-      // Unlock audio via silent oscillator — works on all browsers, no file needed
-      try{
-        var _uctx=new(window.AudioContext||window.webkitAudioContext)();
-        var _uosc=_uctx.createOscillator();
-        var _ugain=_uctx.createGain();
-        _ugain.gain.value=0;
-        _uosc.connect(_ugain);
-        _ugain.connect(_uctx.destination);
-        _uosc.start(0);
-        _uosc.stop(0.001);
-        _uctx.resume().then(function(){console.log('Audio unlocked via AudioContext');});
-      }catch(e){
-        console.log('AudioContext unlock failed:', e.message);
-      }
+      // Play a silent sound to unlock audio context on ALL browsers including desktop
+      _audio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      _audio.play().then(function(){
+        _audio.src='';
+        console.log('Audio unlocked successfully');
+      }).catch(function(e){
+        console.log('Audio unlock failed:', e.message);
+        // Try with AudioContext for desktop browsers
+        try{
+          var ctx=new(window.AudioContext||window.webkitAudioContext)();
+          ctx.resume().then(function(){console.log('AudioContext resumed');});
+        }catch(e2){}
+      });
     } else {
       // Already have audio element — make sure it's not stuck
       try{ _audio.pause(); }catch(e){}
@@ -12357,37 +12326,26 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
       _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
 
-      var mText = null;
-      var mSystem = 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.';
       try {
-        var mResp = await fetch('https://api.anthropic.com/v1/messages', {
+        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-          },
-          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: mSystem, messages: _chatHistory.slice(-10) })
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
+            messages: _chatHistory.slice(-10)
+          })
         });
-        var mData = await mResp.json();
-        mText = mData.content && mData.content[0] && mData.content[0].text;
-      } catch(e) {
-        try {
-          var mResp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ system: mSystem, messages: _chatHistory.slice(-10) })
-          });
-          var mData2 = await mResp2.json();
-          mText = mData2.content && mData2.content[0] && mData2.content[0].text;
-        } catch(e2) {}
-      }
-      typingEl2.remove();
-      _chatThinking = false;
-      if(mText){
-        addMessage('assistant', mText);
-        _chatHistory.push({role:'assistant', content: mText});
-      } else {
+        var data2 = await resp2.json();
+        var text2 = data2.content && data2.content[0] && data2.content[0].text;
+        typingEl2.remove();
+        _chatThinking = false;
+        if(text2){
+          addMessage('assistant', text2);
+          _chatHistory.push({role:'assistant', content: text2});
+        }
+      } catch(e){
+        typingEl2.remove();
+        _chatThinking = false;
         addMessage('assistant', 'Error fetching data for ' + foundMachinist);
       }
       return;
@@ -12410,39 +12368,26 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
       var messages = _chatHistory.slice(-10); // last 10 messages for context
 
-      var aiText = null;
-      try {
-        var directResp = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true'
-          },
-          body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: systemPrompt, messages: messages })
-        });
-        var directData = await directResp.json();
-        aiText = directData.content && directData.content[0] && directData.content[0].text;
-      } catch(e1) {
-        try {
-          var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ system: systemPrompt, messages: messages })
-          });
-          var data = await resp.json();
-          aiText = data.content && data.content[0] && data.content[0].text;
-        } catch(e2) {}
-      }
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system: systemPrompt,
+          messages: messages
+        })
+      });
+
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
 
       typingEl.remove();
       _chatThinking = false;
 
-      if(aiText){
-        addMessage('assistant', aiText);
-        _chatHistory.push({role:'assistant', content: aiText});
+      if(text){
+        addMessage('assistant', text);
+        _chatHistory.push({role:'assistant', content: text});
       } else {
-        addMessage('assistant', 'Sorry, I had trouble connecting. Try again.');
+        addMessage('assistant', 'Sorry, I had trouble with that. Try again.');
       }
 
     } catch(e) {
