@@ -2790,7 +2790,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce','aichat'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -11863,6 +11863,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _on=true;
     badge(true);
     fetchWeather(); fetchSports(); // refresh on every Sparky start
+    _loadSongs(function(){}); // load optional song overrides from songs.js
     var h=new Date().getHours();
     var tod=h<10?'morning':h<14?'afternoon':h<17?'afternoon':'evening';
     var s=sts(),f=flr();
@@ -11942,6 +11943,21 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   window._djSetInterval=function(){};
   window._uploadSparkyMusic=function(){};
   window._removeSong=function(){};
+
+  window._sparkyNextSong=function(){
+    if(!_on||!_audio)return;
+    try{_audio.pause();_audio.src='';}catch(e){}
+    if(window.speechSynthesis)window.speechSynthesis.cancel();
+    setTimeout(loop,300);
+  };
+
+  window._sparkyMusicToggle=function(){
+    _muted=!_muted;
+    if(_audio)_audio.volume=_muted?0:0.8;
+    var btn=document.getElementById('sparky-music-btn');
+    if(btn){btn.style.opacity=_muted?'0.5':'1';}
+    if(window.showToast)window.showToast(_muted?'yellow':'green',_muted?'🔇 Music muted':'🎵 Music on','');
+  };
 
   window._sparkyMute=function(){
     _muted=!_muted;
