@@ -2790,7 +2790,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce','aichat'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -3448,9 +3448,6 @@
       return;
     }
     if (window.loadManagerList) window.loadManagerList();
-    // Load and display songs in admin panel
-    if(window._renderSparkyAdminSongList) window._renderSparkyAdminSongList();
-    if(!window._songsLoaded && window._loadSongs) window._loadSongs(function(){window._renderSparkyAdminSongList&&window._renderSparkyAdminSongList();});
   }
   function closeAdminPanel() { document.getElementById('adminPanel').classList.remove('open'); }
 
@@ -11416,66 +11413,44 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     {title:'Dirt Road Millionaire',  artist:'Nelly',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_d'},
     {title:'Man of Constant Sorrow', artist:'Soggy Bottom Boys',  url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_cs'},
   ];
-  // ── FIREBASE STORAGE SONG LOADER ─────────────────────────
+  // Load audio data from songs.js
   var _songsLoaded = false;
   var _songsLoading = false;
   var _songsCallbacks = [];
-  var _firebaseSongs = []; // songs fetched from Firebase Storage
 
   function _loadSongs(cb){
+    // Already loaded
     if(_songsLoaded){cb();return;}
+    // Queue callback
     _songsCallbacks.push(cb);
     if(_songsLoading) return;
     _songsLoading = true;
 
-    function _done(){
-      _songsLoaded = true;
+    function _apply(){
+      if(window.HILL_SONGS && window.HILL_SONGS.length){
+        window.HILL_SONGS.forEach(function(s,i){
+          if(SONGS[i]) SONGS[i].url = s.b64;
+        });
+        _songsLoaded = true;
+        console.log('Songs loaded:', SONGS.map(function(s){return s.title+'='+(s.url?'OK':'MISSING');}));
+      }
       var cbs = _songsCallbacks.slice();
       _songsCallbacks = [];
       cbs.forEach(function(fn){fn();});
     }
 
-    var stor = window.fbStorage;
-    var mods = window.fbStorageModules;
-    if(stor && mods && mods.listAll && mods.ref && mods.getDownloadURL){
-      mods.listAll(mods.ref(stor, 'music')).then(function(result){
-        if(!result.items || !result.items.length){
-          console.log('No songs in Firebase Storage, using worker URLs');
-          _done();
-          return;
-        }
-        var promises = result.items.map(function(item){
-          return mods.getDownloadURL(item).then(function(url){
-            var name = item.name.replace(/\.[^.]+$/, '').replace(/_/g,' ');
-            return {title: name, artist: '', url: url};
-          }).catch(function(){ return null; });
-        });
-        Promise.all(promises).then(function(songs){
-          var valid = songs.filter(Boolean);
-          if(valid.length){
-            _firebaseSongs = valid;
-            console.log('Loaded', valid.length, 'songs from Firebase Storage');
-          }
-          _done();
-        }).catch(function(){ _done(); });
-      }).catch(function(e){
-        console.log('Firebase Storage list failed:', e.message, '— using worker URLs');
-        _done();
-      });
-    } else {
-      // Firebase Storage not ready yet — retry after a short delay
-      setTimeout(function(){
-        _songsLoaded = false;
-        _songsLoading = false;
-        _loadSongs(function(){});
-      }, 3000);
-      _done(); // proceed with worker URLs immediately
-    }
-  }
+    // Already in window (loaded by another script tag)
+    if(window.HILL_SONGS){_apply();return;}
 
-  // Get the active song list (Firebase Storage songs if available, else SONGS array)
-  function _getSongList(){
-    return _firebaseSongs.length ? _firebaseSongs : SONGS;
+    var sc = document.createElement('script');
+    sc.src = 'https://miguelstulsa.github.io/Shop-floor-app/songs.js';
+    sc.onload = function(){ _apply(); };
+    sc.onerror = function(){
+      console.log('songs.js failed to load');
+      _songsCallbacks.forEach(function(fn){fn();});
+      _songsCallbacks=[];
+    };
+    document.head.appendChild(sc);
   }
 
 
@@ -11573,7 +11548,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
             updatedAt:mods.serverTimestamp()
           }).catch(function(){});
         }
-      }).catch(function(e){ console.debug('Data fetch (direct) failed — using Firebase cache'); });
+      }).catch(function(e){ console.log('Data fetch (direct) failed:',e.message,'— using Firebase cache'); });
   }
 
   // Fetch on start and refresh every 10 min
@@ -11844,9 +11819,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── MAIN LOOP ─────────────────────────────────────────────
   function loop(){
     if(!_on)return;
-    var list=_getSongList();
-    var song=list[_idx%list.length];
-    _idx=(_idx+1)%list.length;
+    var song=SONGS[_idx%SONGS.length];
+    _idx=(_idx+1)%SONGS.length;
     stat('🎙️ Sparky is thinking...');
     // Step 1: AI generates song intro
     buildAIIntro(song).then(function(introText){
@@ -11889,7 +11863,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _on=true;
     badge(true);
     fetchWeather(); fetchSports(); // refresh on every Sparky start
-    _loadSongs(function(){window._renderSparkyAdminSongList&&window._renderSparkyAdminSongList();}); // load optional song overrides from Firebase Storage
     var h=new Date().getHours();
     var tod=h<10?'morning':h<14?'afternoon':h<17?'afternoon':'evening';
     var s=sts(),f=flr();
@@ -11967,73 +11940,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._djNow=function(){buildAIReport().then(function(t){say(t,function(){});});};
   window._djSetInterval=function(){};
-  window._uploadSparkyMusic=function(files){
-    var stor=window.fbStorage,mods=window.fbStorageModules;
-    if(!stor||!mods||!mods.ref||!mods.uploadBytes||!mods.getDownloadURL){
-      if(window.showToast)window.showToast('red','Storage not ready','Try again in a moment');
-      return;
-    }
-    var list=document.getElementById('sparky-song-list');
-    if(list)list.innerHTML='<div style="font-size:11px;color:#f59e0b;padding:4px;">Uploading '+files.length+' song(s)...</div>';
-    var promises=Array.from(files).map(function(file){
-      var r=mods.ref(stor,'music/'+file.name);
-      return mods.uploadBytes(r,file).then(function(snap){
-        return mods.getDownloadURL(snap.ref);
-      }).then(function(url){
-        var name=file.name.replace(/\.[^.]+$/,'').replace(/_/g,' ');
-        _firebaseSongs.push({title:name,artist:'',url:url});
-        return name;
-      });
-    });
-    Promise.all(promises).then(function(names){
-      if(window.showToast)window.showToast('green','✅ Uploaded: '+names.join(', '),'Songs ready for Sparky');
-      // Refresh the song list display
-      _songsLoaded=false; _songsLoading=false; _firebaseSongs=[];
-      _loadSongs(function(){window._renderSparkyAdminSongList&&window._renderSparkyAdminSongList();});
-    }).catch(function(e){
-      if(window.showToast)window.showToast('red','Upload failed',e.message);
-    });
-  };
-  window._removeSong=function(name){
-    var stor=window.fbStorage,mods=window.fbStorageModules;
-    if(!stor||!mods) return;
-    mods.deleteObject(mods.ref(stor,'music/'+name)).then(function(){
-      if(window.showToast)window.showToast('yellow','🗑 Removed: '+name,'');
-      _songsLoaded=false; _songsLoading=false; _firebaseSongs=[];
-      _loadSongs(function(){window._renderSparkyAdminSongList&&window._renderSparkyAdminSongList();});
-    }).catch(function(e){
-      if(window.showToast)window.showToast('red','Remove failed',e.message);
-    });
-  };
-
-  window._renderSparkyAdminSongList=function(){
-    var list=document.getElementById('sparky-song-list');
-    if(!list)return;
-    var songs=_getSongList();
-    if(!songs.length){list.innerHTML='<div style="font-size:11px;color:#334155;padding:4px 0;">No songs uploaded yet.</div>';return;}
-    list.innerHTML=songs.map(function(s,i){
-      var isFirebase=_firebaseSongs.length>0;
-      var removeBtn=isFirebase?'<button onclick="window._removeSong(\''+s.title.replace(/'/g,"\\'")+'\')" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:6px;color:#f87171;font-size:11px;padding:2px 8px;cursor:pointer;margin-left:6px;">✕</button>':'';
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid #0d1f35;">'
-        +'<span style="font-size:11px;color:#94a3b8;">'+s.title+(s.artist?' <span style="color:#475569;">— '+s.artist+'</span>':'')+'</span>'
-        +removeBtn+'</div>';
-    }).join('');
-  };
-
-  window._sparkyNextSong=function(){
-    if(!_on||!_audio)return;
-    try{_audio.pause();_audio.src='';}catch(e){}
-    if(window.speechSynthesis)window.speechSynthesis.cancel();
-    setTimeout(loop,300);
-  };
-
-  window._sparkyMusicToggle=function(){
-    _muted=!_muted;
-    if(_audio)_audio.volume=_muted?0:0.8;
-    var btn=document.getElementById('sparky-music-btn');
-    if(btn){btn.style.opacity=_muted?'0.5':'1';}
-    if(window.showToast)window.showToast(_muted?'yellow':'green',_muted?'🔇 Music muted':'🎵 Music on','');
-  };
+  window._uploadSparkyMusic=function(){};
+  window._removeSong=function(){};
 
   window._sparkyMute=function(){
     _muted=!_muted;
@@ -12164,15 +12072,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var todayStr  = todayMins >= 60 ? Math.floor(todayMins/60)+'h '+(todayMins%60)+'m' : todayMins+'m';
     var allStr    = allMins >= 60 ? Math.floor(allMins/60)+'h '+(allMins%60)+'m' : allMins+'m';
 
-    var isMin = localStorage.getItem('tlMinimized') === '1';
     bar.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
       +'<span style="font-size:13px;color:#f5c842;letter-spacing:1px;">⏱ MY TIME LOG</span>'
-      +'<span style="display:flex;align-items:center;gap:10px;">'
       +'<span style="font-size:11px;color:#475569;">Today: <b style="color:#f5c842;">'+todayStr+'</b> &nbsp; All: <b style="color:#94a3b8;">'+allStr+'</b></span>'
-      +'<button onclick="(function(){var m=localStorage.getItem(\'tlMinimized\')===\'1\';localStorage.setItem(\'tlMinimized\',m?\'0\':\'1\');var body=document.getElementById(\'tl-body\');if(body){body.style.display=m?\'block\':\'none\';}var btn=document.getElementById(\'tl-min-btn\');if(btn){btn.textContent=m?\'−\':\'+'+'\';};})()" id="tl-min-btn" style="background:rgba(255,255,255,0.08);border:1px solid #2a5a8c;border-radius:6px;color:#94a3b8;font-size:16px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0;">'+(isMin?'+':'−')+'</button>'
-      +'</span>'
       +'</div>'
-      +'<div id="tl-body" style="display:'+(isMin?'none':'block')+';">'
       +logs.map(function(l){
         var isSetup = l.role==='setup' || l.role==='machinist';
         var typeColor = l.role==='setup' ? '#60a5fa' : l.role==='machinist' ? '#fbbf24' : '#4ade80';
@@ -12194,8 +12097,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           +'<span style="font-size:11px;color:'+timeColor+';margin-left:auto;font-weight:700;flex-shrink:0;">'+timeStr+'</span>'
           +(l.assignedTo?'<span style="font-size:9px;color:#475569;flex-shrink:0;">→ '+l.assignedTo.split(' ')[0]+'</span>':'')
           +'</div>';
-      }).join('')
-      +'</div>';
+      }).join('');
   }
 
   var _tlTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_tlTimer);_listenTimeLog();}},1500);
