@@ -9021,7 +9021,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
       };
       fetch('https://api.mrsanchez.app/proxy/delivery-track', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify(dnxPayload)
       }).then(function(r){ return r.json(); })
         .then(function(r){ console.log('[DNX delivery-track]', r); })
@@ -11391,11 +11391,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── SONGS ─────────────────────────────────────────────────
   var SONGS = [
-    {title:'Bohemian Rhapsody', artist:'Queen',            url:'https://miguelstulsa.github.io/Shop-floor-app/Queen Bohemian Rhapsody.mp3'},
-    {title:'Neon Moon',         artist:'Brooks & Dunn',    url:'https://miguelstulsa.github.io/Shop-floor-app/Brooks %26 Dunn- neon moon.mp3'},
-    {title:'Even Flow',         artist:'Pearl Jam',        url:'https://miguelstulsa.github.io/Shop-floor-app/Pearl Jam - Even Flow.mp3'},
-    {title:'Juicy',             artist:'Notorious B.I.G.', url:'https://miguelstulsa.github.io/Shop-floor-app/The Notorious B.I.G. - Juicy.mp3'},
-    {title:'I Never Lie',       artist:'Zach Top',         url:'https://miguelstulsa.github.io/Shop-floor-app/Zach Top - I Never Lie.mp3'},
+    {title:'Bohemian Rhapsody', artist:'Queen',            url:'https://miguelstulsa.github.io/Shop-floor-app/Queen%20Bohemian%20Rhapsody.mp3'},
+    {title:'Neon Moon',         artist:'Brooks & Dunn',    url:'https://miguelstulsa.github.io/Shop-floor-app/Brooks%20%26%20Dunn-%20neon%20moon.mp3'},
+    {title:'Even Flow',         artist:'Pearl Jam',        url:'https://miguelstulsa.github.io/Shop-floor-app/Pearl%20Jam%20-%20Even%20Flow.mp3'},
+    {title:'Juicy',             artist:'Notorious B.I.G.', url:'https://miguelstulsa.github.io/Shop-floor-app/The%20Notorious%20B.I.G.%20-%20Juicy.mp3'},
+    {title:'I Never Lie',       artist:'Zach Top',         url:'https://miguelstulsa.github.io/Shop-floor-app/Zach%20Top%20-%20I%20Never%20Lie.mp3'},
   ];
   // Load audio data from songs.js
   var _songsLoaded = false;
@@ -11675,7 +11675,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     try {
       var resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001', max_tokens: 500,
           messages: [{ role: 'user', content: ctx }]
@@ -11717,7 +11717,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     try {
       var resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001', max_tokens: 500,
           messages: [{ role: 'user', content: ctx }]
@@ -12193,7 +12193,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       try {
         var resp2 = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
-          headers: {'Content-Type':'application/json','x-api-key':'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','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+          headers: {'Content-Type':'application/json','x-api-key':'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','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
           body: JSON.stringify({
             model: 'claude-haiku-4-5-20251001', max_tokens: 1024,
             system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
@@ -12235,7 +12235,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
       var resp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5-20251001', max_tokens: 1024,
           system: systemPrompt,
