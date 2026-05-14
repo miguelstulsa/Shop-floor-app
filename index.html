@@ -1166,6 +1166,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
+  <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Floor Analytics</div>
@@ -1181,6 +1182,7 @@
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
+    <div id="miguel-time-log" style="display:none;background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;padding:10px 14px;margin:6px 16px;"></div>
     <div id="proshop-live-bar" style="display:none;background:rgba(0,7,26,0.9);border-bottom:1px solid #1e3a5c;padding:6px 16px;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;min-height:36px;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:10px;color:#475569;letter-spacing:2px;flex-shrink:0;">PROSHOP</span>
     </div>
@@ -1226,7 +1228,20 @@
     </div>
     <style>
     @keyframes sparkypulse { 0%,100%{transform:scale(1);opacity:0.8;} 50%{transform:scale(1.2);opacity:0;} }
-    </style>
+  
+  /* AI Chat */
+  .ai-msg { display:flex; margin-bottom:4px; }
+  .ai-msg-user { justify-content:flex-end; }
+  .ai-msg-assistant { justify-content:flex-start; }
+  .ai-bubble { max-width:85%; padding:10px 14px; border-radius:16px; font-size:14px; line-height:1.5; white-space:pre-wrap; }
+  .ai-msg-user .ai-bubble { background:linear-gradient(135deg,#b8860b,#f5c842); color:#000; border-bottom-right-radius:4px; }
+  .ai-msg-assistant .ai-bubble { background:#0d1f35; border:1px solid #1e3a5f; color:#f0f4f8; border-bottom-left-radius:4px; }
+  .ai-typing { display:flex; gap:4px; padding:12px 16px; align-items:center; }
+  .ai-typing span { width:8px; height:8px; background:#f5c842; border-radius:50%; animation:aiDot 1.2s infinite; }
+  .ai-typing span:nth-child(2) { animation-delay:.2s; }
+  .ai-typing span:nth-child(3) { animation-delay:.4s; }
+  @keyframes aiDot { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
+  </style>
 
     <!-- EXPANDED LIVE FEED OVERLAY -->
     <div id="live-strip-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;" onclick="window._closeLiveStrip()">
@@ -1301,6 +1316,33 @@
 </div>
 
 <!-- BULLETIN BOARD PAGE -->
+<!-- ═══ AI CHAT PAGE ═══ -->
+<div class="page" id="page-aichat" style="display:none;flex-direction:column;height:calc(100vh - 120px);max-width:700px;margin:0 auto;padding:0;">
+
+  <!-- Chat header -->
+  <div style="padding:12px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:2px;">🤖 HILL AI ASSISTANT</div>
+    <div style="font-size:11px;color:#475569;">Ask anything about your floor, jobs, machinists, or operations.</div>
+  </div>
+
+  <!-- Messages -->
+  <div id="ai-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
+    <div class="ai-msg ai-msg-assistant">
+      <div class="ai-bubble">Hey Miguel. I'm your Hill Manufacturing AI assistant. I have full visibility into your shop floor — active jobs, requests, machinist activity, and your ProShop data. Ask me anything.</div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div style="padding:12px 16px;border-top:1px solid #1e3a5f;flex-shrink:0;display:flex;gap:8px;align-items:flex-end;">
+    <textarea id="ai-input" placeholder="Ask anything... e.g. How long has VF-3 been running? Who has the most requests today?" 
+      style="flex:1;background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;color:#f0f4f8;font-size:14px;padding:10px 12px;resize:none;font-family:inherit;min-height:44px;max-height:120px;line-height:1.4;"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window._sendAIChat();}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+    <button onclick="window._sendAIChat()" 
+      style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#000;border-radius:10px;padding:10px 16px;font-size:18px;cursor:pointer;flex-shrink:0;height:44px;">➤</button>
+  </div>
+</div>
+
 <!-- ═══ ANNOUNCEMENTS PAGE ═══ -->
 <div class="page" id="page-announce" style="display:none;padding:16px;max-width:600px;margin:0 auto;">
   <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f5c842;letter-spacing:2px;margin-bottom:4px;">📣 SPARKY ANNOUNCEMENTS</div>
@@ -1430,7 +1472,31 @@
       <button class="note-type-btn green" onclick="selectType('green')"><div class="note-type-label">🟢 Running WO</div><div class="note-type-desc">Currently running</div></button>
     </div>
     <div class="modal-form">
-      <input type="text" id="operatorName" placeholder="Your name (e.g. Miguel)" />
+      <select id="operatorName" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;margin-bottom:2px;">
+        <option value="">-- Select your name --</option>
+        <option value="Brett Thompson">Brett Thompson</option>
+        <option value="Bryan Sturman">Bryan Sturman</option>
+        <option value="Caleb Dooley">Caleb Dooley</option>
+        <option value="Chuck Whitfield">Chuck Whitfield</option>
+        <option value="Corey Bartmier">Corey Bartmier</option>
+        <option value="Daniel McGarvey">Daniel McGarvey</option>
+        <option value="Dingo Mikles">Dingo Mikles</option>
+        <option value="Hank Anglin">Hank Anglin</option>
+        <option value="Jacob Nail">Jacob Nail</option>
+        <option value="Jared Stuart">Jared Stuart</option>
+        <option value="Jimmy Pollard">Jimmy Pollard</option>
+        <option value="Justin Gray">Justin Gray</option>
+        <option value="Keith Groden">Keith Groden</option>
+        <option value="Matthew Carrico">Matthew Carrico</option>
+        <option value="Miguel Sanchez">Miguel Sanchez</option>
+        <option value="Mike Payne">Mike Payne</option>
+        <option value="Rhett Dawson">Rhett Dawson</option>
+        <option value="Scott Smith">Scott Smith</option>
+        <option value="Sean Surratt">Sean Surratt</option>
+        <option value="Steven Riggs">Steven Riggs</option>
+        <option value="Tony Lang">Tony Lang</option>
+        <option value="Tyler Stockham">Tyler Stockham</option>
+      </select>
       <div style="display:flex;gap:8px;">
         <input type="text" id="woInput" placeholder="WO# (e.g. 26-0288)" style="flex:2;" />
         <input type="text" id="opInput" placeholder="OP# (e.g. 10)" style="flex:1;" />
@@ -1439,19 +1505,27 @@
         <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Assign Machinist to Run</div>
         <select id="assignedTo" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;">
           <option value="">-- Assign machinist to run --</option>
+          <option>Brett Thompson</option>
           <option>Bryan Sturman</option>
           <option>Caleb Dooley</option>
           <option>Chuck Whitfield</option>
+          <option>Corey Bartmier</option>
+          <option>Daniel McGarvey</option>
           <option>Dingo Mikles</option>
+          <option>Hank Anglin</option>
           <option>Jacob Nail</option>
           <option>Jared Stuart</option>
           <option>Jimmy Pollard</option>
           <option>Justin Gray</option>
           <option>Keith Groden</option>
+          <option>Matthew Carrico</option>
           <option>Miguel Sanchez</option>
+          <option>Mike Payne</option>
+          <option>Rhett Dawson</option>
           <option>Scott Smith</option>
           <option>Sean Surratt</option>
           <option>Steven Riggs</option>
+          <option>Tony Lang</option>
           <option>Tyler Stockham</option>
         </select>
       </div>
@@ -1550,7 +1624,7 @@
 <!-- FIREBASE MODULE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, getDoc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, getDoc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, where, getDocs, limit, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { getStorage, ref, uploadBytes, getDownloadURL, listAll, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
   const firebaseConfig = {
@@ -1569,7 +1643,7 @@
   window.fbStorageModules = { ref, uploadBytes, getDownloadURL, listAll, deleteObject };
   window.fbFirestore = { collection, doc, setDoc, deleteDoc, getDoc, onSnapshot, query, where, getDocs, addDoc, serverTimestamp };
   window._db = db;
-  window._fbModules = { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, getDoc, where, getDocs, addDoc, collection, query, orderBy, onSnapshot };
+  window._fbModules = { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, getDoc, where, getDocs, setDoc, limit, limitToLast };
 
   let knownIds = new Set();
   let isFirstLoad = true;
@@ -1792,6 +1866,74 @@
   };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
 
+  // ── MACHINIST COMPLETE JOB ──────────────────────────────────
+  window.completeJob = async function(noteId, hillReqId) {
+    var db2  = window.fbDb || window._db;
+    var mods = window._fbModules;
+    if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
+    if (!confirm('Mark this job as complete?')) return;
+
+    var now = new Date();
+    var elapsedMins = null, elapsedStr = 'unknown';
+
+    try {
+      var noteSnap = await mods.getDoc(mods.doc(db2, 'notes', noteId));
+      if (noteSnap && noteSnap.exists()) {
+        var nData = noteSnap.data();
+        // Calculate run time from when setup finished (resolvedAt on hillRequest)
+        if (nData.startedAt && nData.startedAt.seconds) {
+          var startTs = new Date(nData.startedAt.seconds * 1000);
+          elapsedMins = Math.round((now - startTs) / 60000);
+          elapsedStr  = elapsedMins >= 60
+            ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m'
+            : elapsedMins+'m';
+        }
+
+        // Log machinist run time
+        await mods.addDoc(mods.collection(db2, 'hillTimeLog'), {
+          person:      nData.assignedTo || window.currentUser || 'machinist',
+          role:        'run',
+          machine:     nData.machine || '',
+          wo:          nData.wo || '',
+          op:          nData.op || '',
+          detail:      nData.detail || '',
+          startedAt:   nData.startedAt || null,
+          finishedAt:  mods.serverTimestamp(),
+          elapsedMins: elapsedMins,
+          elapsedStr:  elapsedStr,
+          loggedAt:    mods.serverTimestamp(),
+        });
+      }
+    } catch(e) { console.warn('completeJob time log:', e.message); }
+
+    // Mark fully complete
+    try {
+      await mods.deleteDoc(mods.doc(db2, 'notes', noteId));
+    } catch(e) {}
+
+    try {
+      var hrId = hillReqId || noteId;
+      await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), {
+        resolved:    true,
+        resolvedAt:  mods.serverTimestamp(),
+        resolvedBy:  window.currentUser || 'machinist',
+        jobStatus:   'completed',
+        runTime:     elapsedStr,
+        runMins:     elapsedMins,
+        completedAt: mods.serverTimestamp(),
+      });
+    } catch(e) { console.warn('completeJob update:', e.message); }
+
+    if (window._removeActiveJob) window._removeActiveJob(noteId);
+    showToast('green', '🏁 Job Complete!', 'Run time: ' + elapsedStr);
+
+    // Sparky announces it
+    if (window._djAnnounceNew) {
+      var msg = (window.currentUser || 'The machinist') + ' completed the job. Run time: ' + elapsedStr + '. Good work.';
+      if (window.say) window.say(msg, function(){});
+    }
+  };
+
   // ── REQUEST TIMER — START / FINISH ──────────────────────────
   window.startRequest = async function(noteId, hillReqId) {
     if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
@@ -1957,16 +2099,47 @@
     // Remove from live banner immediately
     if (window._removeActiveJob) window._removeActiveJob(noteId);
 
+    // Step 3: Save Miguel's setup time separately before resolving
+    try {
+      var noteForType = window._lastFinishedNote || {};
+      var isSetup = noteForType.type === 'blue' || noteForType.type === 'yellow'; // Pending WO or Machinist Req
+      if(isSetup && elapsedMins !== null) {
+        await mods.addDoc(mods.collection(db2, 'hillTimeLog'), {
+          person:      window.currentUser || 'admin',
+          role:        'setup',
+          machine:     noteForType.machine || '',
+          wo:          noteForType.wo || '',
+          op:          noteForType.op || '',
+          detail:      noteForType.detail || '',
+          assignedTo:  noteForType.assignedTo || '',
+          startedAt:   noteForType.startedAt || null,
+          finishedAt:  mods.serverTimestamp(),
+          elapsedMins: elapsedMins,
+          elapsedStr:  elapsedStr,
+          loggedAt:    mods.serverTimestamp(),
+        });
+        var roleLabel = noteForType.type === 'blue' ? 'Setup' : 'Machinist Req'; showToast('green', '⏱ ' + roleLabel + ' time logged', 'Miguel: ' + elapsedStr + ' on ' + (noteForType.machine||'') + (noteForType.wo?' WO '+noteForType.wo:''));
+      }
+    } catch(e) { console.warn('Time log error:', e.message); }
+
     // Step 3: Mark hillRequests as resolved with elapsed time
+    // For pending/machinist requests — keep on board as green Running card
+    var noteForTypeCheck = window._lastFinishedNote || {};
+    var isToolingRequest = noteForTypeCheck.type === 'blue' || noteForTypeCheck.type === 'yellow';
+
     var resolvePayload = {
-      resolved: true,
-      resolvedAt: mods.serverTimestamp(),
+      resolved: isToolingRequest ? false : true,  // Keep tooling requests visible
+      resolvedAt: isToolingRequest ? null : mods.serverTimestamp(),
       resolvedBy: window.currentUser || 'admin',
       inProgress: false,
       elapsedMins: elapsedMins,
       elapsedStr: elapsedStr,
-      jobStatus: 'completed',
-      completedAt: mods.serverTimestamp()
+      setupBy:    window.currentUser || 'admin',
+      setupTime:  elapsedStr,
+      setupDoneAt: mods.serverTimestamp(),
+      jobStatus: isToolingRequest ? 'running' : 'completed',
+      type: isToolingRequest ? 'green' : noteForTypeCheck.type,  // Flip to green Running WO
+      completedAt: isToolingRequest ? null : mods.serverTimestamp()
     };
     try {
       var hrId = (hillReqId && hillReqId !== noteId && hillReqId !== '') ? hillReqId : null;
@@ -2030,15 +2203,19 @@
       var confirmedType = window._lastFinishedNote ? window._lastFinishedNote.type : (origData ? origData.type : null);
       if (confirmedType === 'blue') {
         var greenNote = {
-          machine:  origData.machine  || '',
-          cell:     origData.cell     || '',
-          type:     'green',
-          wo:       origData.wo       || '',
-          detail:   origData.detail   || '',
-          operator: origData.operator || '',
+          machine:    origData.machine    || '',
+          cell:       origData.cell       || '',
+          type:       'green',
+          wo:         origData.wo         || '',
+          op:         origData.op         || '',
+          detail:     origData.detail     || '',
+          operator:   origData.operator   || '',
+          assignedTo: origData.assignedTo || '',
           autoPosted: true,
-          setupBy:  window.currentUser || 'admin',
-          setupTime: elapsedStr
+          setupBy:    window.currentUser  || 'admin',
+          setupTime:  elapsedStr,
+          setupDoneAt: new Date().toISOString(),
+          originalType: confirmedType,
         };
         // Add to notes (shows on shop floor) and hillRequests (shows on dashboard)
         var greenReqRef = await mods.addDoc(mods.collection(db2, 'hillRequests'), {
@@ -2048,7 +2225,7 @@
         await mods.addDoc(mods.collection(db2, 'notes'), {
           ...greenNote, createdAt: mods.serverTimestamp(), hillReqId: greenReqRef.id
         });
-        showToast('green', '✅ Job Running on ' + (origData.machine||''), 'Setup time: ' + elapsedStr);
+        var typeLabel = confirmedType === 'yellow' ? 'Machinist Req' : 'Pending WO'; showToast('green', '✅ ' + typeLabel + ' done — ' + (origData.machine||''), 'Your time: ' + elapsedStr + (origData.assignedTo ? ' → ' + origData.assignedTo.split(' ')[0] + ' running' : ''));
       } else {
         showToast('green', 'Request Closed ✓', elapsedStr !== 'unknown' ? 'Time: ' + elapsedStr : 'Resolved');
       }
@@ -2630,6 +2807,7 @@
     else { stopShopTV(); }
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     var annEl = document.getElementById('page-announce'); if(annEl) annEl.style.display = tab === 'announce' ? 'block' : 'none';
+    var aiEl = document.getElementById('page-aichat'); if(aiEl) aiEl.style.display = tab === 'aichat' ? 'flex' : 'none';
     if(tab === 'announce') window._loadAnnounceHistory && window._loadAnnounceHistory();
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
@@ -3176,10 +3354,13 @@
       if (inspTab) inspTab.style.display = '';
       var annTab = document.getElementById('tab-announce');
       if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
-      // Force show after brief delay in case other code hides it
+      var aiTab = document.getElementById('tab-aichat');
+      if (aiTab) aiTab.style.display = 'flex';
       setTimeout(function(){
         var a = document.getElementById('tab-announce');
         if(a) a.style.display = 'flex';
+        var b = document.getElementById('tab-aichat');
+        if(b) b.style.display = 'flex';
       }, 500);
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
@@ -5948,24 +6129,30 @@
     });
 
     // Status counts
-    var pending=0, running=0, completed=0, issues=0, inspections=0;
+    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
-      var s = getJobStatus(r);
-      if (s==='completed') completed++;
-      else if (s==='running') running++;
-      else if (s==='pending') pending++;
-      else {
-        if (r.type === 'red') { inspections++; }
-        else { issues++; }
-        issueByMachine[r.machine||''] = (issueByMachine[r.machine||'']||0)+1;
-      }
+      // Count ALL blue requests (pending WO) regardless of resolved status
+      if (r.type === 'blue')   { pending++; }
+      // Count ALL yellow requests (machinist req) regardless of resolved status
+      if (r.type === 'yellow') { machinistReqs++; }
+      // Count ALL green requests as running
+      if (r.type === 'green')  { running++; }
+      // Inspections = all red
+      if (r.type === 'red')    { inspections++; }
+      // Completed = any request resolved
+      if (r.resolved) completed++;
+
+      issueByMachine[r.machine||''] = (issueByMachine[r.machine||'']||0)+1;
     });
+    // Total = everything in period
+    var issues = periodAll.length;
     var el;
     if ((el=document.getElementById('dash-count-pending')))     el.textContent = pending;
+    if ((el=document.getElementById('dash-count-machinist')))   el.textContent = machinistReqs;
     if ((el=document.getElementById('dash-count-running')))     el.textContent = running;
     if ((el=document.getElementById('dash-count-completed')))   el.textContent = completed;
-    if ((el=document.getElementById('dash-count-issues')))      el.textContent = periodAll ? periodAll.length : 0;
+    if ((el=document.getElementById('dash-count-issues')))      el.textContent = issues || 0;
     if ((el=document.getElementById('dash-count-inspections'))) el.textContent = inspections;
 
     // Machine filters
@@ -6005,8 +6192,8 @@
       var h = '<div class="dash-weekly-card">';
       h += '<div class="dash-weekly-title"><span>📊 '+periodLabel+'</span><span style="font-size:11px;color:#475569;font-family:Barlow,sans-serif;">'+periodAll.length+' total records</span></div>';
       h += '<div class="dash-weekly-grid">';
-      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+pending+'</div><div class="dash-weekly-stat-lbl">Pending</div></div>';
-      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#4ade80;">'+running+'</div><div class="dash-weekly-stat-lbl">Running</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#60a5fa;">'+pending+'</div><div class="dash-weekly-stat-lbl">🔵 Pending WO</div></div>';
+      h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#fbbf24;">'+machinistReqs+'</div><div class="dash-weekly-stat-lbl">🟡 Machinist Req</div></div>';
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#22c55e;">'+completed+'</div><div class="dash-weekly-stat-lbl">Completed</div></div>';
       h += '<div class="dash-weekly-stat"><div class="dash-weekly-stat-num" style="color:#94a3b8;">'+periodAll.length+'</div><div class="dash-weekly-stat-lbl">Total Requests</div></div>';
       h += '</div>';
@@ -6638,10 +6825,10 @@
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
-      <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Waiting to run</div></div>
-      <div class="dash-summary-card" style="border-color:rgba(34,197,94,0.4);background:linear-gradient(145deg,#001a08,#002a10);"><div class="dash-summary-label" style="color:#475569;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;animation:pulse-green 1.5s ease-in-out infinite;margin-right:4px;"></span> Running</div><div class="dash-summary-num" style="color:#4ade80;" id="dash-count-running">0</div><div class="dash-summary-sub">Active now</div></div>
-      <div class="dash-summary-card" style="border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ffffff;box-shadow:0 0 6px rgba(255,255,255,0.6);flex-shrink:0;"></span>Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
-      <div class="dash-summary-card" style="border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All request types</div></div>
+      <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending WO</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Setup needed</div></div>
+      <div class="dash-summary-card" style="border-color:rgba(251,191,36,0.4);background:linear-gradient(145deg,#1a1000,#2a1a00);"><div class="dash-summary-label" style="color:#fbbf24;">🟡 Machinist Req</div><div class="dash-summary-num" style="color:#fbbf24;" id="dash-count-machinist">0</div><div class="dash-summary-sub">Needs attention</div></div>
+      <div class="dash-summary-card" style="border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;">✅ Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
+      <div class="dash-summary-card" style="border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All types</div></div>
       <div class="dash-summary-card" style="grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted</div></div>
     </div>
 
@@ -11195,7 +11382,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 (function(){
 
   var EL_KEY   = 'sk_bafca87272088e06c03843540f45f2273f90f656417ca5d0';
-  var EL_VOICE = '21m00Tcm4TlvDq8ikWAM';
+  var EL_VOICE = 'JBFqnCBsd6RMkjVDRZzb'; // George - Deep
   var _on      = false;
   var _muted   = false;
   var _audio   = null;   // ONE persistent audio element — created on first tap
@@ -11203,19 +11390,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _busy    = false;
 
   // ── SONGS ─────────────────────────────────────────────────
-  var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
-  var WORKER = 'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?n=';
-  var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var SONGS = [
-    {title:'Bohemian Rhapsody', artist:'Queen',               url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_q'},
-    {title:'Neon Moon',         artist:'Brooks and Dunn',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_b'},
-    {title:'Even Flow',         artist:'Pearl Jam',            url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_p'},
-    {title:'I Never Lie',       artist:'Zach Top',             url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_z'},
-    {title:'Juicy',             artist:'The Notorious B.I.G.', url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_j'},
-    {title:'Remote Control',    artist:'Roy D. Mercer',        url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_t', customIntro:'roy'},
-    {title:'Sparky on the Floor', artist:'Hill Manufacturing',   url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_s', customIntro:'hill'},
-    {title:'Dirt Road Millionaire', artist:'Nelly',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_d'},
-    {title:'Tulsa Time',            artist:'Don Williams',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_w'},
+    {title:'Bohemian Rhapsody', artist:'Queen',             url:'https://miguelstulsa.github.io/Shop-floor-app/Queen Bohemian Rhapsody.mp3'},
+    {title:'Neon Moon',         artist:'Brooks & Dunn',     url:'https://miguelstulsa.github.io/Shop-floor-app/Brooks %26 Dunn- neon moon.mp3'},
+    {title:'Even Flow',         artist:'Pearl Jam',         url:'https://miguelstulsa.github.io/Shop-floor-app/Pearl Jam - Even Flow.mp3'},
+    {title:'Juicy',             artist:'Notorious B.I.G.',  url:'https://miguelstulsa.github.io/Shop-floor-app/The Notorious B.I.G. - Juicy.mp3'},
+    {title:'I Never Lie',       artist:'Zach Top',          url:'https://miguelstulsa.github.io/Shop-floor-app/Zach Top - I Never Lie.mp3'},
   ];
   // Load audio data from songs.js
   var _songsLoaded = false;
@@ -11289,7 +11469,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var now=new Date(),ts=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime()/1000;
     var ws=ts-(now.getDay()||7)*86400;
     var s={td:0,wk:0,done:0,ops:{}};
-    all.forEach(function(n){var t=n.createdAt&&n.createdAt.seconds?n.createdAt.seconds:0;if(!t)return;if(t>=ts){s.td++;if(n.resolved)s.done++;}if(t>=ws)s.wk++;if(n.operator){var f=n.operator.split(' ')[0];s.ops[f]=(s.ops[f]||0)+1;}});
+    var EXCL=['corey','bartmier']; all.forEach(function(n){var t=n.createdAt&&n.createdAt.seconds?n.createdAt.seconds:0;if(!t)return;if(t>=ts){s.td++;if(n.resolved)s.done++;}if(t>=ws)s.wk++;if(n.operator){var opL=n.operator.toLowerCase();if(EXCL.some(function(e){return opL.indexOf(e)>=0;}))return;var f=n.operator.split(' ')[0];s.ops[f]=(s.ops[f]||0)+1;}});
     var top='',topN=0;Object.keys(s.ops).forEach(function(k){if(s.ops[k]>topN){top=k;topN=s.ops[k];}});
     s.top=top;s.topN=topN;s.saved=s.done*5;s.dol=Math.round(s.done*5*(95/60));return s;
   }
@@ -11352,7 +11532,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
             updatedAt:mods.serverTimestamp()
           }).catch(function(){});
         }
-      }).catch(function(e){ console.log('Data fetch (direct) failed:',e.message,'— using Firebase cache'); });
+      }).catch(function(){});
   }
 
   // Fetch on start and refresh every 10 min
@@ -11380,7 +11560,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── MUSIC — use the persistent _audio element (unlocked on tap) ──
   function playSong(song, onDone){
-    console.log('Playing:', song.title);
+    
     if(!song.url){ if(onDone)onDone(); return; }
     if(!_audio){ if(onDone)onDone(); return; }
 
@@ -11396,16 +11576,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _audio.src    = song.url;
     _audio.onended = finish;
     _audio.onerror = function(){
-      console.log('Song error:', song.title, _audio.error ? _audio.error.code : '');
+      
       finish();
     };
 
     // iPhone: play() must be called directly after src set, no load() needed
     // load() actually causes canplay to never fire on some tracks
     _audio.play().then(function(){
-      console.log('Playing OK:', song.title);
+      
     }).catch(function(e){
-      console.log('play() failed:', e.message, '— trying with load()');
+      
       // Fallback: try with explicit load
       _audio.load();
       var tries = 0;
@@ -11424,23 +11604,165 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── CONTENT ───────────────────────────────────────────────
   var _turn=0;
+  var _lastAIReport = '';
+  var _lastAIIntro  = '';
+
+  // ── AI REPORT via Claude API ──────────────────────────────
+  async function buildAIReport(){
+    var f=flr(), s=sts();
+    var now = new Date();
+    var timeStr = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+    // Build floor context for Claude
+    var ctx = 'You are Sparky, the AI radio host and announcer for Hill Manufacturing in Tulsa Oklahoma. ';
+    ctx += 'You speak in a natural, upbeat radio DJ voice. Keep responses to 2-4 sentences max. No bullet points. ';
+    ctx += 'Current time: ' + timeStr + '. ';
+
+    var floorLines = [];
+    if(f.run.length > 0){
+      f.run.forEach(function(j){
+        floorLines.push(j.name + ' running ' + j.machine + (j.wo ? ' WO ' + j.wo : '') + (j.et ? ' for ' + j.et : ''));
+      });
+    }
+    if(f.pend.length > 0){
+      f.pend.forEach(function(j){
+        floorLines.push(j.name + ' on ' + j.machine + ' waiting on setup' + (j.wo ? ' WO ' + j.wo : ''));
+      });
+    }
+    if(f.mach.length > 0){
+      f.mach.forEach(function(j){
+        floorLines.push(j.name + ' at ' + j.machine + ' needs ' + (j.detail || 'machinist help'));
+      });
+    }
+    if(f.insp.length > 0){
+      f.insp.forEach(function(j){
+        floorLines.push('Quality needed at ' + j.machine + ' for ' + j.name + (j.wo ? ' WO ' + j.wo : ''));
+      });
+    }
+    if(f.supp.length > 0){
+      f.supp.forEach(function(j){
+        floorLines.push('Floor support needed at ' + j.machine);
+      });
+    }
+    if(f.hold.length > 0){
+      f.hold.forEach(function(j){
+        floorLines.push(j.machine + ' on hold' + (j.hr ? ': ' + j.hr : ''));
+      });
+    }
+
+    ctx += floorLines.length > 0
+      ? 'Current floor status: ' + floorLines.join('. ') + '. '
+      : 'Floor is clear right now. ';
+
+    ctx += 'Requests today: ' + s.td + ', this week: ' + s.wk + '. Completed today: ' + s.done + '. ';
+    if(s.top && s.topN >= 2 && s.top.toLowerCase().indexOf('corey')<0) ctx += 'Top operator today: ' + s.top + ' with ' + s.topN + ' requests. ';
+    if(_wx) ctx += 'Tulsa weather: ' + _wx.temp + 'F, ' + _wx.desc + '. High ' + _wx.hi + ', low ' + _wx.lo + '. ';
+    if(_sp && _sp.length) ctx += 'Sports: ' + _sp.slice(0,2).join(' ') + '. ';
+
+    // Rotate what Sparky focuses on
+    _turn = (_turn+1) % 6;
+    var focus = [
+      'Give a quick floor update. Call out who is running and any machines that need attention.',
+      'Give a weather and sports update for the crew, then a quick floor check.',
+      'Give a motivational shoutout to the crew and mention any standout operators.',
+      'Tell a machinist joke then give a quick floor update.',
+      'Give a stats update — how many requests handled today and this week.',
+      'Give a general floor update. Be creative and entertaining like a real radio DJ.',
+    ][_turn];
+
+    ctx += 'Task: ' + focus;
+
+    try {
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': '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',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 500,
+          messages: [{ role: 'user', content: ctx }]
+        })
+      });
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+      if(text){ _lastAIReport = text; return text; }
+    } catch(e) {}
+    return report_scripted();
+  }
+
+  // ── AI SONG INTRO via Claude API ──────────────────────────
+  async function buildAIIntro(song){
+    var f=flr(), s=sts();
+    var ctx = 'You are Sparky, the AI radio host for Hill Manufacturing in Tulsa Oklahoma. ';
+    ctx += 'Introduce the next song in 2-3 sentences max like a real radio DJ. Be enthusiastic and mention the Hill Manufacturing crew. ';
+    ctx += 'Song: ' + song.title + (song.artist ? ' by ' + song.artist : '') + '. ';
+    if(f.run.length > 0){
+      var j = f.run[0];
+      ctx += 'Give a shoutout to ' + j.name + ' running ' + j.machine + (j.wo ? ' on work order ' + j.wo : '') + '. ';
+    }
+    if(s.td > 0) ctx += 'The crew has handled ' + s.td + ' requests today. ';
+    ctx += 'Introduce the song now.';
+
+    if(song.customIntro === 'roy'){
+      return 'Hey guys, this is a throwback for the boys at Hill Manufacturing. Roy D. Mercer — Remote Control. Rest in peace sir. How big a boy are you?';
+    }
+    if(song.customIntro === 'roy2'){
+      return 'Alright boys, here is another throwback prank call from the one and only Roy D. Mercer. This one is called Septic Tank. Enjoy.';
+    }
+    if(song.customIntro === 'hill'){
+      return 'Alright Hill Manufacturing — this next one is for you and you only. Written and recorded by the crew right here. This is Sparky on the Floor. Turn it up.';
+    }
+
+    try {
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': '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',
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 300,
+          messages: [{ role: 'user', content: ctx }]
+        })
+      });
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+      if(text){ _lastAIIntro = text; return text; }
+    } catch(e) {}
+    return intro_scripted(song);
+  }
+
+  // Keep scripted versions as fallback
+  function report_scripted(){
   function report(){
     var f=flr(),s=sts();
     var out=[];
     _turn=(_turn+1)%7;
     out.push(pick(['Floor update.','Here is what is happening.','Checking in on the shop.','Your floor report.','This is Sparky.']));
     var tot=f.run.length+f.pend.length+f.mach.length+f.insp.length+f.supp.length+f.hold.length;
-    if(tot===0){out.push(pick(['Floor is clear. Nothing active.','No open requests right now.','Clean board. Enjoy it.']));}
+    var allNotes=window._lastActionable||[];
+    var pendingCount=allNotes.filter(function(n){return !n.resolved&&n.type==='blue';}).length;
+    var machCount=allNotes.filter(function(n){return !n.resolved&&n.type==='yellow';}).length;
+    var totalOpen=allNotes.filter(function(n){return !n.resolved;}).length;
+    if(tot===0&&totalOpen===0){out.push(pick(['Floor is clear. Nothing active.','No open requests right now.','Clean board. Enjoy it.']));}
+    else if(tot===0&&totalOpen>0){out.push('There '+( totalOpen===1?'is':'are')+' '+totalOpen+' open request'+(totalOpen!==1?'s':'')+' on the floor right now.');}
     else{
       if(f.run.length>0){var sr=f.run.slice().sort(function(a,b){return b.e-a.e;});if(f.run.length===1){var j=sr[0];out.push(j.name+' running on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.et?', '+j.et+' so far':'')+'.');}else{out.push(f.run.length+' jobs running.');sr.slice(0,3).forEach(function(j){out.push(j.name+' on '+j.machine+(j.wo?', work order '+j.wo:'')+(j.et?', '+j.et:'')+'.');});}}
       if(f.hold.length>0)f.hold.forEach(function(j){out.push(j.machine+' on hold'+(j.hr?' — '+j.hr:'')+'. '+j.name+' waiting.');});
-      if(f.pend.length>0)out.push(f.pend.length+' machine'+(f.pend.length>1?'s':'')+' waiting on setup — '+f.pend.map(function(p){return p.name+' on '+p.machine;}).join(', ')+'. Tooling, that is yours.');
+      var showPend=f.pend.length>0?f.pend.length:pendingCount;if(showPend>0)out.push(showPend+' machine'+(showPend>1?'s':'')+' waiting on setup'+(f.pend.length>0?' — '+f.pend.map(function(p){return p.machine+(p.wo?' WO '+p.wo:'');}).join(', '):'')+'. Miguel, that is yours.');
       if(f.mach.length>0)f.mach.forEach(function(r){out.push(r.name+' at '+r.machine+' needs '+(r.detail||'something')+'. Someone go help.');});
       if(f.supp.length>0)f.supp.forEach(function(r){out.push('Floor support at '+r.machine+'. '+r.name+' is waiting.');});
       if(f.insp.length>0)f.insp.forEach(function(r){out.push('Quality — '+r.name+' on '+r.machine+' has parts ready. Do not let that sit.');});
     }
     if(_turn===1&&s.td>0)out.push(s.td+' request'+(s.td!==1?'s':'')+' handled today, '+s.wk+' this week. '+s.done+' completed. Solid work out there.');
-    if(_turn===2&&s.top&&s.topN>=2)out.push('Shoutout to '+s.top+' — '+s.topN+' request'+(s.topN!==1?'s':'')+' logged. Leading the floor. Keep it up, '+s.top+'.');
+    if(_turn===2&&s.top&&s.topN>=2){var topL=s.top.toLowerCase();if(topL.indexOf('corey')<0&&topL.indexOf('bartmier')<0)out.push('Shoutout to '+s.top+' — '+s.topN+' request'+(s.topN!==1?'s':'')+' logged. Leading the floor. Keep it up, '+s.top+'.');}
     if(_turn===3){
       if(_wx) out.push('Tulsa weather — '+_wx.temp+' degrees, '+_wx.desc.toLowerCase()+'. High '+_wx.hi+', low '+_wx.lo+'. Tomorrow '+_wx.tmr+', '+_wx.tmrHi+'.');
       else { fetchWeather(); out.push('Checking Tulsa weather. Check back in a moment.'); }
@@ -11454,8 +11776,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return out.join(' ');
   }
 
+  }
   var _it=0;
-  function intro(song){
+  function intro_scripted(song){
     var f=flr(),s=sts(),e=emp();
     var sl=song.title+(song.artist?' by '+song.artist:'');
     _it=(_it+1)%8;
@@ -11491,20 +11814,27 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!_on)return;
     var song=SONGS[_idx%SONGS.length];
     _idx=(_idx+1)%SONGS.length;
-    // Step 1: say intro
-    stat('🎙️ Sparky is talking...');
-    say(intro(song), function(){
+    stat('🎙️ Sparky is thinking...');
+    // Step 1: AI generates song intro
+    buildAIIntro(song).then(function(introText){
       if(!_on)return;
-      // Step 2: play song
-      stat('♪ '+song.title+' — '+song.artist);
-      playSong(song, function(){
+      stat('🎙️ Sparky is talking...');
+      say(introText, function(){
         if(!_on)return;
-        // Step 3: say report
-        stat('🎙️ Sparky is talking...');
-        say(report(), function(){
+        // Step 2: play song
+        stat('♪ '+song.title+(song.artist?' — '+song.artist:''));
+        playSong(song, function(){
           if(!_on)return;
-          // Step 4: next song
-          setTimeout(loop, 800);
+          stat('🎙️ Sparky is thinking...');
+          // Step 3: AI generates floor report
+          buildAIReport().then(function(reportText){
+            if(!_on)return;
+            stat('🎙️ Sparky is talking...');
+            say(reportText, function(){
+              if(!_on)return;
+              setTimeout(loop, 800);
+            });
+          });
         });
       });
     });
@@ -11538,10 +11868,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var pinned = window._readPinnedIfAny ? window._readPinnedIfAny() : null;
     var fullGreeting = pinned ? (pinned + ' ... ' + g) : g;
     say(fullGreeting, function(){if(_on)loop();});
+    // Pre-fetch first AI report in background
+    buildAIReport().then(function(){}).catch(function(){});
   }
 
   // ── FIREBASE SYNC ─────────────────────────────────────────
-  function pushState(on){var db=window.fbDb,m=window._fbModules;if(!db||!m)return;m.setDoc(m.doc(db,'hillSettings','sparkyState'),{active:on,updatedAt:m.serverTimestamp(),by:window.currentUser||'admin'}).catch(function(){});}
+  function pushState(on){var db=window.fbDb,m=window._fbModules;if(!db||!m||!m.setDoc)return;m.setDoc(m.doc(db,'hillSettings','sparkyState'),{active:on,updatedAt:m.serverTimestamp(),by:window.currentUser||'admin'}).catch(function(){});}
   var _li=setInterval(function(){
     var db=window.fbDb,m=window._fbModules;
     if(!db||!m)return;
@@ -11561,16 +11893,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       _audio=new Audio();
       _audio.volume=0.8;
       // Play a silent sound to unlock audio context on ALL browsers including desktop
-      _audio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      _audio.src='data:audio/mpeg;base64,/+MYxAAAAANIAAAAAExBTUUzLjk4LjIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
       _audio.play().then(function(){
         _audio.src='';
-        console.log('Audio unlocked successfully');
+        
       }).catch(function(e){
-        console.log('Audio unlock failed:', e.message);
+        
         // Try with AudioContext for desktop browsers
         try{
           var ctx=new(window.AudioContext||window.webkitAudioContext)();
-          ctx.resume().then(function(){console.log('AudioContext resumed');});
+          ctx.resume();
         }catch(e2){}
       });
     } else {
@@ -11599,7 +11931,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
   };
 
-  window._djNow=function(){say(report(),function(){});};
+  window._djNow=function(){buildAIReport().then(function(t){say(t,function(){});});};
   window._djSetInterval=function(){};
   window._uploadSparkyMusic=function(){};
   window._removeSong=function(){};
@@ -11632,10 +11964,136 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     say(pick(isAdmin?['Message from Miguel to '+m+': '+text,m+', Miguel says: '+text]:[name+' at '+m+' says: '+text,'Update from '+m+'. '+name+': '+text]),function(){});
   };
   window._jimSetKey=function(k,v){EL_KEY=k||EL_KEY;EL_VOICE=v||EL_VOICE;localStorage.setItem('jimKey',EL_KEY);localStorage.setItem('jimVoice',EL_VOICE);};
-  var _sk=localStorage.getItem('jimKey'),_sv=localStorage.getItem('jimVoice');
-  if(_sk)EL_KEY=_sk;if(_sv)EL_VOICE=_sv;
+  var _sk=localStorage.getItem('jimKey');
+  if(_sk)EL_KEY=_sk;
+  // Voice locked to George — localStorage override disabled
+  localStorage.removeItem('jimVoice');
 
   badge(false);
+
+  // ── MIGUEL'S TIME LOG ─────────────────────────────────────
+  function _listenTimeLog(){
+    var db2=window.fbDb,mods=window._fbModules;
+    if(!db2||!mods) return;
+
+    // Listen to hillTimeLog (timed jobs going forward)
+    mods.onSnapshot(
+      mods.query(
+        mods.collection(db2,'hillTimeLog'),
+        mods.where('person','==','hilladmin'),
+        mods.orderBy('loggedAt','desc'),
+
+      ),
+      function(snap){
+        if(!snap) return;
+        var timedLogs = [];
+        snap.forEach(function(d){ var data=d.data(); data.id=d.id; data._source='timed'; timedLogs.push(data); });
+
+        // Also pull historical hillRequests resolved by hilladmin (blue + yellow types)
+        mods.getDocs(
+          mods.query(
+            mods.collection(db2,'hillRequests'),
+            mods.where('resolvedBy','==','hilladmin'),
+            mods.where('resolved','==',true),
+            mods.orderBy('resolvedAt','desc'),
+            mods.limit(200)
+          )
+        ).then(function(hrSnap){
+          var histLogs = [];
+          if(hrSnap && !hrSnap.empty){
+            hrSnap.forEach(function(d){
+              var r = d.data();
+              // Only blue (Pending WO) and yellow (Machinist Req)
+              if(r.type !== 'blue' && r.type !== 'yellow') return;
+              // Skip if already in timedLogs (same wo+machine combo recently)
+              var alreadyTimed = timedLogs.some(function(t){
+                return t.wo === r.wo && t.machine === r.machine;
+              });
+              histLogs.push({
+                id: d.id,
+                person: r.resolvedBy || 'hilladmin',
+                role: r.type === 'blue' ? 'setup' : 'machinist',
+                machine: r.machine || '',
+                wo: r.wo || '',
+                op: r.op || '',
+                detail: r.detail || '',
+                assignedTo: r.assignedTo || '',
+                elapsedMins: r.elapsedMins || null,
+                elapsedStr: r.elapsedStr || (alreadyTimed ? null : 'no time'),
+                loggedAt: r.resolvedAt || null,
+                _source: alreadyTimed ? 'duplicate' : 'historical'
+              });
+            });
+          }
+
+          // Merge: timed logs first, then historical (no duplicates)
+          var allLogs = timedLogs.concat(
+            histLogs.filter(function(h){ return h._source !== 'duplicate'; })
+          );
+
+          // Sort by date desc
+          allLogs.sort(function(a,b){
+            var at = a.loggedAt && a.loggedAt.seconds ? a.loggedAt.seconds : 0;
+            var bt = b.loggedAt && b.loggedAt.seconds ? b.loggedAt.seconds : 0;
+            return bt - at;
+          });
+
+          window._myTimeLogs = allLogs;
+          _renderTimeLog(allLogs);
+        }).catch(function(e){
+          // If historical pull fails, just show timed logs
+          window._myTimeLogs = timedLogs;
+          _renderTimeLog(timedLogs);
+        });
+      }
+    );
+  }
+
+  function _renderTimeLog(logs){
+    var bar = document.getElementById('miguel-time-log');
+    if(!bar) return;
+    if(!logs || !logs.length){ bar.style.display='none'; return; }
+    bar.style.display='block';
+    // Split into today vs previous
+    var today = new Date();
+    var todayStart = new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime()/1000;
+    var todayLogs = logs.filter(function(l){ return l.loggedAt && l.loggedAt.seconds >= todayStart; });
+    var prevLogs  = logs.filter(function(l){ return !l.loggedAt || l.loggedAt.seconds < todayStart; });
+
+    var todayMins = todayLogs.reduce(function(s,l){ return s+(l.elapsedMins||0); },0);
+    var allMins   = logs.reduce(function(s,l){ return s+(l.elapsedMins||0); },0);
+    var todayStr  = todayMins >= 60 ? Math.floor(todayMins/60)+'h '+(todayMins%60)+'m' : todayMins+'m';
+    var allStr    = allMins >= 60 ? Math.floor(allMins/60)+'h '+(allMins%60)+'m' : allMins+'m';
+
+    bar.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+      +'<span style="font-size:13px;color:#f5c842;letter-spacing:1px;">⏱ MY TIME LOG</span>'
+      +'<span style="font-size:11px;color:#475569;">Today: <b style="color:#f5c842;">'+todayStr+'</b> &nbsp; All: <b style="color:#94a3b8;">'+allStr+'</b></span>'
+      +'</div>'
+      +logs.map(function(l){
+        var isSetup = l.role==='setup' || l.role==='machinist';
+        var typeColor = l.role==='setup' ? '#60a5fa' : l.role==='machinist' ? '#fbbf24' : '#4ade80';
+        var typeLabel = l.role==='setup' ? 'Setup' : l.role==='machinist' ? 'Mach Req' : 'Run';
+        var timed = l.elapsedMins && l.elapsedMins > 0;
+        var timeColor = timed ? '#f5c842' : '#334155';
+        var timeStr = l.elapsedStr && l.elapsedStr !== 'no time' ? l.elapsedStr : '—';
+        var dateStr = '';
+        if(l.loggedAt && l.loggedAt.seconds){
+          var d = new Date(l.loggedAt.seconds*1000);
+          dateStr = (d.getMonth()+1)+'/'+d.getDate();
+        }
+        return '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #0d1f35;">'
+          +'<span style="font-size:9px;background:'+typeColor+'22;color:'+typeColor+';border-radius:4px;padding:2px 5px;font-weight:700;flex-shrink:0;">'+typeLabel+'</span>'
+          +(dateStr?'<span style="font-size:9px;color:#334155;flex-shrink:0;">'+dateStr+'</span>':'')
+          +'<span style="font-size:11px;color:#94a3b8;font-weight:700;">'+l.machine+'</span>'
+          +(l.wo?'<span style="font-size:10px;color:#475569;">WO '+l.wo+'</span>':'')
+          +(l.op?'<span style="font-size:10px;color:#334155;">OP '+l.op+'</span>':'')
+          +'<span style="font-size:11px;color:'+timeColor+';margin-left:auto;font-weight:700;flex-shrink:0;">'+timeStr+'</span>'
+          +(l.assignedTo?'<span style="font-size:9px;color:#475569;flex-shrink:0;">→ '+l.assignedTo.split(' ')[0]+'</span>':'')
+          +'</div>';
+      }).join('');
+  }
+
+  var _tlTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_tlTimer);_listenTimeLog();}},1500);
 
   // ── PROSHOP LIVE DATA ────────────────────────────────────
   function _startProShopListener(){
@@ -11670,6 +12128,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
   var _psTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_psTimer);_startProShopListener();}},1000);
 
+  badge(false);
+
 })();
 </script>
 
@@ -11684,6 +12144,596 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   <div style="font-size:13px;color:#475569;text-align:center;max-width:280px;line-height:1.6;">Sparky will start talking immediately and give you live floor updates every 5 seconds</div>
   <button onclick="window._sparkyUnlock()" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:14px;padding:18px 40px;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;cursor:pointer;box-shadow:0 8px 30px rgba(139,92,246,0.5);margin-top:8px;">LET SPARKY TALK</button>
 </div>
+<script>
+// ═══ AI CHAT ═══
+(function(){
+  var _chatHistory = [];
+  var _chatThinking = false;
+
+  function buildFloorContext(){
+    var notes = window._lastActionable || [];
+    var now = Math.floor(Date.now()/1000);
+    var active = notes.filter(function(n){ return !n.resolved; });
+    var running = active.filter(function(n){ return n.inProgress || (n.startedAt && n.startedAt.seconds); });
+    var pending = active.filter(function(n){ return n.type === 'blue' && !n.inProgress; });
+    var machReq = active.filter(function(n){ return n.type === 'yellow'; });
+    var inspect = active.filter(function(n){ return n.type === 'red'; });
+    var onHold  = active.filter(function(n){ return n.onHold; });
+
+    var allNotes = window._allDashRequests || notes;
+    var today = new Date(); var todayStart = new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime()/1000;
+    var todayNotes = allNotes.filter(function(n){ return n.createdAt && n.createdAt.seconds >= todayStart; });
+    var completed  = todayNotes.filter(function(n){ return n.resolved; });
+
+    var lines = [];
+    lines.push('Current date/time: ' + new Date().toLocaleString('en-US',{weekday:'long',hour:'2-digit',minute:'2-digit'}));
+    lines.push('Shop: Hill Manufacturing, Tulsa Oklahoma');
+    lines.push('You are the AI assistant for Miguel Sanchez (admin/tooling manager)');
+    lines.push('');
+    lines.push('=== LIVE FLOOR STATUS ===');
+    if(running.length){
+      lines.push('RUNNING (' + running.length + '):');
+      running.forEach(function(n){
+        var elapsed = n.startedAt && n.startedAt.seconds ? Math.floor((now - n.startedAt.seconds)/60) : 0;
+        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | WO ' + (n.wo||'?') + ' OP ' + (n.op||'?') + ' | ' + elapsed + ' min running' + (n.detail?' | '+n.detail:''));
+      });
+    }
+    if(pending.length){
+      lines.push('PENDING SETUP (' + pending.length + '):');
+      pending.forEach(function(n){
+        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | WO ' + (n.wo||'?') + (n.assignedTo?' | Assigned to: '+n.assignedTo:''));
+      });
+    }
+    if(machReq.length){
+      lines.push('MACHINIST REQUESTS (' + machReq.length + '):');
+      machReq.forEach(function(n){
+        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | ' + (n.detail||'needs help'));
+      });
+    }
+    if(inspect.length){
+      lines.push('INSPECTIONS NEEDED (' + inspect.length + '):');
+      inspect.forEach(function(n){
+        lines.push('  ' + n.machine + ' | WO ' + (n.wo||'?') + ' | ' + (n.operator||'?'));
+      });
+    }
+    if(onHold.length){
+      lines.push('ON HOLD (' + onHold.length + '):');
+      onHold.forEach(function(n){
+        lines.push('  ' + n.machine + ' | ' + (n.holdReason||'reason unknown'));
+      });
+    }
+    lines.push('');
+    lines.push("=== TODAY'S STATS ===");
+    lines.push('Total requests today: ' + todayNotes.length);
+    lines.push('Completed: ' + completed.length);
+    lines.push('Still open: ' + (todayNotes.length - completed.length));
+
+    // ProShop data if available
+    var psJobs = window._proShopJobs || [];
+    var psActive = psJobs.filter(function(j){ return j.active; });
+    if(psActive.length){
+      lines.push('');
+      lines.push('=== PROSHOP ACTIVE LABOR ===');
+      psActive.forEach(function(j){
+        lines.push('  ' + j.name + ' | WO ' + j.wo + ' OP ' + j.op + ' | ' + j.category + ' | ' + j.elapsed + 'h elapsed' + (j.doing?' | '+j.doing:''));
+      });
+    }
+
+    var wx = window._wx || null;
+    lines.push('');
+    lines.push('=== WEATHER ===');
+    if(wx){
+      lines.push('Tulsa: ' + wx.temp + 'F, ' + wx.desc + '. High ' + wx.hi + ' Low ' + wx.lo);
+    } else {
+      lines.push('Tulsa Oklahoma weather data not yet loaded.');
+    }
+
+    lines.push('');
+    lines.push('=== GENERAL CONTEXT ===');
+    lines.push('City: Tulsa, Oklahoma');
+    lines.push('Industry: CNC Machine Shop / Manufacturing');
+    lines.push('Current user: Miguel Sanchez (tooling manager / admin)');
+    lines.push('Manager: Corey Bartmier');
+
+    return lines.join("\n");
+  }
+
+  window._sendAIChat = async function(){
+    var input = document.getElementById('ai-input');
+    var msg = (input.value || '').trim();
+    if(!msg || _chatThinking) return;
+    input.value = '';
+    input.style.height = '44px';
+
+    // Add user message
+    addMessage('user', msg);
+    _chatHistory.push({role:'user', content: msg});
+
+    // Check if message is a WO lookup
+    var woMatch = msg.match(/(26-?\d{4}|25-?\d{4}|24-?\d{4}|WO[\s-]?\d+|\d{5,6})/i);
+    if(woMatch || /work order|WO#|lookup|receipt|pull up|show me/i.test(msg)){
+      var woNum = woMatch ? woMatch[0].toUpperCase().replace(/\s/g,'') : null;
+      if(woNum){
+        _chatThinking = true;
+        var typingEl = addTyping();
+        var receipt = await _buildWOReceipt(woNum);
+        typingEl.remove();
+        _chatThinking = false;
+        addReceiptMessage(receipt);
+        _chatHistory.push({role:'assistant', content: 'Here is the receipt for WO ' + woNum});
+        return;
+      }
+    }
+
+    // Check for "requests to me" / "sent to me" queries
+    if(/sent to me|my requests|requests to me|how many.*sent|who sent|count.*requests/i.test(msg)){
+      _chatThinking = true;
+      var typingEl3 = addTyping();
+      var myReceipt = await _buildRequestsToMeReceipt();
+      typingEl3.remove();
+      _chatThinking = false;
+      addRequestsToMeMessage(myReceipt);
+      _chatHistory.push({role:'assistant', content: 'Here is your incoming request summary'});
+      return;
+    }
+
+    // Check if message is a machinist name lookup
+    var machinists = ['Brett Thompson', 'Bryan Sturman', 'Caleb Dooley', 'Chuck Whitfield', 'Corey Bartmier', 'Daniel McGarvey', 'Dingo Mikles', 'Hank Anglin', 'Jacob Nail', 'Jared Stuart', 'Jimmy Pollard', 'Justin Gray', 'Keith Groden', 'Matthew Carrico', 'Miguel Sanchez', 'Mike Payne', 'Rhett Dawson', 'Scott Smith', 'Sean Surratt', 'Steven Riggs', 'Tony Lang', 'Tyler Stockham'];
+    var msgLower = msg.toLowerCase();
+    var foundMachinist = null;
+    machinists.forEach(function(name){
+      if(msgLower.indexOf(name.toLowerCase()) >= 0) foundMachinist = name;
+      // Also match first name only
+      var first = name.split(' ')[0].toLowerCase();
+      if(first.length > 3 && msgLower.indexOf(first) >= 0 && !foundMachinist) foundMachinist = name;
+    });
+    if(foundMachinist){
+      // Always fetch real data and pass to Claude for accurate answers
+      _chatThinking = true;
+      var typingEl2 = addTyping();
+      var mReceipt = await _buildMachinistReceipt(foundMachinist);
+      var reqs = mReceipt.requests || [];
+      var completed = reqs.filter(function(r){return r.resolved;});
+      var open = reqs.filter(function(r){return !r.resolved;});
+      var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
+      var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'no time tracked';
+      var machines = [...new Set(reqs.map(function(r){return r.machine;}).filter(Boolean))];
+      var byType = {blue:0,yellow:0,red:0,green:0};
+      reqs.forEach(function(r){ if(byType[r.type]!==undefined) byType[r.type]++; });
+      var recent = reqs.slice(0,5).map(function(r){
+        var d = r.createdAt&&r.createdAt.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString():'';
+        return d+' '+r.machine+' '+(r.type==='blue'?'Pending WO':r.type==='yellow'?'Machinist Req':r.type)+' '+(r.wo?'WO '+r.wo:'')+(r.resolved?' [done]':' [open]');
+      }).join('; ');
+
+      // Build context and let Claude answer naturally
+      var machinistContext = 'MACHINIST DATA FOR ' + foundMachinist + ': '
+        + 'Total requests: ' + reqs.length + '. '
+        + 'Completed: ' + completed.length + '. '
+        + 'Open: ' + open.length + '. '
+        + 'Pending WO: ' + byType.blue + '. '
+        + 'Machinist Requests: ' + byType.yellow + '. '
+        + 'Inspections: ' + byType.red + '. '
+        + 'Total time tracked: ' + totalStr + '. '
+        + 'Machines used: ' + (machines.join(', ')||'none recorded') + '. '
+        + 'Recent activity: ' + (recent||'none');
+
+      _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
+
+      try {
+        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
+            messages: _chatHistory.slice(-10)
+          })
+        });
+        var data2 = await resp2.json();
+        var text2 = data2.content && data2.content[0] && data2.content[0].text;
+        typingEl2.remove();
+        _chatThinking = false;
+        if(text2){
+          addMessage('assistant', text2);
+          _chatHistory.push({role:'assistant', content: text2});
+        }
+      } catch(e){
+        typingEl2.remove();
+        _chatThinking = false;
+        addMessage('assistant', 'Error fetching data for ' + foundMachinist);
+      }
+      return;
+    }
+
+    // Show typing indicator
+    _chatThinking = true;
+    var typingEl = addTyping();
+
+    try {
+      var floorCtx = buildFloorContext();
+      var systemPrompt = 'You are the ultimate AI assistant for Miguel Sanchez at Hill Manufacturing in Tulsa Oklahoma. '
+        + 'You have web search capability and can answer ANYTHING — sports scores, weather, news, phone numbers, addresses, recipes, jokes, manufacturing questions, anything at all. '
+        + 'Use web search for: current events, sports scores, business info, phone numbers, addresses, weather, news, stock prices, or any real-time info. '
+        + 'NEVER make up data. Only report floor data that is explicitly in the LIVE FLOOR DATA section below. '
+        + 'If floor data is empty, say the floor is clear. Do not invent jobs or people. '
+        + 'HILL MANUFACTURING ROSTER: Brett Thompson, Bryan Sturman, Caleb Dooley, Chuck Whitfield, Corey Bartmier, Daniel McGarvey, Dingo Mikles, Hank Anglin, Jacob Nail, Jared Stuart, Jimmy Pollard, Justin Gray, Keith Groden, Matthew Carrico, Miguel Sanchez, Mike Payne, Rhett Dawson, Scott Smith, Sean Surratt, Steven Riggs, Tony Lang, Tyler Stockham. '
+        + 'Be direct, accurate, and conversational. This is the best shop floor app ever built. '
+        + '\nLIVE FLOOR DATA:\n' + floorCtx;
+
+      var messages = _chatHistory.slice(-10); // last 10 messages for context
+
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system: systemPrompt,
+          messages: messages
+        })
+      });
+
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
+
+      typingEl.remove();
+      _chatThinking = false;
+
+      if(text){
+        addMessage('assistant', text);
+        _chatHistory.push({role:'assistant', content: text});
+      } else {
+        addMessage('assistant', 'Sorry, I had trouble with that. Try again.');
+      }
+
+    } catch(e) {
+      typingEl.remove();
+      _chatThinking = false;
+      addMessage('assistant', 'Connection error: ' + e.message);
+    }
+  };
+
+  function addMessage(role, text){
+    var msgs = document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div = document.createElement('div');
+    div.className = 'ai-msg ai-msg-' + role;
+    var bubble = document.createElement('div');
+    bubble.className = 'ai-bubble';
+    bubble.textContent = text;
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function addTyping(){
+    var msgs = document.getElementById('ai-messages');
+    var div = document.createElement('div');
+    div.className = 'ai-msg ai-msg-assistant';
+    div.innerHTML = '<div class="ai-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  // ── WO RECEIPT BUILDER ────────────────────────────────────
+  async function _buildWOReceipt(woNum){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {wo:woNum, requests:[], error:'Not connected'};
+
+    // Normalize WO — try with and without dashes
+    var woClean = woNum.replace(/^WO[-\s]?/i,'').replace(/-/g,'');
+    var woDashed = woClean.length === 6 ? woClean.slice(0,2)+'-'+woClean.slice(2) : woNum;
+
+    var requests = [];
+    try {
+      // Search hillRequests for this WO
+      var snaps = await Promise.all([
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('wo','==',woNum))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('wo','==',woDashed))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('wo','==',woClean))),
+      ]);
+      var seen = {};
+      snaps.forEach(function(snap){
+        if(!snap||snap.empty) return;
+        snap.forEach(function(d){
+          if(seen[d.id]) return;
+          seen[d.id] = true;
+          var r = d.data(); r.id = d.id;
+          requests.push(r);
+        });
+      });
+    } catch(e){ console.warn('WO lookup error:', e.message); }
+
+    // Also check hillTimeLog
+    var timeLogs = [];
+    try {
+      var tlSnap = await mods.getDocs(
+        mods.query(mods.collection(db2,'hillTimeLog'), mods.where('wo','==',woDashed))
+      );
+      if(tlSnap && !tlSnap.empty){
+        tlSnap.forEach(function(d){ var t=d.data(); t.id=d.id; timeLogs.push(t); });
+      }
+    } catch(e){}
+
+    return { wo: woDashed||woNum, requests: requests, timeLogs: timeLogs };
+  }
+
+  // ── REQUESTS TO ME RECEIPT ───────────────────────────────────
+  async function _buildRequestsToMeReceipt(){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {requests:[]};
+    var requests = [];
+    try {
+      var snap = await mods.getDocs(
+        mods.query(
+          mods.collection(db2,'hillRequests'),
+          mods.where('resolvedBy','==','hilladmin'),
+          mods.orderBy('resolvedAt','desc'),
+          mods.limit(500)
+        )
+      );
+      if(snap && !snap.empty){
+        snap.forEach(function(d){
+          var r=d.data(); r.id=d.id;
+          if(r.type==='blue'||r.type==='yellow') requests.push(r);
+        });
+      }
+    } catch(e){ console.warn('Requests to me:', e.message); }
+    return {requests:requests};
+  }
+
+  function addRequestsToMeMessage(data){
+    var msgs = document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div = document.createElement('div');
+    div.className = 'ai-msg ai-msg-assistant';
+    var reqs = data.requests || [];
+
+    if(!reqs.length){
+      div.innerHTML = '<div class="ai-bubble">No completed requests found for you yet. Complete some Pending WO or Machinist Requests and they will show up here.</div>';
+      msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return;
+    }
+
+    // Count by who submitted (operator field)
+    var byOperator = {};
+    var byType = {blue:0, yellow:0};
+    var totalMins = 0;
+    reqs.forEach(function(r){
+      var op = r.operator || 'Unknown';
+      if(!byOperator[op]) byOperator[op] = {total:0, blue:0, yellow:0, mins:0};
+      byOperator[op].total++;
+      if(r.type==='blue') { byOperator[op].blue++; byType.blue++; }
+      if(r.type==='yellow') { byOperator[op].yellow++; byType.yellow++; }
+      byOperator[op].mins += r.elapsedMins||0;
+      totalMins += r.elapsedMins||0;
+    });
+
+    var sortedOps = Object.entries(byOperator).sort(function(a,b){return b[1].total-a[1].total;});
+    var totalStr = totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m';
+
+    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;min-width:260px;max-width:100%;">';
+    html += '<div style="padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #1e3a5f;">';
+    html += '<div style="font-size:11px;color:#475569;letter-spacing:1px;">REQUESTS TO ME</div>';
+    html += '<div style="font-size:18px;font-weight:700;color:#f5c842;">Miguel Sanchez</div>';
+    html += '<div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">';
+    html += '<span style="font-size:11px;color:#94a3b8;">'+reqs.length+' total</span>';
+    html += '<span style="font-size:11px;color:#60a5fa;">🔵 '+byType.blue+' Pending WO</span>';
+    html += '<span style="font-size:11px;color:#fbbf24;">🟡 '+byType.yellow+' Machinist Req</span>';
+    if(totalMins>0) html += '<span style="font-size:11px;color:#f5c842;">⏱ '+totalStr+' tracked</span>';
+    html += '</div></div>';
+
+    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:8px;">SENT BY</div>';
+    sortedOps.forEach(function(entry){
+      var op=entry[0], d=entry[1];
+      var opStr = d.mins>0?(d.mins>=60?Math.floor(d.mins/60)+'h '+(d.mins%60)+'m':d.mins+'m'):'';
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #0d1f35;">';
+      html += '<span style="font-size:12px;color:#f0f4f8;font-weight:700;flex:1;">'+op+'</span>';
+      if(d.blue>0) html += '<span style="font-size:10px;color:#60a5fa;background:rgba(96,165,250,0.1);border-radius:4px;padding:1px 6px;">🔵 '+d.blue+'</span>';
+      if(d.yellow>0) html += '<span style="font-size:10px;color:#fbbf24;background:rgba(251,191,36,0.1);border-radius:4px;padding:1px 6px;">🟡 '+d.yellow+'</span>';
+      html += '<span style="font-size:11px;color:#94a3b8;font-weight:700;">'+d.total+' total</span>';
+      if(opStr) html += '<span style="font-size:10px;color:#f5c842;">⏱'+opStr+'</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    div.innerHTML = html;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  // ── MACHINIST RECEIPT BUILDER ──────────────────────────────
+  async function _buildMachinistReceipt(name){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {name:name, requests:[]};
+    var requests = [];
+    try {
+      var firstName = name.split(' ')[0];
+      var lastName = name.split(' ')[1] || '';
+      // Search by full name, first name only, and assignedTo
+      var snaps = await Promise.all([
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
+      ]);
+      var seen = {};
+      snaps.forEach(function(snap){
+        if(!snap||snap.empty) return;
+        snap.forEach(function(d){
+          if(seen[d.id]) return;
+          seen[d.id] = true;
+          var r = d.data(); r.id = d.id;
+          requests.push(r);
+        });
+      });
+      requests.sort(function(a,b){
+        var at = a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
+        var bt = b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;
+        return bt-at;
+      });
+    } catch(e){ console.warn('Machinist lookup:', e.message); }
+    return {name:name, requests:requests};
+  }
+
+  function addMachinistReceiptMessage(receipt){
+    var msgs = document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div = document.createElement('div');
+    div.className = 'ai-msg ai-msg-assistant';
+    var reqs = receipt.requests || [];
+
+    if(!reqs.length){
+      div.innerHTML = '<div class="ai-bubble">No requests found for <strong>'+receipt.name+'</strong>.</div>';
+      msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; return;
+    }
+
+    var typeLabel = {red:'🔴 Inspection', yellow:'🟡 Machinist Req', blue:'🔵 Pending WO', green:'🟢 Running WO'};
+    var typeColor = {red:'#f87171', yellow:'#fbbf24', blue:'#60a5fa', green:'#4ade80'};
+
+    // Stats
+    var completed = reqs.filter(function(r){return r.resolved;}).length;
+    var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
+    var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'';
+    var machines = [...new Set(reqs.map(function(r){return r.machine;}).filter(Boolean))];
+    var byType = {};
+    reqs.forEach(function(r){ byType[r.type]=(byType[r.type]||0)+1; });
+
+    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;min-width:260px;max-width:100%;">';
+    html += '<div style="padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #1e3a5f;">';
+    html += '<div style="font-size:11px;color:#475569;letter-spacing:1px;">MACHINIST RECEIPT</div>';
+    html += '<div style="font-size:18px;font-weight:700;color:#f5c842;">'+receipt.name+'</div>';
+    html += '<div style="display:flex;gap:12px;margin-top:6px;">';
+    html += '<span style="font-size:11px;color:#94a3b8;">'+reqs.length+' total requests</span>';
+    html += '<span style="font-size:11px;color:#4ade80;">'+completed+' completed</span>';
+    if(totalStr) html += '<span style="font-size:11px;color:#f5c842;">⏱ '+totalStr+'</span>';
+    html += '</div></div>';
+
+    // Type breakdown
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
+    Object.entries(byType).forEach(function(e){
+      var color = typeColor[e[0]]||'#94a3b8';
+      var label = (typeLabel[e[0]]||e[0]).replace(/[🔴🟡🔵🟢]/,'').trim();
+      html += '<span style="font-size:10px;background:'+color+'22;color:'+color+';border-radius:4px;padding:2px 7px;font-weight:700;">'+label+': '+e[1]+'</span>';
+    });
+    html += '</div>';
+
+    if(machines.length) html += '<div style="font-size:11px;color:#64748b;margin-bottom:10px;">📍 '+machines.slice(0,5).join(', ')+(machines.length>5?' +more':'')+'</div>';
+
+    // Recent requests
+    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:6px;">RECENT REQUESTS</div>';
+    reqs.slice(0,10).forEach(function(r){
+      var dateStr='';
+      if(r.createdAt&&r.createdAt.seconds){
+        var d=new Date(r.createdAt.seconds*1000);
+        dateStr=(d.getMonth()+1)+'/'+(d.getDate());
+      }
+      var color=typeColor[r.type]||'#94a3b8';
+      var label=(typeLabel[r.type]||r.type).replace(/[🔴🟡🔵🟢]/,'').trim();
+      html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #0d1f35;">';
+      html+='<span style="font-size:9px;color:'+color+';font-weight:700;flex-shrink:0;">'+label+'</span>';
+      html+='<span style="font-size:10px;color:#64748b;flex-shrink:0;">'+dateStr+'</span>';
+      html+='<span style="font-size:11px;color:#94a3b8;">'+r.machine+'</span>';
+      if(r.wo) html+='<span style="font-size:10px;color:#475569;">WO '+r.wo+'</span>';
+      if(r.elapsedStr) html+='<span style="font-size:11px;color:#f5c842;margin-left:auto;">'+r.elapsedStr+'</span>';
+      else html+='<span style="font-size:10px;color:#334155;margin-left:auto;">'+(r.resolved?'✅':'⏳')+'</span>';
+      html+='</div>';
+    });
+    if(reqs.length>10) html+='<div style="font-size:10px;color:#334155;margin-top:6px;">...and '+(reqs.length-10)+' more</div>';
+    html += '</div>';
+
+    div.innerHTML = html;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function addReceiptMessage(receipt){
+    var msgs = document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div = document.createElement('div');
+    div.className = 'ai-msg ai-msg-assistant';
+
+    var reqs = receipt.requests || [];
+    var timeLogs = receipt.timeLogs || [];
+
+    if(!reqs.length && !timeLogs.length){
+      div.innerHTML = '<div class="ai-bubble">No records found for WO <strong>' + receipt.wo + '</strong>. Try checking the WO number format — e.g. 26-0173.</div>';
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+      return;
+    }
+
+    // Sort requests by date
+    reqs.sort(function(a,b){
+      var at = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : 0;
+      var bt = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : 0;
+      return at - bt;
+    });
+
+    // Type colors and labels
+    var typeLabel = {red:'🔴 Inspection', yellow:'🟡 Machinist Req', blue:'🔵 Pending WO', green:'🟢 Running WO'};
+    var typeColor = {red:'#f87171', yellow:'#fbbf24', blue:'#60a5fa', green:'#4ade80'};
+
+    // Compute totals
+    var totalMins = reqs.reduce(function(s,r){ return s+(r.elapsedMins||0); },0);
+    var totalStr  = totalMins > 0 ? (totalMins >= 60 ? Math.floor(totalMins/60)+'h '+(totalMins%60)+'m' : totalMins+'m') : '';
+    var machines  = [...new Set(reqs.map(function(r){ return r.machine; }).filter(Boolean))];
+    var operators = [...new Set(reqs.map(function(r){ return r.operator; }).filter(Boolean))];
+
+    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;min-width:260px;max-width:100%;">';
+    // Header
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #1e3a5f;">';
+    html += '<div><div style="font-size:11px;color:#475569;letter-spacing:1px;">WORK ORDER RECEIPT</div>';
+    html += '<div style="font-size:18px;font-weight:700;color:#f5c842;">WO ' + receipt.wo + '</div></div>';
+    html += '<div style="text-align:right;"><div style="font-size:11px;color:#475569;">' + reqs.length + ' request' + (reqs.length!==1?'s':'') + '</div>';
+    if(totalStr) html += '<div style="font-size:13px;color:#4ade80;font-weight:700;">' + totalStr + ' tracked</div>';
+    html += '</div></div>';
+
+    // Summary row
+    if(machines.length) html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px;">📍 ' + machines.join(', ') + '</div>';
+    if(operators.length) html += '<div style="font-size:11px;color:#64748b;margin-bottom:10px;">👤 ' + operators.join(', ') + '</div>';
+
+    // Request list
+    reqs.forEach(function(r){
+      var dateStr = '';
+      if(r.createdAt && r.createdAt.seconds){
+        var d = new Date(r.createdAt.seconds*1000);
+        dateStr = (d.getMonth()+1)+'/'+(d.getDate())+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      }
+      var color = typeColor[r.type] || '#94a3b8';
+      var label = typeLabel[r.type] || r.type;
+      var status = r.resolved ? '✅' : r.onHold ? '⏸' : r.inProgress ? '⏱' : '🔵';
+      html += '<div style="border-left:3px solid '+color+';padding:6px 8px;margin-bottom:6px;background:rgba(255,255,255,0.02);border-radius:0 6px 6px 0;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
+      html += '<span style="font-size:11px;color:'+color+';font-weight:700;">'+label+'</span>';
+      html += '<span style="font-size:10px;color:#334155;">'+dateStr+'</span>';
+      html += '</div>';
+      if(r.detail) html += '<div style="font-size:11px;color:#64748b;margin-top:2px;">'+r.detail+'</div>';
+      if(r.operator) html += '<div style="font-size:10px;color:#475569;">👤 '+r.operator+'</div>';
+      if(r.assignedTo) html += '<div style="font-size:10px;color:#475569;">🔧 '+r.assignedTo+'</div>';
+      if(r.elapsedStr) html += '<div style="font-size:11px;color:#f5c842;font-weight:700;">⏱ '+r.elapsedStr+'</div>';
+      html += status + (r.resolved ? ' <span style="font-size:10px;color:#4ade80;">Completed</span>' : '');
+      html += '</div>';
+    });
+
+    // Time log entries
+    if(timeLogs.length){
+      html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #1e3a5f;">';
+      html += '<div style="font-size:10px;color:#475569;margin-bottom:6px;letter-spacing:1px;">TIME LOG</div>';
+      timeLogs.forEach(function(t){
+        html += '<div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">⏱ '+t.person+' — '+(t.elapsedStr||'?')+' ('+t.role+')</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '</div>';
+    div.innerHTML = html;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+})();
+</script>
+
 <script>
 // ═══ ANNOUNCEMENTS ═══
 (function(){
