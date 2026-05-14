@@ -11390,12 +11390,28 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _busy    = false;
 
   // ── SONGS ─────────────────────────────────────────────────
+  var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
+  var WORKER = 'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?n=';
+  var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var SONGS = [
-    {title:'Bohemian Rhapsody', artist:'Queen',            url:'https://miguelstulsa.github.io/Shop-floor-app/Queen%20Bohemian%20Rhapsody.mp3'},
-    {title:'Neon Moon',         artist:'Brooks & Dunn',    url:'https://miguelstulsa.github.io/Shop-floor-app/Brooks%20%26%20Dunn-%20neon%20moon.mp3'},
-    {title:'Even Flow',         artist:'Pearl Jam',        url:'https://miguelstulsa.github.io/Shop-floor-app/Pearl%20Jam%20-%20Even%20Flow.mp3'},
-    {title:'Juicy',             artist:'Notorious B.I.G.', url:'https://miguelstulsa.github.io/Shop-floor-app/The%20Notorious%20B.I.G.%20-%20Juicy.mp3'},
-    {title:'I Never Lie',       artist:'Zach Top',         url:'https://miguelstulsa.github.io/Shop-floor-app/Zach%20Top%20-%20I%20Never%20Lie.mp3'},
+    {title:'Bohemian Rhapsody',      artist:'Queen',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_q'},
+    {title:'Self Care',              artist:'Mac Miller',         url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_m'},
+    {title:'Friends in Low Places',  artist:'Garth Brooks',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_g'},
+    {title:'Remote Control',         artist:'Roy D. Mercer',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_t', customIntro:'roy'},
+    {title:'Run-Around',             artist:'Blues Traveler',     url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_r2'},
+    {title:'Neon Moon',              artist:'Brooks & Dunn',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_b'},
+    {title:'Sparky on the Floor',    artist:'Hill Manufacturing', url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_s', customIntro:'hill'},
+    {title:'Wondering Why',          artist:'Red Clay Strays',    url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_r1'},
+    {title:'Juicy',                  artist:'Notorious B.I.G.',   url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_j'},
+    {title:'Broken Window Serenade', artist:'Whiskey Myers',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_bw'},
+    {title:'Even Flow',              artist:'Pearl Jam',          url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_p'},
+    {title:'Septic Tank',            artist:'Roy D. Mercer',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_st', customIntro:'roy2'},
+    {title:'Tulsa Time',             artist:'Don Williams',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_w'},
+    {title:'Hook',                   artist:'Blues Traveler',     url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_h'},
+    {title:'I Never Lie',            artist:'Zach Top',           url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_z'},
+    {title:'Rather Be',              artist:'Clean Bandit',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_cb'},
+    {title:'Dirt Road Millionaire',  artist:'Nelly',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_d'},
+    {title:'Man of Constant Sorrow', artist:'Soggy Bottom Boys',  url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_cs'},
   ];
   // Load audio data from songs.js
   var _songsLoaded = false;
