@@ -12838,6 +12838,42 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 .kata-procmap-add { background:rgba(59,130,246,.1); border:1px dashed #3b82f644; border-radius:8px; padding:5px 10px; font-size:12px; color:#3b82f6; cursor:pointer; transition:all .15s; }
 .kata-procmap-add:hover { background:rgba(59,130,246,.2); }
 
+/* ── PROCMAP STAGES ── */
+.kata-procmap-chip { background:#1e4a7c; border-radius:8px; padding:5px 10px 5px 12px; font-size:12px; color:#7dd3fc; font-weight:600; display:inline-flex; align-items:center; gap:5px; white-space:nowrap; border:1px solid rgba(59,130,246,.3); }
+.kata-procmap-chip-del { background:none; border:none; color:#334155; cursor:pointer; font-size:14px; line-height:1; padding:0 2px; transition:color .15s; }
+.kata-procmap-chip-del:hover { color:#ef4444; }
+.kata-procmap-input-row { display:flex; gap:6px; align-items:center; margin-top:6px; }
+.kata-procmap-input { flex:1; min-width:0; background:#0d1f35; border:1px solid #3b82f644; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:13px; padding:7px 10px; outline:none; transition:border-color .15s; }
+.kata-procmap-input:focus { border-color:#3b82f6; }
+.kata-procmap-input::placeholder { color:#334155; }
+.kata-procmap-btn { background:#1e4a7c; border:none; color:#7dd3fc; border-radius:8px; padding:7px 14px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background .15s; }
+.kata-procmap-btn:hover { background:#2563eb; }
+
+/* ── CHECKBOXES ── */
+.kata-checks { display:flex; flex-direction:column; gap:5px; margin-bottom:4px; }
+.kata-check-row { display:flex; align-items:center; gap:8px; background:#0d1f35; border-radius:7px; padding:7px 10px; border:1px solid #1e3a5f; }
+.kata-check-row input[type=checkbox] { width:16px; height:16px; accent-color:#22c55e; flex-shrink:0; cursor:pointer; }
+.kata-check-label { flex:1; font-size:13px; color:#cbd5e1; line-height:1.3; cursor:pointer; }
+.kata-check-label.done { text-decoration:line-through; color:#475569; }
+.kata-check-del { background:none; border:none; color:#334155; cursor:pointer; font-size:14px; padding:0 3px; transition:color .15s; flex-shrink:0; }
+.kata-check-del:hover { color:#ef4444; }
+.kata-check-add-row { display:flex; gap:6px; align-items:center; margin-top:4px; }
+.kata-check-add-input { flex:1; min-width:0; background:#0d1f35; border:1px solid #22c55e44; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:13px; padding:7px 10px; outline:none; transition:border-color .15s; }
+.kata-check-add-input:focus { border-color:#22c55e; }
+.kata-check-add-input::placeholder { color:#334155; }
+.kata-check-add-btn { background:#16a34a; border:none; color:#fff; border-radius:8px; padding:7px 14px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.kata-check-add-btn:hover { background:#22c55e; }
+
+/* Print checkboxes */
+@media print {
+  .kata-check-add-row { display:none !important; }
+  .kata-check-del { display:none !important; }
+  .kata-procmap-input-row { display:none !important; }
+  .kata-check-row { background:#f9f9f9 !important; border-color:#ddd !important; }
+  .kata-check-label { color:#222 !important; }
+  .kata-check-label.done { color:#888 !important; }
+}
+
 /* ─── EXPERIMENTS VIEW ─── */
 .kata-exp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
 .kata-exp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:12px; }
@@ -13092,15 +13128,21 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         <div class="kb-label">1 — Target Condition</div>
         <div class="kb-sub">By: <input class="kata-inline-in" id="kb-tc-date" placeholder="5/30/26" style="width:90px;display:inline-block;padding:2px 6px;font-size:12px;" oninput="kataBoardChanged()"></div>
       </div>
-      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Map</div>
-      <div class="kata-procmap" id="kb-procmap-target">
-        <span class="kata-procmap-add" onclick="kataAddProcStep('target')">+ Add Step</span>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Process Map</div>
+      <div class="kata-procmap" id="kb-procmap-target"></div>
+      <div class="kata-procmap-input-row no-print">
+        <input class="kata-procmap-input" id="kb-procmap-target-input" placeholder="Stage name (e.g. Setup)" onkeydown="if(event.key==='Enter'){kataAddProcStep('target');}">
+        <button class="kata-procmap-btn" onclick="kataAddProcStep('target')">+ Add Stage</button>
       </div>
-      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Characteristics</div>
-      <textarea class="kata-inline-ta" id="kb-target-char" placeholder="What should the process look like?&#10;• ..." oninput="kataBoardChanged()"></textarea>
-      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Metrics</div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;margin-top:10px;">Process Characteristics</div>
+      <div class="kata-checks" id="kb-target-checks"></div>
+      <div class="kata-check-add-row no-print">
+        <input class="kata-check-add-input" id="kb-target-check-input" placeholder="Add characteristic..." onkeydown="if(event.key==='Enter'){kataAddCheck('target');}">
+        <button class="kata-check-add-btn" onclick="kataAddCheck('target')">+ Add</button>
+      </div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:10px;">Process Metrics</div>
       <textarea class="kata-inline-ta" style="min-height:50px;" id="kb-target-metrics" placeholder="How will we measure success?" oninput="kataBoardChanged()"></textarea>
-      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Outcome Metrics</div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:6px;">Outcome Metrics</div>
       <textarea class="kata-inline-ta" style="min-height:50px;" id="kb-target-outcome" placeholder="Business outcome targets..." oninput="kataBoardChanged()"></textarea>
     </div>
 
@@ -13110,15 +13152,21 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         <div class="kb-label">2 — Current Condition</div>
         <div class="kb-sub">Last updated: <span id="kb-current-updated">—</span></div>
       </div>
-      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Map</div>
-      <div class="kata-procmap" id="kb-procmap-current">
-        <span class="kata-procmap-add" onclick="kataAddProcStep('current')">+ Add Step</span>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Process Map</div>
+      <div class="kata-procmap" id="kb-procmap-current"></div>
+      <div class="kata-procmap-input-row no-print">
+        <input class="kata-procmap-input" id="kb-procmap-current-input" placeholder="Stage name (e.g. Setup)" onkeydown="if(event.key==='Enter'){kataAddProcStep('current');}">
+        <button class="kata-procmap-btn" onclick="kataAddProcStep('current')">+ Add Stage</button>
       </div>
-      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Characteristics</div>
-      <textarea class="kata-inline-ta" id="kb-current-char" placeholder="What do you observe today?&#10;• ..." oninput="kataBoardChanged()"></textarea>
-      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Metrics</div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;margin-top:10px;">Process Characteristics</div>
+      <div class="kata-checks" id="kb-current-checks"></div>
+      <div class="kata-check-add-row no-print">
+        <input class="kata-check-add-input" id="kb-current-check-input" placeholder="Add characteristic..." onkeydown="if(event.key==='Enter'){kataAddCheck('current');}">
+        <button class="kata-check-add-btn" onclick="kataAddCheck('current')">+ Add</button>
+      </div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:10px;">Process Metrics</div>
       <textarea class="kata-inline-ta" style="min-height:50px;" id="kb-current-metrics" placeholder="Current measurable data..." oninput="kataBoardChanged()"></textarea>
-      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Outcome Metrics</div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:6px;">Outcome Metrics</div>
       <textarea class="kata-inline-ta" style="min-height:50px;" id="kb-current-outcome" placeholder="Current business outcomes..." oninput="kataBoardChanged()"></textarea>
     </div>
 
@@ -13307,8 +13355,10 @@ var KS = {
   EXP:     'hillKataExps',
   COACH:   'hillKataCoach',
   HISTORY: 'hillKataHistory',
-  PROC_T:  'hillKataProcTarget',
-  PROC_C:  'hillKataProcCurrent'
+  PROC_T:   'hillKataProcTarget',
+  PROC_C:   'hillKataProcCurrent',
+  CHECKS_T: 'hillKataChecksTarget',
+  CHECKS_C: 'hillKataChecksCurrent'
 };
 function kLoad(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
 function kSave(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
@@ -13356,6 +13406,8 @@ function kataGetBoard(){
     currentMetrics: (document.getElementById('kb-current-metrics')||{}).value||'',
     currentOutcome: (document.getElementById('kb-current-outcome')||{}).value||'',
     obstacles:      (document.getElementById('kb-obstacles')||{}).value||'',
+    checksTarget:   kLoad(KS.CHECKS_T)||[],
+    checksCurrent:  kLoad(KS.CHECKS_C)||[],
     savedAt:        new Date().toISOString()
   };
 }
@@ -13383,31 +13435,99 @@ function kataBoardLoad(){
 
 /* ── PROCESS MAP ── */
 function kataRenderProcMap(side){
-  var steps = kLoad(side==='target'?KS.PROC_T:KS.PROC_C)||[];
+  var key = side==='target' ? KS.PROC_T : KS.PROC_C;
+  var steps = kLoad(key)||[];
   var el = document.getElementById('kb-procmap-'+side); if(!el) return;
   el.innerHTML = '';
+  // If stored as single string with --> separators, split it
+  if(steps.length===1 && steps[0].indexOf('-->')!==-1){
+    steps = steps[0].split('-->').map(function(s){ return s.trim(); }).filter(Boolean);
+    kSave(key, steps);
+  }
   steps.forEach(function(s,i){
-    if(i>0){ var arr=document.createElement('span'); arr.className='kata-procmap-arrow'; arr.textContent='→'; el.appendChild(arr); }
-    var chip=document.createElement('span'); chip.className='kata-procmap-step';
-    chip.textContent=s; chip.title='Click to remove'; chip.style.cursor='pointer';
-    chip.onclick=function(){ steps.splice(i,1); kSave(side==='target'?KS.PROC_T:KS.PROC_C,steps); kataRenderProcMap(side); };
-    el.appendChild(chip);
+    if(i>0){
+      var arr=document.createElement('span');
+      arr.className='kata-procmap-arrow';
+      arr.textContent='→';
+      el.appendChild(arr);
+    }
+    var chip=document.createElement('div'); chip.className='kata-procmap-chip';
+    var label=document.createElement('span'); label.textContent=s;
+    var del=document.createElement('button'); del.className='kata-procmap-chip-del'; del.textContent='✕'; del.title='Remove stage';
+    del.addEventListener('click',(function(idx){ return function(){
+      var st=kLoad(key)||[]; st.splice(idx,1); kSave(key,st); kataRenderProcMap(side);
+    }; })(i));
+    chip.appendChild(label); chip.appendChild(del); el.appendChild(chip);
   });
-  var add=document.createElement('span'); add.className='kata-procmap-add'; add.textContent='+ Add Step';
-  add.onclick=function(){ kataAddProcStep(side); }; el.appendChild(add);
 }
 window.kataAddProcStep = function(side){
-  var name=prompt('Process step name (e.g. Pull Tools, Setup, Run Job):','');
-  if(!name||!name.trim()) return;
-  var key=side==='target'?KS.PROC_T:KS.PROC_C;
-  var steps=kLoad(key)||[]; steps.push(name.trim()); kSave(key,steps);
+  var inputId = 'kb-procmap-'+side+'-input';
+  var inp = document.getElementById(inputId);
+  var raw = inp ? inp.value.trim() : '';
+  if(!raw) return;
+  var key = side==='target' ? KS.PROC_T : KS.PROC_C;
+  var steps = kLoad(key)||[];
+  // Support pasting full chain like "Pull Tooling-->Setup-->Run Job"
+  if(raw.indexOf('-->')!==-1){
+    var parts = raw.split('-->').map(function(s){ return s.trim(); }).filter(Boolean);
+    steps = steps.concat(parts);
+  } else {
+    steps.push(raw);
+  }
+  kSave(key, steps);
+  if(inp) inp.value='';
   kataRenderProcMap(side);
 };
+
+/* ── CHECKBOXES ── */
+window.kataAddCheck = function(side){
+  var inputId = 'kb-'+side+'-check-input';
+  var inp = document.getElementById(inputId);
+  var text = inp ? inp.value.trim() : '';
+  if(!text) return;
+  var key = side==='target' ? KS.CHECKS_T : KS.CHECKS_C;
+  var checks = kLoad(key)||[];
+  checks.push({ id:kUid(), text:text, done:false });
+  kSave(key, checks);
+  if(inp) inp.value='';
+  kataRenderChecks(side);
+  kataBoardChanged();
+};
+
+function kataRenderChecks(side){
+  var key = side==='target' ? KS.CHECKS_T : KS.CHECKS_C;
+  var checks = kLoad(key)||[];
+  var el = document.getElementById('kb-'+side+'-checks'); if(!el) return;
+  el.innerHTML='';
+  checks.forEach(function(c,i){
+    var row = document.createElement('div'); row.className='kata-check-row';
+    var cb = document.createElement('input'); cb.type='checkbox'; cb.checked=!!c.done;
+    cb.addEventListener('change',(function(idx){ return function(){
+      var cs=kLoad(key)||[]; cs[idx].done=this.checked; kSave(key,cs);
+      kataRenderChecks(side); kataBoardChanged();
+    }; })(i));
+    var lbl = document.createElement('label'); lbl.className='kata-check-label'+(c.done?' done':'');
+    lbl.textContent=c.text;
+    lbl.addEventListener('click',function(){ cb.click(); });
+    var del = document.createElement('button'); del.className='kata-check-del no-print'; del.textContent='✕';
+    del.addEventListener('click',(function(idx){ return function(){
+      var cs=kLoad(key)||[]; cs.splice(idx,1); kSave(key,cs);
+      kataRenderChecks(side); kataBoardChanged();
+    }; })(i));
+    row.appendChild(cb); row.appendChild(lbl); row.appendChild(del);
+    el.appendChild(row);
+  });
+}
 
 /* ── SNAPSHOT / HISTORY ── */
 window.kataSaveSnapshot = function(){
   var board = kataGetBoard();
   var hist = kLoad(KS.HISTORY)||[];
+  // Also snapshot the checkbox lists
+  board.checksTarget  = kLoad(KS.CHECKS_T)||[];
+  board.checksCurrent = kLoad(KS.CHECKS_C)||[];
+  board.procTarget    = kLoad(KS.PROC_T)||[];
+  board.procCurrent   = kLoad(KS.PROC_C)||[];
   hist.unshift({ id:kUid(), date:kToday(), ts:new Date().toISOString(), board:board });
   if(hist.length>50) hist=hist.slice(0,50);
   kSave(KS.HISTORY,hist);
@@ -13655,6 +13775,8 @@ function kataInit(){
   kataBoardLoad();
   kataRenderProcMap('target');
   kataRenderProcMap('current');
+  kataRenderChecks('target');
+  kataRenderChecks('current');
   renderExps();
   renderCoach();
   renderHistory();
