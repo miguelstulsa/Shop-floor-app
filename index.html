@@ -13418,27 +13418,38 @@ window.kataSaveSnapshot = function(){
 function renderHistory(){
   var el=document.getElementById('kataHistList'); if(!el) return;
   var hist=kLoad(KS.HISTORY)||[];
+  el.innerHTML='';
   if(!hist.length){
-    el.innerHTML='<div class="kata-exp-empty"><div class="kata-exp-empty-icon">📁</div><div>No snapshots yet. Tap <strong>Save Snapshot</strong> to capture today\'s board state.</div></div>';
+    el.innerHTML='<div class="kata-exp-empty"><div class="kata-exp-empty-icon">📁</div><div>No snapshots yet. Tap <strong>Save Snapshot Now</strong> to capture today\'s board state.</div></div>';
     return;
   }
-  el.innerHTML=hist.map(function(h,i){
+  hist.forEach(function(h,i){
     var b=h.board||{};
-    return '<div class="kata-hist-entry">'
-      +'<div class="kata-hist-entry-hdr">'
-      +'<div><div class="kata-hist-entry-title">Snapshot #'+(hist.length-i)+'</div>'
-      +'<span class="kata-pill '+(b.status||'active')+'" style="margin-top:4px;display:inline-block;">'+(b.status||'active')+'</span></div>'
-      +'<div style="text-align:right;"><div class="kata-hist-entry-date">'+kEsc(h.date)+'</div>'
-      +'<button class="kata-btn danger sm no-print" style="margin-top:6px;" data-id="'+h.id+'" onclick="kataDeleteSnapshot(this.getAttribute(\"data-id\"))">🗑 Delete</button></div>'
-      +'</div>'
-      +'<div class="kata-hist-grid">'
-      +'<div class="kata-hist-box"><div class="kata-hist-box-label" style="color:#22c55e;">Challenge</div><div class="kata-hist-box-value">'+kEsc(b.challenge||'—')+'</div></div>'
-      +'<div class="kata-hist-box"><div class="kata-hist-box-label" style="color:#22c55e;">Target Condition By</div><div class="kata-hist-box-value">'+kEsc(b.tcDate||'—')+'</div></div>'
-      +'<div class="kata-hist-box"><div class="kata-hist-box-label" style="color:#ef4444;">Current Characteristics</div><div class="kata-hist-box-value">'+kEsc((b.currentChar||'—').slice(0,200))+'</div></div>'
-      +'<div class="kata-hist-box"><div class="kata-hist-box-label" style="color:#a78bfa;">Obstacles</div><div class="kata-hist-box-value">'+kEsc((b.obstacles||'—').slice(0,200))+'</div></div>'
-      +'</div>'
-      +'</div>';
-  }).join('');
+    var card=document.createElement('div'); card.className='kata-hist-entry';
+    var hdr=document.createElement('div'); hdr.className='kata-hist-entry-hdr';
+    var left=document.createElement('div');
+    var title=document.createElement('div'); title.className='kata-hist-entry-title'; title.textContent='Snapshot #'+(hist.length-i);
+    var pill=document.createElement('span'); pill.className='kata-pill '+(b.status||'active'); pill.textContent=(b.status||'active'); pill.style.cssText='margin-top:4px;display:inline-block;';
+    left.appendChild(title); left.appendChild(pill);
+    var right=document.createElement('div'); right.style.textAlign='right';
+    var dateEl=document.createElement('div'); dateEl.className='kata-hist-entry-date'; dateEl.textContent=h.date||'';
+    var delBtn=document.createElement('button'); delBtn.className='kata-btn danger sm no-print'; delBtn.textContent='🗑 Delete'; delBtn.style.marginTop='6px';
+    delBtn.addEventListener('click', (function(snapId){ return function(){ kataDeleteSnapshot(snapId); }; })(h.id));
+    right.appendChild(dateEl); right.appendChild(delBtn);
+    hdr.appendChild(left); hdr.appendChild(right); card.appendChild(hdr);
+    var grid=document.createElement('div'); grid.className='kata-hist-grid';
+    function makeBox(label,val,color){
+      var box=document.createElement('div'); box.className='kata-hist-box';
+      var lbl=document.createElement('div'); lbl.className='kata-hist-box-label'; lbl.style.color=color; lbl.textContent=label;
+      var val2=document.createElement('div'); val2.className='kata-hist-box-value'; val2.textContent=(val||'—').slice(0,300);
+      box.appendChild(lbl); box.appendChild(val2); return box;
+    }
+    grid.appendChild(makeBox('Challenge',b.challenge,'#22c55e'));
+    grid.appendChild(makeBox('Target Condition By',b.tcDate,'#22c55e'));
+    grid.appendChild(makeBox('Current Characteristics',b.currentChar,'#ef4444'));
+    grid.appendChild(makeBox('Obstacles',b.obstacles,'#a78bfa'));
+    card.appendChild(grid); el.appendChild(card);
+  });
 }
 window.kataDeleteSnapshot=function(id){
   kSave(KS.HISTORY,(kLoad(KS.HISTORY)||[]).filter(function(h){ return h.id!==id; }));
@@ -13493,32 +13504,43 @@ window.kataSaveExp=function(){
 function renderExps(){
   var el=document.getElementById('kataExpGrid'); if(!el) return;
   var exps=kLoad(KS.EXP)||[];
+  el.innerHTML='';
   if(!exps.length){
     el.innerHTML='<div class="kata-exp-empty"><div class="kata-exp-empty-icon">🔬</div><div>No experiments yet. Tap <strong>+ Add Experiment</strong>.</div></div>';
     return;
   }
-  el.innerHTML=exps.map(function(e){
-    var stepLabel={plan:'Plan',do:'Do',check:'Check',act:'Act'}[e.step]||e.step;
-    return '<div class="kata-exp-card">'
-      +'<div class="kata-exp-card-header">'
-      +'<div style="display:flex;align-items:center;gap:10px;"><span class="kata-exp-num">#'+(e.num||'?')+'</span>'
-      +'<div><div style="font-size:12px;font-weight:600;color:#cbd5e1;">'+kEsc(e.hypo).slice(0,60)+(e.hypo.length>60?'…':'')+'</div>'
-      +(e.datePlanned?'<div style="font-size:10px;color:#475569;">Planned: '+kEsc(e.datePlanned)+'</div>':'')+'</div></div>'
-      +'<span class="kata-exp-step-badge '+e.step+'">'+stepLabel+'</span>'
-      +'</div>'
-      +'<div class="kata-exp-card-body">'
-      +'<div><div class="kata-exp-field-label">Plan / Do — Experiment & Metric</div><div class="kata-exp-field-value">'+kEsc(e.hypo)+'</div></div>'
-      +(e.expect?'<div><div class="kata-exp-field-label">What You Expect</div><div class="kata-exp-field-value">'+kEsc(e.expect)+'</div></div>':'')
-      +(e.happened?'<div><div class="kata-exp-field-label">Check — What Actually Happened</div><div class="kata-exp-field-value">'+kEsc(e.happened)+'</div></div>':'')
-      +(e.learned?'<div><div class="kata-exp-field-label">Act — What We Learned</div><div class="kata-exp-field-value">'+kEsc(e.learned)+'</div></div>':'')
-      +(e.dateConducted?'<div style="font-size:10px;color:#475569;">Conducted: '+kEsc(e.dateConducted)+'</div>':'')
-      +'</div>'
-      +'<div class="kata-exp-card-footer no-print">'
-      +'<button class="kata-btn ghost sm" data-id="'+e.id+'" onclick="kataOpenExpModal(this.getAttribute(\"data-id\"))">✏ Edit</button>'
-      +'<button class="kata-btn danger sm" data-id="'+e.id+'" onclick="kataDeleteExp(this.getAttribute(\"data-id\"))">🗑 Delete</button>'
-      +'</div>'
-      +'</div>';
-  }).join('');
+  var stepLabels={plan:'Plan',do:'Do',check:'Check',act:'Act'};
+  exps.forEach(function(e){
+    var card=document.createElement('div'); card.className='kata-exp-card';
+    // header
+    var hdr=document.createElement('div'); hdr.className='kata-exp-card-header';
+    var left=document.createElement('div'); left.style.cssText='display:flex;align-items:center;gap:10px;';
+    var num=document.createElement('span'); num.className='kata-exp-num'; num.textContent='#'+(e.num||'?');
+    var info=document.createElement('div');
+    var hypoShort=document.createElement('div'); hypoShort.style.cssText='font-size:12px;font-weight:600;color:#cbd5e1;'; hypoShort.textContent=(e.hypo||'').slice(0,60)+((e.hypo||'').length>60?'…':'');
+    info.appendChild(hypoShort);
+    if(e.datePlanned){ var dp=document.createElement('div'); dp.style.cssText='font-size:10px;color:#475569;'; dp.textContent='Planned: '+e.datePlanned; info.appendChild(dp); }
+    left.appendChild(num); left.appendChild(info);
+    var badge=document.createElement('span'); badge.className='kata-exp-step-badge '+(e.step||'plan'); badge.textContent=stepLabels[e.step]||e.step;
+    hdr.appendChild(left); hdr.appendChild(badge); card.appendChild(hdr);
+    // body
+    var body=document.createElement('div'); body.className='kata-exp-card-body';
+    function addField(label,val){ if(!val) return; var d=document.createElement('div'); var l=document.createElement('div'); l.className='kata-exp-field-label'; l.textContent=label; var v=document.createElement('div'); v.className='kata-exp-field-value'; v.textContent=val; d.appendChild(l); d.appendChild(v); body.appendChild(d); }
+    addField('Plan / Do — Experiment & Metric', e.hypo);
+    addField('What You Expect', e.expect);
+    addField('Check — What Actually Happened', e.happened);
+    addField('Act — What We Learned', e.learned);
+    if(e.dateConducted){ var dc=document.createElement('div'); dc.style.cssText='font-size:10px;color:#475569;'; dc.textContent='Conducted: '+e.dateConducted; body.appendChild(dc); }
+    card.appendChild(body);
+    // footer buttons
+    var footer=document.createElement('div'); footer.className='kata-exp-card-footer no-print';
+    var editBtn=document.createElement('button'); editBtn.className='kata-btn ghost sm'; editBtn.textContent='✏ Edit';
+    editBtn.addEventListener('click',(function(eid){ return function(){ kataOpenExpModal(eid); }; })(e.id));
+    var delBtn=document.createElement('button'); delBtn.className='kata-btn danger sm'; delBtn.textContent='🗑 Delete';
+    delBtn.addEventListener('click',(function(eid){ return function(){ kataDeleteExp(eid); }; })(e.id));
+    footer.appendChild(editBtn); footer.appendChild(delBtn); card.appendChild(footer);
+    el.appendChild(card);
+  });
 }
 window.kataDeleteExp=function(id){
   kSave(KS.EXP,(kLoad(KS.EXP)||[]).filter(function(e){ return e.id!==id; }));
@@ -13553,30 +13575,38 @@ window.kataSaveCoach=function(){
 function renderCoach(){
   var el=document.getElementById('kataCoachGrid'); if(!el) return;
   var sessions=kLoad(KS.COACH)||[];
+  el.innerHTML='';
   if(!sessions.length){
     el.innerHTML='<div class="kata-exp-empty"><div class="kata-exp-empty-icon">💬</div><div>No coaching sessions logged yet.</div></div>';
     return;
   }
-  el.innerHTML=sessions.map(function(s){
-    return '<div class="kata-coach-card">'
-      +'<div class="kata-coach-card-hdr">'
-      +'<div><div class="kata-coach-learner">'+kEsc(s.learner)+'</div>'
-      +'<div class="kata-coach-linked">'+(s.coach?'Coach: '+kEsc(s.coach):'')+'</div></div>'
-      +'<div class="kata-coach-date">'+kEsc(s.date)+'<br><span style="font-size:10px;color:#334155;">'+kEsc(s.by||'')+'</span></div>'
-      +'</div>'
-      +'<div class="kata-coach-card-body">'
-      +(s.q1?'<div class="kata-coach-q">Target Condition?</div><div class="kata-coach-a">'+kEsc(s.q1)+'</div>':'')
-      +(s.q2?'<div class="kata-coach-q">Actual Condition Now?</div><div class="kata-coach-a">'+kEsc(s.q2)+'</div>':'')
-      +(s.q3?'<div class="kata-coach-q">Obstacles Preventing TC?</div><div class="kata-coach-a">'+kEsc(s.q3)+'</div>':'')
-      +(s.q4?'<div class="kata-coach-q">Next Step / Experiment?</div><div class="kata-coach-a">'+kEsc(s.q4)+'</div>':'')
-      +(s.q5?'<div class="kata-coach-q">When Can We Check?</div><div class="kata-coach-a">'+kEsc(s.q5)+'</div>':'')
-      +(s.notes?'<div class="kata-coach-notes-block">📝 '+kEsc(s.notes)+'</div>':'')
-      +'</div>'
-      +'<div class="kata-coach-card-footer no-print">'
-      +'<button class="kata-btn danger sm" data-id="'+s.id+'" onclick="kataDeleteCoach(this.getAttribute(\"data-id\"))">🗑 Delete</button>'
-      +'</div>'
-      +'</div>';
-  }).join('');
+  sessions.forEach(function(s){
+    var card=document.createElement('div'); card.className='kata-coach-card';
+    // header
+    var hdr=document.createElement('div'); hdr.className='kata-coach-card-hdr';
+    var left=document.createElement('div');
+    var nameEl=document.createElement('div'); nameEl.className='kata-coach-learner'; nameEl.textContent=s.learner||'';
+    var coachEl=document.createElement('div'); coachEl.className='kata-coach-linked'; coachEl.textContent=s.coach?'Coach: '+s.coach:'';
+    left.appendChild(nameEl); left.appendChild(coachEl);
+    var right=document.createElement('div'); right.className='kata-coach-date'; right.textContent=s.date||'';
+    hdr.appendChild(left); hdr.appendChild(right); card.appendChild(hdr);
+    // body
+    var body=document.createElement('div'); body.className='kata-coach-card-body';
+    function addQ(q,a){ if(!a) return; var ql=document.createElement('div'); ql.className='kata-coach-q'; ql.textContent=q; var al=document.createElement('div'); al.className='kata-coach-a'; al.textContent=a; body.appendChild(ql); body.appendChild(al); }
+    addQ('Target Condition?', s.q1);
+    addQ('Actual Condition Now?', s.q2);
+    addQ('Obstacles Preventing TC?', s.q3);
+    addQ('Next Step / Experiment?', s.q4);
+    addQ('When Can We Check?', s.q5);
+    if(s.notes){ var nb=document.createElement('div'); nb.className='kata-coach-notes-block'; nb.textContent='📝 '+s.notes; body.appendChild(nb); }
+    card.appendChild(body);
+    // footer
+    var footer=document.createElement('div'); footer.className='kata-coach-card-footer no-print';
+    var delBtn=document.createElement('button'); delBtn.className='kata-btn danger sm'; delBtn.textContent='🗑 Delete';
+    delBtn.addEventListener('click',(function(sid){ return function(){ kataDeleteCoach(sid); }; })(s.id));
+    footer.appendChild(delBtn); card.appendChild(footer);
+    el.appendChild(card);
+  });
 }
 window.kataDeleteCoach=function(id){
   kSave(KS.COACH,(kLoad(KS.COACH)||[]).filter(function(s){ return s.id!==id; }));
