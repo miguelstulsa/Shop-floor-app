@@ -1174,6 +1174,7 @@
   <div class="nav-tab" onclick="switchTab('proshop')" id="tab-proshop" style="display:none;">🔗 ProShop</div>
   <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;">📅 Planner</div>
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
+  <div class="nav-tab admin-only" onclick="switchTab('kata')" id="tab-kata" style="display:none;">🔄 Kata</div>
   </nav>
   <button class="nav-scroll-btn right" onclick="scrollTabs(120)" aria-label="Scroll tabs right">&#8250;</button>
 </div>
@@ -2790,7 +2791,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce','kata'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -2814,6 +2815,7 @@
     if (tab === 'proshop') { var psFrame = document.getElementById('proshop-iframe'); if (psFrame && !psFrame.src) psFrame.src = PROSHOP_BASE + '/'; }
     var planEl = document.getElementById('page-planner'); if (planEl) planEl.style.display = tab === 'planner' ? 'flex' : 'none';
     if (tab === 'planner') { plannerSetView(_plannerView || 'hill'); }
+    var kataEl = document.getElementById('page-kata'); if (kataEl) kataEl.style.display = tab === 'kata' ? 'block' : 'none';
 
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
@@ -3352,6 +3354,8 @@
       // tab-mgmt, tab-proshop, tab-planner, tab-datanomix, tab-shoptv — demo only
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
+      var kataTab = document.getElementById('tab-kata');
+      if (kataTab) kataTab.style.display = 'flex';
       var annTab = document.getElementById('tab-announce');
       if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
       var aiTab = document.getElementById('tab-aichat');
@@ -3401,7 +3405,7 @@
     var sb = document.getElementById('shopSwitchBtn');
     if (sb) sb.classList.remove('visible');
     // Hide admin-only tabs
-    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections'].forEach(function(id){
+    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections','tab-kata'].forEach(function(id){
       var t = document.getElementById(id); if(t) t.style.display = 'none';
     });
     // Switch back to shop floor if on a hidden tab
@@ -12757,5 +12761,893 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
 })();
 </script>
+<!-- ═══════════════════════════════════════════════
+     TOYOTA KATA — IMPROVEMENT & COACHING DASHBOARD
+     ═══════════════════════════════════════════════ -->
+<div class="page" id="page-kata" style="display:none;padding:0;">
+<style>
+/* ─── KATA RESET & BASE ─── */
+#page-kata * { box-sizing: border-box; }
+#page-kata { background:#0b1a2b; min-height:calc(100vh - 88px); font-family:'Barlow',sans-serif; color:#f0f4f8; }
+
+/* ─── HEADER ─── */
+.kata-hdr { background:linear-gradient(135deg,#0f2338,#1a3a5c); border-bottom:3px solid #22c55e; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.kata-hdr-left h2 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; color:#22c55e; text-shadow:0 0 14px rgba(34,197,94,.5); margin:0; }
+.kata-hdr-left p { font-size:11px; color:#64748b; letter-spacing:2px; text-transform:uppercase; margin:2px 0 0; }
+.kata-hdr-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.kata-btn { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1.5px; border:none; border-radius:9px; padding:9px 20px; cursor:pointer; transition:all .2s; }
+.kata-btn.green  { background:linear-gradient(135deg,#16a34a,#22c55e); color:#0b1a2b; box-shadow:0 4px 14px rgba(34,197,94,.35); }
+.kata-btn.green:hover  { transform:translateY(-1px); box-shadow:0 6px 20px rgba(34,197,94,.5); }
+.kata-btn.blue   { background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:#fff; box-shadow:0 4px 14px rgba(59,130,246,.35); }
+.kata-btn.blue:hover   { transform:translateY(-1px); }
+.kata-btn.ghost  { background:rgba(255,255,255,.06); border:1px solid #2a5a8c; color:#94a3b8; }
+.kata-btn.ghost:hover  { background:rgba(255,255,255,.12); color:#f0f4f8; }
+.kata-btn.danger { background:rgba(239,68,68,.12); border:1px solid #ef444444; color:#ef4444; }
+.kata-btn.danger:hover { background:rgba(239,68,68,.22); }
+.kata-btn.sm { font-size:12px; padding:6px 14px; }
+
+/* ─── TAB BAR ─── */
+.kata-tabs { display:flex; gap:0; border-bottom:2px solid #1e3a5f; background:#0d1f35; padding:0 20px; }
+.kata-tab-btn { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:2px; color:#475569; background:none; border:none; border-bottom:3px solid transparent; margin-bottom:-2px; padding:10px 18px; cursor:pointer; transition:all .2s; }
+.kata-tab-btn.active { color:#22c55e; border-bottom-color:#22c55e; }
+.kata-tab-btn:hover:not(.active) { color:#94a3b8; }
+
+/* ─── VIEWS ─── */
+.kata-view { display:none; padding:16px 20px 60px; }
+.kata-view.active { display:block; }
+
+/* ─── BOARD VIEW (whiteboard layout) ─── */
+.kata-board { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:auto auto auto; gap:12px; }
+.kata-board-full { grid-column:1/-1; }
+
+/* challenge box */
+.kata-challenge-box { background:linear-gradient(135deg,#0d2a1a,#0f3820); border:2px solid #22c55e44; border-radius:12px; padding:16px 20px; }
+.kata-challenge-box .kb-label { font-size:11px; letter-spacing:2.5px; text-transform:uppercase; color:#22c55e; font-weight:700; margin-bottom:8px; }
+.kata-challenge-box .kb-value { font-size:14px; color:#d1fae5; line-height:1.6; white-space:pre-wrap; }
+
+/* quadrant boxes */
+.kata-quad { background:linear-gradient(160deg,#112845,#1a3555); border:1px solid #1e4a7c; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:10px; }
+.kata-quad .kb-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin-bottom:2px; }
+.kata-quad.target  .kb-label { color:#22c55e; }
+.kata-quad.current .kb-label { color:#ef4444; }
+.kata-quad.obstacle .kb-label { color:#a78bfa; }
+.kata-quad.coach    .kb-label { color:#f59e0b; }
+.kata-quad .kb-sub  { font-size:10px; color:#64748b; letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
+.kata-quad .kb-value { font-size:13px; color:#cbd5e1; line-height:1.5; white-space:pre-wrap; flex:1; }
+.kata-quad .kb-meta { font-size:11px; color:#475569; margin-top:4px; }
+.kata-quad .kb-edit { margin-top:10px; }
+
+/* editable textarea inside quad */
+.kata-inline-ta { width:100%; background:#0d1f35; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:13px; padding:8px 10px; resize:vertical; min-height:80px; outline:none; transition:border-color .15s; }
+.kata-inline-ta:focus { border-color:#22c55e; }
+.kata-inline-in { width:100%; background:#0d1f35; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:13px; padding:8px 10px; outline:none; transition:border-color .15s; }
+.kata-inline-in:focus { border-color:#22c55e; }
+.kata-inline-sel { width:100%; background:#0d1f35; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:13px; padding:8px 10px; outline:none; }
+.kata-inline-sel option { background:#112845; }
+
+/* status pill */
+.kata-pill { display:inline-block; font-size:10px; font-weight:700; border-radius:999px; padding:3px 10px; text-transform:uppercase; letter-spacing:1px; }
+.kata-pill.active   { background:rgba(34,197,94,.15);  color:#22c55e; border:1px solid #22c55e44; }
+.kata-pill.stalled  { background:rgba(234,179,8,.15);  color:#eab308; border:1px solid #eab30844; }
+.kata-pill.complete { background:rgba(59,130,246,.15); color:#3b82f6; border:1px solid #3b82f644; }
+
+/* process map strip */
+.kata-procmap { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:10px 0 4px; }
+.kata-procmap-step { background:#1e4a7c; border-radius:8px; padding:6px 12px; font-size:12px; color:#7dd3fc; font-weight:600; letter-spacing:.5px; white-space:nowrap; }
+.kata-procmap-arrow { color:#334155; font-size:16px; flex-shrink:0; }
+.kata-procmap-add { background:rgba(59,130,246,.1); border:1px dashed #3b82f644; border-radius:8px; padding:5px 10px; font-size:12px; color:#3b82f6; cursor:pointer; transition:all .15s; }
+.kata-procmap-add:hover { background:rgba(59,130,246,.2); }
+
+/* ─── EXPERIMENTS VIEW ─── */
+.kata-exp-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+.kata-exp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:12px; }
+.kata-exp-card { background:linear-gradient(160deg,#112845,#1a3555); border:1px solid #1e4a7c; border-radius:12px; overflow:hidden; }
+.kata-exp-card-header { padding:12px 16px; border-bottom:1px solid #1e3a5f; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.kata-exp-num { font-family:'Bebas Neue',sans-serif; font-size:28px; color:#f59e0b; line-height:1; }
+.kata-exp-step-badge { font-size:10px; font-weight:700; border-radius:6px; padding:3px 10px; text-transform:uppercase; letter-spacing:1px; }
+.kata-exp-step-badge.plan  { background:rgba(59,130,246,.2);  color:#3b82f6; }
+.kata-exp-step-badge.do    { background:rgba(245,158,11,.2);  color:#f59e0b; }
+.kata-exp-step-badge.check { background:rgba(167,139,250,.2); color:#a78bfa; }
+.kata-exp-step-badge.act   { background:rgba(34,197,94,.2);   color:#22c55e; }
+.kata-exp-card-body { padding:12px 16px 14px; display:flex; flex-direction:column; gap:8px; }
+.kata-exp-field-label { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#475569; font-weight:700; margin-bottom:3px; }
+.kata-exp-field-value { font-size:13px; color:#cbd5e1; line-height:1.5; }
+.kata-exp-card-footer { padding:8px 16px 12px; display:flex; gap:8px; border-top:1px solid #1e3a5f; }
+.kata-exp-empty { background:#0d1f35; border:1px dashed #1e3a5f; border-radius:12px; padding:40px; text-align:center; color:#334155; }
+.kata-exp-empty-icon { font-size:40px; margin-bottom:10px; }
+
+/* ─── COACHING VIEW ─── */
+.kata-coach-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:12px; }
+.kata-coach-card { background:linear-gradient(160deg,#112845,#1a3555); border:1px solid #1e4a7c; border-radius:12px; overflow:hidden; }
+.kata-coach-card-hdr { padding:12px 16px; border-bottom:1px solid #1e3a5f; display:flex; justify-content:space-between; align-items:flex-start; }
+.kata-coach-learner { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; color:#f5d050; }
+.kata-coach-linked { font-size:10px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+.kata-coach-date { font-size:11px; color:#475569; text-align:right; }
+.kata-coach-card-body { padding:12px 16px 14px; }
+.kata-coach-q { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#3b82f6; margin-bottom:3px; margin-top:8px; }
+.kata-coach-q:first-child { margin-top:0; }
+.kata-coach-a { font-size:13px; color:#94a3b8; line-height:1.5; padding-left:8px; border-left:2px solid #1e3a5f; }
+.kata-coach-notes-block { margin-top:10px; background:#0d1f35; border-radius:8px; padding:8px 10px; font-size:12px; color:#475569; font-style:italic; }
+.kata-coach-card-footer { padding:8px 16px 12px; border-top:1px solid #1e3a5f; display:flex; gap:8px; }
+
+/* ─── HISTORY VIEW ─── */
+.kata-hist-list { display:flex; flex-direction:column; gap:10px; }
+.kata-hist-entry { background:linear-gradient(160deg,#112845,#1a3555); border:1px solid #1e4a7c; border-radius:12px; padding:14px 18px; }
+.kata-hist-entry-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.kata-hist-entry-title { font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:2px; color:#7dd3fc; }
+.kata-hist-entry-date { font-size:11px; color:#475569; }
+.kata-hist-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.kata-hist-box { background:#0d1f35; border-radius:8px; padding:8px 10px; }
+.kata-hist-box-label { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#475569; margin-bottom:4px; font-weight:700; }
+.kata-hist-box-value { font-size:12px; color:#94a3b8; line-height:1.4; white-space:pre-wrap; }
+
+/* ─── MODALS ─── */
+.kata-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:9000; align-items:center; justify-content:center; padding:16px; }
+.kata-modal-bg.open { display:flex; }
+.kata-modal { background:#112845; border:1px solid #2a5a8c; border-radius:16px; width:100%; max-width:580px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.7); }
+.kata-modal-hdr { padding:18px 20px; border-bottom:1px solid #1e3a5f; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#112845; z-index:1; }
+.kata-modal-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2.5px; color:#22c55e; }
+.kata-modal-close { background:none; border:none; color:#475569; font-size:22px; cursor:pointer; padding:2px 6px; border-radius:6px; transition:color .15s; line-height:1; }
+.kata-modal-close:hover { color:#ef4444; }
+.kata-modal-body { padding:20px; display:flex; flex-direction:column; gap:14px; }
+.kata-field-label { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#64748b; margin-bottom:5px; }
+.kata-input,.kata-textarea,.kata-select { width:100%; background:#0d1f35; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:10px 12px; outline:none; transition:border-color .15s; }
+.kata-input:focus,.kata-textarea:focus,.kata-select:focus { border-color:#22c55e; }
+.kata-textarea { resize:vertical; min-height:72px; }
+.kata-select option { background:#112845; }
+.kata-modal-footer { padding:14px 20px; border-top:1px solid #1e3a5f; display:flex; justify-content:flex-end; gap:10px; position:sticky; bottom:0; background:#112845; }
+
+/* ─── PRINT ─── */
+@media print {
+  /* Hide everything except kata page */
+  body > *:not(#page-kata) { display:none !important; }
+  header, nav, .nav-tabs-wrap, .nav-tabs, #sparkyBtn, #sparkyOverlay { display:none !important; }
+
+  /* Page setup */
+  @page { margin: 0.6in 0.5in; size: letter portrait; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  body { overflow:visible !important; height:auto !important; background:#fff !important; }
+  body.scrollable { overflow:visible !important; }
+
+  #page-kata {
+    display:block !important;
+    background:#fff !important;
+    color:#000 !important;
+    min-height:0 !important;
+    padding:0 !important;
+  }
+
+  /* Header */
+  .kata-hdr {
+    background:#fff !important;
+    border-bottom:3px solid #16a34a !important;
+    padding:10px 0 8px !important;
+    margin-bottom:6px;
+    display:flex !important;
+  }
+  .kata-hdr-left h2 { color:#16a34a !important; text-shadow:none !important; font-size:22px !important; }
+  .kata-hdr-left p  { color:#555 !important; }
+  .kata-hdr-actions { display:none !important; }
+
+  /* Hide nav tabs and buttons */
+  .kata-tabs, .kata-btn, .kata-procmap-add,
+  .kata-exp-card-footer, .kata-coach-card-footer,
+  .no-print { display:none !important; }
+
+  /* Show ALL views — each on its own page */
+  .kata-view { display:block !important; padding:0 !important; margin:0 !important; }
+
+  /* Section title bars before each view */
+  #kata-view-board::before      { content:'BOARD — Improvement Kata'; display:block; font-family:'Arial',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#16a34a; border-bottom:1px solid #16a34a; padding-bottom:4px; margin-bottom:10px; }
+  #kata-view-experiments::before{ content:'EXPERIMENTS — PDCA Cycles Record'; display:block; font-family:'Arial',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#1d4ed8; border-bottom:1px solid #1d4ed8; padding-bottom:4px; margin-bottom:10px; margin-top:4px; }
+  #kata-view-coach::before      { content:'COACHING — 5-Question Cycle Log'; display:block; font-family:'Arial',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#92400e; border-bottom:1px solid #92400e; padding-bottom:4px; margin-bottom:10px; margin-top:4px; }
+  #kata-view-history::before    { content:'HISTORY — Board Snapshots'; display:block; font-family:'Arial',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#475569; border-bottom:1px solid #475569; padding-bottom:4px; margin-bottom:10px; margin-top:4px; }
+
+  /* Page breaks between sections */
+  #kata-view-board       { page-break-after:always; padding-bottom:20px !important; }
+  #kata-view-experiments { page-break-after:always; padding-bottom:20px !important; }
+  #kata-view-coach       { page-break-after:always; padding-bottom:20px !important; }
+  #kata-view-history     { page-break-after:avoid; }
+
+  /* Board layout */
+  .kata-board { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; }
+  .kata-board-full { grid-column:1/-1 !important; margin-bottom:8px; }
+
+  /* Cards */
+  .kata-challenge-box,
+  .kata-quad,
+  .kata-exp-card,
+  .kata-coach-card,
+  .kata-hist-entry {
+    background:#fff !important;
+    border:1px solid #aaa !important;
+    border-radius:4px !important;
+    box-shadow:none !important;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  /* Labels */
+  .kb-label { font-weight:700 !important; font-size:10px !important; }
+  .kata-challenge-box .kb-label  { color:#16a34a !important; }
+  .kata-quad.target   .kb-label  { color:#16a34a !important; }
+  .kata-quad.current  .kb-label  { color:#dc2626 !important; }
+  .kata-quad.obstacle .kb-label  { color:#7c3aed !important; }
+  .kata-quad.coach    .kb-label  { color:#92400e !important; }
+
+  /* Values */
+  .kb-value, .kata-challenge-box .kb-value,
+  .kata-exp-field-value, .kata-coach-a,
+  .kata-hist-box-value { color:#111 !important; font-size:12px !important; }
+
+  /* Inline inputs show as plain text */
+  .kata-inline-ta, .kata-inline-in, .kata-inline-sel {
+    border:1px solid #ccc !important;
+    background:#f9f9f9 !important;
+    color:#000 !important;
+    font-size:12px !important;
+  }
+
+  /* Process map */
+  .kata-procmap-step { background:#dbeafe !important; color:#1e40af !important; border:1px solid #93c5fd !important; }
+  .kata-procmap-arrow { color:#555 !important; }
+
+  /* Status pills */
+  .kata-pill.active   { background:#dcfce7 !important; color:#16a34a !important; border:1px solid #16a34a !important; }
+  .kata-pill.stalled  { background:#fef9c3 !important; color:#854d0e !important; border:1px solid #854d0e !important; }
+  .kata-pill.complete { background:#dbeafe !important; color:#1e40af !important; border:1px solid #1e40af !important; }
+
+  /* Experiments */
+  .kata-exp-grid   { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; }
+  .kata-exp-num    { color:#92400e !important; }
+  .kata-exp-step-badge { border:1px solid #ccc !important; font-size:10px !important; }
+  .kata-exp-field-label { color:#555 !important; font-size:10px !important; }
+
+  /* Coaching */
+  .kata-coach-grid    { display:grid !important; grid-template-columns:1fr 1fr !important; gap:8px !important; }
+  .kata-coach-learner { color:#92400e !important; }
+  .kata-coach-q       { color:#1d4ed8 !important; font-size:10px !important; }
+  .kata-coach-a       { color:#222 !important; border-left:2px solid #ccc !important; }
+  .kata-coach-notes-block { background:#f5f5f5 !important; color:#555 !important; }
+
+  /* History */
+  .kata-hist-grid      { display:grid !important; grid-template-columns:1fr 1fr !important; gap:6px !important; }
+  .kata-hist-box       { background:#f5f5f5 !important; border:1px solid #ddd !important; }
+  .kata-hist-box-label { color:#555 !important; }
+  .kata-hist-entry-title { color:#1d4ed8 !important; }
+
+  /* Footer watermark */
+  #kata-view-history::after {
+    content:'Hill Manufacturing — Toyota Kata Board — Generated ' attr(data-date);
+    display:block;
+    margin-top:20px;
+    font-size:9px;
+    color:#aaa;
+    text-align:right;
+    font-family:Arial,sans-serif;
+  }
+}
+
+@media (max-width:700px) {
+  .kata-board { grid-template-columns:1fr; }
+  .kata-exp-grid, .kata-coach-grid { grid-template-columns:1fr; }
+  .kata-hist-grid { grid-template-columns:1fr; }
+}
+</style>
+
+<!-- HEADER -->
+<div class="kata-hdr">
+  <div class="kata-hdr-left">
+    <h2>🔄 Toyota Kata Board</h2>
+    <p id="kataFocusLabel">Focus Area: —</p>
+  </div>
+  <div class="kata-hdr-actions">
+    <button class="kata-btn ghost sm no-print" onclick="kataPrint()">🖨 Print / Save PDF</button>
+    <button class="kata-btn blue sm no-print" onclick="kataOpenCoachModal()">+ Coaching Session</button>
+    <button class="kata-btn green sm no-print" onclick="kataOpenExpModal()">+ Experiment</button>
+    <button class="kata-btn green no-print" onclick="kataSaveSnapshot()">💾 Save Snapshot</button>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<div class="kata-tabs no-print">
+  <button class="kata-tab-btn active" onclick="kataShowView('board')"   id="ktab-board">📋 Board</button>
+  <button class="kata-tab-btn"        onclick="kataShowView('experiments')" id="ktab-experiments">🔬 Experiments</button>
+  <button class="kata-tab-btn"        onclick="kataShowView('coach')"   id="ktab-coach">🗣 Coaching</button>
+  <button class="kata-tab-btn"        onclick="kataShowView('history')" id="ktab-history">📁 History</button>
+</div>
+
+<!-- ══ VIEW: BOARD ══ -->
+<div class="kata-view active" id="kata-view-board">
+  <!-- 0 - Challenge -->
+  <div class="kata-board-full" style="margin-bottom:12px;">
+    <div class="kata-challenge-box">
+      <div class="kb-label" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>0 — Challenge (Where are we trying to go?)</span>
+        <span id="kataBoardStatus" class="kata-pill active">🟢 Active</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-start;margin-top:8px;flex-wrap:wrap;">
+        <textarea class="kata-inline-ta" id="kb-challenge" style="flex:1;min-width:200px;" placeholder="It would be incredible if, by [DATE], ..." oninput="kataBoardChanged()"></textarea>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:130px;">
+          <div style="font-size:10px;color:#64748b;letter-spacing:1.5px;text-transform:uppercase;">Focus Area</div>
+          <input class="kata-inline-in" id="kb-focus" placeholder="e.g. Shop Production" oninput="kataBoardChanged()">
+          <div style="font-size:10px;color:#64748b;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;">Target Date</div>
+          <input class="kata-inline-in" id="kb-targetdate" placeholder="e.g. 8/15/26" oninput="kataBoardChanged()">
+          <div style="font-size:10px;color:#64748b;letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;">Status</div>
+          <select class="kata-inline-sel" id="kb-status" onchange="kataBoardChanged()">
+            <option value="active">🟢 Active</option>
+            <option value="stalled">🟡 Stalled</option>
+            <option value="complete">🔵 Complete</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kata-board">
+    <!-- 1 - Target Condition -->
+    <div class="kata-quad target">
+      <div>
+        <div class="kb-label">1 — Target Condition</div>
+        <div class="kb-sub">By: <input class="kata-inline-in" id="kb-tc-date" placeholder="5/30/26" style="width:90px;display:inline-block;padding:2px 6px;font-size:12px;" oninput="kataBoardChanged()"></div>
+      </div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Map</div>
+      <div class="kata-procmap" id="kb-procmap-target">
+        <span class="kata-procmap-add" onclick="kataAddProcStep('target')">+ Add Step</span>
+      </div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Characteristics</div>
+      <textarea class="kata-inline-ta" id="kb-target-char" placeholder="What should the process look like?&#10;• ..." oninput="kataBoardChanged()"></textarea>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Metrics</div>
+      <textarea class="kata-inline-ta" style="min-height:50px;" id="kb-target-metrics" placeholder="How will we measure success?" oninput="kataBoardChanged()"></textarea>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Outcome Metrics</div>
+      <textarea class="kata-inline-ta" style="min-height:50px;" id="kb-target-outcome" placeholder="Business outcome targets..." oninput="kataBoardChanged()"></textarea>
+    </div>
+
+    <!-- 2 - Current Condition -->
+    <div class="kata-quad current">
+      <div>
+        <div class="kb-label">2 — Current Condition</div>
+        <div class="kb-sub">Last updated: <span id="kb-current-updated">—</span></div>
+      </div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Map</div>
+      <div class="kata-procmap" id="kb-procmap-current">
+        <span class="kata-procmap-add" onclick="kataAddProcStep('current')">+ Add Step</span>
+      </div>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Characteristics</div>
+      <textarea class="kata-inline-ta" id="kb-current-char" placeholder="What do you observe today?&#10;• ..." oninput="kataBoardChanged()"></textarea>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Process Metrics</div>
+      <textarea class="kata-inline-ta" style="min-height:50px;" id="kb-current-metrics" placeholder="Current measurable data..." oninput="kataBoardChanged()"></textarea>
+      <div style="font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Outcome Metrics</div>
+      <textarea class="kata-inline-ta" style="min-height:50px;" id="kb-current-outcome" placeholder="Current business outcomes..." oninput="kataBoardChanged()"></textarea>
+    </div>
+
+    <!-- 3 - Obstacles -->
+    <div class="kata-quad obstacle">
+      <div class="kb-label">3 — Obstacles</div>
+      <textarea class="kata-inline-ta" style="flex:1;min-height:120px;" id="kb-obstacles" placeholder="What is preventing you from reaching the target condition?&#10;&#10;• Obstacle 1&#10;• Obstacle 2" oninput="kataBoardChanged()"></textarea>
+    </div>
+
+    <!-- Coaching Questions card -->
+    <div class="kata-quad coach">
+      <div class="kb-label">5 Coaching Questions</div>
+      <div style="font-size:12px;color:#94a3b8;line-height:1.8;">
+        <div><span style="color:#f59e0b;font-weight:700;">0.</span> What is your challenge?</div>
+        <div><span style="color:#f59e0b;font-weight:700;">1.</span> What is your target condition?</div>
+        <div><span style="color:#f59e0b;font-weight:700;">2.</span> What is the actual condition now?</div>
+        <div><span style="color:#f59e0b;font-weight:700;">3.</span> What obstacles are in the way? Which one are you addressing?</div>
+        <div><span style="color:#f59e0b;font-weight:700;">4.</span> What is your next step? When can we check?</div>
+      </div>
+      <button class="kata-btn blue sm no-print" style="margin-top:10px;" onclick="kataOpenCoachModal()">Log a Coaching Session →</button>
+    </div>
+  </div>
+
+  <!-- autosave indicator -->
+  <div style="font-size:11px;color:#334155;letter-spacing:1px;text-align:right;margin-top:10px;padding-right:4px;" id="kataAutosaveLabel">Changes save automatically</div>
+</div>
+
+<!-- ══ VIEW: EXPERIMENTS ══ -->
+<div class="kata-view" id="kata-view-experiments">
+  <div class="kata-exp-header">
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:#7dd3fc;">4 — PDCA Experiments</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px;">Each row = 1 experiment. Plan → Do → Check → Act</div>
+    </div>
+    <button class="kata-btn green no-print" onclick="kataOpenExpModal()">+ Add Experiment</button>
+  </div>
+  <div class="kata-exp-grid" id="kataExpGrid">
+    <div class="kata-exp-empty"><div class="kata-exp-empty-icon">🔬</div><div>No experiments yet. Tap <strong>+ Add Experiment</strong> to start your first PDCA cycle.</div></div>
+  </div>
+</div>
+
+<!-- ══ VIEW: COACHING ══ -->
+<div class="kata-view" id="kata-view-coach">
+  <div class="kata-exp-header">
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:#f5d050;">Coaching Sessions</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px;">5-question Toyota Kata coaching cycle log</div>
+    </div>
+    <button class="kata-btn blue no-print" onclick="kataOpenCoachModal()">+ Log Session</button>
+  </div>
+  <div class="kata-coach-grid" id="kataCoachGrid">
+    <div class="kata-exp-empty"><div class="kata-exp-empty-icon">💬</div><div>No coaching sessions logged yet.</div></div>
+  </div>
+</div>
+
+<!-- ══ VIEW: HISTORY ══ -->
+<div class="kata-view" id="kata-view-history">
+  <div class="kata-exp-header">
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:#94a3b8;">Board History</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px;">Saved snapshots — reflect on how conditions changed over time</div>
+    </div>
+    <button class="kata-btn ghost no-print" onclick="kataSaveSnapshot()">💾 Save Snapshot Now</button>
+  </div>
+  <div class="kata-hist-list" id="kataHistList">
+    <div class="kata-exp-empty"><div class="kata-exp-empty-icon">📁</div><div>No snapshots yet. Tap <strong>Save Snapshot</strong> to capture today's board state.</div></div>
+  </div>
+</div>
+
+<!-- ══ MODAL: EXPERIMENT ══ -->
+<div class="kata-modal-bg" id="kataExpModal">
+  <div class="kata-modal">
+    <div class="kata-modal-hdr">
+      <div class="kata-modal-title" id="kataExpModalTitle">ADD PDCA EXPERIMENT</div>
+      <button class="kata-modal-close" onclick="document.getElementById('kataExpModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="kata-modal-body">
+      <div>
+        <div class="kata-field-label">Experiment / Step & Metric (what will you try?)</div>
+        <textarea class="kata-textarea" id="kme-hypo" placeholder="If we do X, we expect Y because Z...&#10;Metric: we'll know it worked when..."></textarea>
+      </div>
+      <div>
+        <div class="kata-field-label">What You Expect</div>
+        <textarea class="kata-textarea" style="min-height:54px;" id="kme-expect" placeholder="Expected outcome or result..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div class="kata-field-label">PDCA Step</div>
+          <select class="kata-select" id="kme-step">
+            <option value="plan">Plan</option>
+            <option value="do">Do</option>
+            <option value="check">Check</option>
+            <option value="act">Act</option>
+          </select>
+        </div>
+        <div>
+          <div class="kata-field-label">Date Planned</div>
+          <input class="kata-input" id="kme-date-planned" placeholder="e.g. 5/20/26">
+        </div>
+      </div>
+      <div>
+        <div class="kata-field-label">Do a Coaching Cycle? / Conduct the Experiment</div>
+        <select class="kata-select" id="kme-coaching">
+          <option value="no">No — running independently</option>
+          <option value="yes">Yes — coaching cycle included</option>
+        </select>
+      </div>
+      <div>
+        <div class="kata-field-label">What Actually Happened (Check)</div>
+        <textarea class="kata-textarea" style="min-height:54px;" id="kme-happened" placeholder="Leave blank if not conducted yet..."></textarea>
+      </div>
+      <div>
+        <div class="kata-field-label">What We Learned (Act)</div>
+        <textarea class="kata-textarea" style="min-height:54px;" id="kme-learned" placeholder="Insight, adjustment, or next step..."></textarea>
+      </div>
+      <div>
+        <div class="kata-field-label">Date Conducted</div>
+        <input class="kata-input" id="kme-date-conducted" placeholder="Leave blank if not yet">
+      </div>
+    </div>
+    <div class="kata-modal-footer">
+      <button class="kata-btn ghost" onclick="document.getElementById('kataExpModal').classList.remove('open')">Cancel</button>
+      <button class="kata-btn green" onclick="kataSaveExp()">Save Experiment</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: COACHING ══ -->
+<div class="kata-modal-bg" id="kataCoachModal">
+  <div class="kata-modal">
+    <div class="kata-modal-hdr">
+      <div class="kata-modal-title">LOG COACHING SESSION</div>
+      <button class="kata-modal-close" onclick="document.getElementById('kataCoachModal').classList.remove('open')">✕</button>
+    </div>
+    <div class="kata-modal-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div class="kata-field-label">Learner Name</div>
+          <input class="kata-input" id="kmc-learner" placeholder="Who is being coached?">
+        </div>
+        <div>
+          <div class="kata-field-label">Coach Name</div>
+          <input class="kata-input" id="kmc-coach" placeholder="Coach name">
+        </div>
+      </div>
+      <div>
+        <div class="kata-field-label">Q1 — What is the target condition?</div>
+        <textarea class="kata-textarea" style="min-height:54px;" id="kmc-q1" placeholder="Learner's answer..."></textarea>
+      </div>
+      <div>
+        <div class="kata-field-label">Q2 — What is the actual condition now?</div>
+        <textarea class="kata-textarea" style="min-height:54px;" id="kmc-q2" placeholder="Learner's answer..."></textarea>
+      </div>
+      <div>
+        <div class="kata-field-label">Q3 — What obstacles are preventing you from reaching the TC?</div>
+        <textarea class="kata-textarea" style="min-height:54px;" id="kmc-q3" placeholder="Learner's answer..."></textarea>
+      </div>
+      <div>
+        <div class="kata-field-label">Q4 — What is your next step / experiment?</div>
+        <textarea class="kata-textarea" style="min-height:54px;" id="kmc-q4" placeholder="Learner's answer..."></textarea>
+      </div>
+      <div>
+        <div class="kata-field-label">Q5 — When can we go and see what we have learned from that experiment?</div>
+        <input class="kata-input" id="kmc-q5" placeholder="e.g. Friday end of shift, May 20 8am...">
+      </div>
+      <div>
+        <div class="kata-field-label">Coach Notes (private reflection)</div>
+        <textarea class="kata-textarea" style="min-height:54px;" id="kmc-notes" placeholder="Patterns noticed, follow-up reminders..."></textarea>
+      </div>
+    </div>
+    <div class="kata-modal-footer">
+      <button class="kata-btn ghost" onclick="document.getElementById('kataCoachModal').classList.remove('open')">Cancel</button>
+      <button class="kata-btn blue" onclick="kataSaveCoach()">Save Session</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #page-kata -->
+
+<script>
+(function(){
+
+/* ── STORAGE ── */
+var KS = {
+  BOARD:   'hillKataBoard',
+  EXP:     'hillKataExps',
+  COACH:   'hillKataCoach',
+  HISTORY: 'hillKataHistory',
+  PROC_T:  'hillKataProcTarget',
+  PROC_C:  'hillKataProcCurrent'
+};
+function kLoad(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
+function kSave(k,v){ localStorage.setItem(k,JSON.stringify(v)); }
+function kUid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+function kToday(){ return new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function kEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── BOARD AUTO-SAVE ── */
+var _boardDirty = false;
+var _boardTimer = null;
+window.kataBoardChanged = function(){
+  _boardDirty = true;
+  clearTimeout(_boardTimer);
+  _boardTimer = setTimeout(kataAutoSave, 800);
+};
+function kataAutoSave(){
+  if(!_boardDirty) return;
+  var board = kataGetBoard();
+  kSave(KS.BOARD, board);
+  _boardDirty = false;
+  var lbl = document.getElementById('kataAutosaveLabel');
+  if(lbl){ lbl.textContent = 'Saved ' + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+  // update focus label in header
+  var fl = document.getElementById('kataFocusLabel');
+  if(fl) fl.textContent = 'Focus Area: ' + (board.focus || '—');
+  // update status pill
+  var sp = document.getElementById('kataBoardStatus');
+  if(sp){ sp.className='kata-pill '+(board.status||'active'); sp.textContent={active:'🟢 Active',stalled:'🟡 Stalled',complete:'🔵 Complete'}[board.status||'active']||'Active'; }
+  // update current-updated timestamp
+  var cu = document.getElementById('kb-current-updated');
+  if(cu) cu.textContent = kToday();
+}
+
+function kataGetBoard(){
+  return {
+    challenge:      (document.getElementById('kb-challenge')||{}).value||'',
+    focus:          (document.getElementById('kb-focus')||{}).value||'',
+    targetdate:     (document.getElementById('kb-targetdate')||{}).value||'',
+    status:         (document.getElementById('kb-status')||{}).value||'active',
+    tcDate:         (document.getElementById('kb-tc-date')||{}).value||'',
+    targetChar:     (document.getElementById('kb-target-char')||{}).value||'',
+    targetMetrics:  (document.getElementById('kb-target-metrics')||{}).value||'',
+    targetOutcome:  (document.getElementById('kb-target-outcome')||{}).value||'',
+    currentChar:    (document.getElementById('kb-current-char')||{}).value||'',
+    currentMetrics: (document.getElementById('kb-current-metrics')||{}).value||'',
+    currentOutcome: (document.getElementById('kb-current-outcome')||{}).value||'',
+    obstacles:      (document.getElementById('kb-obstacles')||{}).value||'',
+    savedAt:        new Date().toISOString()
+  };
+}
+
+function kataBoardLoad(){
+  var b = kLoad(KS.BOARD); if(!b) return;
+  var set = function(id,val){ var el=document.getElementById(id); if(el) el.value=val||''; };
+  set('kb-challenge',     b.challenge);
+  set('kb-focus',         b.focus);
+  set('kb-targetdate',    b.targetdate);
+  set('kb-status',        b.status||'active');
+  set('kb-tc-date',       b.tcDate);
+  set('kb-target-char',   b.targetChar);
+  set('kb-target-metrics',b.targetMetrics);
+  set('kb-target-outcome',b.targetOutcome);
+  set('kb-current-char',  b.currentChar);
+  set('kb-current-metrics',b.currentMetrics);
+  set('kb-current-outcome',b.currentOutcome);
+  set('kb-obstacles',     b.obstacles);
+  var fl = document.getElementById('kataFocusLabel');
+  if(fl) fl.textContent = 'Focus Area: '+(b.focus||'—');
+  var sp = document.getElementById('kataBoardStatus');
+  if(sp){ sp.className='kata-pill '+(b.status||'active'); sp.textContent={active:'🟢 Active',stalled:'🟡 Stalled',complete:'🔵 Complete'}[b.status||'active']||'Active'; }
+}
+
+/* ── PROCESS MAP ── */
+function kataRenderProcMap(side){
+  var steps = kLoad(side==='target'?KS.PROC_T:KS.PROC_C)||[];
+  var el = document.getElementById('kb-procmap-'+side); if(!el) return;
+  el.innerHTML = '';
+  steps.forEach(function(s,i){
+    if(i>0){ var arr=document.createElement('span'); arr.className='kata-procmap-arrow'; arr.textContent='→'; el.appendChild(arr); }
+    var chip=document.createElement('span'); chip.className='kata-procmap-step';
+    chip.textContent=s; chip.title='Click to remove'; chip.style.cursor='pointer';
+    chip.onclick=function(){ steps.splice(i,1); kSave(side==='target'?KS.PROC_T:KS.PROC_C,steps); kataRenderProcMap(side); };
+    el.appendChild(chip);
+  });
+  var add=document.createElement('span'); add.className='kata-procmap-add'; add.textContent='+ Add Step';
+  add.onclick=function(){ kataAddProcStep(side); }; el.appendChild(add);
+}
+window.kataAddProcStep = function(side){
+  var name=prompt('Process step name (e.g. Pull Tools, Setup, Run Job):','');
+  if(!name||!name.trim()) return;
+  var key=side==='target'?KS.PROC_T:KS.PROC_C;
+  var steps=kLoad(key)||[]; steps.push(name.trim()); kSave(key,steps);
+  kataRenderProcMap(side);
+};
+
+/* ── SNAPSHOT / HISTORY ── */
+window.kataSaveSnapshot = function(){
+  var board = kataGetBoard();
+  var hist = kLoad(KS.HISTORY)||[];
+  hist.unshift({ id:kUid(), date:kToday(), ts:new Date().toISOString(), board:board });
+  if(hist.length>50) hist=hist.slice(0,50);
+  kSave(KS.HISTORY,hist);
+  renderHistory();
+  if(window.showToast) window.showToast('green','📸 Snapshot Saved','Board state captured to history');
+};
+
+function renderHistory(){
+  var el=document.getElementById('kataHistList'); if(!el) return;
+  var hist=kLoad(KS.HISTORY)||[];
+  if(!hist.length){
+    el.innerHTML='<div class="kata-exp-empty"><div class="kata-exp-empty-icon">📁</div><div>No snapshots yet. Tap <strong>Save Snapshot</strong> to capture today\'s board state.</div></div>';
+    return;
+  }
+  el.innerHTML=hist.map(function(h,i){
+    var b=h.board||{};
+    return '<div class="kata-hist-entry">'
+      +'<div class="kata-hist-entry-hdr">'
+      +'<div><div class="kata-hist-entry-title">Snapshot #'+(hist.length-i)+'</div>'
+      +'<span class="kata-pill '+(b.status||'active')+'" style="margin-top:4px;display:inline-block;">'+(b.status||'active')+'</span></div>'
+      +'<div style="text-align:right;"><div class="kata-hist-entry-date">'+kEsc(h.date)+'</div>'
+      +'<button class="kata-btn danger sm no-print" style="margin-top:6px;" data-id="'+h.id+'" onclick="kataDeleteSnapshot(this.getAttribute(\"data-id\"))">🗑 Delete</button></div>'
+      +'</div>'
+      +'<div class="kata-hist-grid">'
+      +'<div class="kata-hist-box"><div class="kata-hist-box-label" style="color:#22c55e;">Challenge</div><div class="kata-hist-box-value">'+kEsc(b.challenge||'—')+'</div></div>'
+      +'<div class="kata-hist-box"><div class="kata-hist-box-label" style="color:#22c55e;">Target Condition By</div><div class="kata-hist-box-value">'+kEsc(b.tcDate||'—')+'</div></div>'
+      +'<div class="kata-hist-box"><div class="kata-hist-box-label" style="color:#ef4444;">Current Characteristics</div><div class="kata-hist-box-value">'+kEsc((b.currentChar||'—').slice(0,200))+'</div></div>'
+      +'<div class="kata-hist-box"><div class="kata-hist-box-label" style="color:#a78bfa;">Obstacles</div><div class="kata-hist-box-value">'+kEsc((b.obstacles||'—').slice(0,200))+'</div></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+window.kataDeleteSnapshot=function(id){
+  kSave(KS.HISTORY,(kLoad(KS.HISTORY)||[]).filter(function(h){ return h.id!==id; }));
+  renderHistory();
+};
+
+/* ── EXPERIMENTS ── */
+window.kataOpenExpModal = function(editId){
+  var fields=['kme-hypo','kme-expect','kme-happened','kme-learned','kme-date-planned','kme-date-conducted'];
+  fields.forEach(function(f){ var el=document.getElementById(f); if(el) el.value=''; });
+  var stepEl=document.getElementById('kme-step'); if(stepEl) stepEl.value='plan';
+  var coEl=document.getElementById('kme-coaching'); if(coEl) coEl.value='no';
+  document.getElementById('kataExpModal')._editId=editId||null;
+  document.getElementById('kataExpModalTitle').textContent=editId?'EDIT EXPERIMENT':'ADD PDCA EXPERIMENT';
+  if(editId){
+    var exps=kLoad(KS.EXP)||[];
+    var e=exps.find(function(x){ return x.id===editId; });
+    if(e){
+      var s=function(id,v){ var el=document.getElementById(id); if(el) el.value=v||''; };
+      s('kme-hypo',e.hypo); s('kme-expect',e.expect); s('kme-happened',e.happened);
+      s('kme-learned',e.learned); s('kme-date-planned',e.datePlanned); s('kme-date-conducted',e.dateConducted);
+      if(stepEl) stepEl.value=e.step||'plan';
+      if(coEl) coEl.value=e.coaching||'no';
+    }
+  }
+  document.getElementById('kataExpModal').classList.add('open');
+};
+window.kataSaveExp=function(){
+  var hypo=(document.getElementById('kme-hypo').value||'').trim();
+  if(!hypo){ alert('Describe the experiment step.'); return; }
+  var exps=kLoad(KS.EXP)||[];
+  var editId=document.getElementById('kataExpModal')._editId;
+  var obj={
+    id:editId||kUid(),
+    hypo:hypo,
+    expect:(document.getElementById('kme-expect').value||'').trim(),
+    step:document.getElementById('kme-step').value,
+    coaching:document.getElementById('kme-coaching').value,
+    happened:(document.getElementById('kme-happened').value||'').trim(),
+    learned:(document.getElementById('kme-learned').value||'').trim(),
+    datePlanned:(document.getElementById('kme-date-planned').value||'').trim(),
+    dateConducted:(document.getElementById('kme-date-conducted').value||'').trim(),
+    createdAt:editId?undefined:new Date().toISOString()
+  };
+  if(editId){ exps=exps.map(function(e){ return e.id===editId?Object.assign({},e,obj):e; }); }
+  else { obj.num=exps.length+1; exps.push(obj); }
+  kSave(KS.EXP,exps);
+  document.getElementById('kataExpModal').classList.remove('open');
+  renderExps();
+  if(window.showToast) window.showToast('blue','🔬 Experiment Saved','PDCA cycle logged');
+};
+function renderExps(){
+  var el=document.getElementById('kataExpGrid'); if(!el) return;
+  var exps=kLoad(KS.EXP)||[];
+  if(!exps.length){
+    el.innerHTML='<div class="kata-exp-empty"><div class="kata-exp-empty-icon">🔬</div><div>No experiments yet. Tap <strong>+ Add Experiment</strong>.</div></div>';
+    return;
+  }
+  el.innerHTML=exps.map(function(e){
+    var stepLabel={plan:'Plan',do:'Do',check:'Check',act:'Act'}[e.step]||e.step;
+    return '<div class="kata-exp-card">'
+      +'<div class="kata-exp-card-header">'
+      +'<div style="display:flex;align-items:center;gap:10px;"><span class="kata-exp-num">#'+(e.num||'?')+'</span>'
+      +'<div><div style="font-size:12px;font-weight:600;color:#cbd5e1;">'+kEsc(e.hypo).slice(0,60)+(e.hypo.length>60?'…':'')+'</div>'
+      +(e.datePlanned?'<div style="font-size:10px;color:#475569;">Planned: '+kEsc(e.datePlanned)+'</div>':'')+'</div></div>'
+      +'<span class="kata-exp-step-badge '+e.step+'">'+stepLabel+'</span>'
+      +'</div>'
+      +'<div class="kata-exp-card-body">'
+      +'<div><div class="kata-exp-field-label">Plan / Do — Experiment & Metric</div><div class="kata-exp-field-value">'+kEsc(e.hypo)+'</div></div>'
+      +(e.expect?'<div><div class="kata-exp-field-label">What You Expect</div><div class="kata-exp-field-value">'+kEsc(e.expect)+'</div></div>':'')
+      +(e.happened?'<div><div class="kata-exp-field-label">Check — What Actually Happened</div><div class="kata-exp-field-value">'+kEsc(e.happened)+'</div></div>':'')
+      +(e.learned?'<div><div class="kata-exp-field-label">Act — What We Learned</div><div class="kata-exp-field-value">'+kEsc(e.learned)+'</div></div>':'')
+      +(e.dateConducted?'<div style="font-size:10px;color:#475569;">Conducted: '+kEsc(e.dateConducted)+'</div>':'')
+      +'</div>'
+      +'<div class="kata-exp-card-footer no-print">'
+      +'<button class="kata-btn ghost sm" data-id="'+e.id+'" onclick="kataOpenExpModal(this.getAttribute(\"data-id\"))">✏ Edit</button>'
+      +'<button class="kata-btn danger sm" data-id="'+e.id+'" onclick="kataDeleteExp(this.getAttribute(\"data-id\"))">🗑 Delete</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+window.kataDeleteExp=function(id){
+  kSave(KS.EXP,(kLoad(KS.EXP)||[]).filter(function(e){ return e.id!==id; }));
+  renderExps();
+};
+
+/* ── COACHING ── */
+window.kataOpenCoachModal=function(){
+  ['kmc-learner','kmc-coach','kmc-q1','kmc-q2','kmc-q3','kmc-q4','kmc-q5','kmc-notes'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('kataCoachModal').classList.add('open');
+};
+window.kataSaveCoach=function(){
+  var learner=(document.getElementById('kmc-learner').value||'').trim();
+  if(!learner){ alert('Enter the learner\'s name.'); return; }
+  var sessions=kLoad(KS.COACH)||[];
+  sessions.unshift({
+    id:kUid(), learner:learner,
+    coach:(document.getElementById('kmc-coach').value||'').trim(),
+    q1:(document.getElementById('kmc-q1').value||'').trim(),
+    q2:(document.getElementById('kmc-q2').value||'').trim(),
+    q3:(document.getElementById('kmc-q3').value||'').trim(),
+    q4:(document.getElementById('kmc-q4').value||'').trim(),
+    q5:(document.getElementById('kmc-q5').value||'').trim(),
+    notes:(document.getElementById('kmc-notes').value||'').trim(),
+    date:kToday(), by:window.currentUser||'admin'
+  });
+  kSave(KS.COACH,sessions);
+  document.getElementById('kataCoachModal').classList.remove('open');
+  renderCoach();
+  if(window.showToast) window.showToast('green','💬 Coaching Session Saved','5-question cycle logged');
+};
+function renderCoach(){
+  var el=document.getElementById('kataCoachGrid'); if(!el) return;
+  var sessions=kLoad(KS.COACH)||[];
+  if(!sessions.length){
+    el.innerHTML='<div class="kata-exp-empty"><div class="kata-exp-empty-icon">💬</div><div>No coaching sessions logged yet.</div></div>';
+    return;
+  }
+  el.innerHTML=sessions.map(function(s){
+    return '<div class="kata-coach-card">'
+      +'<div class="kata-coach-card-hdr">'
+      +'<div><div class="kata-coach-learner">'+kEsc(s.learner)+'</div>'
+      +'<div class="kata-coach-linked">'+(s.coach?'Coach: '+kEsc(s.coach):'')+'</div></div>'
+      +'<div class="kata-coach-date">'+kEsc(s.date)+'<br><span style="font-size:10px;color:#334155;">'+kEsc(s.by||'')+'</span></div>'
+      +'</div>'
+      +'<div class="kata-coach-card-body">'
+      +(s.q1?'<div class="kata-coach-q">Target Condition?</div><div class="kata-coach-a">'+kEsc(s.q1)+'</div>':'')
+      +(s.q2?'<div class="kata-coach-q">Actual Condition Now?</div><div class="kata-coach-a">'+kEsc(s.q2)+'</div>':'')
+      +(s.q3?'<div class="kata-coach-q">Obstacles Preventing TC?</div><div class="kata-coach-a">'+kEsc(s.q3)+'</div>':'')
+      +(s.q4?'<div class="kata-coach-q">Next Step / Experiment?</div><div class="kata-coach-a">'+kEsc(s.q4)+'</div>':'')
+      +(s.q5?'<div class="kata-coach-q">When Can We Check?</div><div class="kata-coach-a">'+kEsc(s.q5)+'</div>':'')
+      +(s.notes?'<div class="kata-coach-notes-block">📝 '+kEsc(s.notes)+'</div>':'')
+      +'</div>'
+      +'<div class="kata-coach-card-footer no-print">'
+      +'<button class="kata-btn danger sm" data-id="'+s.id+'" onclick="kataDeleteCoach(this.getAttribute(\"data-id\"))">🗑 Delete</button>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+window.kataDeleteCoach=function(id){
+  kSave(KS.COACH,(kLoad(KS.COACH)||[]).filter(function(s){ return s.id!==id; }));
+  renderCoach();
+};
+
+/* ── VIEW SWITCHING ── */
+window.kataShowView=function(v){
+  ['board','experiments','coach','history'].forEach(function(name){
+    var view=document.getElementById('kata-view-'+name);
+    var tab=document.getElementById('ktab-'+name);
+    if(view) view.classList.toggle('active',name===v);
+    if(tab)  tab.classList.toggle('active',name===v);
+  });
+};
+
+/* ── PRINT ── */
+window.kataPrint=function(){
+  // Stamp date for watermark
+  var histEl=document.getElementById('kata-view-history');
+  if(histEl) histEl.setAttribute('data-date',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}));
+
+  // Show ALL views so everything prints
+  var views=['kata-view-board','kata-view-experiments','kata-view-coach','kata-view-history'];
+  var saved={};
+  views.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){ saved[id]=el.classList.contains('active'); el.style.display='block'; }
+  });
+  var pg=document.getElementById('page-kata');
+  if(pg) pg.style.display='block';
+
+  setTimeout(function(){
+    window.print();
+    setTimeout(function(){
+      views.forEach(function(id){
+        var el=document.getElementById(id);
+        if(el){ el.style.display=''; if(!saved[id]) el.classList.remove('active'); }
+      });
+    },1500);
+  },150);
+};
+
+/* ── INIT ── */
+function kataInit(){
+  kataBoardLoad();
+  kataRenderProcMap('target');
+  kataRenderProcMap('current');
+  renderExps();
+  renderCoach();
+  renderHistory();
+}
+
+// Hook into switchTab
+var _kataReady=false;
+var _origST=window.switchTab;
+window.switchTab=function(tab){
+  if(_origST) _origST(tab);
+  if(tab==='kata'){
+    var pg=document.getElementById('page-kata');
+    if(pg) pg.style.display='block';
+    if(!_kataReady){ _kataReady=true; kataInit(); }
+  }
+};
+
+document.addEventListener('DOMContentLoaded', function(){
+  if(document.getElementById('page-kata') && document.getElementById('page-kata').style.display!=='none') kataInit();
+});
+
+})();
+</script>
+
 </body>
 </html>
