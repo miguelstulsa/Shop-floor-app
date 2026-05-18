@@ -1175,6 +1175,7 @@
   <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;">📅 Planner</div>
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
   <div class="nav-tab admin-only" onclick="switchTab('kata')" id="tab-kata" style="display:none;">🔄 Kata</div>
+  <div class="nav-tab" onclick="switchTab('dnxalerts')" id="tab-dnxalerts" style="display:none;">🔔 DNX Alerts</div>
   </nav>
   <button class="nav-scroll-btn right" onclick="scrollTabs(120)" aria-label="Scroll tabs right">&#8250;</button>
 </div>
@@ -2791,7 +2792,7 @@
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce','kata'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce','kata','dnxalerts'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -2816,6 +2817,8 @@
     var planEl = document.getElementById('page-planner'); if (planEl) planEl.style.display = tab === 'planner' ? 'flex' : 'none';
     if (tab === 'planner') { plannerSetView(_plannerView || 'hill'); }
     var kataEl = document.getElementById('page-kata'); if (kataEl) kataEl.style.display = tab === 'kata' ? 'block' : 'none';
+    var dnxAlertEl = document.getElementById('page-dnxalerts'); if (dnxAlertEl) dnxAlertEl.style.display = tab === 'dnxalerts' ? 'block' : 'none';
+    if (tab === 'dnxalerts') initDNXAlerts();
 
     var mgmtEl = document.getElementById('page-mgmt');
     if (mgmtEl) mgmtEl.style.display = tab === 'mgmt' ? 'flex' : 'none';
@@ -3356,6 +3359,7 @@
       if (inspTab) inspTab.style.display = '';
       var kataTab = document.getElementById('tab-kata');
       if (kataTab) kataTab.style.display = 'flex';
+
       var annTab = document.getElementById('tab-announce');
       if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
       var aiTab = document.getElementById('tab-aichat');
@@ -3405,7 +3409,7 @@
     var sb = document.getElementById('shopSwitchBtn');
     if (sb) sb.classList.remove('visible');
     // Hide admin-only tabs
-    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections','tab-kata'].forEach(function(id){
+    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections','tab-kata','tab-dnxalerts'].forEach(function(id){
       var t = document.getElementById(id); if(t) t.style.display = 'none';
     });
     // Switch back to shop floor if on a hidden tab
@@ -10058,7 +10062,7 @@ window.enableDemoMode = function() {
   applyDemoToCards();
   loadDemoAnalytics();
   // Show all tabs that are normally hidden
-  ['tab-shoptv','tab-datanomix','tab-proshop','tab-planner','tab-mgmt'].forEach(function(id){
+  ['tab-shoptv','tab-datanomix','tab-proshop','tab-planner','tab-mgmt','tab-dnxalerts'].forEach(function(id){
     var t = document.getElementById(id); if (t) t.style.display = '';
   });
   if (typeof injectReportsTab === 'function') setTimeout(injectReportsTab, 200);
@@ -10075,7 +10079,7 @@ window.disableDemoMode = function() {
   localStorage.removeItem("hillDemoMode");
   if (window._demoInterval) { clearInterval(window._demoInterval); window._demoInterval = null; }
   // Hide demo-only tabs
-  ['tab-shoptv','tab-datanomix','tab-proshop','tab-planner','tab-mgmt'].forEach(function(id){
+  ['tab-shoptv','tab-datanomix','tab-proshop','tab-planner','tab-mgmt','tab-dnxalerts'].forEach(function(id){
     var t = document.getElementById(id); if (t) t.style.display = 'none';
   });
   var rt = document.getElementById('tab-reports');
@@ -12741,21 +12745,46 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     mods.getDocs(
       mods.query(mods.collection(db,'hillAnnouncements'),
       mods.orderBy('createdAt','desc'),
-      mods.limit(10))
+      mods.limit(20))
     ).then(function(snap){
+      hist.innerHTML = '';
       if(!snap||!snap.docs||!snap.docs.length){
         hist.innerHTML = '<div style="font-size:12px;color:#475569;">No announcements yet.</div>';
         return;
       }
-      hist.innerHTML = '<div style="font-size:13px;color:#94a3b8;margin-bottom:8px;">RECENT ANNOUNCEMENTS</div>'
-        + snap.docs.map(function(d){
-          var data = d.data();
-          var ts = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-          return '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;padding:10px;margin-bottom:8px;">'
-            +'<div style="font-size:13px;color:#f0f4f8;">'+data.text+'</div>'
-            +'<div style="font-size:11px;color:#475569;margin-top:4px;">'+ts+' — '+(data.by||'admin')+'</div>'
-            +'</div>';
-        }).join('');
+      var label = document.createElement('div');
+      label.style.cssText = 'font-size:13px;color:#94a3b8;margin-bottom:8px;';
+      label.textContent = 'RECENT ANNOUNCEMENTS';
+      hist.appendChild(label);
+      snap.docs.forEach(function(d){
+        var data = d.data();
+        var ts = data.createdAt && data.createdAt.toDate
+          ? data.createdAt.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+          : '';
+        var card = document.createElement('div');
+        card.style.cssText = 'background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;padding:10px;margin-bottom:8px;position:relative;';
+        var txt = document.createElement('div');
+        txt.style.cssText = 'font-size:13px;color:#f0f4f8;padding-right:28px;';
+        txt.textContent = data.text;
+        var meta = document.createElement('div');
+        meta.style.cssText = 'font-size:11px;color:#475569;margin-top:4px;';
+        meta.textContent = ts + ' — ' + (data.by||'admin');
+        var del = document.createElement('button');
+        del.textContent = '✕';
+        del.title = 'Delete this announcement';
+        del.style.cssText = 'position:absolute;top:8px;right:8px;background:rgba(239,68,68,.15);border:1px solid #ef444444;color:#ef4444;border-radius:5px;width:22px;height:22px;font-size:13px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;';
+        del.addEventListener('click', function(){
+          del.disabled = true;
+          del.textContent = '...';
+          mods.deleteDoc(mods.doc(db,'hillAnnouncements',d.id))
+            .then(function(){ card.remove(); })
+            .catch(function(){ del.disabled=false; del.textContent='✕'; });
+        });
+        card.appendChild(txt);
+        card.appendChild(meta);
+        card.appendChild(del);
+        hist.appendChild(card);
+      });
     }).catch(function(){});
   };
 
@@ -13797,6 +13826,584 @@ window.switchTab=function(tab){
 document.addEventListener('DOMContentLoaded', function(){
   if(document.getElementById('page-kata') && document.getElementById('page-kata').style.display!=='none') kataInit();
 });
+
+})();
+</script>
+
+
+<!-- ═══════════════════════════════════════════════
+     DATANOMIX ALERT MONITOR — DEMO MODE v2
+     ═══════════════════════════════════════════════ -->
+<div id="page-dnxalerts" style="display:none;background:#00071a;min-height:calc(100vh - 88px);font-family:'Barlow',sans-serif;color:#f0f4f8;">
+<style>
+#page-dnxalerts * { box-sizing:border-box; margin:0; }
+
+/* ── HEADER ── */
+.da-hdr { background:linear-gradient(135deg,#0a1628,#0f2240); border-bottom:3px solid #f59e0b; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.da-hdr-left h2 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; color:#f59e0b; text-shadow:0 0 18px rgba(245,158,11,.5); }
+.da-hdr-left p  { font-size:11px; color:#64748b; letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+.da-demo-badge  { background:rgba(245,158,11,.12); border:1px solid #f59e0b55; color:#f59e0b; font-size:11px; font-weight:700; letter-spacing:2px; padding:5px 14px; border-radius:999px; animation:da-pulse 2.5s infinite; }
+@keyframes da-pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+/* ── TARGET BAR ── */
+.da-target-bar { background:#0d1f35; border-bottom:1px solid #1e3a5f; padding:10px 20px; display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+.da-target-item { display:flex; align-items:center; gap:8px; }
+.da-target-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:#475569; }
+.da-target-value { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1.5px; }
+.da-target-value.green  { color:#22c55e; }
+.da-target-value.yellow { color:#f59e0b; }
+.da-target-value.red    { color:#ef4444; }
+.da-live-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e; animation:da-blink 1.5s infinite; flex-shrink:0; }
+@keyframes da-blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+.da-clock { font-family:'Bebas Neue',sans-serif; font-size:18px; color:#64748b; letter-spacing:2px; margin-left:auto; }
+
+/* ── BODY ── */
+.da-body { display:grid; grid-template-columns:1fr 360px; gap:0; height:calc(100vh - 185px); overflow:hidden; }
+@media(max-width:900px){ .da-body { grid-template-columns:1fr; height:auto; overflow:visible; } }
+
+/* ── MACHINE LIST ── */
+.da-machines-panel { overflow-y:auto; padding:14px 16px; border-right:1px solid #1e3a5f; }
+.da-machines-panel::-webkit-scrollbar { width:5px; }
+.da-machines-panel::-webkit-scrollbar-track { background:#0b1a2b; }
+.da-machines-panel::-webkit-scrollbar-thumb { background:#1e3a5f; border-radius:3px; }
+
+.da-panel-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.da-panel-title { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2.5px; color:#64748b; }
+.da-summary-pills { display:flex; gap:6px; }
+.da-summary-pill { font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; }
+.da-summary-pill.green  { background:rgba(34,197,94,.15);  color:#22c55e; }
+.da-summary-pill.yellow { background:rgba(245,158,11,.15); color:#f59e0b; }
+.da-summary-pill.red    { background:rgba(239,68,68,.15);  color:#ef4444; }
+
+.da-machine-card { background:linear-gradient(160deg,#0f2035,#162a45); border:1px solid #1e3a5f; border-radius:11px; padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:all .2s; }
+.da-machine-card:hover { border-color:#3b82f666; }
+.da-machine-card.st-running { border-left:3px solid #22c55e; }
+.da-machine-card.st-slow    { border-left:3px solid #f59e0b; box-shadow:0 0 12px rgba(245,158,11,.15); }
+.da-machine-card.st-down    { border-left:3px solid #ef4444; box-shadow:0 0 18px rgba(239,68,68,.25); animation:da-alert-glow 2s infinite; }
+@keyframes da-alert-glow { 0%,100%{box-shadow:0 0 12px rgba(239,68,68,.2)} 50%{box-shadow:0 0 28px rgba(239,68,68,.55)} }
+
+.da-card-row1 { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.da-status-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.da-status-dot.running { background:#22c55e; box-shadow:0 0 7px #22c55e; animation:da-blink 2s infinite; }
+.da-status-dot.slow    { background:#f59e0b; box-shadow:0 0 7px #f59e0b; }
+.da-status-dot.down    { background:#ef4444; box-shadow:0 0 7px #ef4444; animation:da-blink .8s infinite; }
+.da-machine-id { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; color:#7dd3fc; }
+.da-machine-state { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:2px 8px; border-radius:5px; }
+.da-machine-state.running { background:rgba(34,197,94,.12);  color:#22c55e; }
+.da-machine-state.slow    { background:rgba(245,158,11,.12); color:#f59e0b; }
+.da-machine-state.down    { background:rgba(239,68,68,.12);  color:#ef4444; }
+.da-machine-wo { font-size:11px; color:#475569; margin-left:auto; }
+.da-machine-ts { font-size:10px; color:#334155; }
+
+.da-card-stats { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:8px; }
+.da-stat { background:#0b1a2b; border-radius:7px; padding:6px 8px; }
+.da-stat-label { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:#334155; margin-bottom:2px; }
+.da-stat-value { font-size:13px; font-weight:700; }
+.da-stat-value.green  { color:#22c55e; }
+.da-stat-value.yellow { color:#f59e0b; }
+.da-stat-value.red    { color:#ef4444; }
+.da-stat-value.white  { color:#cbd5e1; }
+
+.da-util-track { background:#0b1a2b; border-radius:999px; height:5px; overflow:hidden; position:relative; }
+.da-util-fill { height:100%; border-radius:999px; transition:width .6s ease; }
+.da-util-target-line { position:absolute; top:0; bottom:0; width:2px; background:#ffffff33; }
+
+/* threshold editor */
+.da-threshold-row { display:flex; align-items:center; gap:8px; margin-top:6px; }
+.da-threshold-label { font-size:10px; color:#475569; }
+.da-threshold-input { width:52px; background:#0b1a2b; border:1px solid #2a5a8c; border-radius:6px; color:#f0f4f8; font-size:12px; font-weight:700; padding:3px 7px; outline:none; text-align:center; }
+.da-threshold-input:focus { border-color:#f59e0b; }
+.da-threshold-unit { font-size:10px; color:#475569; }
+.da-set-btn { background:#1e3a5f; border:none; color:#7dd3fc; font-size:10px; font-weight:700; padding:3px 10px; border-radius:5px; cursor:pointer; }
+.da-set-btn:hover { background:#2a5a8c; }
+
+/* ── RIGHT PANEL ── */
+.da-right-panel { display:flex; flex-direction:column; overflow:hidden; }
+
+/* Pushover live preview */
+.da-pushover-wrap { padding:14px 16px 10px; border-bottom:1px solid #1e3a5f; }
+.da-pushover-card { background:linear-gradient(160deg,#1a1008,#221508); border:2px solid #f59e0b44; border-radius:13px; padding:13px 15px; transition:all .3s; }
+.da-pushover-card.flash { border-color:#f59e0b; box-shadow:0 0 22px rgba(245,158,11,.4); animation:da-flash .5s; }
+.da-pushover-card.flash-red { border-color:#ef4444; box-shadow:0 0 22px rgba(239,68,68,.4); animation:da-flash .5s; }
+@keyframes da-flash { 0%{transform:scale(1.02)} 100%{transform:scale(1)} }
+.da-pp-hdr { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.da-pp-appicon { width:34px; height:34px; background:linear-gradient(135deg,#f59e0b,#d97706); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.da-pp-appname { font-size:12px; font-weight:700; color:#f5d050; }
+.da-pp-device  { font-size:10px; color:#64748b; }
+.da-pp-ts      { font-size:10px; color:#475569; margin-left:auto; }
+.da-pp-title   { font-size:14px; font-weight:700; color:#f0f4f8; margin-bottom:5px; line-height:1.3; }
+.da-pp-body    { font-size:12px; color:#94a3b8; line-height:1.6; white-space:pre-wrap; }
+.da-pp-delivered { display:inline-block; margin-top:8px; background:rgba(34,197,94,.12); border:1px solid #22c55e44; color:#22c55e; font-size:10px; font-weight:700; letter-spacing:1px; padding:2px 9px; border-radius:5px; }
+
+/* Alert log */
+.da-log-header { padding:10px 16px 6px; display:flex; align-items:center; justify-content:space-between; }
+.da-log-title { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2.5px; color:#64748b; }
+.da-log-count { font-size:11px; color:#334155; }
+.da-log-scroll { flex:1; overflow-y:auto; padding:0 16px 16px; }
+.da-log-scroll::-webkit-scrollbar { width:4px; }
+.da-log-scroll::-webkit-scrollbar-thumb { background:#1e3a5f; border-radius:3px; }
+
+.da-log-entry { background:linear-gradient(160deg,#0f1e35,#162035); border-radius:9px; padding:10px 12px; margin-bottom:6px; border-left:3px solid #334155; }
+.da-log-entry.sev-down     { border-left-color:#ef4444; background:linear-gradient(160deg,#1a0708,#200a0a); }
+.da-log-entry.sev-slow     { border-left-color:#f59e0b; background:linear-gradient(160deg,#1a1008,#201508); }
+.da-log-entry.sev-pace     { border-left-color:#a78bfa; background:linear-gradient(160deg,#12081a,#180d22); }
+.da-log-entry.sev-recover  { border-left-color:#22c55e; background:linear-gradient(160deg,#081a0f,#0c2014); opacity:.8; }
+.da-log-entry-hdr { display:flex; align-items:center; gap:7px; margin-bottom:4px; }
+.da-log-icon { font-size:14px; flex-shrink:0; }
+.da-log-machine { font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1.5px; color:#f5d050; }
+.da-log-sev { font-size:9px; font-weight:700; padding:1px 7px; border-radius:4px; text-transform:uppercase; letter-spacing:1px; }
+.da-log-sev.down    { background:rgba(239,68,68,.15);  color:#ef4444; }
+.da-log-sev.slow    { background:rgba(245,158,11,.15); color:#f59e0b; }
+.da-log-sev.pace    { background:rgba(167,139,250,.15);color:#a78bfa; }
+.da-log-sev.recover { background:rgba(34,197,94,.15);  color:#22c55e; }
+.da-log-ts { font-size:10px; color:#334155; margin-left:auto; }
+.da-log-msg { font-size:11px; color:#64748b; line-height:1.5; }
+.da-log-pushover { display:inline-block; margin-top:4px; font-size:10px; color:#f59e0b; font-weight:700; }
+
+.da-empty-log { text-align:center; padding:30px 16px; color:#1e3a5f; font-size:12px; }
+</style>
+
+<!-- HEADER -->
+<div class="da-hdr">
+  <div class="da-hdr-left">
+    <h2>🔔 Machine Alert Monitor</h2>
+    <p>Datanomix Live Feed · Firebase · Pushover · Every event timestamped</p>
+  </div>
+  <span class="da-demo-badge">⚡ Demo Mode — Simulated Live Data</span>
+</div>
+
+<!-- TARGET BAR -->
+<div class="da-target-bar">
+  <div class="da-live-dot"></div>
+  <div class="da-target-item">
+    <span class="da-target-label">Target Util</span>
+    <span class="da-target-value green">55%+</span>
+  </div>
+  <div class="da-target-item">
+    <span class="da-target-label">Shop Avg</span>
+    <span class="da-target-value" id="daShopAvg">—</span>
+  </div>
+  <div class="da-target-item">
+    <span class="da-target-label">Running</span>
+    <span class="da-target-value green" id="daRunCount">—</span>
+  </div>
+  <div class="da-target-item">
+    <span class="da-target-label">Down</span>
+    <span class="da-target-value red" id="daDownCount">—</span>
+  </div>
+  <div class="da-target-item">
+    <span class="da-target-label">Alerts Today</span>
+    <span class="da-target-value yellow" id="daAlertCount">0</span>
+  </div>
+  <div class="da-clock" id="daClock">—</div>
+</div>
+
+<!-- BODY -->
+<div class="da-body">
+
+  <!-- LEFT: Machines -->
+  <div class="da-machines-panel">
+    <div class="da-panel-header">
+      <span class="da-panel-title">⚙️ All Machines</span>
+      <div class="da-summary-pills" id="daSummaryPills"></div>
+    </div>
+    <div id="daMachineList"></div>
+  </div>
+
+  <!-- RIGHT: Pushover + Log -->
+  <div class="da-right-panel">
+    <div class="da-pushover-wrap">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:#64748b;margin-bottom:8px;">📱 PUSHOVER — MIGUEL'S IPHONE</div>
+      <div class="da-pushover-card" id="daPushoverCard">
+        <div class="da-pp-hdr">
+          <div class="da-pp-appicon">🏭</div>
+          <div>
+            <div class="da-pp-appname">Hill Manufacturing</div>
+            <div class="da-pp-device">Shop Floor App · Miguel</div>
+          </div>
+          <div class="da-pp-ts" id="daPPTs">Waiting...</div>
+        </div>
+        <div class="da-pp-title" id="daPPTitle">Monitoring machines...</div>
+        <div class="da-pp-body" id="daPPBody">Alerts will fire here the moment any machine drops below target or goes down.</div>
+      </div>
+    </div>
+
+    <div class="da-log-header">
+      <span class="da-log-title">📋 Alert Log</span>
+      <span class="da-log-count" id="daLogCount">0 events</span>
+    </div>
+    <div class="da-log-scroll" id="daLogScroll">
+      <div class="da-empty-log">No alerts yet — all machines being monitored</div>
+    </div>
+  </div>
+
+</div>
+</div><!-- end page-dnxalerts -->
+
+<script>
+(function(){
+'use strict';
+
+/* ── MACHINE DATA (real Hill machines from demo) ── */
+var DA_MACHINES = [
+  {id:'VF-2',   cell:'MPPI',       wo:'26-0288', part:'114522',   customer:'Arrowhead Winch',  qty:29,  done:18, util:82, running:true,  threshold:55},
+  {id:'VF-3',   cell:'MPPI',       wo:'26-0287', part:'113972',   customer:'Arrowhead Winch',  qty:35,  done:22, util:75, running:true,  threshold:55},
+  {id:'VF-6',   cell:'Big Mill',   wo:'26-0438', part:'6308601',  customer:'McElroy Mfg',      qty:25,  done:12, util:88, running:true,  threshold:60},
+  {id:'ST35',   cell:'MPPI',       wo:'26-0241', part:'103486',   customer:'Arrowhead Winch',  qty:70,  done:41, util:91, running:true,  threshold:55},
+  {id:'1050-B', cell:'Big Mill',   wo:'26-0337', part:'G437378V', customer:'Geislinger Corp',  qty:44,  done:28, util:79, running:true,  threshold:55},
+  {id:'PUMA-1', cell:'Automation', wo:'26-0025', part:'C314103',  customer:'Centrilift BH',    qty:202, done:134,util:85, running:true,  threshold:55},
+  {id:'PUMA-2', cell:'MPPI',       wo:'26-0296', part:'102704',   customer:'Arrowhead Winch',  qty:104, done:67, util:48, running:false, threshold:55},
+  {id:'PUMA-3', cell:'MPPI',       wo:'26-0307', part:'27009',    customer:'Arrowhead Winch',  qty:300, done:198,util:93, running:true,  threshold:55},
+  {id:'VF-5',   cell:'Big Mill',   wo:'26-0411', part:'BG90211',  customer:'Baker Hughes',     qty:18,  done:0,  util:0,  running:false, threshold:55},
+  {id:'HAAS-1', cell:'Automation', wo:'26-0389', part:'A2290034', customer:'Enovis',           qty:22,  done:8,  util:72, running:true,  threshold:55},
+  {id:'HAAS-2', cell:'Automation', wo:'26-0401', part:'B1100221', customer:'NOV',              qty:50,  done:31, util:68, running:true,  threshold:55},
+  {id:'VF-4',   cell:'Big Mill',   wo:'26-0355', part:'447821A',  customer:'GE Aviation',      qty:15,  done:9,  util:77, running:true,  threshold:60},
+];
+
+/* load saved thresholds */
+function loadThresholds(){
+  try {
+    var saved = JSON.parse(localStorage.getItem('daThresholds')||'{}');
+    DA_MACHINES.forEach(function(m){ if(saved[m.id] !== undefined) m.threshold = saved[m.id]; });
+  } catch(e){}
+}
+function saveThreshold(id, val){
+  try {
+    var saved = JSON.parse(localStorage.getItem('daThresholds')||'{}');
+    saved[id] = val;
+    localStorage.setItem('daThresholds', JSON.stringify(saved));
+  } catch(e){}
+}
+
+var _daAlerts = [];
+var _daAlertTotal = 0;
+var _daInited = false;
+var _daAlertedDown = {}; // track which machines we already alerted as down
+var _daAlertedSlow = {}; // track slow alerts (don't spam)
+
+/* ── TIMESTAMP ── */
+function daTs(){
+  var now = new Date();
+  return now.toLocaleDateString('en-US',{month:'short',day:'numeric'})
+    + ' ' + now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+function daTimeShort(){
+  return new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+/* ── CLOCK ── */
+function tickClock(){
+  var el = document.getElementById('daClock');
+  if(el) el.textContent = daTimeShort();
+}
+
+/* ── STATUS ── */
+function getStatus(m){
+  if(!m.running || m.util === 0) return 'down';
+  if(m.util < m.threshold) return 'slow';
+  return 'running';
+}
+
+/* ── PACE CHECK ── */
+function getPacePct(m){
+  if(!m.qty) return 100;
+  return Math.round((m.done / m.qty) * 100);
+}
+
+/* ── FIRE ALERT ── */
+function fireAlert(m, type){
+  var ts = daTs();
+  var alert = { ts:ts, machine:m.id, type:type };
+  var pushTitle, pushBody, sev, icon, msg;
+
+  if(type === 'down'){
+    sev = 'down'; icon = '🔴';
+    pushTitle = '🔴 MACHINE DOWN — ' + m.id;
+    pushBody  = 'Machine: ' + m.id + ' (' + m.cell + ')\n'
+              + 'WO: ' + m.wo + ' | Part: ' + m.part + '\n'
+              + 'Customer: ' + m.customer + '\n'
+              + 'Status: IDLE / NO SPINDLE\n'
+              + 'Timestamp: ' + ts;
+    msg = m.id + ' is DOWN — no spindle activity. WO ' + m.wo + ' at risk. ' + m.customer + '.';
+  } else if(type === 'slow'){
+    sev = 'slow'; icon = '🟡';
+    pushTitle = '⚠️ LOW UTIL — ' + m.id + ' (' + Math.round(m.util) + '%)';
+    pushBody  = 'Machine: ' + m.id + ' (' + m.cell + ')\n'
+              + 'Utilization: ' + Math.round(m.util) + '% — below ' + m.threshold + '% target\n'
+              + 'WO: ' + m.wo + ' | ' + m.customer + '\n'
+              + 'Timestamp: ' + ts;
+    msg = m.id + ' util at ' + Math.round(m.util) + '% — below ' + m.threshold + '% threshold. WO ' + m.wo + '.';
+  } else if(type === 'pace'){
+    var pp = getPacePct(m);
+    sev = 'pace'; icon = '🟣';
+    pushTitle = '📉 BEHIND PACE — ' + m.id;
+    pushBody  = 'Machine: ' + m.id + ' (' + m.cell + ')\n'
+              + 'Parts: ' + m.done + ' / ' + m.qty + ' (' + pp + '% complete)\n'
+              + 'WO: ' + m.wo + ' | ' + m.customer + '\n'
+              + 'Action: Check pace vs. due date\n'
+              + 'Timestamp: ' + ts;
+    msg = m.id + ' behind pace — ' + m.done + '/' + m.qty + ' parts done. WO ' + m.wo + '. ' + m.customer + '.';
+  } else if(type === 'recover'){
+    sev = 'recover'; icon = '🟢';
+    pushTitle = '✅ BACK ONLINE — ' + m.id;
+    pushBody  = 'Machine: ' + m.id + ' (' + m.cell + ')\n'
+              + 'Utilization: ' + Math.round(m.util) + '%\n'
+              + 'WO: ' + m.wo + ' resuming\n'
+              + 'Timestamp: ' + ts;
+    msg = m.id + ' back online at ' + Math.round(m.util) + '%. WO ' + m.wo + ' resuming.';
+  }
+
+  alert.sev = sev; alert.icon = icon; alert.pushTitle = pushTitle;
+  alert.pushBody = pushBody; alert.msg = msg;
+
+  _daAlerts.unshift(alert);
+  if(_daAlerts.length > 50) _daAlerts = _daAlerts.slice(0,50);
+  _daAlertTotal++;
+
+  // Flash pushover card
+  flashPushover(alert);
+  renderAlertLog();
+
+  var countEl = document.getElementById('daAlertCount');
+  if(countEl) countEl.textContent = _daAlertTotal;
+}
+
+/* ── PUSHOVER FLASH ── */
+function flashPushover(alert){
+  var card  = document.getElementById('daPushoverCard');
+  var title = document.getElementById('daPPTitle');
+  var body  = document.getElementById('daPPBody');
+  var ts    = document.getElementById('daPPTs');
+  if(!card) return;
+  if(title) title.textContent = alert.pushTitle;
+  if(body)  body.textContent  = alert.pushBody;
+  if(ts)    ts.textContent    = alert.ts;
+
+  // Remove old flash classes
+  card.classList.remove('flash','flash-red');
+  void card.offsetWidth; // reflow
+  card.classList.add(alert.sev === 'down' ? 'flash-red' : 'flash');
+
+  // Add delivered badge if not there
+  var delivered = card.querySelector('.da-pp-delivered');
+  if(!delivered){
+    delivered = document.createElement('span');
+    delivered.className = 'da-pp-delivered';
+    delivered.textContent = '📱 Delivered to Miguel\'s iPhone';
+    card.appendChild(delivered);
+  }
+}
+
+/* ── SIMULATE TICK ── */
+function tickMachines(){
+  DA_MACHINES.forEach(function(m){
+    var wasRunning = m.running;
+    var prevUtil   = m.util;
+
+    if(!m.running){
+      // chance to recover
+      if(Math.random() < 0.018){
+        m.running = true;
+        m.util = 55 + Math.random() * 30;
+        if(_daAlertedDown[m.id]){
+          delete _daAlertedDown[m.id];
+          delete _daAlertedSlow[m.id];
+          fireAlert(m, 'recover');
+        }
+      }
+      return;
+    }
+
+    // drift util
+    var drift = (Math.random() - 0.46) * 4;
+    m.util = Math.min(99, Math.max(0, m.util + drift));
+
+    // small chance machine goes down
+    if(Math.random() < 0.005){
+      m.running = false;
+      m.util = 0;
+    }
+
+    // check alerts
+    var st = getStatus(m);
+    if(st === 'down' && !_daAlertedDown[m.id]){
+      _daAlertedDown[m.id] = true;
+      fireAlert(m, 'down');
+    } else if(st === 'slow' && !_daAlertedSlow[m.id]){
+      _daAlertedSlow[m.id] = daTs();
+      fireAlert(m, 'slow');
+    } else if(st === 'running' && _daAlertedSlow[m.id]){
+      delete _daAlertedSlow[m.id];
+    }
+
+    // pace check — random chance
+    if(Math.random() < 0.008 && m.qty > 0){
+      var pp = getPacePct(m);
+      var expectedPct = 60; // roughly where they should be
+      if(pp < expectedPct - 15){
+        fireAlert(m, 'pace');
+      }
+    }
+
+    // increment done count slowly
+    if(m.running && Math.random() < 0.12 && m.done < m.qty){
+      m.done++;
+    }
+  });
+}
+
+/* ── RENDER MACHINES ── */
+function renderMachines(){
+  var el = document.getElementById('daMachineList'); if(!el) return;
+
+  var running = 0, slow = 0, down = 0, totalUtil = 0, counted = 0;
+  DA_MACHINES.forEach(function(m){
+    var st = getStatus(m);
+    if(st === 'running'){ running++; }
+    else if(st === 'slow'){ slow++; }
+    else { down++; }
+    if(m.running){ totalUtil += m.util; counted++; }
+  });
+  var avgUtil = counted ? Math.round(totalUtil/counted) : 0;
+  var avgClass = avgUtil >= 70 ? 'green' : avgUtil >= 55 ? 'yellow' : 'red';
+
+  // Update header stats
+  var avgEl = document.getElementById('daShopAvg'); if(avgEl){ avgEl.textContent = avgUtil + '%'; avgEl.className='da-target-value '+avgClass; }
+  var runEl = document.getElementById('daRunCount'); if(runEl) runEl.textContent = running;
+  var dwnEl = document.getElementById('daDownCount'); if(dwnEl) dwnEl.textContent = down + (slow?' (+'+slow+' slow)':'');
+
+  // Summary pills
+  var pills = document.getElementById('daSummaryPills');
+  if(pills) pills.innerHTML =
+    '<span class="da-summary-pill green">'+running+' Running</span>'
+    +(slow?'<span class="da-summary-pill yellow">'+slow+' Slow</span>':'')
+    +(down?'<span class="da-summary-pill red">'+down+' Down</span>':'');
+
+  // Sort: down first, then slow, then running
+  var sorted = DA_MACHINES.slice().sort(function(a,b){
+    var order = {down:0, slow:1, running:2};
+    return order[getStatus(a)] - order[getStatus(b)];
+  });
+
+  el.innerHTML = '';
+  sorted.forEach(function(m){
+    var st = getStatus(m);
+    var pct = Math.round(m.util);
+    var barColor = st==='down' ? '#ef4444' : st==='slow' ? '#f59e0b' : '#22c55e';
+    var valClass = st==='down' ? 'red' : st==='slow' ? 'yellow' : 'green';
+    var pace = m.qty > 0 ? Math.round((m.done/m.qty)*100) : 0;
+    var paceClass = pace >= 80 ? 'green' : pace >= 60 ? 'white' : 'yellow';
+    var targetPx = Math.round(m.threshold / 100 * 100); // position of target line
+
+    var card = document.createElement('div');
+    card.className = 'da-machine-card st-' + st;
+    card.innerHTML =
+      '<div class="da-card-row1">'
+      +'<div class="da-status-dot '+st+'"></div>'
+      +'<div class="da-machine-id">'+m.id+'</div>'
+      +'<span class="da-machine-state '+st+'">'+(st==='down'?'DOWN':st==='slow'?'SLOW':'RUNNING')+'</span>'
+      +'<span class="da-machine-wo">WO '+m.wo+'</span>'
+      +'</div>'
+      +'<div class="da-card-stats">'
+      +'<div class="da-stat"><div class="da-stat-label">Util %</div><div class="da-stat-value '+valClass+'">'+pct+'%</div></div>'
+      +'<div class="da-stat"><div class="da-stat-label">Target</div><div class="da-stat-value white">'+m.threshold+'%</div></div>'
+      +'<div class="da-stat"><div class="da-stat-label">Done/Qty</div><div class="da-stat-value white">'+m.done+'/'+m.qty+'</div></div>'
+      +'<div class="da-stat"><div class="da-stat-label">Pace</div><div class="da-stat-value '+paceClass+'">'+pace+'%</div></div>'
+      +'<div class="da-stat"><div class="da-stat-label">Cell</div><div class="da-stat-value white">'+m.cell+'</div></div>'
+      +'</div>'
+      +'<div class="da-util-track">'
+      +'<div class="da-util-fill" style="width:'+Math.min(pct,100)+'%;background:'+barColor+';"></div>'
+      +'<div class="da-util-target-line" style="left:'+targetPx+'%;"></div>'
+      +'</div>'
+      +'<div class="da-threshold-row">'
+      +'<span class="da-threshold-label">Alert threshold:</span>'
+      +'<input class="da-threshold-input" type="number" min="30" max="95" value="'+m.threshold+'" data-mid="'+m.id+'">'
+      +'<span class="da-threshold-unit">%</span>'
+      +'<button class="da-set-btn" data-mid="'+m.id+'">Set</button>'
+      +'<span class="da-threshold-label" style="margin-left:auto;font-size:9px;color:#334155;">Part: '+m.part+' · '+m.customer+'</span>'
+      +'</div>';
+
+    // Threshold set button
+    card.querySelector('.da-set-btn').addEventListener('click', function(){
+      var mid = this.dataset.mid;
+      var inp = card.querySelector('.da-threshold-input');
+      var val = parseInt(inp.value, 10);
+      if(isNaN(val)||val<30||val>95){ inp.style.borderColor='#ef4444'; return; }
+      inp.style.borderColor='#22c55e';
+      DA_MACHINES.forEach(function(mx){ if(mx.id===mid){ mx.threshold=val; delete _daAlertedSlow[mid]; } });
+      saveThreshold(mid, val);
+      setTimeout(function(){ renderMachines(); }, 300);
+    });
+
+    el.appendChild(card);
+  });
+}
+
+/* ── RENDER ALERT LOG ── */
+function renderAlertLog(){
+  var el = document.getElementById('daLogScroll'); if(!el) return;
+  var countEl = document.getElementById('daLogCount');
+  if(countEl) countEl.textContent = _daAlerts.length + ' events';
+
+  if(!_daAlerts.length){
+    el.innerHTML = '<div class="da-empty-log">No alerts yet — all machines being monitored<br><span style="font-size:10px;color:#1e3a5f;">Alerts fire automatically when machines cross thresholds</span></div>';
+    return;
+  }
+  el.innerHTML = '';
+  _daAlerts.forEach(function(a){
+    var entry = document.createElement('div');
+    entry.className = 'da-log-entry sev-' + (a.sev||'recover');
+    entry.innerHTML =
+      '<div class="da-log-entry-hdr">'
+      +'<span class="da-log-icon">'+a.icon+'</span>'
+      +'<span class="da-log-machine">'+a.machine+'</span>'
+      +'<span class="da-log-sev '+(a.sev||'recover')+'">'+((a.sev||'recover').toUpperCase())+'</span>'
+      +'<span class="da-log-ts">'+a.ts+'</span>'
+      +'</div>'
+      +'<div class="da-log-msg">'+a.msg+'</div>'
+      +'<span class="da-log-pushover">📱 Pushover → Miguel</span>';
+    el.appendChild(entry);
+  });
+}
+
+/* ── INIT ── */
+window.initDNXAlerts = function(){
+  if(_daInited) return;
+  _daInited = true;
+  loadThresholds();
+
+  // Seed alerts for machines already in bad state
+  setTimeout(function(){
+    DA_MACHINES.forEach(function(m){
+      var st = getStatus(m);
+      if(st === 'down' && !_daAlertedDown[m.id]){
+        _daAlertedDown[m.id] = true;
+        fireAlert(m, 'down');
+      } else if(st === 'slow' && !_daAlertedSlow[m.id]){
+        _daAlertedSlow[m.id] = daTs();
+        fireAlert(m, 'slow');
+      }
+    });
+    renderMachines();
+  }, 400);
+
+  // Clock ticks every second
+  setInterval(tickClock, 1000);
+  tickClock();
+
+  // Machine simulation every 6s
+  setInterval(function(){
+    tickMachines();
+    renderMachines();
+  }, 6000);
+};
+
+/* hook switchTab */
+var _daST = window.switchTab;
+window.switchTab = function(tab){
+  if(_daST) _daST(tab);
+  if(tab === 'dnxalerts') initDNXAlerts();
+};
 
 })();
 </script>
