@@ -55,9 +55,9 @@
   /* SHOP FLOOR */
   .shop-page { display: none; }
   .shop-page.active { display: grid; grid-template-columns: 1fr 320px; height: calc(100vh - 88px); overflow: hidden; }
-  .floor-section { padding: 10px 12px; overflow-y: auto; height: 100%; box-sizing: border-box; }
+  .floor-section { padding: 10px 12px; overflow-y: auto; overflow-x: hidden; height: 100%; box-sizing: border-box; }
   .floor-title { font-size: 11px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-  .floor-grid { background: #0f2035; border-radius: 10px; padding: 8px; border: 1px solid #1e4a7c; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 6px; }
+  .floor-grid { background: #0f2035; border-radius: 10px; padding: 8px; border: 1px solid #1e4a7c; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px; }
   .hill-center { grid-column: 3; grid-row: 2; background: linear-gradient(135deg, #1e3a5f, #2a5080); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid #f59e0b; min-height: 80px; }
   .hill-logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #f59e0b; letter-spacing: 4px; }
   .cell { background: linear-gradient(175deg, #112845 0%, #1a3555 100%); border-radius: 8px; padding: 6px 5px; display: flex; flex-direction: column; border: 1px solid rgba(59,130,246,0.35); box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06); }
@@ -795,9 +795,9 @@
 
   /* FULL SCREEN LAYOUT */
   html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
-  .shop-page.active { display: block !important; height: calc(100vh - 82px) !important; max-height: calc(100vh - 82px) !important; overflow: hidden !important; }
+  .shop-page.active { display: grid !important; grid-template-columns: 1fr 320px; height: calc(100vh - 82px) !important; overflow: hidden !important; }
   .floor-section { overflow: hidden !important; height: calc(100dvh - 150px) !important; padding: 4px 6px !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; }
-  .floor-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; grid-template-rows: repeat(2, 1fr) !important; gap: 4px !important; padding: 4px !important; flex: 1 !important; min-height: 0 !important; overflow: hidden !important; }
+  .floor-grid { display: grid !important; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important; gap: 4px !important; padding: 4px !important; overflow-y: auto !important; overflow-x: hidden !important; }
   .cell { padding: 4px !important; border-radius: 7px !important; }
   .cell-title { font-size: 18px !important; letter-spacing: 3px !important; margin-bottom: 6px !important; padding-bottom: 3px !important; }
   .machine { margin-bottom: 3px !important; border-radius: 6px !important; }
@@ -1258,7 +1258,7 @@
         <div id="live-strip-modal-content"></div>
       </div>
     </div>
-    <div class="floor-grid" style="grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);">
+    <div class="floor-grid">
 
       <div class="cell" style="grid-column:1;grid-row:1;"><div class="cell-title">Big Mill</div><div class="machines"><div class="machine" onclick="openModal('1050-B','Big Mill')"><div class="perf-bar pending" id="perf-1050-B" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">1050-B</div></div><div class="machine-right"><div class="machine-led" id="light-1050-B"></div></div></div><div class="machine-notes" id="notes-1050-B"></div></div><div class="machine" onclick="openModal('7000','Big Mill')"><div class="perf-bar pending" id="perf-7000" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">7000</div></div><div class="machine-right"><div class="machine-led" id="light-7000"></div></div></div><div class="machine-notes" id="notes-7000"></div></div><div class="machine" onclick="openModal('VF-6','Big Mill')"><div class="perf-bar pending" id="perf-VF-6" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-6</div></div><div class="machine-right"><div class="machine-led" id="light-VF-6"></div></div></div><div class="machine-notes" id="notes-VF-6"></div></div></div></div>
       <div class="cell" style="grid-column:2;grid-row:1;"><div class="cell-title">5100 · 2500</div><div class="machines"><div class="machine" onclick="openModal('5100-B','5100 Cell')"><div class="perf-bar pending" id="perf-5100-B" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">5100-B</div></div><div class="machine-right"><div class="machine-led" id="light-5100-B"></div></div></div><div class="machine-notes" id="notes-5100-B"></div></div><div class="machine" onclick="openModal('2500','5100 Cell')"><div class="perf-bar pending" id="perf-2500" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">2500</div></div><div class="machine-right"><div class="machine-led" id="light-2500"></div></div></div><div class="machine-notes" id="notes-2500"></div></div><div class="machine" onclick="openModal('PUMA-3','5100 Cell')"><div class="perf-bar pending" id="perf-PUMA-3" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-3</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-3"></div></div></div><div class="machine-notes" id="notes-PUMA-3"></div></div></div></div>
