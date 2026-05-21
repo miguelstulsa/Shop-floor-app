@@ -1439,15 +1439,21 @@ function isToday(ts){
 // Load all requests from Firebase
 async function hsLoadData(){
   if(_hsLoaded) return;
-  var db = window.fbDb; var mods = window.fbFirestore;
-  if(!db||!mods){
-    // Firebase not ready yet — retry after short delay
+  var db   = window.fbDb   || window._db;
+  var mods = window._fbModules || window.fbFirestore;
+  if(!db || !mods || !mods.getDocs){
+    // Firebase not ready yet — retry
     return new Promise(function(resolve){
-      setTimeout(function(){ hsLoadData().then(resolve); }, 800);
+      setTimeout(function(){ hsLoadData().then(resolve); }, 600);
     });
   }
   try {
-    var snap = await mods.getDocs(mods.query(mods.collection(db,'hillRequests'), mods.orderBy('createdAt','desc'), mods.limit(200)));
+    var q = mods.query(
+      mods.collection(db, 'hillRequests'),
+      mods.orderBy('createdAt', 'desc'),
+      mods.limit(200)
+    );
+    var snap = await mods.getDocs(q);
     _hsAllData = snap.docs.map(function(d){
       var data = d.data();
       data._id = d.id;
@@ -1455,7 +1461,10 @@ async function hsLoadData(){
       return data;
     });
     _hsLoaded = true;
-  } catch(e){ console.warn('HS load:', e); }
+    console.log('HS loaded', _hsAllData.length, 'records');
+  } catch(e){
+    console.warn('HS load error:', e);
+  }
 }
 
 window.hsSetFilter = function(filter, btn){
