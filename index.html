@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Hill Manufacturing — Shop Floor v72</title>
+<title>Hill Manufacturing — Shop Floor v71</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1417,7 +1417,6 @@
 var _hsFilter = 'all';
 var _hsAllData = [];
 var _hsLoaded = false;
-var _hsLoading = false;
 
 var ROSTER = ['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Ker Vang','Matthew Carrico','Miguel Sanchez','Mike Payne','ProShop Admin','Rhett Dawson','Robert Clinton','Scott Smith','Sean Surratt','Steven Riggs','Tami Tate','Tony Lang','Tyler Stockham'];
 var MACHINES = ['1050-B','7000','VF-6','VF-2','VF-3','VF-4','VF-5','ST35','PUMA-1','PUMA-2','PUMA-3','403-A','403-B','403-C','5100-A','5100-B','2500','3000-A','3000-C','HAAS-1','HAAS-2','SAW','SHARP'];
@@ -1474,12 +1473,9 @@ window.hsSearch = function(){
   // Load data if not yet loaded
   if(!_hsLoaded){
     if(_hsLoading) return; // prevent double-load loop
-    _hsLoading = true;
+    window._hsLoading = true;
     results.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⏳</div><div class="hs-empty-text">Loading data...</div></div>';
-    hsLoadData().then(function(){ _hsLoading=false; hsSearch(); }).catch(function(e){
-      _hsLoading=false;
-      results.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⚠️</div><div class="hs-empty-text">Could not load data — check connection.<br><span style="font-size:11px;color:#1e3a5f;">' + (e&&e.message||'') + '</span></div></div>';
-    });
+    hsLoadData().then(function(){ window._hsLoading=false; hsSearch(); }).catch(function(){ window._hsLoading=false; });
     return;
   }
 
@@ -1628,15 +1624,15 @@ window.switchTab = function(tab){
     var pg = document.getElementById('page-aichat');
     if(pg) pg.style.display = 'flex';
     setTimeout(function(){
-      if(!_hsLoaded && !_hsLoading){
-        _hsLoading = true;
+      if(!_hsLoaded && !window._hsLoading){
+        window._hsLoading = true;
         hsLoadData().then(function(){
-          _hsLoading = false;
+          window._hsLoading = false;
           hsShowOverview();
-        }).catch(function(e){
-          _hsLoading = false;
+        }).catch(function(){
+          window._hsLoading = false;
           var el = document.getElementById('hs-results');
-          if(el) el.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⚠️</div><div class="hs-empty-text">Could not load data. Check your connection.<br><span style="font-size:11px;color:#1e3a5f;">'+(e&&e.message||'')+'</span></div></div>';
+          if(el) el.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⚠️</div><div class="hs-empty-text">Could not load data. Check your connection.</div></div>';
         });
       } else if(_hsLoaded) {
         hsShowOverview();
@@ -1647,12 +1643,7 @@ window.switchTab = function(tab){
 
 // Also load on DOMContentLoaded if already on tab
 document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){
-    if(!_hsLoaded && !_hsLoading){
-      _hsLoading = true;
-      hsLoadData().then(function(){ _hsLoading = false; }).catch(function(){ _hsLoading = false; });
-    }
-  }, 2000);
+  setTimeout(function(){ hsLoadData(); }, 2000);
 });
 
 })();
@@ -12656,153 +12647,20 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     input.value = '';
     input.style.height = '44px';
 
-    // Add user message
     addMessage('user', msg);
-    _chatHistory.push({role:'user', content: msg});
 
-    // Check if message is a WO lookup
-    var woMatch = msg.match(/(26-?\d{4}|25-?\d{4}|24-?\d{4}|WO[\s-]?\d+|\d{5,6})/i);
-    if(woMatch || /work order|WO#|lookup|receipt|pull up|show me/i.test(msg)){
-      var woNum = woMatch ? woMatch[0].toUpperCase().replace(/\s/g,'') : null;
-      if(woNum){
-        _chatThinking = true;
-        var typingEl = addTyping();
-        var receipt = await _buildWOReceipt(woNum);
-        typingEl.remove();
-        _chatThinking = false;
-        addReceiptMessage(receipt);
-        _chatHistory.push({role:'assistant', content: 'Here is the receipt for WO ' + woNum});
-        return;
+    // No AI credits — redirect to Search tab
+    var searchInput = document.getElementById('hs-input');
+    if(searchInput){
+      searchInput.value = msg;
+      addMessage('assistant', 'Searching your floor data for "' + msg + '" — see the Search tab for full results.');
+      if(typeof hsSearch === 'function'){
+        window.hsSetFilter && window.hsSetFilter('all', null);
+        searchInput.value = msg;
+        setTimeout(function(){ hsSearch(); }, 100);
       }
-    }
-
-    // Check for "requests to me" / "sent to me" queries
-    if(/sent to me|my requests|requests to me|how many.*sent|who sent|count.*requests/i.test(msg)){
-      _chatThinking = true;
-      var typingEl3 = addTyping();
-      var myReceipt = await _buildRequestsToMeReceipt();
-      typingEl3.remove();
-      _chatThinking = false;
-      addRequestsToMeMessage(myReceipt);
-      _chatHistory.push({role:'assistant', content: 'Here is your incoming request summary'});
-      return;
-    }
-
-    // Check if message is a machinist name lookup
-    var machinists = ['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Ker Vang','Matthew Carrico','Miguel Sanchez','Mike Payne','ProShop Admin','Rhett Dawson','Robert Clinton','Scott Smith','Sean Surratt','Steven Riggs','Tami Tate','Tony Lang','Tyler Stockham'];
-    var msgLower = msg.toLowerCase();
-    var foundMachinist = null;
-    machinists.forEach(function(name){
-      if(msgLower.indexOf(name.toLowerCase()) >= 0) foundMachinist = name;
-      // Also match first name only
-      var first = name.split(' ')[0].toLowerCase();
-      if(first.length > 3 && msgLower.indexOf(first) >= 0 && !foundMachinist) foundMachinist = name;
-    });
-    if(foundMachinist){
-      // Always fetch real data and pass to Claude for accurate answers
-      _chatThinking = true;
-      var typingEl2 = addTyping();
-      var mReceipt = await _buildMachinistReceipt(foundMachinist);
-      var reqs = mReceipt.requests || [];
-      var completed = reqs.filter(function(r){return r.resolved;});
-      var open = reqs.filter(function(r){return !r.resolved;});
-      var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
-      var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'no time tracked';
-      var machines = [...new Set(reqs.map(function(r){return r.machine;}).filter(Boolean))];
-      var byType = {blue:0,yellow:0,red:0,green:0};
-      reqs.forEach(function(r){ if(byType[r.type]!==undefined) byType[r.type]++; });
-      var recent = reqs.slice(0,5).map(function(r){
-        var d = r.createdAt&&r.createdAt.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString():'';
-        return d+' '+r.machine+' '+(r.type==='blue'?'Pending WO':r.type==='yellow'?'Machinist Req':r.type)+' '+(r.wo?'WO '+r.wo:'')+(r.resolved?' [done]':' [open]');
-      }).join('; ');
-
-      // Build context and let Claude answer naturally
-      var machinistContext = 'MACHINIST DATA FOR ' + foundMachinist + ': '
-        + 'Total requests: ' + reqs.length + '. '
-        + 'Completed: ' + completed.length + '. '
-        + 'Open: ' + open.length + '. '
-        + 'Pending WO: ' + byType.blue + '. '
-        + 'Machinist Requests: ' + byType.yellow + '. '
-        + 'Inspections: ' + byType.red + '. '
-        + 'Total time tracked: ' + totalStr + '. '
-        + 'Machines used: ' + (machines.join(', ')||'none recorded') + '. '
-        + 'Recent activity: ' + (recent||'none');
-
-      _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
-
-      try {
-        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
-            messages: _chatHistory.slice(-10)
-          })
-        });
-        var data2 = await resp2.json();
-        var text2 = data2.content && data2.content[0] && data2.content[0].text;
-        typingEl2.remove();
-        _chatThinking = false;
-        if(text2){
-          addMessage('assistant', text2);
-          _chatHistory.push({role:'assistant', content: text2});
-        }
-      } catch(e){
-        typingEl2.remove();
-        _chatThinking = false;
-        addMessage('assistant', 'Error fetching data for ' + foundMachinist);
-      }
-      return;
-    }
-
-    // Show typing indicator
-    _chatThinking = true;
-    var typingEl = addTyping();
-
-    try {
-      var floorCtx = buildFloorContext();
-      var systemPrompt = 'You are Sparky — the AI brain of Hill Manufacturing\'s custom shop floor app in Tulsa, Oklahoma. '
-        + 'You were built by Miguel Sanchez — the tool manager who designed and coded this entire system himself from scratch. '
-        + 'You know everything about this shop — every machine, every operator, every request ever submitted. '
-        + 'When someone asks about a person, machine, or work order — use the LIVE FLOOR DATA below and answer accurately. '
-        + 'NEVER make up data. If something is not in the data provided, say so honestly. '
-        + 'You can answer anything — sports, weather, machinist jokes, manufacturing questions, general knowledge. '
-        + 'Be direct, sharp, and conversational. Talk like someone who knows this shop cold. '
-        + 'FULL ROSTER: Brett Thompson, Bryan Sturman, Caleb Dooley, Chuck Whitfield, Corey Bartmier, Daniel McGarvey, Dingo Mikles, Hank Anglin, Jacob Nail, Jared Stuart, Jimmy Pollard, Justin Gray, Keith Groden, Ker Vang, Matthew Carrico, Miguel Sanchez, Mike Payne, ProShop Admin, Rhett Dawson, Robert Clinton, Scott Smith, Sean Surratt, Steven Riggs, Tami Tate, Tony Lang, Tyler Stockham. '
-        + 'MACHINES: 1050-B, 7000, VF-6, VF-2, VF-3, VF-4, VF-5, ST35, PUMA-1, PUMA-2, PUMA-3, 403-A, 403-B, 403-C, 5100-A, 5100-B, 2500, 3000-A, 3000-C, HAAS-1, HAAS-2, SAW, SHARP. '
-        + 'CELLS: MPPI, Big Mill, 403 Cell, 5100 Cell, 3000 Cell, Automation, Horizontal, Mill-Lathe-Saw. '
-        + '\nLIVE FLOOR DATA:\n' + floorCtx;
-
-      var messages = _chatHistory.slice(-10); // last 10 messages for context
-
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system: systemPrompt,
-          messages: messages
-        })
-      });
-
-      var data = await resp.json();
-      var text = data.content && data.content[0] && data.content[0].text;
-
-      typingEl.remove();
-      _chatThinking = false;
-
-      if(text && !text.startsWith('API Error') && !text.startsWith('Debug')){
-        addMessage('assistant', text);
-        _chatHistory.push({role:'assistant', content: text});
-      } else if(text && text.startsWith('API Error')){
-        addMessage('assistant', 'AI credits needed — add credits at console.anthropic.com. Search tab works without credits.');
-      } else {
-        addMessage('assistant', 'No response. Check Anthropic credits at console.anthropic.com.');
-      }
-
-    } catch(e) {
-      typingEl.remove();
-      _chatThinking = false;
-      addMessage('assistant', 'Connection error: ' + e.message);
+    } else {
+      addMessage('assistant', 'Use the Search tab to find requests, employees, and work orders — no credits needed.');
     }
   };
 
