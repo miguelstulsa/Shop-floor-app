@@ -1398,7 +1398,7 @@
 <div class="hs-search-row">
   <input class="hs-search-input" id="hs-input" placeholder="Search name, WO number, machine, notes..." 
     onkeydown="if(event.key==='Enter') hsSearch()"
-    oninput="if(this.value.length===0||this.value.length>=2) hsSearch()">
+    oninput="clearTimeout(window._hsTimer);window._hsTimer=setTimeout(function(){hsSearch();},300)">
   <button class="hs-search-btn" onclick="hsSearch()">SEARCH</button>
 </div>
 
@@ -1440,9 +1440,14 @@ function isToday(ts){
 async function hsLoadData(){
   if(_hsLoaded) return;
   var db = window.fbDb; var mods = window.fbFirestore;
-  if(!db||!mods) return;
+  if(!db||!mods){
+    // Firebase not ready yet — retry after short delay
+    return new Promise(function(resolve){
+      setTimeout(function(){ hsLoadData().then(resolve); }, 800);
+    });
+  }
   try {
-    var snap = await mods.getDocs(mods.query(mods.collection(db,'hillRequests'), mods.orderBy('createdAt','desc')));
+    var snap = await mods.getDocs(mods.query(mods.collection(db,'hillRequests'), mods.orderBy('createdAt','desc'), mods.limit(200)));
     _hsAllData = snap.docs.map(function(d){
       var data = d.data();
       data._id = d.id;
@@ -1467,8 +1472,10 @@ window.hsSearch = function(){
 
   // Load data if not yet loaded
   if(!_hsLoaded){
+    if(_hsLoading) return; // prevent double-load loop
+    window._hsLoading = true;
     results.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⏳</div><div class="hs-empty-text">Loading data...</div></div>';
-    hsLoadData().then(function(){ hsSearch(); });
+    hsLoadData().then(function(){ window._hsLoading=false; hsSearch(); }).catch(function(){ window._hsLoading=false; });
     return;
   }
 
@@ -1614,9 +1621,23 @@ var _hsOrigST = window.switchTab;
 window.switchTab = function(tab){
   if(_hsOrigST) _hsOrigST(tab);
   if(tab === 'aichat'){
+    var pg = document.getElementById('page-aichat');
+    if(pg) pg.style.display = 'flex';
     setTimeout(function(){
-      hsLoadData().then(function(){ hsShowOverview(); });
-    }, 200);
+      if(!_hsLoaded && !window._hsLoading){
+        window._hsLoading = true;
+        hsLoadData().then(function(){
+          window._hsLoading = false;
+          hsShowOverview();
+        }).catch(function(){
+          window._hsLoading = false;
+          var el = document.getElementById('hs-results');
+          if(el) el.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⚠️</div><div class="hs-empty-text">Could not load data. Check your connection.</div></div>';
+        });
+      } else if(_hsLoaded) {
+        hsShowOverview();
+      }
+    }, 300);
   }
 };
 
@@ -11874,8 +11895,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     {title:'Dirt Road Millionaire',  artist:'Nelly',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_d'},
     {title:'Man of Constant Sorrow', artist:'Soggy Bottom Boys',  url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_cs'},
   ];
-  // Load audio data from songs.js
-  var _songsLoaded = false;
+  // Songs load directly from Worker KV — no songs.js needed
+  var _songsLoaded = true;  // KV URLs are already set above
   var _songsLoading = false;
   var _songsCallbacks = [];
 
@@ -11900,18 +11921,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       cbs.forEach(function(fn){fn();});
     }
 
-    // Already in window (loaded by another script tag)
-    if(window.HILL_SONGS){_apply();return;}
-
-    var sc = document.createElement('script');
-    sc.src = 'https://miguelstulsa.github.io/Shop-floor-app/songs.js';
-    sc.onload = function(){ _apply(); };
-    sc.onerror = function(){
-      console.log('songs.js failed to load');
-      _songsCallbacks.forEach(function(fn){fn();});
-      _songsCallbacks=[];
-    };
-    document.head.appendChild(sc);
+    // Songs are loaded from KV — just fire callbacks immediately
+    var cbs = _songsCallbacks.slice();
+    _songsCallbacks = [];
+    cbs.forEach(function(fn){fn();});
   }
 
 
@@ -12199,13 +12212,13 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           messages: [{ role: 'user', content: ctx }]
         })
       });
+      if(!resp.ok){ return report_scripted(); }
       var data = await resp.json();
       var text = data.content && data.content[0] && data.content[0].text;
-      if(text){ _lastAIReport = text; return text; }
+      if(text && text.length > 10 && !text.startsWith('API Error') && !text.startsWith('Debug')){ _lastAIReport = text; return text; }
     } catch(e) {
-      
+      // Worker unavailable — use scripted fallback
     }
-    // Fallback to scripted
     return report_scripted();
   }
 
@@ -12240,18 +12253,19 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           messages: [{ role: 'user', content: ctx }]
         })
       });
+      if(!resp.ok){ return intro_scripted(song); }
       var data = await resp.json();
       var text = data.content && data.content[0] && data.content[0].text;
-      if(text){ _lastAIIntro = text; return text; }
+      if(text && text.length > 10 && !text.startsWith('API Error') && !text.startsWith('Debug')){ _lastAIIntro = text; return text; }
     } catch(e) {
-      
+      // Worker unavailable — use scripted fallback
     }
     return intro_scripted(song);
   }
 
   // Keep scripted versions as fallback
+  // Scripted fallback
   function report_scripted(){
-  function report(){
     var f=flr(),s=sts();
     var out=[];
     _turn=(_turn+1)%7;
@@ -12286,7 +12300,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return out.join(' ');
   }
 
-  }
+
   var _it=0;
   function intro_scripted(song){
     var f=flr(),s=sts(),e=emp();
@@ -12767,11 +12781,13 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       typingEl.remove();
       _chatThinking = false;
 
-      if(text){
+      if(text && !text.startsWith('API Error') && !text.startsWith('Debug')){
         addMessage('assistant', text);
         _chatHistory.push({role:'assistant', content: text});
+      } else if(text && text.startsWith('API Error')){
+        addMessage('assistant', 'AI credits needed — add credits at console.anthropic.com. Search tab works without credits.');
       } else {
-        addMessage('assistant', 'Sorry, I had trouble with that. Try again.');
+        addMessage('assistant', 'No response. Check Anthropic credits at console.anthropic.com.');
       }
 
     } catch(e) {
