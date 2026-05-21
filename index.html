@@ -1527,7 +1527,22 @@ window.hsSearch = function(){
     return;
   }
 
-  // Render results
+  // Check if query matches an employee name
+  var matchedRoster = q ? ROSTER.find(function(n){ return n.toLowerCase().indexOf(q) >= 0; }) : null;
+
+  // For employee searches — pull ALL records for that person from full dataset
+  var empAll = matchedRoster
+    ? _hsAllData.filter(function(r){
+        var nm = (r.name||'').toLowerCase();
+        var at = (r.assignedTo||'').toLowerCase();
+        var ml = matchedRoster.toLowerCase();
+        return nm === ml || nm.indexOf(q) >= 0 || at.indexOf(q) >= 0;
+      })
+    : [];
+
+  // If employee search — override data with full employee records
+  if(matchedRoster && empAll.length > 0) data = empAll;
+
   if(!data.length){
     results.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">🔍</div><div class="hs-empty-text">No results for "' + hsEsc(q) + '"<br><span style="font-size:11px;color:#1e3a5f;">Try a name, machine, or WO number</span></div></div>';
     return;
@@ -1536,33 +1551,159 @@ window.hsSearch = function(){
   var open = data.filter(function(r){ return !r.resolved; }).length;
   var html = '<div class="hs-result-count">' + data.length + ' result' + (data.length!==1?'s':'') + ' · ' + open + ' open</div>';
 
-  // If searching by employee name — show summary card first
-  var matchedRoster = ROSTER.find(function(n){ return q && n.toLowerCase().indexOf(q)>=0; });
-  if(matchedRoster && data.length > 0){
-    var emp = data.filter(function(r){ return (r.name||'').toLowerCase() === matchedRoster.toLowerCase(); });
-    var empOpen = emp.filter(function(r){ return !r.resolved; }).length;
-    var empDone = emp.filter(function(r){ return r.resolved; }).length;
-    var byType = {};
-    emp.forEach(function(r){ byType[r.type] = (byType[r.type]||0)+1; });
-    var machines = [...new Set(emp.map(function(r){ return r.machine; }).filter(Boolean))];
-    html += '<div class="hs-card" style="border-color:#f5c84266;margin-bottom:12px;">'
-      + '<div class="hs-card-top"><span class="hs-card-icon">👤</span><span class="hs-card-title">' + hsEsc(matchedRoster) + '</span><span class="hs-card-type yellow">EMPLOYEE</span></div>'
-      + '<div class="hs-stat-grid">'
-      + '<div class="hs-stat"><div class="hs-stat-val">' + emp.length + '</div><div class="hs-stat-lbl">Total Requests</div></div>'
+  // Employee summary card
+  if(matchedRoster && empAll.length > 0){
+    var empOpen = empAll.filter(function(r){ return !r.resolved; }).length;
+    var empDone = empAll.filter(function(r){ return r.resolved; }).length;
+    var byType = {}; empAll.forEach(function(r){ byType[r.type] = (byType[r.type]||0)+1; });
+    var byWO = {}; empAll.forEach(function(r){ if(r.wo){ byWO[r.wo]=(byWO[r.wo]||0)+1; } });
+    var topWOs = Object.entries(byWO).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    var machines = empAll.map(function(r){return r.machine;}).filter(Boolean);
+    var uniqueMachines = machines.filter(function(v,i,a){return a.indexOf(v)===i;});
+    // Repeat requests — same type on same machine
+    var repeatKey = {}; empAll.forEach(function(r){ var k=(r.machine||'')+'|'+(r.type||''); repeatKey[k]=(repeatKey[k]||0)+1; });
+    var repeats = Object.entries(repeatKey).filter(function(e){return e[1]>1;}).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
+
+    html += '<div class="hs-card" style="border-color:#f5c84255;margin-bottom:14px;">'
+      + '<div class="hs-card-top"><span class="hs-card-icon">👤</span><span class="hs-card-title">' + hsEsc(matchedRoster) + '</span><span class="hs-card-type yellow">EMPLOYEE PROFILE</span></div>'
+      + '<div class="hs-stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px;">'
+      + '<div class="hs-stat"><div class="hs-stat-val">' + empAll.length + '</div><div class="hs-stat-lbl">Total Requests</div></div>'
       + '<div class="hs-stat"><div class="hs-stat-val" style="color:#22c55e;">' + empDone + '</div><div class="hs-stat-lbl">Completed</div></div>'
       + '<div class="hs-stat"><div class="hs-stat-val" style="color:#ef4444;">' + empOpen + '</div><div class="hs-stat-lbl">Open</div></div>'
       + '</div>'
       + '<div class="hs-card-body">'
-      + (byType.blue ? '<span class="hs-tag">🔵 ' + byType.blue + ' Pending WO</span>' : '')
+      + '<div style="margin-bottom:6px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">BY TYPE</strong><br>'
+      + (byType.blue   ? '<span class="hs-tag">🔵 ' + byType.blue   + ' Pending WO</span>' : '')
       + (byType.yellow ? '<span class="hs-tag">🟡 ' + byType.yellow + ' Machinist Req</span>' : '')
-      + (byType.red ? '<span class="hs-tag">🔴 ' + byType.red + ' Inspections</span>' : '')
-      + (byType.green ? '<span class="hs-tag">🟢 ' + byType.green + ' Running WO</span>' : '')
-      + (machines.length ? '<br><span style="font-size:11px;color:#475569;margin-top:4px;display:block;">Machines: ' + machines.join(', ') + '</span>' : '')
+      + (byType.orange ? '<span class="hs-tag">🟠 ' + byType.orange + ' Floor Support</span>' : '')
+      + (byType.red    ? '<span class="hs-tag">🔴 ' + byType.red    + ' Inspections</span>' : '')
+      + (byType.green  ? '<span class="hs-tag">🟢 ' + byType.green  + ' Running WO</span>' : '')
+      + '</div>'
+      + (topWOs.length ? '<div style="margin-bottom:6px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">TOP WORK ORDERS</strong><br>'
+        + topWOs.map(function(w){ return '<span class="hs-tag">WO ' + hsEsc(w[0]) + ' (' + w[1] + 'x)</span>'; }).join('')
+        + '</div>' : '')
+      + (repeats.length ? '<div style="margin-bottom:6px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">REPEAT REQUESTS</strong><br>'
+        + repeats.map(function(r){ var parts=r[0].split('|'); return '<span class="hs-tag" style="border-color:#ef444466;color:#f87171;">' + (parts[0]||'?') + ' · ' + (TYPE_LABELS[parts[1]]||parts[1]) + ' · ' + r[1] + 'x</span>'; }).join('')
+        + '</div>' : '')
+      + (uniqueMachines.length ? '<div><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">MACHINES USED</strong><br><span style="font-size:11px;color:#475569;">' + uniqueMachines.join(', ') + '</span></div>' : '')
       + '</div></div>';
   }
 
+  // ── REQUEST TYPE SUMMARY CARD ──
+  // Fires when user searches a type name OR clicks a filter pill
+  var typeKeywords = {
+    blue:   ['pending','pending wo','pending work order'],
+    yellow: ['machinist','machinist req','machinist request'],
+    red:    ['inspection','inspect','inspection request'],
+    orange: ['floor support','floor','support','floor support request'],
+  };
+  var matchedType = null;
+  if(q){
+    Object.keys(typeKeywords).forEach(function(type){
+      typeKeywords[type].forEach(function(kw){
+        if(q === kw || q.indexOf(kw) >= 0 || kw.indexOf(q) >= 0) matchedType = type;
+      });
+    });
+  }
+  if(!matchedType && _hsFilter !== 'all' && _hsFilter !== 'open' && _hsFilter !== 'today' &&
+     _hsFilter !== 'wo' && _hsFilter !== 'machine' && _hsFilter !== 'employee' && _hsFilter !== 'requests'){
+    matchedType = _hsFilter;
+  }
+
+  if(matchedType){
+    var typeAll = _hsAllData.filter(function(r){ return r.type === matchedType; });
+    var typeOpen = typeAll.filter(function(r){ return !r.resolved; }).length;
+    var typeDone = typeAll.filter(function(r){ return r.resolved; }).length;
+    var typeToday = typeAll.filter(function(r){ return isToday(r.createdAt); }).length;
+    // By machine
+    var tByMachine = {}; typeAll.forEach(function(r){ if(r.machine) tByMachine[r.machine]=(tByMachine[r.machine]||0)+1; });
+    var topTypeMachines = Object.entries(tByMachine).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+    // By operator
+    var tByOp = {}; typeAll.forEach(function(r){ if(r.name) tByOp[r.name]=(tByOp[r.name]||0)+1; });
+    var topTypeOps = Object.entries(tByOp).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    // By WO
+    var tByWO = {}; typeAll.forEach(function(r){ if(r.wo) tByWO[r.wo]=(tByWO[r.wo]||0)+1; });
+    var topTypeWOs = Object.entries(tByWO).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    // Common notes/reasons
+    var tByNote = {}; typeAll.forEach(function(r){ var n=(r.notes||r.detail||'').trim().slice(0,60); if(n) tByNote[n]=(tByNote[n]||0)+1; });
+    var topNotes = Object.entries(tByNote).sort(function(a,b){return b[1]-a[1];}).filter(function(e){return e[1]>1;}).slice(0,4);
+    var typeLabels = {blue:'🔵 Pending WO',yellow:'🟡 Machinist Requests',red:'🔴 Inspections',orange:'🟠 Floor Support'};
+    var typeColors = {blue:'blue',yellow:'yellow',red:'red',orange:'yellow'};
+
+    html += '<div class="hs-card" style="border-color:#f5c84255;margin-bottom:14px;">'
+      + '<div class="hs-card-top"><span class="hs-card-icon">' + (TYPE_ICONS[matchedType]||'📋') + '</span>'
+      + '<span class="hs-card-title">' + (typeLabels[matchedType]||'Requests') + '</span>'
+      + '<span class="hs-card-type ' + typeColors[matchedType] + '">ALL TIME SUMMARY</span></div>'
+      + '<div class="hs-stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px;">'
+      + '<div class="hs-stat"><div class="hs-stat-val">' + typeAll.length + '</div><div class="hs-stat-lbl">Total</div></div>'
+      + '<div class="hs-stat"><div class="hs-stat-val" style="color:#22c55e;">' + typeDone + '</div><div class="hs-stat-lbl">Completed</div></div>'
+      + '<div class="hs-stat"><div class="hs-stat-val" style="color:#ef4444;">' + typeOpen + '</div><div class="hs-stat-lbl">Open</div></div>'
+      + '<div class="hs-stat"><div class="hs-stat-val" style="color:#f59e0b;">' + typeToday + '</div><div class="hs-stat-lbl">Today</div></div>'
+      + '</div>'
+      + '<div class="hs-card-body">'
+      + (topTypeMachines.length ? '<div style="margin-bottom:8px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">TOP MACHINES</strong><br>'
+        + topTypeMachines.map(function(m){ return '<span class="hs-tag">' + hsEsc(m[0]) + ' · ' + m[1] + 'x</span>'; }).join('') + '</div>' : '')
+      + (topTypeOps.length ? '<div style="margin-bottom:8px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">TOP REQUESTORS</strong><br>'
+        + topTypeOps.map(function(o){ return '<span class="hs-tag">' + hsEsc(o[0]) + ' · ' + o[1] + '</span>'; }).join('') + '</div>' : '')
+      + (topTypeWOs.length ? '<div style="margin-bottom:8px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">TOP WORK ORDERS</strong><br>'
+        + topTypeWOs.map(function(w){ return '<span class="hs-tag">WO ' + hsEsc(w[0]) + ' · ' + w[1] + 'x</span>'; }).join('') + '</div>' : '')
+      + (topNotes.length ? '<div><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">COMMON REASONS</strong><br>'
+        + topNotes.map(function(n){ return '<span class="hs-tag">' + hsEsc(n[0]) + ' · ' + n[1] + 'x</span>'; }).join('') + '</div>' : '')
+      + '</div></div>';
+  }
+
+  // WO Summary card — when searching a work order number
+  var isWOSearch = q && /^\d{2}-\d{3,}/.test(q);
+  if(isWOSearch){
+    var woAll = _hsAllData.filter(function(r){
+      return (r.wo||'').toLowerCase().indexOf(q) >= 0
+          || (r.notes||'').toLowerCase().indexOf(q) >= 0;
+    });
+    if(woAll.length > 0){
+      var woOpen = woAll.filter(function(r){ return !r.resolved; }).length;
+      var woDone = woAll.filter(function(r){ return r.resolved; }).length;
+      var woByType = {}; woAll.forEach(function(r){ woByType[r.type]=(woByType[r.type]||0)+1; });
+      var woByMachine = {}; woAll.forEach(function(r){ if(r.machine) woByMachine[r.machine]=(woByMachine[r.machine]||0)+1; });
+      var woByOp = {}; woAll.forEach(function(r){ if(r.name) woByOp[r.name]=(woByOp[r.name]||0)+1; });
+      var topMachines = Object.entries(woByMachine).sort(function(a,b){return b[1]-a[1];});
+      var topOps = Object.entries(woByOp).sort(function(a,b){return b[1]-a[1];});
+      var ops = woAll.filter(function(r){return r.op;}).map(function(r){return r.op;});
+      var uniqueOps = ops.filter(function(v,i,a){return a.indexOf(v)===i;});
+      // Repeat issues — same type more than once
+      var repeatKey = {}; woAll.forEach(function(r){ var k=(r.machine||'')+'|'+(r.type||''); repeatKey[k]=(repeatKey[k]||0)+1; });
+      var repeats = Object.entries(repeatKey).filter(function(e){return e[1]>1;}).sort(function(a,b){return b[1]-a[1];}).slice(0,3);
+      var firstTs = woAll.length ? hsTs(woAll[woAll.length-1].createdAt) : '';
+      var lastTs  = woAll.length ? hsTs(woAll[0].createdAt) : '';
+
+      html += '<div class="hs-card" style="border-color:#3b82f655;margin-bottom:14px;">'
+        + '<div class="hs-card-top"><span class="hs-card-icon">🔧</span><span class="hs-card-title">WO ' + hsEsc(q.toUpperCase()) + '</span><span class="hs-card-type blue">WORK ORDER</span></div>'
+        + '<div class="hs-stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:10px;">'
+        + '<div class="hs-stat"><div class="hs-stat-val">' + woAll.length + '</div><div class="hs-stat-lbl">Total Requests</div></div>'
+        + '<div class="hs-stat"><div class="hs-stat-val" style="color:#22c55e;">' + woDone + '</div><div class="hs-stat-lbl">Completed</div></div>'
+        + '<div class="hs-stat"><div class="hs-stat-val" style="color:#ef4444;">' + woOpen + '</div><div class="hs-stat-lbl">Open</div></div>'
+        + '</div>'
+        + '<div class="hs-card-body">'
+        + '<div style="margin-bottom:6px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">BY TYPE</strong><br>'
+        + (woByType.blue   ? '<span class="hs-tag">🔵 ' + woByType.blue   + ' Pending WO</span>' : '')
+        + (woByType.yellow ? '<span class="hs-tag">🟡 ' + woByType.yellow + ' Machinist Req</span>' : '')
+        + (woByType.orange ? '<span class="hs-tag">🟠 ' + woByType.orange + ' Floor Support</span>' : '')
+        + (woByType.red    ? '<span class="hs-tag">🔴 ' + woByType.red    + ' Inspections</span>' : '')
+        + '</div>'
+        + (uniqueOps.length ? '<div style="margin-bottom:6px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">OPERATIONS</strong><br>'
+          + uniqueOps.map(function(o){ return '<span class="hs-tag">OP ' + hsEsc(o) + '</span>'; }).join('') + '</div>' : '')
+        + (topMachines.length ? '<div style="margin-bottom:6px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">MACHINES</strong><br>'
+          + topMachines.map(function(m){ return '<span class="hs-tag">' + hsEsc(m[0]) + ' (' + m[1] + 'x)</span>'; }).join('') + '</div>' : '')
+        + (topOps.length ? '<div style="margin-bottom:6px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">OPERATORS</strong><br>'
+          + topOps.map(function(o){ return '<span class="hs-tag">' + hsEsc(o[0]) + ' · ' + o[1] + ' req</span>'; }).join('') + '</div>' : '')
+        + (repeats.length ? '<div style="margin-bottom:6px;"><strong style="font-size:10px;letter-spacing:1px;color:#64748b;">REPEAT ISSUES</strong><br>'
+          + repeats.map(function(r){ var parts=r[0].split('|'); return '<span class="hs-tag" style="border-color:#ef444466;color:#f87171;">' + (parts[0]||'?') + ' · ' + (TYPE_LABELS[parts[1]]||parts[1]) + ' · ' + r[1] + 'x</span>'; }).join('') + '</div>' : '')
+        + '<div style="font-size:10px;color:#334155;margin-top:4px;">First: ' + firstTs + ' &nbsp;·&nbsp; Last: ' + lastTs + '</div>'
+        + '</div></div>';
+    }
+  }
+
   // Render each request card
-  data.slice(0,100).forEach(function(r){
+  data.forEach(function(r){
     var icon  = TYPE_ICONS[r.type]  || '📋';
     var label = TYPE_LABELS[r.type] || r.type || 'Request';
     var ts    = hsTs(r.createdAt);
