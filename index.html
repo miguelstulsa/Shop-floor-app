@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Hill Manufacturing — Shop Floor v71</title>
+<title>Hill Manufacturing — Shop Floor v72</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1417,6 +1417,7 @@
 var _hsFilter = 'all';
 var _hsAllData = [];
 var _hsLoaded = false;
+var _hsLoading = false;
 
 var ROSTER = ['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Ker Vang','Matthew Carrico','Miguel Sanchez','Mike Payne','ProShop Admin','Rhett Dawson','Robert Clinton','Scott Smith','Sean Surratt','Steven Riggs','Tami Tate','Tony Lang','Tyler Stockham'];
 var MACHINES = ['1050-B','7000','VF-6','VF-2','VF-3','VF-4','VF-5','ST35','PUMA-1','PUMA-2','PUMA-3','403-A','403-B','403-C','5100-A','5100-B','2500','3000-A','3000-C','HAAS-1','HAAS-2','SAW','SHARP'];
@@ -1473,9 +1474,12 @@ window.hsSearch = function(){
   // Load data if not yet loaded
   if(!_hsLoaded){
     if(_hsLoading) return; // prevent double-load loop
-    window._hsLoading = true;
+    _hsLoading = true;
     results.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⏳</div><div class="hs-empty-text">Loading data...</div></div>';
-    hsLoadData().then(function(){ window._hsLoading=false; hsSearch(); }).catch(function(){ window._hsLoading=false; });
+    hsLoadData().then(function(){ _hsLoading=false; hsSearch(); }).catch(function(e){
+      _hsLoading=false;
+      results.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⚠️</div><div class="hs-empty-text">Could not load data — check connection.<br><span style="font-size:11px;color:#1e3a5f;">' + (e&&e.message||'') + '</span></div></div>';
+    });
     return;
   }
 
@@ -1624,15 +1628,15 @@ window.switchTab = function(tab){
     var pg = document.getElementById('page-aichat');
     if(pg) pg.style.display = 'flex';
     setTimeout(function(){
-      if(!_hsLoaded && !window._hsLoading){
-        window._hsLoading = true;
+      if(!_hsLoaded && !_hsLoading){
+        _hsLoading = true;
         hsLoadData().then(function(){
-          window._hsLoading = false;
+          _hsLoading = false;
           hsShowOverview();
-        }).catch(function(){
-          window._hsLoading = false;
+        }).catch(function(e){
+          _hsLoading = false;
           var el = document.getElementById('hs-results');
-          if(el) el.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⚠️</div><div class="hs-empty-text">Could not load data. Check your connection.</div></div>';
+          if(el) el.innerHTML = '<div class="hs-empty"><div class="hs-empty-icon">⚠️</div><div class="hs-empty-text">Could not load data. Check your connection.<br><span style="font-size:11px;color:#1e3a5f;">'+(e&&e.message||'')+'</span></div></div>';
         });
       } else if(_hsLoaded) {
         hsShowOverview();
@@ -1643,7 +1647,12 @@ window.switchTab = function(tab){
 
 // Also load on DOMContentLoaded if already on tab
 document.addEventListener('DOMContentLoaded', function(){
-  setTimeout(function(){ hsLoadData(); }, 2000);
+  setTimeout(function(){
+    if(!_hsLoaded && !_hsLoading){
+      _hsLoading = true;
+      hsLoadData().then(function(){ _hsLoading = false; }).catch(function(){ _hsLoading = false; });
+    }
+  }, 2000);
 });
 
 })();
