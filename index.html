@@ -1417,6 +1417,7 @@
 var _hsFilter = 'all';
 var _hsAllData = [];
 var _hsLoaded = false;
+var _hsLoading = false;
 
 var ROSTER = ['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Ker Vang','Matthew Carrico','Miguel Sanchez','Mike Payne','ProShop Admin','Rhett Dawson','Robert Clinton','Scott Smith','Sean Surratt','Steven Riggs','Tami Tate','Tony Lang','Tyler Stockham'];
 var MACHINES = ['1050-B','7000','VF-6','VF-2','VF-3','VF-4','VF-5','ST35','PUMA-1','PUMA-2','PUMA-3','403-A','403-B','403-C','5100-A','5100-B','2500','3000-A','3000-C','HAAS-1','HAAS-2','SAW','SHARP'];
@@ -1504,16 +1505,17 @@ window.hsSearch = function(){
     });
   }
 
-  // Text search
-  if(q && _hsFilter !== 'employee'){
+  // Text search — fuzzy across all fields
+  if(q){
+    var terms = q.toLowerCase().split(' ').filter(function(t){ return t.length > 0; });
     data = data.filter(function(r){
       var haystack = [
         r.name, r.machine, r.wo, r.notes, r.detail,
         r.type, TYPE_LABELS[r.type], r.resolvedBy,
-        r.resolvedNote, r.cell
+        r.resolvedNote, r.cell, r.op, r.assignedTo
       ].join(' ').toLowerCase();
-      // Also check if q matches a machine name
-      return haystack.indexOf(q) >= 0;
+      // ALL terms must match (so "jimmy pollard" matches both words)
+      return terms.every(function(term){ return haystack.indexOf(term) >= 0; });
     });
   }
 
@@ -1558,11 +1560,11 @@ window.hsSearch = function(){
   }
 
   // Render each request card
-  data.slice(0,50).forEach(function(r){
+  data.slice(0,100).forEach(function(r){
     var icon  = TYPE_ICONS[r.type]  || '📋';
     var label = TYPE_LABELS[r.type] || r.type || 'Request';
     var ts    = hsTs(r.createdAt);
-    var statusColor = r.resolved ? 'green' : (r.type||'blue');
+    var statusColor = r.resolved ? 'green' : (r.type==='orange'?'yellow':r.type||'blue');
     html += '<div class="hs-card">'
       + '<div class="hs-card-top">'
       + '<span class="hs-card-icon">' + icon + '</span>'
@@ -1570,16 +1572,20 @@ window.hsSearch = function(){
       + '<span class="hs-card-type ' + statusColor + '">' + (r.resolved ? '✓ DONE' : label) + '</span>'
       + '</div>'
       + '<div class="hs-card-body">'
-      + '<strong>👤</strong> ' + hsEsc(r.name||'—') + ' &nbsp;'
-      + (r.wo ? '<strong>WO</strong> ' + hsEsc(r.wo) + ' &nbsp;' : '')
-      + (r.notes||r.detail ? '<br>' + hsEsc((r.notes||r.detail||'').slice(0,120)) : '')
-      + (r.resolved && r.resolvedBy ? '<br><strong>Resolved by:</strong> ' + hsEsc(r.resolvedBy) + (r.resolvedNote ? ' — ' + hsEsc(r.resolvedNote.slice(0,80)) : '') : '')
+      + '<strong>👤</strong> ' + hsEsc(r.name||'—')
+      + (r.wo ? ' &nbsp;<strong>WO</strong> ' + hsEsc(r.wo) : '')
+      + (r.op ? ' &nbsp;<strong>OP</strong> ' + hsEsc(r.op) : '')
+      + (r.cell ? ' &nbsp;<span class="hs-tag">' + hsEsc(r.cell) + '</span>' : '')
+      + (r.assignedTo ? ' &nbsp;<strong>→</strong> ' + hsEsc(r.assignedTo) : '')
+      + ((r.notes||r.detail) ? '<br><span style="color:#94a3b8;">' + hsEsc((r.notes||r.detail||'').slice(0,150)) + '</span>' : '')
+      + (r.resolved && r.resolvedBy ? '<br><strong style="color:#22c55e;">✓ Resolved by:</strong> ' + hsEsc(r.resolvedBy) + (r.resolvedNote ? ' — ' + hsEsc(r.resolvedNote.slice(0,100)) : '') : '')
+      + (r.setupTime ? '<br><span style="font-size:10px;color:#475569;">⏱ ' + hsEsc(r.setupTime) + '</span>' : '')
       + '</div>'
       + '<div class="hs-card-ts">' + ts + '</div>'
       + '</div>';
   });
 
-  if(data.length > 50) html += '<div style="font-size:11px;color:#334155;text-align:center;padding:10px;">Showing first 50 of ' + data.length + ' results. Refine your search.</div>';
+  if(data.length > 100) html += '<div style="font-size:11px;color:#334155;text-align:center;padding:10px;">Showing first 100 of ' + data.length + ' results. Refine your search.</div>';
   results.innerHTML = html;
 };
 
