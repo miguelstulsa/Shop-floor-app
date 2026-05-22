@@ -884,6 +884,7 @@
       <label class="auth-remember"><input type="checkbox" id="rememberMe" checked><span>Remember me on this device</span></label>
       <div class="auth-msg" id="loginMsg"></div>
       <button class="auth-btn" onclick="doLogin()">SIGN IN</button>
+      <button class="auth-btn" onclick="doDemoLogin()" style="background:linear-gradient(135deg,#7c3aed,#5b21b6);margin-top:8px;letter-spacing:2px;">🎬 TRY DEMO</button>
     </div>
     <div class="auth-panel" id="panelSignup">
       <div class="auth-field"><label>Full Name</label><input type="text" id="signupName" placeholder="e.g. Miguel Sanchez" maxlength="40"></div>
@@ -1443,10 +1444,16 @@ function isToday(ts){
 // Load all requests from Firebase
 async function hsLoadData(){
   if(_hsLoaded) return;
+  // Guest mode — use baked-in demo data
+  if(window._guestMode && window._hsGuestData){
+    _hsAllData = window._hsGuestData;
+    _hsLoaded = true;
+    console.log('HS guest mode:', _hsAllData.length, 'demo records');
+    return;
+  }
   var db   = window.fbDb   || window._db;
   var mods = window._fbModules || window.fbFirestore;
   if(!db || !mods || !mods.getDocs){
-    // Firebase not ready yet — retry
     return new Promise(function(resolve){
       setTimeout(function(){ hsLoadData().then(resolve); }, 600);
     });
@@ -2142,7 +2149,13 @@ document.addEventListener('DOMContentLoaded', function(){
   const storage = getStorage(app);
   window.fbStorage = storage;
   window.fbStorageModules = { ref, uploadBytes, getDownloadURL, listAll, deleteObject };
-  window.fbFirestore = { collection, doc, setDoc, deleteDoc, getDoc, onSnapshot, query, where, getDocs, addDoc, serverTimestamp };
+  // Wrap addDoc/setDoc/updateDoc/deleteDoc to block guest writes
+  var _realAddDoc = addDoc, _realSetDoc = setDoc, _realUpdateDoc = updateDoc, _realDeleteDoc = deleteDoc;
+  var _safeAddDoc = function(col){ if(window._guestMode){ console.log('Guest: addDoc blocked'); return Promise.resolve({id:'demo-'+Date.now()}); } return _realAddDoc.apply(this,arguments); };
+  var _safeSetDoc = function(){ if(window._guestMode){ console.log('Guest: setDoc blocked'); return Promise.resolve(); } return _realSetDoc.apply(this,arguments); };
+  var _safeUpdateDoc = function(){ if(window._guestMode){ console.log('Guest: updateDoc blocked'); return Promise.resolve(); } return _realUpdateDoc.apply(this,arguments); };
+  var _safeDeleteDoc = function(){ if(window._guestMode){ console.log('Guest: deleteDoc blocked'); return Promise.resolve(); } return _realDeleteDoc.apply(this,arguments); };
+  window.fbFirestore = { collection, doc, setDoc:_safeSetDoc, deleteDoc:_safeDeleteDoc, getDoc, onSnapshot, query, where, getDocs, addDoc:_safeAddDoc, serverTimestamp };
   window._db = db;
   window._fbModules = { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, serverTimestamp, updateDoc, arrayUnion, increment, getDoc, where, getDocs, setDoc, limit, limitToLast };
 
@@ -2986,6 +2999,29 @@ document.addEventListener('DOMContentLoaded', function(){
   window.fbUpdateUserStatus = async function(id, status) { await updateDoc(doc(db, 'hillUsers', id), { status }); };
   window.fbDeleteUser = async function(id) { await deleteDoc(doc(db, 'hillUsers', id)); };
 
+  // ── GUEST DEMO DATA ──
+  function _buildGuestData(){
+    var now = new Date();
+    function daysAgo(n){ var d=new Date(now); d.setDate(d.getDate()-n); return {seconds:Math.floor(d.getTime()/1000)}; }
+    return [
+      {_id:'d1',_type:'request',type:'yellow',machine:'PUMA-2',cell:'MPPI',name:'Jake Martinez',wo:'26-0288',op:'60',notes:'Need a 1/2 inch end mill — running low',resolved:false,createdAt:daysAgo(0)},
+      {_id:'d2',_type:'request',type:'red',machine:'403-B',cell:'403 Cell',name:'Carlos Rivera',wo:'26-0312',op:'20',notes:'First article ready for inspection',resolved:true,resolvedBy:'Miguel Sanchez',createdAt:daysAgo(0)},
+      {_id:'d3',_type:'request',type:'blue',machine:'VF-3',cell:'MPPI',name:'Jake Martinez',wo:'26-0301',op:'10',notes:'Pending WO queued for setup',resolved:false,createdAt:daysAgo(1)},
+      {_id:'d4',_type:'request',type:'orange',machine:'5100-B',cell:'5100 Cell',name:'Tony Reyes',wo:'26-0299',op:'40',notes:'Machine down — need immediate help',resolved:true,resolvedBy:'Miguel Sanchez',createdAt:daysAgo(1)},
+      {_id:'d5',_type:'request',type:'yellow',machine:'PUMA-2',cell:'MPPI',name:'Jake Martinez',wo:'26-0288',op:'60',notes:'Need insert replacement — CNMG 432',resolved:true,resolvedBy:'Miguel Sanchez',createdAt:daysAgo(2)},
+      {_id:'d6',_type:'request',type:'red',machine:'VF-6',cell:'Big Mill',name:'Carlos Rivera',wo:'26-0275',op:'30',notes:'In-process check required',resolved:true,resolvedBy:'Quality',createdAt:daysAgo(2)},
+      {_id:'d7',_type:'request',type:'yellow',machine:'ST35',cell:'MPPI',name:'Maria Lopez',wo:'26-0315',op:'10',notes:'Need fixture for OP 10 setup',resolved:false,createdAt:daysAgo(3)},
+      {_id:'d8',_type:'request',type:'blue',machine:'403-A',cell:'403 Cell',name:'Carlos Rivera',wo:'26-0290',op:'50',notes:'Pending WO ready to run',resolved:true,resolvedBy:'Miguel Sanchez',createdAt:daysAgo(3)},
+      {_id:'d9',_type:'request',type:'yellow',machine:'PUMA-2',cell:'MPPI',name:'Jake Martinez',wo:'26-0288',op:'60',notes:'Return tooling — job complete',resolved:true,resolvedBy:'Miguel Sanchez',createdAt:daysAgo(4)},
+      {_id:'d10',_type:'request',type:'red',machine:'403-B',cell:'403 Cell',name:'Tony Reyes',wo:'26-0312',op:'20',notes:'Final inspection — ready to ship',resolved:true,resolvedBy:'Quality',createdAt:daysAgo(4)},
+      {_id:'d11',_type:'request',type:'orange',machine:'7000',cell:'Big Mill',name:'Maria Lopez',wo:'26-0301',op:'10',notes:'Coolant issue — need refill',resolved:false,createdAt:daysAgo(5)},
+      {_id:'d12',_type:'request',type:'yellow',machine:'VF-3',cell:'MPPI',name:'Jake Martinez',wo:'26-0301',op:'10',notes:'Program issue — need programmer to verify offset',resolved:true,resolvedBy:'Miguel Sanchez',createdAt:daysAgo(5)},
+      {_id:'d13',_type:'request',type:'blue',machine:'PUMA-3',cell:'MPPI',name:'Maria Lopez',wo:'26-0318',op:'20',notes:'Pending WO — Arrowhead Winch parts',resolved:false,createdAt:daysAgo(6)},
+      {_id:'d14',_type:'request',type:'red',machine:'VF-6',cell:'Big Mill',name:'Carlos Rivera',wo:'26-0275',op:'30',notes:'Questionable part — needs QC review',resolved:false,createdAt:daysAgo(6)},
+      {_id:'d15',_type:'request',type:'yellow',machine:'5100-B',cell:'5100 Cell',name:'Tony Reyes',wo:'26-0299',op:'40',notes:'Need measuring equipment — micrometer',resolved:true,resolvedBy:'Miguel Sanchez',createdAt:daysAgo(7)},
+    ];
+  }
+
   document.getElementById('statusDot').style.background = '#22c55e';
   document.getElementById('statusLabel').textContent = 'LIVE';
   if (Notification.permission !== 'granted') document.getElementById('notifBanner').style.display = 'flex';
@@ -3471,6 +3507,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   function sendPushover(type, cell, machine, wo, detail, operator, op) {
+    if(window._guestMode){ console.log('Guest: Pushover blocked'); return; }
     // Route through Worker /alert endpoint — handles device targeting + shift hours
     fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/alert', {
       method: 'POST',
@@ -3801,6 +3838,15 @@ document.addEventListener('DOMContentLoaded', function(){
   window.showAuthTab = showAuthTab;
   function setMsg(id, msg, type) { const el = document.getElementById(id); el.textContent = msg; el.className = 'auth-msg ' + type; }
 
+  function doDemoLogin() {
+    var inputs = document.querySelectorAll('.auth-input');
+    inputs.forEach(function(inp){
+      if(inp.type === 'password') inp.value = 'hill2026';
+      else inp.value = 'demo';
+    });
+    doLogin();
+  }
+
   async function doLogin() {
     const username = document.getElementById('loginUser').value.trim().toLowerCase();
     const password = document.getElementById('loginPass').value;
@@ -3857,7 +3903,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     // Show role badge next to name
     const greetingName = document.getElementById('greetingName');
-    const roleMap = { admin: '👑', manager: '💼', machinist: '🔧' };
+    const roleMap = { admin: '👑', manager: '💼', machinist: '🔧', guest: '🎬' };
     const roleEmoji = roleMap[user.role] || '🔧';
     greetingName.innerHTML = roleEmoji + ' <strong>' + escHtml(user.name) + '</strong>';
 
@@ -3904,6 +3950,26 @@ document.addEventListener('DOMContentLoaded', function(){
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
       // tab-mgmt, tab-proshop, tab-planner, tab-datanomix, tab-shoptv — demo only
+    } else if (user.role === 'guest') {
+      // ── GUEST / DEMO MODE ──
+      window._isGuest = true;
+      window._isAdmin = false;
+      // Show tabs visible to guest
+      var aiTab = document.getElementById('tab-aichat');
+      if (aiTab) aiTab.style.display = 'flex';
+      // Inject guest banner
+      var banner = document.createElement('div');
+      banner.id = 'guest-banner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;text-align:center;padding:6px 16px;font-family:Bebas Neue,sans-serif;font-size:14px;letter-spacing:2px;';
+      banner.innerHTML = '🎬 DEMO MODE — Hill Manufacturing Shop Floor App &nbsp;·&nbsp; <span style="font-size:11px;font-family:Barlow,sans-serif;letter-spacing:1px;opacity:.8;">You are viewing a live demo. No real data will be modified.</span>';
+      document.body.prepend(banner);
+      // Offset the app content so banner doesn't cover it
+      var appWrap = document.getElementById('app') || document.querySelector('.app-wrapper');
+      // Inject demo data into search
+      window._hsGuestData = _buildGuestData();
+      // Block Firebase writes for guest
+      window._guestMode = true;
+      // Show the shop floor tab
     } else {
       // machinist — check legacy isManager flag as fallback
       if (window.checkManagerAccess) {
