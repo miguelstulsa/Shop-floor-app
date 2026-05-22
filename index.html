@@ -2859,11 +2859,13 @@ document.addEventListener('DOMContentLoaded', function(){
         const btn = document.createElement('button');
         btn.textContent = '🟢 READY';
         btn.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:4px 8px;border-radius:12px;border:none;background:#22c55e;color:#0f2338;cursor:pointer;";
+        if(window._guestMode) { btn.style.display='none'; }
         btn.onclick = function() { window.changeNoteType(n.id, 'green'); };
         actionsEl.appendChild(btn);
       } else if (n.type === 'green') {
         // COMPLETE JOB button — marks running WO as complete and removes from floor
         const btn = document.createElement('button');
+        if(window._guestMode) { btn.style.display='none'; }
         btn.textContent = '✅ COMPLETE JOB';
         btn.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:5px 10px;border-radius:12px;border:2px solid #22c55e;background:rgba(34,197,94,0.15);color:#22c55e;cursor:pointer;letter-spacing:1px;";
         btn.onclick = async function() {
@@ -2894,6 +2896,7 @@ document.addEventListener('DOMContentLoaded', function(){
         actionsEl.appendChild(btn);
       } else if (n.type === 'yellow') {
         const btn = document.createElement('button');
+        if(window._guestMode) { btn.style.display='none'; }
         btn.textContent = '🔴 INSPECT';
         btn.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:4px 8px;border-radius:12px;border:none;background:#ef4444;color:#fff;cursor:pointer;";
         btn.onclick = function() { window.changeNoteType(n.id, 'red'); };
@@ -2901,6 +2904,7 @@ document.addEventListener('DOMContentLoaded', function(){
       }
       const removeBtn = document.createElement('button');
       removeBtn.className = 'existing-note-remove';
+      if(window._guestMode) { removeBtn.style.display='none'; }
       removeBtn.textContent = '✕';
       removeBtn.setAttribute('data-id', n.id);
       removeBtn.setAttribute('type', 'button');
