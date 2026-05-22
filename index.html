@@ -221,6 +221,17 @@
   .dash-req-card.resolved { opacity:0.4; }
   .req-timer-btn { border:none;border-radius:6px;padding:5px 12px;font-family:"Bebas Neue",sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all .15s; }
   .req-start-btn  { background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.4); }
+  /* Guest/demo mode — hide all action buttons */
+  body.guest-mode .req-start-btn,
+  body.guest-mode .req-finish-btn,
+  body.guest-mode .req-timer-btn,
+  body.guest-mode .dash-resolve-btn,
+  body.guest-mode .notif-close,
+  body.guest-mode [onclick*="finishRequest"],
+  body.guest-mode [onclick*="startRequest"],
+  body.guest-mode [onclick*="resolveNote"],
+  body.guest-mode .note-del-btn,
+  body.guest-mode #submitNoteBtn { display:none !important; }
   .req-start-btn:hover  { background:rgba(34,197,94,0.3); }
   .req-finish-btn { background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.4); }
   .req-finish-btn:hover { background:rgba(59,130,246,0.3); }
@@ -2039,9 +2050,10 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
       <textarea id="noteText" rows="3" placeholder="Additional details..."></textarea>
     </div>
+    <div id="guest-modal-notice" style="display:none;background:rgba(124,58,237,.15);border:1px solid #7c3aed55;border-radius:8px;padding:8px 14px;font-size:12px;color:#a78bfa;margin-bottom:8px;text-align:center;width:100%;">🎬 Demo Mode — view only</div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-submit" onclick="submitNote()">Submit</button>
+      <button class="btn btn-submit" id="submitNoteBtn" onclick="submitNote()">Submit</button>
     </div>
     <div class="existing-notes" id="existingNotes"></div>
   </div>
@@ -3395,7 +3407,25 @@ document.addEventListener('DOMContentLoaded', function(){
   const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
 
   function openModal(machine, cell) {
-    if(window._guestMode){ showToast('yellow','🎬 Demo Mode','Requests are view-only in demo.'); return; }
+    // In guest mode — open modal as read-only, hide submit
+    var guestNotice = document.getElementById('guest-modal-notice');
+    var submitBtn   = document.getElementById('submitNoteBtn');
+    var typeButtons = document.querySelectorAll('.note-type-btn');
+    var nameSelect  = document.getElementById('operatorSelect');
+    var woInput     = document.getElementById('woInput');
+    var opInput     = document.getElementById('opInput');
+    var noteTA      = document.getElementById('noteText');
+    if(window._guestMode){
+      if(guestNotice) guestNotice.style.display='block';
+      if(submitBtn)   submitBtn.style.display='none';
+      [nameSelect,woInput,opInput,noteTA].forEach(function(el){ if(el){ el.disabled=true; el.style.opacity='.5'; } });
+      typeButtons.forEach(function(b){ b.style.pointerEvents='none'; b.style.opacity='.5'; });
+    } else {
+      if(guestNotice) guestNotice.style.display='none';
+      if(submitBtn)   submitBtn.style.display='';
+      [nameSelect,woInput,opInput,noteTA].forEach(function(el){ if(el){ el.disabled=false; el.style.opacity='1'; } });
+      typeButtons.forEach(function(b){ b.style.pointerEvents=''; b.style.opacity='1'; });
+    }
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
@@ -3957,6 +3987,7 @@ document.addEventListener('DOMContentLoaded', function(){
       // ── GUEST / DEMO MODE ──
       window._isGuest = true;
       window._isAdmin = false;
+      document.body.classList.add('guest-mode');
       // Show tabs visible to guest
       var aiTab = document.getElementById('tab-aichat');
       if (aiTab) aiTab.style.display = 'flex';
@@ -15054,4 +15085,3 @@ window.switchTab = function(tab){
 
 })();
 </script>
-  
