@@ -2857,6 +2857,11 @@ document.addEventListener('DOMContentLoaded', function(){
       const textEl = document.createElement('div');
       textEl.className = 'existing-note-text';
       textEl.innerHTML = '<strong>' + typeLabels[n.type] + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — ' + n.wo : '') + (n.detail ? ' · ' + n.detail : '') + (n.assignedTo ? ' <span style="background:rgba(59,130,246,0.2);color:#93c5fd;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;">→ ' + n.assignedTo + '</span>' : '');
+      // Guest mode — skip all action buttons
+      if(window._guestMode){
+        container.appendChild(item);
+        return;
+      }
       const actionsEl = document.createElement('div');
       actionsEl.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
       if (n.type === 'blue') {
