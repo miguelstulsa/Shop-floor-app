@@ -2361,6 +2361,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   window.submitNoteToFirebase = async function(note) {
+    if(window._guestMode){ return; }
     // Save to hillRequests first to get the ID
     const reqRef = await addDoc(collection(db, "hillRequests"), {
       ...note, createdAt: serverTimestamp(), resolvedAt: null, resolved: false,
@@ -2579,6 +2580,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   window.finishRequest = async function(noteId, hillReqId) {
+    if(window._guestMode){ showToast('yellow','🎬 Demo Mode','Actions are disabled in demo.'); return; }
     if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
@@ -2919,7 +2921,7 @@ document.addEventListener('DOMContentLoaded', function(){
     renderBoard();
     updateBoardStats();
   });
-  window.submitPostToFirebase = async function(post) { await addDoc(collection(db, "boardPosts"), { ...post, createdAt: serverTimestamp(), likes: 0, replies: [] }); };
+  window.submitPostToFirebase = async function(post) { if(window._guestMode){ return; } await addDoc(collection(db, "boardPosts"), { ...post, createdAt: serverTimestamp(), likes: 0, replies: [] }); };
   window.deletePostFromFirebase = async function(id) { await deleteDoc(doc(db, "boardPosts", id)); };
   window.likePost = async function(id) { await updateDoc(doc(db, "boardPosts", id), { likes: increment(1) }); };
   window.addReply = async function(id, reply) { await updateDoc(doc(db, "boardPosts", id), { replies: arrayUnion(reply) }); };
@@ -3393,6 +3395,7 @@ document.addEventListener('DOMContentLoaded', function(){
   const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
 
   function openModal(machine, cell) {
+    if(window._guestMode){ showToast('yellow','🎬 Demo Mode','Requests are view-only in demo.'); return; }
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
@@ -13270,6 +13273,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // Save pinned message to Firebase
   window._savePinned = function(){
+    if(window._guestMode){ showToast('yellow','🎬 Demo Mode','Disabled in demo.'); return; }
     var text = (document.getElementById('pinned-text').value || '').trim();
     if(!text){ alert('Type a pinned message first.'); return; }
     if(db && mods){
@@ -15050,3 +15054,4 @@ window.switchTab = function(tab){
 
 })();
 </script>
+  
