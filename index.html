@@ -228,13 +228,16 @@
   body.guest-mode .dash-resolve-btn,
   body.guest-mode .notif-close,
   body.guest-mode .existing-note-remove,
+  body.guest-mode .req-dismiss,
   body.guest-mode [onclick*="finishRequest"],
   body.guest-mode [onclick*="startRequest"],
   body.guest-mode [onclick*="resolveNote"],
   body.guest-mode [onclick*="changeNoteType"],
   body.guest-mode [onclick*="removeNote"],
+  body.guest-mode [onclick*="completeJob"],
   body.guest-mode .note-del-btn,
-  body.guest-mode #submitNoteBtn { display:none !important; }
+  body.guest-mode #submitNoteBtn,
+  body.guest-mode #existingNotes button { display:none !important; }
   .req-start-btn:hover  { background:rgba(34,197,94,0.3); }
   .req-finish-btn { background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.4); }
   .req-finish-btn:hover { background:rgba(59,130,246,0.3); }
@@ -2399,6 +2402,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // ── MACHINIST COMPLETE JOB ──────────────────────────────────
   window.completeJob = async function(noteId, hillReqId) {
+    if(window._guestMode){ showToast('yellow','🎬 Demo Mode','Disabled in demo.'); return; }
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
     if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
@@ -2847,7 +2851,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const container = document.getElementById('existingNotes');
     const notes = (window.machineNotes || {})[window.currentMachine] || [];
     if (notes.length === 0) { container.innerHTML = ''; return; }
-    container.innerHTML = '<div class="existing-notes-title">Active Notes on ' + window.currentMachine + '</div>';
+    container.innerHTML = '<div class="existing-notes-title">Active Notes on ' + window.currentMachine + '</div>' + (window._guestMode ? '<style>#existingNotes button{display:none!important}</style>' : '');
     notes.forEach(n => {
       const item = document.createElement('div');
       item.className = 'existing-note-item';
