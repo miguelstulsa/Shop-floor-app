@@ -12151,14 +12151,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var BASE = 'https://miguelstulsa.github.io/Shop-floor-app/';
   var SONGS = [
     {title:'Bohemian Rhapsody',      artist:'Queen',              url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_q'},
-    {title:'Self Care',              artist:'Mac Miller',         url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_m'},
+    {title:'Self Care',              artist:'Mac Miller',         url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_m', guestHide:true},
     {title:'Friends in Low Places',  artist:'Garth Brooks',       url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_g'},
     {title:'Remote Control',         artist:'Roy D. Mercer',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_t', customIntro:'roy'},
     {title:'Run-Around',             artist:'Blues Traveler',     url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_r2'},
     {title:'Neon Moon',              artist:'Brooks & Dunn',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_b'},
     {title:'Sparky on the Floor',    artist:'Hill Manufacturing', url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_s', customIntro:'hill'},
     {title:'Wondering Why',          artist:'Red Clay Strays',    url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_r1'},
-    {title:'Juicy',                  artist:'Notorious B.I.G.',   url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_j'},
+    {title:'Juicy',                  artist:'Notorious B.I.G.',   url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_j', guestHide:true},
     {title:'Broken Window Serenade', artist:'Whiskey Myers',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_bw'},
     {title:'Even Flow',              artist:'Pearl Jam',          url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_p'},
     {title:'Septic Tank',            artist:'Roy D. Mercer',      url:'https://hill-dnx-alerts.miguelstulsa.workers.dev/song?k=song_st', customIntro:'roy2'},
@@ -12610,8 +12610,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── MAIN LOOP ─────────────────────────────────────────────
   function loop(){
     if(!_on)return;
-    var song=SONGS[_idx%SONGS.length];
-    _idx=(_idx+1)%SONGS.length;
+    // In guest mode filter out flagged songs
+    var _pool = window._guestMode ? SONGS.filter(function(s){ return !s.guestHide; }) : SONGS;
+    if(!_pool.length) _pool = SONGS;
+    var song=_pool[_idx%_pool.length];
+    _idx=(_idx+1)%_pool.length;
     stat('🎙️ Sparky is thinking...');
     // Step 1: AI generates song intro
     buildAIIntro(song).then(function(introText){
