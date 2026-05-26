@@ -1442,8 +1442,8 @@ var _hsLoading = false;
 
 var ROSTER = ['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Ker Vang','Matthew Carrico','Miguel Sanchez','Mike Payne','ProShop Admin','Rhett Dawson','Robert Clinton','Scott Smith','Sean Surratt','Steven Riggs','Tami Tate','Tony Lang','Tyler Stockham'];
 var MACHINES = ['1050-B','7000','VF-6','VF-2','VF-3','VF-4','VF-5','ST35','PUMA-1','PUMA-2','PUMA-3','403-A','403-B','403-C','5100-A','5100-B','2500','3000-A','3000-C','HAAS-1','HAAS-2','SAW','SHARP'];
-var TYPE_LABELS = { blue:'Pending WO', yellow:'Machinist Req', red:'Inspection', green:'Running WO' };
-var TYPE_ICONS  = { blue:'🔵', yellow:'🟡', red:'🔴', green:'🟢' };
+var TYPE_LABELS = { blue:'Pending WO', yellow:'Machinist Req', red:'Inspection', green:'Running WO', orange:'Floor Support', kitComplete:'Kit Complete', job:'Job', note:'Note', timelog:'Time Log', inspection:'Inspection' };
+var TYPE_ICONS  = { blue:'🔵', yellow:'🟡', red:'🔴', green:'🟢', orange:'🟠', kitComplete:'🧰', job:'🔧', note:'📝', timelog:'⏱', inspection:'🔴' };
 
 function hsTs(ts){
   if(!ts) return '';
@@ -1476,19 +1476,75 @@ async function hsLoadData(){
     });
   }
   try {
-    var q = mods.query(
-      mods.collection(db, 'hillRequests'),
-      mods.orderBy('createdAt', 'desc')
-    );
-    var snap = await mods.getDocs(q);
-    _hsAllData = snap.docs.map(function(d){
-      var data = d.data();
-      data._id = d.id;
-      data._type = 'request';
-      return data;
+    var results = [];
+
+    // ── Load hillRequests ──
+    var snapReq = await mods.getDocs(mods.query(mods.collection(db,'hillRequests'), mods.orderBy('createdAt','desc')));
+    snapReq.docs.forEach(function(d){
+      var r = d.data(); r._id = d.id; r._type = 'request';
+      r._collection = 'hillRequests';
+      results.push(r);
     });
+
+    // ── Load hillInspections ──
+    try {
+      var snapInsp = await mods.getDocs(mods.query(mods.collection(db,'hillInspections'), mods.orderBy('createdAt','desc')));
+      snapInsp.docs.forEach(function(d){
+        var r = d.data(); r._id = d.id; r._type = 'inspection';
+        r._collection = 'hillInspections';
+        if(!r.type) r.type = 'red';
+        results.push(r);
+      });
+    } catch(e){ console.warn('hillInspections:', e.message); }
+
+    // ── Load hillKits ──
+    try {
+      var snapKits = await mods.getDocs(mods.query(mods.collection(db,'hillKits'), mods.orderBy('createdAt','desc')));
+      snapKits.docs.forEach(function(d){
+        var r = d.data(); r._id = d.id; r._type = 'kitComplete';
+        r._collection = 'hillKits';
+        if(!r.type) r.type = 'blue';
+        if(!r.name) r.name = r.completedBy || r.operator || '';
+        results.push(r);
+      });
+    } catch(e){ console.warn('hillKits:', e.message); }
+
+    // ── Load notes (shop floor notes) ──
+    try {
+      var snapNotes = await mods.getDocs(mods.query(mods.collection(db,'notes'), mods.orderBy('createdAt','desc')));
+      snapNotes.docs.forEach(function(d){
+        var r = d.data(); r._id = d.id;
+        r._collection = 'notes';
+        if(!r._type) r._type = 'note';
+        results.push(r);
+      });
+    } catch(e){ console.warn('notes:', e.message); }
+
+    // ── Load hillJobs ──
+    try {
+      var snapJobs = await mods.getDocs(mods.query(mods.collection(db,'hillJobs'), mods.orderBy('createdAt','desc')));
+      snapJobs.docs.forEach(function(d){
+        var r = d.data(); r._id = d.id; r._type = 'job';
+        r._collection = 'hillJobs';
+        if(!r.name) r.name = r.operator || r.assignedTo || '';
+        results.push(r);
+      });
+    } catch(e){ console.warn('hillJobs:', e.message); }
+
+    // ── Load hillTimeLog ──
+    try {
+      var snapTime = await mods.getDocs(mods.query(mods.collection(db,'hillTimeLog'), mods.orderBy('createdAt','desc')));
+      snapTime.docs.forEach(function(d){
+        var r = d.data(); r._id = d.id; r._type = 'timelog';
+        r._collection = 'hillTimeLog';
+        if(!r.name) r.name = r.operator || r.user || '';
+        results.push(r);
+      });
+    } catch(e){ console.warn('hillTimeLog:', e.message); }
+
+    _hsAllData = results;
     _hsLoaded = true;
-    console.log('HS loaded', _hsAllData.length, 'records');
+    console.log('HS loaded', _hsAllData.length, 'total records across all collections');
   } catch(e){
     console.warn('HS load error:', e);
   }
@@ -1536,11 +1592,12 @@ window.hsSearch = function(){
     var terms = q.toLowerCase().split(' ').filter(function(t){ return t.length > 0; });
     data = data.filter(function(r){
       var haystack = [
-        r.name, r.machine, r.wo, r.notes, r.detail,
-        r.type, TYPE_LABELS[r.type], r.resolvedBy,
-        r.resolvedNote, r.cell, r.op, r.assignedTo
+        r.name, r.machine, r.wo, r.op, r.notes, r.detail, r.reason,
+        r.type, TYPE_LABELS[r.type], TYPE_LABELS[r._type],
+        r.resolvedBy, r.resolvedNote, r.cell,
+        r.operator, r.completedBy, r.assignedTo,
+        r._collection, r._type, r.partNumber, r.program
       ].join(' ').toLowerCase();
-      // ALL terms must match (so "jimmy pollard" matches both words)
       return terms.every(function(term){ return haystack.indexOf(term) >= 0; });
     });
   }
@@ -1728,23 +1785,25 @@ window.hsSearch = function(){
 
   // Render each request card
   data.forEach(function(r){
-    var icon  = TYPE_ICONS[r.type]  || '📋';
-    var label = TYPE_LABELS[r.type] || r.type || 'Request';
-    var ts    = hsTs(r.createdAt);
+    var icon  = TYPE_ICONS[r._type] || TYPE_ICONS[r.type] || '📋';
+    var label = TYPE_LABELS[r._type] || TYPE_LABELS[r.type] || r.type || 'Request';
+    var ts    = hsTs(r.createdAt || r.completedAt || r.timestamp);
     var statusColor = r.resolved ? 'green' : (r.type==='orange'?'yellow':r.type||'blue');
+    var colBadge = (r._collection && r._collection !== 'hillRequests')
+      ? ' <span style="font-size:9px;background:rgba(255,255,255,.05);border:1px solid #1e3a5f;border-radius:4px;padding:1px 5px;color:#475569;">' + r._collection.replace('hill','') + '</span>' : '';
     html += '<div class="hs-card">'
       + '<div class="hs-card-top">'
       + '<span class="hs-card-icon">' + icon + '</span>'
-      + '<span class="hs-card-title">' + hsEsc(r.machine||'?') + '</span>'
+      + '<span class="hs-card-title">' + hsEsc(r.machine||r.wo||'?') + colBadge + '</span>'
       + '<span class="hs-card-type ' + statusColor + '">' + (r.resolved ? '✓ DONE' : label) + '</span>'
       + '</div>'
       + '<div class="hs-card-body">'
-      + '<strong>👤</strong> ' + hsEsc(r.name||'—')
+      + '<strong>👤</strong> ' + hsEsc(r.name||r.operator||r.completedBy||'—')
       + (r.wo ? ' &nbsp;<strong>WO</strong> ' + hsEsc(r.wo) : '')
       + (r.op ? ' &nbsp;<strong>OP</strong> ' + hsEsc(r.op) : '')
       + (r.cell ? ' &nbsp;<span class="hs-tag">' + hsEsc(r.cell) + '</span>' : '')
       + (r.assignedTo ? ' &nbsp;<strong>→</strong> ' + hsEsc(r.assignedTo) : '')
-      + ((r.notes||r.detail) ? '<br><span style="color:#94a3b8;">' + hsEsc((r.notes||r.detail||'').slice(0,150)) + '</span>' : '')
+      + ((r.notes||r.detail||r.reason) ? '<br><span style="color:#94a3b8;">' + hsEsc((r.notes||r.detail||r.reason||'').slice(0,150)) + '</span>' : '')
       + (r.resolved && r.resolvedBy ? '<br><strong style="color:#22c55e;">✓ Resolved by:</strong> ' + hsEsc(r.resolvedBy) + (r.resolvedNote ? ' — ' + hsEsc(r.resolvedNote.slice(0,100)) : '') : '')
       + (r.setupTime ? '<br><span style="font-size:10px;color:#475569;">⏱ ' + hsEsc(r.setupTime) + '</span>' : '')
       + '</div>'
