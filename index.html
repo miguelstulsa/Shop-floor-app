@@ -3889,11 +3889,10 @@ document.addEventListener('DOMContentLoaded', function(){
   function setMsg(id, msg, type) { const el = document.getElementById(id); el.textContent = msg; el.className = 'auth-msg ' + type; }
 
   function doDemoLogin() {
-    var inputs = document.querySelectorAll('.auth-input');
-    inputs.forEach(function(inp){
-      if(inp.type === 'password') inp.value = 'hill2026';
-      else inp.value = 'demo';
-    });
+    var userInput = document.getElementById('loginUser');
+    var passInput = document.getElementById('loginPass');
+    if(userInput) userInput.value = 'demo';
+    if(passInput) passInput.value = 'hill2026';
     doLogin();
   }
 
