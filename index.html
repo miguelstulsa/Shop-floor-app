@@ -1765,7 +1765,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
-        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'orange')) {
+        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'orange' || n.type === 'dnx')) {
           // Only browser notification from listener — Pushover fires from submit button only
           sendBrowserNotif(n);
           showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.cell + ' — ' + n.machine + ': ' + n.wo);
