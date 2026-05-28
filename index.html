@@ -1757,7 +1757,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'orange' || n.type === 'dnx')) {
           // Only browser notification from listener — Pushover fires from submit button only
           sendBrowserNotif(n);
-          showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.cell + ' — ' + n.machine + ': ' + n.wo);
+          showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.type==='dnx' ? (n.machine + ': ' + (n.detail||'INACTIVE')) : (n.cell + ' — ' + n.machine + ': ' + n.wo));
           // DJ announces new requests to the floor
           setTimeout(function(){ window._djAnnounceNew(n); }, 1500);
         }
@@ -1844,7 +1844,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       item.innerHTML =
         '<div class="notif-blink-dot"></div>' +
         '<div class="notif-type">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
-        '<div class="notif-machine">' + n.cell + ' — ' + n.machine + '</div>' +
+        '<div class="notif-machine">' + (n.type==='dnx' ? n.machine : (n.cell + ' — ' + n.machine)) + '</div>' +
         '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + n.wo + (n.detail ? ' · ' + n.detail : '') + '</div>' +
         '<div class="notif-time">Today at ' + timeStr + '</div>' +
         timerBtns +
@@ -1890,7 +1890,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         '<div class="req-dot-col"><span class="req-blink-dot ' + n.type + '"></span></div>' +
         '<div class="req-body">' +
           '<div class="req-machine">' + n.machine + '</div>' +
-          '<div class="req-cell">' + n.cell + '</div>' +
+          (n.type!=='dnx' ? '<div class="req-cell">' + n.cell + '</div>' : '') +
           '<div class="req-type-label">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
           (n.wo     ? '<div class="req-wo">WO: '      + n.wo     + '</div>' : '') +
           (n.assignedTo ? '<div class="req-wo" style="color:#93c5fd;">🔧 Assigned to: ' + n.assignedTo + '</div>' : '') +
@@ -1907,7 +1907,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
 
   function sendBrowserNotif(n) {
     if (Notification.permission === 'granted') {
-      new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: n.cell + ' — ' + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + n.wo, tag: n.id, requireInteraction: true });
+      new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: n.type==='dnx' ? (n.machine + ' INACTIVE for ' + n.duration) : (n.cell + ' — ' + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + n.wo), tag: n.id, requireInteraction: true });
     }
   }
 
@@ -12167,57 +12167,68 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   function _renderDnxTab(alerts){
     var active = document.getElementById('dnx-active-alerts');
-    var hist = document.getElementById('dnx-alerts-list');
-    if(!alerts || !alerts.length){
-      if(active) active.innerHTML = '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ No active alerts right now.</div>';
-      if(hist) hist.innerHTML = '<div style="font-size:13px;color:#475569;padding:12px 0;">No alert history yet.</div>';
+    var hist   = document.getElementById('dnx-alerts-list');
+    if(!alerts||!alerts.length){
+      if(active) active.innerHTML='<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ No active alerts right now.</div>';
+      if(hist)   hist.innerHTML  ='<div style="font-size:13px;color:#475569;padding:12px 0;">No alert history yet.</div>';
       return;
     }
+    var unresolved=alerts.filter(function(a){return !a.resolved;});
 
-    var unresolved = alerts.filter(function(a){ return !a.resolved; });
-    var resolved   = alerts.filter(function(a){ return a.resolved; });
-
-    // Active unresolved alerts
     if(active){
       if(!unresolved.length){
-        active.innerHTML = '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ All alerts resolved.</div>';
+        active.innerHTML='<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ All alerts resolved.</div>';
       } else {
-        active.innerHTML = '<div style="font-size:12px;color:#7dd3fc;font-weight:700;letter-spacing:1px;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
-          + unresolved.map(function(a){
-            var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-            return '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">'
-              +'<span style="font-size:22px;animation:dnxPulse 1.5s infinite;">🔴</span>'
+        active.innerHTML='<div style="font-size:12px;color:#7dd3fc;font-weight:700;letter-spacing:1px;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
+          +unresolved.map(function(a){
+            var ts=a.receivedAt?new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+            return '<div style="background:rgba(125,211,252,0.06);border:1px solid rgba(125,211,252,0.3);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">'
+              +'<span style="font-size:20px;">🔷</span>'
               +'<div style="flex:1;">'
-              +'<div style="font-size:14px;font-weight:700;color:#f87171;">'+a.machine+'</div>'
+              +'<div style="font-size:15px;font-weight:700;color:#7dd3fc;">'+a.machine+'</div>'
               +'<div style="font-size:11px;color:#64748b;">'+a.status+' — '+a.duration+'</div>'
               +'<div style="font-size:10px;color:#334155;">'+ts+'</div>'
               +'</div>'
-              +'<button onclick="window._openResolveDnx(this)" data-id="'+a.id+'" data-machine="'+a.machine+'" '
-              +'style="background:linear-gradient(135deg,#059669,#10b981);border:none;color:#fff;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;flex-shrink:0;">RESOLVE</button>'
+              +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">'
+              +'<button onclick="window._openResolveDnx(this)" data-id="'+a.id+'" data-machine="'+a.machine+'" data-duration="'+a.duration+'" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;">✓ RESOLVE</button>'
+              +'<button data-delid="'+a.id+'" onclick="window._deleteDnxAlert(this.dataset.delid)" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:5px 12px;font-size:10px;cursor:pointer;">🗑 DELETE</button>'
+              +'</div>'
               +'</div>';
           }).join('');
       }
     }
 
-    // History
     if(hist){
-      hist.innerHTML = alerts.slice(0,100).map(function(a){
-        var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-        var resolvedStr = a.resolved ? '<div style="font-size:10px;color:#4ade80;">✅ Resolved: '+( a.comment||'no comment')+'</div>' : '<span style="font-size:10px;color:#f87171;">⚠ Unresolved</span>';
-        return '<div style="padding:8px 0;border-bottom:1px solid #0d1f35;">'
-          +'<div style="display:flex;align-items:center;gap:8px;">'
-          +'<span>'+(a.resolved?'✅':'🔴')+'</span>'
+      hist.innerHTML=alerts.slice(0,100).map(function(a){
+        var ts=a.receivedAt?new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+        var resStr=a.resolved
+          ?'<div style="font-size:10px;color:#4ade80;">✅ Resolved: '+(a.comment||a.resolveReason||'')+'</div>'
+          :'<div style="font-size:10px;color:#f87171;">⚠ Unresolved</div>';
+        return '<div style="padding:8px 4px;border-bottom:1px solid #0d1f35;display:flex;align-items:flex-start;gap:8px;">'
+          +'<span>'+(a.resolved?'✅':'🔷')+'</span>'
           +'<div style="flex:1;">'
-          +'<span style="font-size:12px;font-weight:700;color:'+(a.resolved?'#94a3b8':'#f87171')+';">'+a.machine+'</span>'
+          +'<span style="font-size:12px;font-weight:700;color:'+(a.resolved?'#94a3b8':'#7dd3fc')+';">'+a.machine+'</span>'
           +' <span style="font-size:10px;color:#475569;">'+a.duration+'</span>'
-          +'</div>'
           +'<div style="font-size:10px;color:#334155;">'+ts+'</div>'
+          +resStr
           +'</div>'
-          +resolvedStr
+          +'<button data-delid="'+a.id+'" onclick="window._deleteDnxAlert(this.dataset.delid)" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:3px 8px;font-size:9px;cursor:pointer;flex-shrink:0;">🗑</button>'
           +'</div>';
       }).join('');
     }
   }
+
+  window._deleteDnxAlert = async function(id){
+    if(!id||!confirm('Delete this alert permanently?')) return;
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return;
+    try {
+      await mods.deleteDoc(mods.doc(db2,'hillDnxAlerts',id));
+      if(window.showToast) window.showToast('blue','🗑 Deleted','Alert removed');
+    } catch(e) {
+      if(window.showToast) window.showToast('red','Error',e.message);
+    }
+  };
 
   window._openResolveDnx = function(btn){
     _dnxPendingResolveId = btn.getAttribute('data-id');
@@ -13405,6 +13416,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   window._dnxResolveCancel=function(){
     document.getElementById('dnx-resolve-modal').style.display='none';
     window._dnxResolvePending=null;
+    document.getElementById('dnx-resolve-reason').value='';
+    document.getElementById('dnx-resolve-submit').disabled=true;
+    document.getElementById('dnx-resolve-submit').textContent='✓ CLOSE ALERT';
   };
   window.openDnxResolve=function(noteId,hillReqId,machine,duration){
     // Accept machine/duration as direct params OR look up from machineNotes
@@ -13467,6 +13481,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         await Promise.all(dnxUps).catch(function(){});
       }
       document.getElementById('dnx-resolve-modal').style.display='none';
+      document.getElementById('dnx-resolve-reason').value='';
+      document.getElementById('dnx-resolve-submit').disabled=true;
+      document.getElementById('dnx-resolve-submit').textContent='✓ CLOSE ALERT';
       window._dnxResolvePending=null;
       if(window.showToast)window.showToast('blue','🔷 DNX Alert Closed',(note.machine||'Machine')+' — reason saved');
     }catch(e){btn.disabled=false;btn.textContent='✓ CLOSE ALERT';if(window.showToast)window.showToast('red','Error',e.message);}
