@@ -1834,7 +1834,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var onHold  = n.onHold;
       var timerBtns = isAdmin
         ? (n.type === 'dnx'
-            ? '<div style="margin-top:6px;"><button class="req-timer-btn req-finish-btn" style="background:rgba(125,211,252,0.15);border-color:#7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">🔷 CLOSE ALERT</button></div>'
+            ? '<div style="margin-top:6px;"><button class="req-timer-btn req-finish-btn" style="background:rgba(125,211,252,0.15);border-color:#7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 CLOSE ALERT</button></div>'
             : onHold
             ? '<div style="margin-top:6px;"><div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<div style="display:flex;gap:6px;">' +
@@ -1884,7 +1884,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var adminBtns = isAdmin2
         ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
           (n.type === 'dnx'
-            ? '<button class="req-timer-btn req-finish-btn" style="background:rgba(125,211,252,0.15);border-color:#7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">🔷 CLOSE ALERT</button>'
+            ? '<button class="req-timer-btn req-finish-btn" style="background:rgba(125,211,252,0.15);border-color:#7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 CLOSE ALERT</button>'
             : onHold2
             ? '<div style="width:100%;font-size:9px;color:#f59e0b;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
@@ -13399,17 +13399,26 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     document.getElementById('dnx-resolve-modal').classList.remove('open');
     window._dnxResolvePending=null;
   };
-  window.openDnxResolve=function(noteId,hillReqId){
+  window.openDnxResolve=function(noteId,hillReqId,machine,duration){
+    // Accept machine/duration as direct params OR look up from machineNotes
     var note=null;
-    Object.values(window.machineNotes||{}).forEach(function(arr){arr.forEach(function(n){if(n.id===noteId)note=n;});});
-    window._dnxResolvePending={noteId:noteId,hillReqId:hillReqId,note:note};
-    document.getElementById('dnx-modal-machine').textContent=(note&&note.machine)||'—';
-    document.getElementById('dnx-modal-duration').textContent=(note&&note.duration)?'Inactive for: '+note.duration:'';
+    Object.values(window.machineNotes||{}).forEach(function(arr){
+      arr.forEach(function(n){if(n.id===noteId)note=n;});
+    });
+    var machineName = (note&&note.machine)||machine||'—';
+    var dur = (note&&note.duration)||duration||'';
+    window._dnxResolvePending={noteId:noteId,hillReqId:hillReqId,note:note,machine:machineName,duration:dur};
+    var modal = document.getElementById('dnx-resolve-modal');
+    if(!modal){ console.error('DNX modal not found'); return; }
+    document.getElementById('dnx-modal-machine').textContent=machineName;
+    document.getElementById('dnx-modal-duration').textContent=dur?'Inactive for: '+dur:'';
     document.getElementById('dnx-resolve-reason').value='';
     document.getElementById('dnx-resolve-charcount').textContent='0 / 20 min characters';
     document.getElementById('dnx-resolve-charcount').className='dnx-resolve-charcount';
+    document.getElementById('dnx-resolve-error').style.display='none';
     document.getElementById('dnx-resolve-submit').disabled=true;
-    document.getElementById('dnx-resolve-modal').classList.add('open');
+    document.getElementById('dnx-resolve-submit').textContent='✓ CLOSE ALERT';
+    modal.classList.add('open');
   };
   window._dnxResolveSubmit=async function(){
     var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
