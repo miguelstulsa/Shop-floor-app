@@ -1352,7 +1352,16 @@
   <!-- Messages -->
   <div id="ai-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;">
     <div class="ai-msg ai-msg-assistant">
-      <div class="ai-bubble">Hey Miguel. I'm your Hill Manufacturing AI assistant. I have full visibility into your shop floor — active jobs, requests, machinist activity, and your ProShop data. Ask me anything.</div>
+      <div class="ai-bubble">Hey Miguel — search anything saved to your app. All results are printable as PDF.
+
+🔍 SEARCH OPTIONS:
+• WO# — type "26-0173" → every request on that job, who touched it, timestamps, times
+• Employee — type "Jimmy Pollard" or "Jimmy" → full history of their requests
+• Request type — type "pending", "machinist", "inspection", "datanomix", "floor support" → all requests of that type
+• "requests sent to me" → everything you fulfilled, by person
+• Machine — type "3000-A" or "VF-3" → all requests on that machine
+
+Every result shows: date, time, operator, type, WO#, details, elapsed time, status.</div>
     </div>
   </div>
 
@@ -11757,9 +11766,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           messages: [{ role: 'user', content: ctx }]
         })
       });
+      if(!resp.ok){
+        console.log('AI report HTTP error:', resp.status);
+        return report_scripted();
+      }
       var data = await resp.json();
       var text = data.content && data.content[0] && data.content[0].text;
-      if(text){ _lastAIReport = text; return text; }
+      if(text && text.length > 10){ _lastAIReport = text; return text; }
+      console.log('AI report empty response:', JSON.stringify(data).slice(0,200));
     } catch(e) {
       console.log('AI report error:', e.message);
     }
@@ -11798,9 +11812,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           messages: [{ role: 'user', content: ctx }]
         })
       });
+      if(!resp.ok){ return intro_scripted(song); }
       var data = await resp.json();
       var text = data.content && data.content[0] && data.content[0].text;
-      if(text){ _lastAIIntro = text; return text; }
+      if(text && text.length > 10){ _lastAIIntro = text; return text; }
     } catch(e) {
       console.log('AI intro error:', e.message);
     }
@@ -12547,10 +12562,50 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         var receipt = await _buildWOReceipt(woNum);
         typingEl.remove();
         _chatThinking = false;
-        addReceiptMessage(receipt);
-        _chatHistory.push({role:'assistant', content: 'Here is the receipt for WO ' + woNum});
+        receipt.wo = woNum;
+        addFullReceipt(receipt, 'WO');
+        _chatHistory.push({role:'assistant', content: 'Receipt shown for WO ' + woNum});
         return;
       }
+    }
+
+    // Check for request TYPE search
+    var typeSearchMap = {
+      'pending': 'blue', 'pending wo': 'blue',
+      'machinist': 'yellow', 'machinist req': 'yellow', 'machinist request': 'yellow',
+      'inspection': 'red',
+      'datanomix': 'dnx', 'dnx': 'dnx',
+      'floor support': 'orange', 'support': 'orange',
+      'running': 'green', 'running wo': 'green'
+    };
+    var typeFound = null;
+    Object.keys(typeSearchMap).forEach(function(k){
+      if(msgLower.indexOf(k) >= 0) typeFound = typeSearchMap[k];
+    });
+    if(typeFound && !/jimmy|dingo|corey|bryan|caleb|chuck|jacob|jared|justin|keith|matthew|miguel|mike|rhett|scott|sean|steven|tony|tyler|brett|hank|daniel/i.test(msg)){
+      _chatThinking = true;
+      var typingElT = addTyping();
+      var typeReceipt = await _buildTypeReceipt(typeFound, msg);
+      typingElT.remove();
+      _chatThinking = false;
+      addFullReceipt(typeReceipt, 'TYPE');
+      return;
+    }
+
+    // Check for machine search
+    var machines = ['1050-B','7000','VF-6','5100-B','2500','PUMA-3','ST35','VF-3','VF-2','PUMA-2','403-A','403-B','403-C','5100-A','3000-C','3000-A','2G','PUMA-1','303-B','TWIN','2500-Y','SHARP','SH-403','5000','SYIL','EMCO','SAW-1','SAW-2'];
+    var machineFound = null;
+    machines.forEach(function(m){
+      if(msgLower.indexOf(m.toLowerCase()) >= 0) machineFound = m;
+    });
+    if(machineFound){
+      _chatThinking = true;
+      var typingElM = addTyping();
+      var machReceipt = await _buildMachineReceipt(machineFound);
+      typingElM.remove();
+      _chatThinking = false;
+      addFullReceipt(machReceipt, 'MACHINE');
+      return;
     }
 
     // Check for "requests to me" / "sent to me" queries
@@ -12627,7 +12682,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       } catch(e){
         typingEl2.remove();
         _chatThinking = false;
-        addMessage('assistant', 'Error fetching data for ' + foundMachinist);
+        addMessage('assistant', 'I had trouble pulling data for ' + foundMachinist + '. Try asking again or type their full name like "Jimmy Pollard".');
       }
       return;
     }
@@ -12637,39 +12692,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var typingEl = addTyping();
 
     try {
-      var floorCtx = buildFloorContext();
-      var systemPrompt = 'You are the ultimate AI assistant for Miguel Sanchez at Hill Manufacturing in Tulsa Oklahoma. '
-        + 'You have web search capability and can answer ANYTHING — sports scores, weather, news, phone numbers, addresses, recipes, jokes, manufacturing questions, anything at all. '
-        + 'Use web search for: current events, sports scores, business info, phone numbers, addresses, weather, news, stock prices, or any real-time info. '
-        + 'NEVER make up data. Only report floor data that is explicitly in the LIVE FLOOR DATA section below. '
-        + 'If floor data is empty, say the floor is clear. Do not invent jobs or people. '
-        + 'HILL MANUFACTURING ROSTER: Brett Thompson, Bryan Sturman, Caleb Dooley, Chuck Whitfield, Corey Bartmier, Daniel McGarvey, Dingo Mikles, Hank Anglin, Jacob Nail, Jared Stuart, Jimmy Pollard, Justin Gray, Keith Groden, Matthew Carrico, Miguel Sanchez, Mike Payne, Rhett Dawson, Scott Smith, Sean Surratt, Steven Riggs, Tony Lang, Tyler Stockham. '
-        + 'Be direct, accurate, and conversational. This is the best shop floor app ever built. '
-        + '\nLIVE FLOOR DATA:\n' + floorCtx;
-
-      var messages = _chatHistory.slice(-10); // last 10 messages for context
-
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system: systemPrompt,
-          messages: messages
-        })
-      });
-
-      var data = await resp.json();
-      var text = data.content && data.content[0] && data.content[0].text;
-
       typingEl.remove();
       _chatThinking = false;
-
-      if(text){
-        addMessage('assistant', text);
-        _chatHistory.push({role:'assistant', content: text});
-      } else {
-        addMessage('assistant', 'Sorry, I had trouble with that. Try again.');
-      }
+      addMessage('assistant', 'I can look up data from your shop floor. Try:\n\n• Type a WO number like "26-0173" → get full receipt\n• Type a name like "Jimmy Pollard" → see their request history\n• Type "requests sent to me" → see all requests you fulfilled\n• Type "Jimmy history" or "Dingo requests" → machinist summary');
+      _chatHistory.push({role:'assistant', content: 'Data lookup help shown'});
 
     } catch(e) {
       typingEl.remove();
@@ -12691,6 +12717,169 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     msgs.scrollTop = msgs.scrollHeight;
     return div;
   }
+
+  // ── TYPE RECEIPT BUILDER ──────────────────────────────────
+  async function _buildTypeReceipt(type, originalMsg){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {type:type, requests:[]};
+    var requests = [];
+    try {
+      var snap = await mods.getDocs(
+        mods.query(mods.collection(db2,'hillRequests'),
+          mods.where('type','==',type),
+          mods.orderBy('createdAt','desc'),
+          mods.limit(200))
+      );
+      if(snap && !snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
+    } catch(e){ console.warn('Type receipt:', e.message); }
+    return {type:type, requests:requests, query:originalMsg};
+  }
+
+  // ── MACHINE RECEIPT BUILDER ────────────────────────────────
+  async function _buildMachineReceipt(machine){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {machine:machine, requests:[]};
+    var requests = [];
+    try {
+      var snap = await mods.getDocs(
+        mods.query(mods.collection(db2,'hillRequests'),
+          mods.where('machine','==',machine),
+          mods.orderBy('createdAt','desc'),
+          mods.limit(200))
+      );
+      if(snap && !snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
+    } catch(e){ console.warn('Machine receipt:', e.message); }
+    return {machine:machine, requests:requests};
+  }
+
+  // ── UNIFIED FULL RECEIPT DISPLAY + PRINT ──────────────────
+  function addFullReceipt(data, searchType){
+    var msgs = document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div = document.createElement('div');
+    div.className = 'ai-msg ai-msg-assistant';
+    var reqs = data.requests || [];
+
+    var typeLabel = {red:'🔴 Inspection', yellow:'🟡 Machinist Req', blue:'🔵 Pending WO', green:'🟢 Running WO', orange:'🟠 Floor Support', dnx:'🔷 Datanomix'};
+    var typeColor = {red:'#f87171', yellow:'#fbbf24', blue:'#60a5fa', green:'#4ade80', orange:'#fb923c', dnx:'#7dd3fc'};
+
+    // Title
+    var title = searchType === 'TYPE' ? (typeLabel[data.type] || data.type) + ' — All Requests'
+              : searchType === 'MACHINE' ? '📍 ' + data.machine + ' — All Requests'
+              : data.wo ? 'WO ' + data.wo : data.name;
+
+    if(!reqs.length){
+      div.innerHTML = '<div class="ai-bubble">No records found for <strong>' + title + '</strong>.</div>';
+      msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; return;
+    }
+
+    // Stats
+    var completed = reqs.filter(function(r){return r.resolved;}).length;
+    var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
+    var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'';
+
+    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;max-width:100%;">';
+
+    // Header
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #1e3a5f;">';
+    html += '<div><div style="font-size:11px;color:#475569;letter-spacing:1px;">HILL MANUFACTURING REPORT</div>'
+          + '<div style="font-size:16px;font-weight:700;color:#f5c842;">'+title+'</div>'
+          + '<div style="font-size:11px;color:#475569;margin-top:2px;">'+reqs.length+' requests · '+completed+' completed'+(totalStr?' · ⏱ '+totalStr+' tracked':'')+'</div></div>';
+    html += '<button onclick="window._printFullReceipt(this)" data-title="'+title+'" style="background:rgba(255,255,255,0.06);border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;flex-shrink:0;">🖨 PDF</button>';
+    html += '</div>';
+
+    // Request rows
+    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:6px;">REQUEST TRAIL</div>';
+    reqs.forEach(function(r){
+      var dateStr = r.createdAt && r.createdAt.seconds
+        ? new Date(r.createdAt.seconds*1000).toLocaleString('en-US',{month:'numeric',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      var color = typeColor[r.type] || '#94a3b8';
+      var label = (typeLabel[r.type] || r.type || '').replace(/[🔴🟡🔵🟢🟠🔷]/,'').trim();
+      var status = r.resolved ? '✅' : r.onHold ? '⏸ Hold' : r.inProgress ? '⏱ Running' : '🔵 Open';
+      html += '<div style="border-left:3px solid '+color+';padding:6px 8px;margin-bottom:5px;background:rgba(255,255,255,0.02);border-radius:0 6px 6px 0;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">';
+      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      html += '<span style="font-size:10px;background:'+color+'22;color:'+color+';border-radius:3px;padding:1px 5px;font-weight:700;">'+label+'</span>';
+      if(r.machine) html += '<span style="font-size:11px;color:#f0f4f8;font-weight:700;">'+r.machine+'</span>';
+      if(r.wo) html += '<span style="font-size:10px;color:#64748b;">WO '+r.wo+'</span>';
+      if(r.op) html += '<span style="font-size:10px;color:#475569;">OP '+r.op+'</span>';
+      html += '</div>';
+      html += '<span style="font-size:9px;color:#334155;">'+dateStr+'</span>';
+      html += '</div>';
+      if(r.operator) html += '<div style="font-size:10px;color:#64748b;margin-top:2px;">👤 '+r.operator+'</div>';
+      if(r.detail) html += '<div style="font-size:10px;color:#475569;margin-top:1px;">'+r.detail+'</div>';
+      if(r.assignedTo) html += '<div style="font-size:10px;color:#7dd3fc;margin-top:1px;">🔧 → '+r.assignedTo+'</div>';
+      if(r.elapsedStr) html += '<div style="font-size:10px;color:#f5c842;margin-top:1px;">⏱ '+r.elapsedStr+'</div>';
+      if(r.holdReason) html += '<div style="font-size:10px;color:#f97316;margin-top:1px;">⏸ '+r.holdReason+'</div>';
+      html += '<div style="font-size:10px;margin-top:2px;">'+status+'</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+
+    // Store data for printing
+    div.setAttribute('data-receipt', JSON.stringify({title:title, reqs:reqs.slice(0,200)}));
+    div.innerHTML = html;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  window._printFullReceipt = function(btn){
+    var container = btn.closest('[data-receipt]');
+    if(!container) return;
+    var data = JSON.parse(container.getAttribute('data-receipt'));
+    var reqs = data.reqs || [];
+    var typeLabel = {red:'Inspection',yellow:'Machinist Req',blue:'Pending WO',green:'Running WO',orange:'Floor Support',dnx:'Datanomix'};
+    var typeColor = {red:'#c0392b',yellow:'#d68910',blue:'#1a5276',green:'#1d8348',orange:'#d35400',dnx:'#1a6899'};
+
+    var rows = reqs.map(function(r){
+      var ts = r.createdAt && r.createdAt.seconds ? new Date(r.createdAt.seconds*1000).toLocaleString() : '';
+      var color = typeColor[r.type] || '#333';
+      var label = typeLabel[r.type] || r.type || '';
+      return '<tr>'
+        +'<td>'+ts+'</td>'
+        +'<td style="color:'+color+';font-weight:bold;">'+label+'</td>'
+        +'<td>'+( r.machine||'')+'</td>'
+        +'<td>'+(r.wo||'')+(r.op?' OP'+r.op:'')+'</td>'
+        +'<td>'+(r.operator||'')+'</td>'
+        +'<td>'+(r.assignedTo||'')+'</td>'
+        +'<td>'+(r.detail||'')+'</td>'
+        +'<td>'+(r.elapsedStr||'—')+'</td>'
+        +'<td>'+(r.resolved?'✅ Done':r.onHold?'⏸ Hold':r.inProgress?'Running':'Open')+'</td>'
+        +'</tr>';
+    }).join('');
+
+    var win = window.open('','_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>${data.title} — Hill Manufacturing</title>
+    <style>
+      body{font-family:Arial,sans-serif;padding:24px;color:#222;}
+      h1{font-size:20px;margin-bottom:4px;}
+      h2{font-size:14px;color:#666;font-weight:normal;margin-bottom:16px;}
+      table{width:100%;border-collapse:collapse;font-size:11px;}
+      th{background:#1a2744;color:#fff;padding:7px 8px;text-align:left;}
+      td{padding:6px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;}
+      tr:nth-child(even){background:#f9fafb;}
+      .stats{display:flex;gap:24px;margin-bottom:16px;padding:12px;background:#f3f4f6;border-radius:6px;}
+      .stat{text-align:center;} .stat-num{font-size:20px;font-weight:bold;color:#1a2744;} .stat-lbl{font-size:11px;color:#666;}
+      @media print{button{display:none!important;}.no-print{display:none!important;}}
+    </style></head><body>
+    <div class="no-print" style="margin-bottom:16px;">
+      <button onclick="window.print()" style="padding:8px 20px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button>
+    </div>
+    <h1>Hill Manufacturing — ${data.title}</h1>
+    <h2>Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; Total: ${reqs.length} requests</h2>
+    <div class="stats">
+      <div class="stat"><div class="stat-num">${reqs.length}</div><div class="stat-lbl">Total</div></div>
+      <div class="stat"><div class="stat-num">${reqs.filter(r=>r.resolved).length}</div><div class="stat-lbl">Completed</div></div>
+      <div class="stat"><div class="stat-num">${reqs.filter(r=>!r.resolved).length}</div><div class="stat-lbl">Open</div></div>
+      <div class="stat"><div class="stat-num">${Math.round(reqs.reduce((s,r)=>s+(r.elapsedMins||0),0))}m</div><div class="stat-lbl">Time Tracked</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Date / Time</th><th>Type</th><th>Machine</th><th>WO / OP</th><th>Operator</th><th>Assigned To</th><th>Details</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </body></html>`);
+    win.document.close();
+  };
 
   function addTyping(){
     var msgs = document.getElementById('ai-messages');
