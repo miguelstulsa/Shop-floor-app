@@ -13431,6 +13431,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
     if(reason.length<20){document.getElementById('dnx-resolve-error').style.display='block';return;}
     var pending=window._dnxResolvePending; if(!pending)return;
+    var machineName=pending.machine||'';
     var btn=document.getElementById('dnx-resolve-submit');
     btn.disabled=true; btn.textContent='SAVING...';
     var db2=window.fbDb||window._db, mods=window._fbModules, now=new Date();
