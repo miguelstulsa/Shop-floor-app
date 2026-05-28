@@ -12182,7 +12182,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       if(!unresolved.length){
         active.innerHTML = '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ All alerts resolved.</div>';
       } else {
-        active.innerHTML = '<div style="font-size:12px;color:#f87171;font-weight:700;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
+        active.innerHTML = '<div style="font-size:12px;color:#7dd3fc;font-weight:700;letter-spacing:1px;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
           + unresolved.map(function(a){
             var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
             return '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">'
@@ -12230,29 +12230,48 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._confirmResolveDnx = async function(){
     var comment = (document.getElementById('dnx-resolve-comment').value || '').trim();
-    if(!comment){ alert('Please describe the issue before resolving.'); return; }
+    if(comment.length < 20){ alert('Please write at least 20 characters explaining the issue.'); return; }
     if(!_dnxPendingResolveId) return;
-
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
-
+    var machine = document.getElementById('dnx-resolve-machine').textContent || '';
     try {
+      // Mark hillDnxAlerts as resolved
       await mods.updateDoc(mods.doc(db2,'hillDnxAlerts',_dnxPendingResolveId),{
-        resolved: true,
-        comment: comment,
-        resolvedAt: mods.serverTimestamp(),
-        resolvedBy: window.currentUser || 'admin'
+        resolved:true, comment:comment, resolvedAt:mods.serverTimestamp(), resolvedBy:window.currentUser||'admin'
       });
-
-      // Remove machine highlight
+      // Also clean up any live notes for this machine
+      if(machine){
+        var notesSnap = await mods.getDocs(mods.query(
+          mods.collection(db2,'notes'),
+          mods.where('machine','==',machine),
+          mods.where('type','==','dnx')
+        )).catch(function(){return null;});
+        if(notesSnap&&!notesSnap.empty){
+          notesSnap.forEach(function(d){ mods.deleteDoc(mods.doc(db2,'notes',d.id)).catch(function(){}); });
+        }
+        // Also update hillRequests
+        var hrSnap = await mods.getDocs(mods.query(
+          mods.collection(db2,'hillRequests'),
+          mods.where('machine','==',machine),
+          mods.where('type','==','dnx'),
+          mods.where('resolved','==',false)
+        )).catch(function(){return null;});
+        if(hrSnap&&!hrSnap.empty){
+          hrSnap.forEach(function(d){
+            mods.updateDoc(mods.doc(db2,'hillRequests',d.id),{
+              resolved:true, resolveReason:comment, resolvedAt:mods.serverTimestamp(), resolvedBy:window.currentUser||'admin'
+            }).catch(function(){});
+          });
+        }
+      }
       document.querySelectorAll('.dnx-inactive').forEach(function(card){
         card.classList.remove('dnx-inactive');
-        var badge = card.querySelector('.dnx-badge');
-        if(badge) badge.remove();
+        var badge=card.querySelector('.dnx-badge'); if(badge)badge.remove();
       });
-
-      document.getElementById('dnx-resolve-modal').style.display = 'none';
-      if(window.showToast) window.showToast('green','✅ Alert Resolved', comment);
+      var modal = document.getElementById('dnx-resolve-modal-tab') || document.getElementById('dnx-resolve-modal-tab');
+      if(modal) modal.style.display='none';
+      if(window.showToast) window.showToast('blue','🔷 Alert Resolved', machine + ' — ' + comment.substring(0,40));
     } catch(e){
       alert('Error resolving: ' + e.message);
     }
@@ -13431,6 +13450,21 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         if(snap&&!snap.empty){var ups=[];snap.forEach(function(d){ups.push(mods.updateDoc(mods.doc(db2,'hillRequests',d.id),payload));});await Promise.all(ups).catch(function(){});}
       }
       await mods.addDoc(mods.collection(db2,'hillDnxLog'),{machine:note.machine||'',duration:note.duration||'',since:note.since||'',status:note.status||'INACTIVE',resolveReason:reason,resolvedBy:window.currentUser||'admin',resolvedAt:mods.serverTimestamp(),elapsedMins:elapsedMins,autoAlert:true}).catch(function(){});
+      // Also mark the hillDnxAlerts record as resolved so the DNX tab updates
+      var dnxSnap = await mods.getDocs(mods.query(
+        mods.collection(db2,'hillDnxAlerts'),
+        mods.where('machine','==',machineName),
+        mods.where('resolved','==',false)
+      )).catch(function(){return null;});
+      if(dnxSnap&&!dnxSnap.empty){
+        var dnxUps=[];
+        dnxSnap.forEach(function(d){
+          dnxUps.push(mods.updateDoc(mods.doc(db2,'hillDnxAlerts',d.id),{
+            resolved:true, comment:reason, resolvedAt:mods.serverTimestamp(), resolvedBy:window.currentUser||'admin'
+          }));
+        });
+        await Promise.all(dnxUps).catch(function(){});
+      }
       document.getElementById('dnx-resolve-modal').style.display='none';
       window._dnxResolvePending=null;
       if(window.showToast)window.showToast('blue','🔷 DNX Alert Closed',(note.machine||'Machine')+' — reason saved');
