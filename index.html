@@ -1183,7 +1183,13 @@
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
     <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
-    <div id="miguel-time-log" style="display:none;background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;padding:10px 14px;margin:6px 16px;"></div>
+    <div id="miguel-time-log" style="display:none;background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;margin:6px 16px;overflow:hidden;">
+      <div onclick="window._toggleTimeLog()" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;">
+        <span id="miguel-time-log-header" style="font-size:12px;color:#f5c842;font-weight:700;">⏱ MY TIME LOG</span>
+        <span id="miguel-time-log-toggle" style="font-size:11px;color:#475569;">▼ SHOW</span>
+      </div>
+      <div id="miguel-time-log-body" style="display:none;padding:0 14px 10px;max-height:220px;overflow-y:auto;"></div>
+    </div>
     <div id="proshop-live-bar" style="display:none;background:rgba(0,7,26,0.9);border-bottom:1px solid #1e3a5c;padding:6px 16px;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;min-height:36px;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:10px;color:#475569;letter-spacing:2px;flex-shrink:0;">PROSHOP</span>
     </div>
@@ -12319,8 +12325,19 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     );
   }
 
+  window._toggleTimeLog = function(){
+    var body = document.getElementById('miguel-time-log-body');
+    var toggle = document.getElementById('miguel-time-log-toggle');
+    if(!body) return;
+    var open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : 'block';
+    if(toggle) toggle.textContent = open ? '▼ SHOW' : '▲ HIDE';
+  };
+
   function _renderTimeLog(logs){
     var bar = document.getElementById('miguel-time-log');
+    var body = document.getElementById('miguel-time-log-body');
+    var header = document.getElementById('miguel-time-log-header');
     if(!bar) return;
     if(!logs || !logs.length){ bar.style.display='none'; return; }
     bar.style.display='block';
@@ -12335,11 +12352,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var todayStr  = todayMins >= 60 ? Math.floor(todayMins/60)+'h '+(todayMins%60)+'m' : todayMins+'m';
     var allStr    = allMins >= 60 ? Math.floor(allMins/60)+'h '+(allMins%60)+'m' : allMins+'m';
 
-    bar.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-      +'<span style="font-size:13px;color:#f5c842;letter-spacing:1px;">⏱ MY TIME LOG</span>'
-      +'<span style="font-size:11px;color:#475569;">Today: <b style="color:#f5c842;">'+todayStr+'</b> &nbsp; All: <b style="color:#94a3b8;">'+allStr+'</b></span>'
-      +'</div>'
-      +logs.map(function(l){
+    // Update header with totals
+    if(header) header.textContent = '⏱ MY TIME LOG — Today: ' + todayStr + '  All: ' + allStr;
+    if(!body) return;
+    body.innerHTML = logs.map(function(l){
         var isSetup = l.role==='setup' || l.role==='machinist';
         var typeColor = l.role==='setup' ? '#60a5fa' : l.role==='machinist' ? '#fbbf24' : '#4ade80';
         var typeLabel = l.role==='setup' ? 'Setup' : l.role==='machinist' ? 'Mach Req' : 'Run';
