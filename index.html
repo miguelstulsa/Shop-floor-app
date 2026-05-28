@@ -210,6 +210,7 @@
   .dash-req-card.type-yellow::before { background:#eab308; }
   .dash-req-card.type-blue::before   { background:#3b82f6; }
   .dash-req-card.type-green::before  { background:#22c55e; }
+  .dash-req-card.type-dnx::before    { background:#7dd3fc; }
   .dash-req-card.resolved { opacity:0.4; }
   .req-timer-btn { border:none;border-radius:6px;padding:5px 12px;font-family:"Bebas Neue",sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all .15s; }
   .req-start-btn  { background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.4); }
@@ -505,7 +506,7 @@
   .req-card.yellow { border-left-color: #eab308; background: rgba(234,179,8,0.1); box-shadow: 0 0 0 1px rgba(234,179,8,0.2); }
   .req-card.blue   { border-left-color: #3b82f6; background: rgba(59,130,246,0.1); box-shadow: 0 0 0 1px rgba(59,130,246,0.2); }
   .req-card.green  { border-left-color: #22c55e; background: rgba(34,197,94,0.1); box-shadow: 0 0 0 1px rgba(34,197,94,0.2); }
-  .req-card.dnx  { border-left-color: #7dd3fc; background: rgba(125,211,252,0.1); box-shadow: 0 0 0 1px rgba(125,211,252,0.2); }
+    .req-card.dnx  { border-left-color: #7dd3fc; background: rgba(125,211,252,0.1); box-shadow: 0 0 0 1px rgba(125,211,252,0.2); }
   .req-dot-col { display: flex; align-items: flex-start; padding-top: 4px; }
   .req-blink-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; display: block; }
   .req-blink-dot.red    { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.9); animation: blink-red    0.7s step-end infinite; }
@@ -1386,10 +1387,10 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
 
   <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#7dd3fc;letter-spacing:2px;">🔷 DATANOMIX ALERTS</div>
-    <button onclick="window._printDnxAlerts()" style="background:rgba(125,211,252,0.08);border:1px solid #2a5a8c;color:#7dd3fc;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">🖨 PRINT / PDF</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f87171;letter-spacing:2px;">⚠️ DATANOMIX ALERTS</div>
+    <button onclick="window._printDnxAlerts()" style="background:rgba(255,255,255,0.08);border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">🖨 PRINT / PDF</button>
   </div>
-  <div style="font-size:12px;color:#475569;margin-bottom:16px;">Machines inactive 30+ minutes. Click RESOLVE to document the issue. Records are kept permanently — delete manually when done.</div>
+  <div style="font-size:12px;color:#475569;margin-bottom:16px;">Machines inactive 30+ minutes. Click RESOLVE to stop flashing and document the issue.</div>
 
   <!-- Active unresolved alerts -->
   <div id="dnx-active-alerts" style="margin-bottom:20px;"></div>
@@ -1399,19 +1400,17 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
   <div id="dnx-alerts-list"></div>
 </div>
 
-<!-- Resolve Modal (baby blue) -->
-<div id="dnx-resolve-modal-tab" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
-  <div style="background:linear-gradient(135deg,#0d1f35,#1a3555);border:2px solid #7dd3fc;border-radius:16px;padding:24px;max-width:460px;width:100%;box-shadow:0 0 40px rgba(125,211,252,0.15);">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#7dd3fc;letter-spacing:2px;margin-bottom:4px;">🔷 RESOLVE ALERT</div>
-    <div id="dnx-resolve-machine" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#f5d050;letter-spacing:2px;margin-bottom:4px;"></div>
-    <div id="dnx-resolve-duration-tab" style="font-size:11px;color:#64748b;margin-bottom:16px;"></div>
-    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#7dd3fc;text-transform:uppercase;margin-bottom:6px;">Why did this machine sit idle? <span style="color:#ef4444;">*Required (20 char min)</span></div>
-    <textarea id="dnx-resolve-comment" placeholder="e.g. Operator on break, tool change, waiting for material, machine fault, setup between jobs..." 
-      style="width:100%;box-sizing:border-box;background:#0a1628;border:1px solid #2a5a8c;border-radius:8px;color:#f0f4f8;font-size:14px;padding:12px;min-height:100px;resize:vertical;font-family:inherit;margin-bottom:6px;outline:none;" oninput="window._dnxTabReasonInput()"></textarea>
-    <div id="dnx-tab-charcount" style="font-size:10px;color:#475569;text-align:right;margin-bottom:16px;">0 / 20 min characters</div>
+<!-- Resolve Modal -->
+<div id="dnx-resolve-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#0d1f35;border:1px solid #ef4444;border-radius:16px;padding:24px;max-width:420px;width:100%;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f87171;letter-spacing:2px;margin-bottom:4px;">RESOLVE ALERT</div>
+    <div id="dnx-resolve-machine" style="font-size:13px;color:#94a3b8;margin-bottom:16px;"></div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:6px;">What was the issue? (required)</div>
+    <textarea id="dnx-resolve-comment" placeholder="e.g. Operator on break, tool change, part measurement, machine down..." 
+      style="width:100%;box-sizing:border-box;background:#060d1a;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;font-size:14px;padding:10px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:12px;"></textarea>
     <div style="display:flex;gap:8px;">
-      <button onclick="window._confirmResolveDnx()" id="dnx-tab-resolve-btn" style="flex:1;background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;opacity:0.4;" disabled>✓ RESOLVE</button>
-      <button onclick="document.getElementById('dnx-resolve-modal-tab').style.display='none'" style="background:rgba(255,255,255,0.05);border:1px solid #334155;color:#64748b;border-radius:8px;padding:12px 16px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">CANCEL</button>
+      <button onclick="window._confirmResolveDnx()" style="flex:1;background:linear-gradient(135deg,#059669,#10b981);border:none;color:#fff;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">✓ RESOLVE</button>
+      <button onclick="document.getElementById('dnx-resolve-modal').style.display='none'" style="background:rgba(255,255,255,0.05);border:1px solid #334155;color:#64748b;border-radius:8px;padding:12px 16px;cursor:pointer;">Cancel</button>
     </div>
   </div>
 </div>
@@ -6212,7 +6211,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     });
 
     // Status counts
-    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0;
+    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0, dnxAlerts=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
       // Count ALL blue requests (pending WO) regardless of resolved status
@@ -6220,7 +6219,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       if (r.type === 'yellow') { machinistReqs++; }
       if (r.type === 'green')  { running++; }
       if (r.type === 'red')    { inspections++; }
-      if (r.type === 'dnx')    { machinistReqs++; } // DNX counts with machinist reqs
+      if (r.type === 'dnx')    { dnxAlerts++; }
       // Completed = any request resolved
       if (r.resolved) completed++;
 
@@ -8970,20 +8969,17 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
   #dnx-resolve-modal.open { display:flex; }
   .dnx-resolve-box { background:linear-gradient(135deg,#0d1f35,#1a3555); border:2px solid #7dd3fc; border-radius:16px; padding:28px; width:90%; max-width:480px; box-shadow:0 0 40px rgba(125,211,252,0.2); }
   .dnx-resolve-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#7dd3fc; margin-bottom:4px; }
-  .dnx-resolve-sub { font-size:12px; color:#64748b; letter-spacing:1px; margin-bottom:18px; }
   .dnx-resolve-machine { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#f5d050; letter-spacing:2px; margin-bottom:6px; }
   .dnx-resolve-duration { font-size:12px; color:#94a3b8; margin-bottom:20px; }
   .dnx-resolve-label { font-size:11px; font-weight:700; letter-spacing:1.5px; color:#7dd3fc; text-transform:uppercase; margin-bottom:8px; }
-  .dnx-resolve-textarea { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:12px; resize:vertical; min-height:100px; outline:none; transition:border 0.2s; box-sizing:border-box; }
+  .dnx-resolve-textarea { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:12px; resize:vertical; min-height:100px; outline:none; box-sizing:border-box; }
   .dnx-resolve-textarea:focus { border-color:#7dd3fc; }
   .dnx-resolve-charcount { font-size:10px; color:#475569; text-align:right; margin-top:4px; margin-bottom:18px; }
   .dnx-resolve-charcount.ok { color:#4ade80; }
   .dnx-resolve-btns { display:flex; gap:10px; }
-  .dnx-resolve-cancel { flex:1; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #2a5a8c; border-radius:8px; color:#64748b; font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1px; cursor:pointer; }
-  .dnx-resolve-submit { flex:2; padding:10px; background:rgba(125,211,252,0.15); border:1px solid #7dd3fc; border-radius:8px; color:#7dd3fc; font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1.5px; cursor:pointer; transition:all 0.2s; }
-  .dnx-resolve-submit:hover { background:rgba(125,211,252,0.25); }
+  .dnx-resolve-cancel { flex:1; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #2a5a8c; border-radius:8px; color:#64748b; font-family:'Bebas Neue',sans-serif; font-size:15px; cursor:pointer; }
+  .dnx-resolve-submit { flex:2; padding:10px; background:rgba(125,211,252,0.15); border:1px solid #7dd3fc; border-radius:8px; color:#7dd3fc; font-family:'Bebas Neue',sans-serif; font-size:15px; cursor:pointer; }
   .dnx-resolve-submit:disabled { opacity:0.35; cursor:not-allowed; }
-  .dnx-resolve-error { font-size:11px; color:#f87171; margin-top:8px; display:none; }
 
 </style>
 <!-- ═══ JOB INFO MODAL ═══ -->
@@ -12063,6 +12059,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!n)return;
     var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'someone';
     var wo=n.wo?'work order '+n.wo:'',detail=n.detail||'';
+    if(n.type==='dnx'){
+      var dur=n.duration||'30 minutes';
+      var dnxMsgs=['Miguel. '+machine+' has been down for '+dur+'. You need to find out why.','Hey Miguel, '+machine+' is inactive. '+dur+' and nobody has addressed it.','Alert. '+machine+' has been sitting idle for '+dur+'. Miguel, go find out what is going on.'];
+      say(pick(dnxMsgs),function(){}); return;
+    }
     var lines={blue:['Setup request. '+name+' on '+machine+(wo?', '+wo:'')+' is ready. Tooling, you are up.'],yellow:[name+' at '+machine+' needs '+(detail||'something')+'. Someone go help.'],orange:['Floor support at '+machine+'. '+name+' is waiting.'],red:['Quality — '+name+' on '+machine+' has parts ready. Do not let that sit.']};
     say(pick(lines[n.type]||lines.yellow),function(){});
   };
@@ -12161,10 +12162,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   function _sparkySayInactive(machine, duration){
     if(!window.say) return;
+    var m = machine || 'a machine';
+    var d = duration || '30 minutes';
     var msgs = [
-      'Attention. ' + machine + ' has been inactive for ' + duration + '. Somebody needs to check on that machine.',
-      'Hey, heads up. ' + machine + ' just hit the 30 minute mark on downtime. ' + duration + ' and counting. Lets get eyes on it.',
-      machine + ' is showing inactive. Duration: ' + duration + '. Worth looking into.',
+      'Miguel. ' + m + ' has been down for ' + d + '. You need to find out why.',
+      'Hey Miguel, ' + m + ' is showing inactive. ' + d + ' and nobody has addressed it. Go check it out.',
+      'Heads up Miguel. ' + m + ' has not been cutting for ' + d + '. That needs your attention.',
+      'Miguel, Datanomix is flagging ' + m + '. Down for ' + d + '. Somebody needs to get eyes on that machine.',
+      'Alert. ' + m + ' has been sitting idle for ' + d + '. Miguel, go find out what is going on.',
     ];
     var msg = msgs[Math.floor(Math.random()*msgs.length)];
     window.say(msg, function(){});
@@ -12182,53 +12187,45 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     var unresolved = alerts.filter(function(a){ return !a.resolved; });
+    var resolved   = alerts.filter(function(a){ return a.resolved; });
 
     // Active unresolved alerts
     if(active){
       if(!unresolved.length){
         active.innerHTML = '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ All alerts resolved.</div>';
       } else {
-        active.innerHTML = '<div style="font-size:12px;color:#7dd3fc;font-weight:700;letter-spacing:1px;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
+        active.innerHTML = '<div style="font-size:12px;color:#f87171;font-weight:700;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
           + unresolved.map(function(a){
             var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-            return '<div style="background:rgba(125,211,252,0.06);border:1px solid rgba(125,211,252,0.35);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">'
-              +'<span style="font-size:22px;animation:dnxPulse 1.5s infinite;">🔷</span>'
+            return '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">'
+              +'<span style="font-size:22px;animation:dnxPulse 1.5s infinite;">🔴</span>'
               +'<div style="flex:1;">'
-              +'<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#7dd3fc;letter-spacing:1px;">'+a.machine+'</div>'
+              +'<div style="font-size:14px;font-weight:700;color:#f87171;">'+a.machine+'</div>'
               +'<div style="font-size:11px;color:#64748b;">'+a.status+' — '+a.duration+'</div>'
               +'<div style="font-size:10px;color:#334155;">'+ts+'</div>'
               +'</div>'
-              +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">'
-              +'<button onclick="window._openResolveDnx(this)" data-id="'+a.id+'" data-machine="'+a.machine+'" data-duration="'+a.duration+'" '
-              +'style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;font-family:\'Bebas Neue\',sans-serif;">✓ RESOLVE</button>'
-              +'<button data-delid="'+a.id+'" onclick="window._deleteDnxAlert(this.dataset.delid)" '
-              +'style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:5px 12px;font-size:10px;cursor:pointer;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">🗑 DELETE</button>'
-              +'</div>'
+              +'<button onclick="window._openResolveDnx(this)" data-id="'+a.id+'" data-machine="'+a.machine+'" '
+              +'style="background:linear-gradient(135deg,#059669,#10b981);border:none;color:#fff;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;flex-shrink:0;">RESOLVE</button>'
               +'</div>';
           }).join('');
       }
     }
 
-    // Full history — kept forever, with delete button on each
+    // History
     if(hist){
-      hist.innerHTML = alerts.slice(0,200).map(function(a){
+      hist.innerHTML = alerts.slice(0,100).map(function(a){
         var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-        var resolvedStr = a.resolved
-          ? '<div style="font-size:10px;color:#4ade80;margin-top:3px;">✅ Resolved: '+(a.comment||a.resolveReason||'no comment')+'</div>'
-          : '<div style="font-size:10px;color:#7dd3fc;margin-top:3px;">🔷 Unresolved</div>';
-        return '<div style="padding:10px 0;border-bottom:1px solid #0d1f35;display:flex;align-items:center;gap:8px;">'
-          +'<span style="font-size:16px;">'+(a.resolved?'✅':'🔷')+'</span>'
+        var resolvedStr = a.resolved ? '<div style="font-size:10px;color:#4ade80;">✅ Resolved: '+( a.comment||'no comment')+'</div>' : '<span style="font-size:10px;color:#f87171;">⚠ Unresolved</span>';
+        return '<div style="padding:8px 0;border-bottom:1px solid #0d1f35;">'
+          +'<div style="display:flex;align-items:center;gap:8px;">'
+          +'<span>'+(a.resolved?'✅':'🔴')+'</span>'
           +'<div style="flex:1;">'
-          +'<div style="display:flex;align-items:baseline;gap:6px;">'
-          +'<span style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:'+(a.resolved?'#94a3b8':'#7dd3fc')+';">'+a.machine+'</span>'
+          +'<span style="font-size:12px;font-weight:700;color:'+(a.resolved?'#94a3b8':'#f87171')+';">'+a.machine+'</span>'
           +' <span style="font-size:10px;color:#475569;">'+a.duration+'</span>'
           +'</div>'
-          +resolvedStr
-          +'</div>'
-          +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">'
           +'<div style="font-size:10px;color:#334155;">'+ts+'</div>'
-          +'<button data-delid="'+a.id+'" onclick="window._deleteDnxAlert(this.dataset.delid)" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:3px 8px;font-size:9px;cursor:pointer;letter-spacing:1px;">🗑 DELETE</button>'
           +'</div>'
+          +resolvedStr
           +'</div>';
       }).join('');
     }
@@ -12236,40 +12233,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._openResolveDnx = function(btn){
     _dnxPendingResolveId = btn.getAttribute('data-id');
-    var machine  = btn.getAttribute('data-machine');
-    var duration = btn.getAttribute('data-duration') || '';
-    var modal = document.getElementById('dnx-resolve-modal-tab');
-    document.getElementById('dnx-resolve-machine').textContent = machine;
-    document.getElementById('dnx-resolve-duration-tab').textContent = duration ? 'Inactive for: ' + duration : '';
+    var machine = btn.getAttribute('data-machine');
+    var modal = document.getElementById('dnx-resolve-modal');
+    document.getElementById('dnx-resolve-machine').textContent = 'Machine: ' + machine;
     document.getElementById('dnx-resolve-comment').value = '';
-    document.getElementById('dnx-tab-charcount').textContent = '0 / 20 min characters';
-    document.getElementById('dnx-tab-charcount').style.color = '#475569';
-    var resolveBtn = document.getElementById('dnx-tab-resolve-btn');
-    resolveBtn.disabled = true; resolveBtn.style.opacity = '0.4';
     modal.style.display = 'flex';
-  };
-
-  window._dnxTabReasonInput = function() {
-    var ta  = document.getElementById('dnx-resolve-comment');
-    var cnt = document.getElementById('dnx-tab-charcount');
-    var btn = document.getElementById('dnx-tab-resolve-btn');
-    var len = (ta.value || '').trim().length;
-    cnt.textContent = len + ' / 20 min characters';
-    cnt.style.color = len >= 20 ? '#4ade80' : '#475569';
-    btn.disabled = len < 20;
-    btn.style.opacity = len >= 20 ? '1' : '0.4';
-  };
-
-  window._deleteDnxAlert = async function(alertId) {
-    if (!confirm('Delete this alert permanently?')) return;
-    var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return;
-    try {
-      await mods.deleteDoc(mods.doc(db2,'hillDnxAlerts',alertId));
-      if(window.showToast) window.showToast('yellow','🗑 Alert deleted','Removed from history');
-    } catch(e) {
-      if(window.showToast) window.showToast('red','Error',e.message);
-    }
   };
 
   window._confirmResolveDnx = async function(){
@@ -12295,7 +12263,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         if(badge) badge.remove();
       });
 
-      document.getElementById('dnx-resolve-modal-tab').style.display = 'none';
+      document.getElementById('dnx-resolve-modal').style.display = 'none';
       if(window.showToast) window.showToast('green','✅ Alert Resolved', comment);
     } catch(e){
       alert('Error resolving: ' + e.message);
@@ -13418,97 +13386,58 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── DNX RESOLVE MODAL ──────────────────────────────────────────────────
   window._dnxResolvePending = null;
-
   window._dnxReasonInput = function() {
-    var ta  = document.getElementById('dnx-resolve-reason');
-    var cnt = document.getElementById('dnx-resolve-charcount');
-    var btn = document.getElementById('dnx-resolve-submit');
-    var err = document.getElementById('dnx-resolve-error');
-    var len = (ta.value || '').trim().length;
-    cnt.textContent = len + ' / 20 min characters';
-    cnt.className = 'dnx-resolve-charcount' + (len >= 20 ? ' ok' : '');
-    btn.disabled = len < 20;
-    if (len >= 20) err.style.display = 'none';
+    var ta=document.getElementById('dnx-resolve-reason');
+    var cnt=document.getElementById('dnx-resolve-charcount');
+    var btn=document.getElementById('dnx-resolve-submit');
+    var len=(ta.value||'').trim().length;
+    cnt.textContent=len+' / 20 min characters';
+    cnt.className='dnx-resolve-charcount'+(len>=20?' ok':'');
+    btn.disabled=len<20;
   };
-
-  window._dnxResolveCancel = function() {
+  window._dnxResolveCancel=function(){
     document.getElementById('dnx-resolve-modal').classList.remove('open');
-    window._dnxResolvePending = null;
+    window._dnxResolvePending=null;
   };
-
-  window.openDnxResolve = function(noteId, hillReqId) {
-    var note = null;
-    Object.values(window.machineNotes || {}).forEach(function(arr) {
-      arr.forEach(function(n) { if (n.id === noteId) note = n; });
-    });
-    window._dnxResolvePending = { noteId: noteId, hillReqId: hillReqId, note: note };
-    document.getElementById('dnx-modal-machine').textContent = (note && note.machine) || '—';
-    document.getElementById('dnx-modal-duration').textContent = (note && note.duration) ? 'Was inactive for: ' + note.duration : '';
-    document.getElementById('dnx-resolve-reason').value = '';
-    document.getElementById('dnx-resolve-charcount').textContent = '0 / 20 min characters';
-    document.getElementById('dnx-resolve-charcount').className = 'dnx-resolve-charcount';
-    document.getElementById('dnx-resolve-submit').disabled = true;
-    document.getElementById('dnx-resolve-error').style.display = 'none';
+  window.openDnxResolve=function(noteId,hillReqId){
+    var note=null;
+    Object.values(window.machineNotes||{}).forEach(function(arr){arr.forEach(function(n){if(n.id===noteId)note=n;});});
+    window._dnxResolvePending={noteId:noteId,hillReqId:hillReqId,note:note};
+    document.getElementById('dnx-modal-machine').textContent=(note&&note.machine)||'—';
+    document.getElementById('dnx-modal-duration').textContent=(note&&note.duration)?'Inactive for: '+note.duration:'';
+    document.getElementById('dnx-resolve-reason').value='';
+    document.getElementById('dnx-resolve-charcount').textContent='0 / 20 min characters';
+    document.getElementById('dnx-resolve-charcount').className='dnx-resolve-charcount';
+    document.getElementById('dnx-resolve-submit').disabled=true;
     document.getElementById('dnx-resolve-modal').classList.add('open');
   };
-
-  window._dnxResolveSubmit = async function() {
-    var reason = (document.getElementById('dnx-resolve-reason').value || '').trim();
-    if (reason.length < 20) { document.getElementById('dnx-resolve-error').style.display = 'block'; return; }
-    var pending = window._dnxResolvePending;
-    if (!pending) return;
-    var btn = document.getElementById('dnx-resolve-submit');
-    btn.disabled = true; btn.textContent = 'SAVING...';
-    var db2  = window.fbDb || window._db;
-    var mods = window._fbModules;
-    var now  = new Date();
-    try {
-      var note = pending.note || {};
-      var elapsedMins = null, elapsedStr = 'unknown';
-      if (note.createdAt && note.createdAt.seconds) {
-        elapsedMins = Math.round((now - new Date(note.createdAt.seconds * 1000)) / 60000);
-        elapsedStr  = elapsedMins >= 60 ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m' : elapsedMins+'m';
+  window._dnxResolveSubmit=async function(){
+    var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
+    if(reason.length<20){document.getElementById('dnx-resolve-error').style.display='block';return;}
+    var pending=window._dnxResolvePending; if(!pending)return;
+    var btn=document.getElementById('dnx-resolve-submit');
+    btn.disabled=true; btn.textContent='SAVING...';
+    var db2=window.fbDb||window._db, mods=window._fbModules, now=new Date();
+    try{
+      var note=pending.note||{};
+      var elapsedMins=null,elapsedStr='unknown';
+      if(note.createdAt&&note.createdAt.seconds){
+        elapsedMins=Math.round((now-new Date(note.createdAt.seconds*1000))/60000);
+        elapsedStr=elapsedMins>=60?Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m':elapsedMins+'m';
       }
-      var resolvePayload = {
-        resolved: true, resolvedAt: mods.serverTimestamp(),
-        resolvedBy: window.currentUser || 'admin',
-        resolveReason: reason, elapsedMins: elapsedMins, elapsedStr: elapsedStr,
-        inProgress: false, jobStatus: 'completed', completedAt: mods.serverTimestamp(),
-      };
-      // 1. Delete from live notes
-      await mods.deleteDoc(mods.doc(db2, 'notes', pending.noteId)).catch(function(){});
-      // 2. Update hillRequests
-      var hrId = (pending.hillReqId && pending.hillReqId !== pending.noteId && pending.hillReqId !== '') ? pending.hillReqId : null;
-      if (hrId) {
-        await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), resolvePayload).catch(function(){});
-      } else {
-        var snap = await mods.getDocs(mods.query(
-          mods.collection(db2, 'hillRequests'),
-          mods.where('machine', '==', note.machine || ''),
-          mods.where('resolved', '==', false),
-          mods.where('type', '==', 'dnx')
-        )).catch(function(){ return null; });
-        if (snap && !snap.empty) {
-          var ups = [];
-          snap.forEach(function(d) { ups.push(mods.updateDoc(mods.doc(db2, 'hillRequests', d.id), resolvePayload)); });
-          await Promise.all(ups).catch(function(){});
-        }
+      var payload={resolved:true,resolvedAt:mods.serverTimestamp(),resolvedBy:window.currentUser||'admin',resolveReason:reason,elapsedMins:elapsedMins,elapsedStr:elapsedStr,inProgress:false,jobStatus:'completed',completedAt:mods.serverTimestamp()};
+      await mods.deleteDoc(mods.doc(db2,'notes',pending.noteId)).catch(function(){});
+      var hrId=(pending.hillReqId&&pending.hillReqId!==pending.noteId&&pending.hillReqId!=='')?pending.hillReqId:null;
+      if(hrId){await mods.updateDoc(mods.doc(db2,'hillRequests',hrId),payload).catch(function(){});}
+      else{
+        var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('machine','==',note.machine||''),mods.where('resolved','==',false),mods.where('type','==','dnx'))).catch(function(){return null;});
+        if(snap&&!snap.empty){var ups=[];snap.forEach(function(d){ups.push(mods.updateDoc(mods.doc(db2,'hillRequests',d.id),payload));});await Promise.all(ups).catch(function(){});}
       }
-      // 3. Save to hillDnxLog for reporting
-      await mods.addDoc(mods.collection(db2, 'hillDnxLog'), {
-        machine: note.machine || '', duration: note.duration || '',
-        since: note.since || '', status: note.status || 'INACTIVE',
-        resolveReason: reason, resolvedBy: window.currentUser || 'admin',
-        resolvedAt: mods.serverTimestamp(), elapsedMins: elapsedMins, elapsedStr: elapsedStr,
-        createdAt: note.createdAt || null, autoAlert: true,
-      }).catch(function(){});
+      await mods.addDoc(mods.collection(db2,'hillDnxLog'),{machine:note.machine||'',duration:note.duration||'',since:note.since||'',status:note.status||'INACTIVE',resolveReason:reason,resolvedBy:window.currentUser||'admin',resolvedAt:mods.serverTimestamp(),elapsedMins:elapsedMins,autoAlert:true}).catch(function(){});
       document.getElementById('dnx-resolve-modal').classList.remove('open');
-      window._dnxResolvePending = null;
-      if (window.showToast) window.showToast('blue', '🔷 DNX Alert Closed', (note.machine||'Machine') + ' — reason saved to log');
-    } catch(e) {
-      btn.disabled = false; btn.textContent = '✓ CLOSE ALERT';
-      if (window.showToast) window.showToast('red', 'Error', e.message);
-    }
+      window._dnxResolvePending=null;
+      if(window.showToast)window.showToast('blue','🔷 DNX Alert Closed',(note.machine||'Machine')+' — reason saved');
+    }catch(e){btn.disabled=false;btn.textContent='✓ CLOSE ALERT';if(window.showToast)window.showToast('red','Error',e.message);}
   };
 
 })();
@@ -13518,13 +13447,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 <div id="dnx-resolve-modal">
   <div class="dnx-resolve-box">
     <div class="dnx-resolve-title">🔷 Close DNX Alert</div>
-    <div class="dnx-resolve-sub">DATANOMIX INACTIVE ALERT</div>
     <div class="dnx-resolve-machine" id="dnx-modal-machine">—</div>
     <div class="dnx-resolve-duration" id="dnx-modal-duration"></div>
     <div class="dnx-resolve-label">Why did this machine sit idle? <span style="color:#ef4444;">*Required (20 char min)</span></div>
-    <textarea class="dnx-resolve-textarea" id="dnx-resolve-reason" placeholder="e.g. Operator on break, waiting for material, tool change, machine fault, setup between jobs..." oninput="window._dnxReasonInput()"></textarea>
+    <textarea class="dnx-resolve-textarea" id="dnx-resolve-reason" placeholder="e.g. Operator on break, waiting for material, tool change, machine fault..." oninput="window._dnxReasonInput()"></textarea>
     <div class="dnx-resolve-charcount" id="dnx-resolve-charcount">0 / 20 min characters</div>
-    <div class="dnx-resolve-error" id="dnx-resolve-error">Please explain why the machine was inactive before closing.</div>
+    <div style="font-size:11px;color:#f87171;margin-bottom:10px;display:none;" id="dnx-resolve-error">Please write at least 20 characters.</div>
     <div class="dnx-resolve-btns">
       <button class="dnx-resolve-cancel" onclick="window._dnxResolveCancel()">CANCEL</button>
       <button class="dnx-resolve-submit" id="dnx-resolve-submit" onclick="window._dnxResolveSubmit()" disabled>✓ CLOSE ALERT</button>
