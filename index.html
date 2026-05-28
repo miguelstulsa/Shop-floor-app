@@ -1832,7 +1832,9 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var inProg  = n.inProgress;
       var onHold  = n.onHold;
       var timerBtns = isAdmin
-        ? (onHold
+        ? (n.type === 'dnx'
+            ? '<div style="margin-top:6px;"><button class="req-timer-btn req-finish-btn" style="background:rgba(125,211,252,0.15);border-color:#7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">🔷 CLOSE ALERT</button></div>'
+            : onHold
             ? '<div style="margin-top:6px;"><div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<div style="display:flex;gap:6px;">' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
@@ -1880,7 +1882,9 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var onHold2  = n.onHold;
       var adminBtns = isAdmin2
         ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
-          (onHold2
+          (n.type === 'dnx'
+            ? '<button class="req-timer-btn req-finish-btn" style="background:rgba(125,211,252,0.15);border-color:#7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">🔷 CLOSE ALERT</button>'
+            : onHold2
             ? '<div style="width:100%;font-size:9px;color:#f59e0b;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>'
@@ -8959,6 +8963,26 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 #page-dashboard .dash-summary-card:nth-child(4){animation-delay:.18s;}
 #page-dashboard .dash-summary-card:nth-child(5){animation-delay:.24s;}
 @media(max-width:640px){.legend{display:none!important;}.logo p{display:none!important;}}
+  /* DNX RESOLVE MODAL */
+  #dnx-resolve-modal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; }
+  #dnx-resolve-modal.open { display:flex; }
+  .dnx-resolve-box { background:linear-gradient(135deg,#0d1f35,#1a3555); border:2px solid #7dd3fc; border-radius:16px; padding:28px; width:90%; max-width:480px; box-shadow:0 0 40px rgba(125,211,252,0.2); }
+  .dnx-resolve-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#7dd3fc; margin-bottom:4px; }
+  .dnx-resolve-sub { font-size:12px; color:#64748b; letter-spacing:1px; margin-bottom:18px; }
+  .dnx-resolve-machine { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#f5d050; letter-spacing:2px; margin-bottom:6px; }
+  .dnx-resolve-duration { font-size:12px; color:#94a3b8; margin-bottom:20px; }
+  .dnx-resolve-label { font-size:11px; font-weight:700; letter-spacing:1.5px; color:#7dd3fc; text-transform:uppercase; margin-bottom:8px; }
+  .dnx-resolve-textarea { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:12px; resize:vertical; min-height:100px; outline:none; transition:border 0.2s; box-sizing:border-box; }
+  .dnx-resolve-textarea:focus { border-color:#7dd3fc; }
+  .dnx-resolve-charcount { font-size:10px; color:#475569; text-align:right; margin-top:4px; margin-bottom:18px; }
+  .dnx-resolve-charcount.ok { color:#4ade80; }
+  .dnx-resolve-btns { display:flex; gap:10px; }
+  .dnx-resolve-cancel { flex:1; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #2a5a8c; border-radius:8px; color:#64748b; font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1px; cursor:pointer; }
+  .dnx-resolve-submit { flex:2; padding:10px; background:rgba(125,211,252,0.15); border:1px solid #7dd3fc; border-radius:8px; color:#7dd3fc; font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1.5px; cursor:pointer; transition:all 0.2s; }
+  .dnx-resolve-submit:hover { background:rgba(125,211,252,0.25); }
+  .dnx-resolve-submit:disabled { opacity:0.35; cursor:not-allowed; }
+  .dnx-resolve-error { font-size:11px; color:#f87171; margin-top:8px; display:none; }
+
 </style>
 <!-- ═══ JOB INFO MODAL ═══ -->
 <div id="jobInfoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:20px;">
@@ -13352,7 +13376,121 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }).catch(function(){});
   };
 
+
+  // ── DNX RESOLVE MODAL ──────────────────────────────────────────────────
+  window._dnxResolvePending = null;
+
+  window._dnxReasonInput = function() {
+    var ta  = document.getElementById('dnx-resolve-reason');
+    var cnt = document.getElementById('dnx-resolve-charcount');
+    var btn = document.getElementById('dnx-resolve-submit');
+    var err = document.getElementById('dnx-resolve-error');
+    var len = (ta.value || '').trim().length;
+    cnt.textContent = len + ' / 20 min characters';
+    cnt.className = 'dnx-resolve-charcount' + (len >= 20 ? ' ok' : '');
+    btn.disabled = len < 20;
+    if (len >= 20) err.style.display = 'none';
+  };
+
+  window._dnxResolveCancel = function() {
+    document.getElementById('dnx-resolve-modal').classList.remove('open');
+    window._dnxResolvePending = null;
+  };
+
+  window.openDnxResolve = function(noteId, hillReqId) {
+    var note = null;
+    Object.values(window.machineNotes || {}).forEach(function(arr) {
+      arr.forEach(function(n) { if (n.id === noteId) note = n; });
+    });
+    window._dnxResolvePending = { noteId: noteId, hillReqId: hillReqId, note: note };
+    document.getElementById('dnx-modal-machine').textContent = (note && note.machine) || '—';
+    document.getElementById('dnx-modal-duration').textContent = (note && note.duration) ? 'Was inactive for: ' + note.duration : '';
+    document.getElementById('dnx-resolve-reason').value = '';
+    document.getElementById('dnx-resolve-charcount').textContent = '0 / 20 min characters';
+    document.getElementById('dnx-resolve-charcount').className = 'dnx-resolve-charcount';
+    document.getElementById('dnx-resolve-submit').disabled = true;
+    document.getElementById('dnx-resolve-error').style.display = 'none';
+    document.getElementById('dnx-resolve-modal').classList.add('open');
+  };
+
+  window._dnxResolveSubmit = async function() {
+    var reason = (document.getElementById('dnx-resolve-reason').value || '').trim();
+    if (reason.length < 20) { document.getElementById('dnx-resolve-error').style.display = 'block'; return; }
+    var pending = window._dnxResolvePending;
+    if (!pending) return;
+    var btn = document.getElementById('dnx-resolve-submit');
+    btn.disabled = true; btn.textContent = 'SAVING...';
+    var db2  = window.fbDb || window._db;
+    var mods = window._fbModules;
+    var now  = new Date();
+    try {
+      var note = pending.note || {};
+      var elapsedMins = null, elapsedStr = 'unknown';
+      if (note.createdAt && note.createdAt.seconds) {
+        elapsedMins = Math.round((now - new Date(note.createdAt.seconds * 1000)) / 60000);
+        elapsedStr  = elapsedMins >= 60 ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m' : elapsedMins+'m';
+      }
+      var resolvePayload = {
+        resolved: true, resolvedAt: mods.serverTimestamp(),
+        resolvedBy: window.currentUser || 'admin',
+        resolveReason: reason, elapsedMins: elapsedMins, elapsedStr: elapsedStr,
+        inProgress: false, jobStatus: 'completed', completedAt: mods.serverTimestamp(),
+      };
+      // 1. Delete from live notes
+      await mods.deleteDoc(mods.doc(db2, 'notes', pending.noteId)).catch(function(){});
+      // 2. Update hillRequests
+      var hrId = (pending.hillReqId && pending.hillReqId !== pending.noteId && pending.hillReqId !== '') ? pending.hillReqId : null;
+      if (hrId) {
+        await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), resolvePayload).catch(function(){});
+      } else {
+        var snap = await mods.getDocs(mods.query(
+          mods.collection(db2, 'hillRequests'),
+          mods.where('machine', '==', note.machine || ''),
+          mods.where('resolved', '==', false),
+          mods.where('type', '==', 'dnx')
+        )).catch(function(){ return null; });
+        if (snap && !snap.empty) {
+          var ups = [];
+          snap.forEach(function(d) { ups.push(mods.updateDoc(mods.doc(db2, 'hillRequests', d.id), resolvePayload)); });
+          await Promise.all(ups).catch(function(){});
+        }
+      }
+      // 3. Save to hillDnxLog for reporting
+      await mods.addDoc(mods.collection(db2, 'hillDnxLog'), {
+        machine: note.machine || '', duration: note.duration || '',
+        since: note.since || '', status: note.status || 'INACTIVE',
+        resolveReason: reason, resolvedBy: window.currentUser || 'admin',
+        resolvedAt: mods.serverTimestamp(), elapsedMins: elapsedMins, elapsedStr: elapsedStr,
+        createdAt: note.createdAt || null, autoAlert: true,
+      }).catch(function(){});
+      document.getElementById('dnx-resolve-modal').classList.remove('open');
+      window._dnxResolvePending = null;
+      if (window.showToast) window.showToast('blue', '🔷 DNX Alert Closed', (note.machine||'Machine') + ' — reason saved to log');
+    } catch(e) {
+      btn.disabled = false; btn.textContent = '✓ CLOSE ALERT';
+      if (window.showToast) window.showToast('red', 'Error', e.message);
+    }
+  };
+
 })();
 </script>
+
+<!-- DNX RESOLVE MODAL -->
+<div id="dnx-resolve-modal">
+  <div class="dnx-resolve-box">
+    <div class="dnx-resolve-title">🔷 Close DNX Alert</div>
+    <div class="dnx-resolve-sub">DATANOMIX INACTIVE ALERT</div>
+    <div class="dnx-resolve-machine" id="dnx-modal-machine">—</div>
+    <div class="dnx-resolve-duration" id="dnx-modal-duration"></div>
+    <div class="dnx-resolve-label">Why did this machine sit idle? <span style="color:#ef4444;">*Required (20 char min)</span></div>
+    <textarea class="dnx-resolve-textarea" id="dnx-resolve-reason" placeholder="e.g. Operator on break, waiting for material, tool change, machine fault, setup between jobs..." oninput="window._dnxReasonInput()"></textarea>
+    <div class="dnx-resolve-charcount" id="dnx-resolve-charcount">0 / 20 min characters</div>
+    <div class="dnx-resolve-error" id="dnx-resolve-error">Please explain why the machine was inactive before closing.</div>
+    <div class="dnx-resolve-btns">
+      <button class="dnx-resolve-cancel" onclick="window._dnxResolveCancel()">CANCEL</button>
+      <button class="dnx-resolve-submit" id="dnx-resolve-submit" onclick="window._dnxResolveSubmit()" disabled>✓ CLOSE ALERT</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
