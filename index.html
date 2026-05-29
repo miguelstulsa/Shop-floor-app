@@ -8444,7 +8444,7 @@ window.plannerSetView = function(view) {
     var mods = window._fbModules, db2 = window._db;
     // Load from both hillInspections (permanent archive) and hillRequests (red type)
     Promise.all([
-      mods.getDocs(mods.query(mods.collection(db2,'hillInspections'), mods.orderBy('createdAt','desc'))),
+      mods.getDocs(mods.query(mods.collection(db2,'hillInspections'))),
       mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('type','==','red')))
     ]).then(function(results){
       var seen = new Set();
@@ -9642,7 +9642,7 @@ window.filterJobs = function(filter) {
 window.loadJobTracker = function() {
   if (!window.fbDb || !window.fbFirestore) { setTimeout(window.loadJobTracker, 800); return; }
   var mods = window.fbFirestore;
-  mods.onSnapshot(mods.query(mods.collection(window.fbDb,'hillJobs'),mods.orderBy('createdAt','desc')), function(snap) {
+  mods.onSnapshot(mods.query(mods.collection(window.fbDb,'hillJobs')), function(snap) {
     _allJobs = [];
     snap.forEach(function(d){ var j=d.data(); j.id=d.id; _allJobs.push(j); });
     loadLinkedRequests();
@@ -12826,7 +12826,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _chatHistory.push({role:'user', content: msg});
 
     // Check if message is a WO lookup
-    var woMatch = msg.match(/(26-?\d{4}|25-?\d{4}|24-?\d{4}|WO[\s-]?\d+|\d{5,6})/i);
+    var woMatch = msg.match(/(2\d-\d{4}|\d{2}-\d{4}|WO[\s\-#]?\d+)/i);
     if(woMatch || /work order|WO#|lookup|receipt|pull up|show me/i.test(msg)){
       var woNum = woMatch ? woMatch[0].toUpperCase().replace(/\s/g,'') : null;
       if(woNum){
@@ -13031,7 +13031,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var snap = await mods.getDocs(
         mods.query(mods.collection(db2,'hillRequests'),
           mods.where('type','==',type),
-          mods.orderBy('createdAt','desc'),
           mods.limit(200))
       );
       if(snap && !snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
@@ -13048,7 +13047,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var snap = await mods.getDocs(
         mods.query(mods.collection(db2,'hillRequests'),
           mods.where('machine','==',machine),
-          mods.orderBy('createdAt','desc'),
           mods.limit(200))
       );
       if(snap && !snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
@@ -13632,7 +13630,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!hist) return;
     mods.getDocs(
       mods.query(mods.collection(db,'hillAnnouncements'),
-      mods.orderBy('createdAt','desc'),
       mods.limit(10))
     ).then(function(snap){
       if(!snap||!snap.docs||!snap.docs.length){
@@ -13760,3 +13757,4 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 </div>
 </body>
 </html>
+      
