@@ -12611,14 +12611,40 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── QUICK SEARCH ─────────────────────────────────────────
   window._aiQuickSearch = async function(type) {
+    // For type filters, use _buildAllReceipt directly with type filter
+    var typeFilters = ['pending','machinist','inspection','running','datanomix'];
+    var directFilters = ['all','open','completed','today','week'];
+    
+    if(typeFilters.indexOf(type) >= 0 || directFilters.indexOf(type) >= 0) {
+      var msgs = document.getElementById('ai-messages');
+      // Add user message bubble
+      var userDiv = document.createElement('div');
+      userDiv.className = 'ai-msg ai-msg-user';
+      var labelMap = {
+        all:'All Requests', pending:'Pending WO', machinist:'Machinist Requests',
+        inspection:'Inspection Requests', running:'Running WO', datanomix:'Datanomix Alerts',
+        open:'Open Requests', completed:'Completed Requests', today:"Today", week:"This Week"
+      };
+      userDiv.innerHTML = '<div class="ai-bubble ai-bubble-user">'+labelMap[type]+'</div>';
+      msgs.appendChild(userDiv);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      // Show typing indicator
+      var typingDiv = document.createElement('div');
+      typingDiv.className = 'ai-msg ai-msg-assistant';
+      typingDiv.innerHTML = '<div class="ai-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+      msgs.appendChild(typingDiv);
+      msgs.scrollTop = msgs.scrollHeight;
+
+      var data = await _buildAllReceipt(type);
+      typingDiv.remove();
+      addAllReceipt(data);
+      return;
+    }
+    
+    // Fallback for anything else
     var input = document.getElementById('ai-input');
-    var labelMap = {
-      all: 'all requests', pending: 'pending wo', machinist: 'machinist request',
-      inspection: 'inspection', running: 'running wo', datanomix: 'datanomix',
-      open: 'open requests', completed: 'completed requests',
-      today: 'today', week: 'this week'
-    };
-    input.value = labelMap[type] || type;
+    input.value = type;
     window._sendAIChat();
   };
 
