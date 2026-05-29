@@ -8445,7 +8445,7 @@ window.plannerSetView = function(view) {
     // Load from both hillInspections (permanent archive) and hillRequests (red type)
     Promise.all([
       mods.getDocs(mods.query(mods.collection(db2,'hillInspections'), mods.orderBy('createdAt','desc'))),
-      mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('type','==','red'), mods.orderBy('createdAt','desc')))
+      mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('type','==','red')))
     ]).then(function(results){
       var seen = new Set();
       inspRecords = [];
@@ -12653,10 +12653,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return {requests:[]};
     try {
-      var snap = await mods.getDocs(mods.query(
-        mods.collection(db2,'hillRequests'),
-        mods.orderBy('createdAt','desc')
-      ));
+      // No orderBy to avoid index requirement - sort in JS
+      var snap = await mods.getDocs(mods.collection(db2,'hillRequests'));
       var now = new Date();
       var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       var weekStart  = new Date(todayStart); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
@@ -12678,6 +12676,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         if (filter === 'datanomix' && r.type !== 'dnx') return;
 
         reqs.push(r);
+      });
+      // Sort by createdAt descending in JS
+      reqs.sort(function(a,b){
+        var ta = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : 0;
+        var tb = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : 0;
+        return tb - ta;
       });
       return {requests: reqs, filter: filter};
     } catch(e) {
@@ -13327,11 +13331,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var lastName = name.split(' ')[1] || '';
       // Search by full name, first name only, and assignedTo
       var snaps = await Promise.all([
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.limit(100))),
       ]);
       var seen = {};
       snaps.forEach(function(snap){
