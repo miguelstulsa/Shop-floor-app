@@ -10506,71 +10506,149 @@ function dtBar(label, mins, total, color, bg) {
 
 // ── PRINT REPORT ────────────────────────────────────────────
 window.printReport = function() {
-  var body = document.getElementById('report-body');
-  if (!body) return;
-  var periodLabel = {daily:'Daily',weekly:'Weekly',monthly:'Monthly',yearly:'Year to Date'}[_reportPeriod];
-  var win = window.open('','_blank');
-  win.document.write('<html><head><title>Hill Mfg - '+periodLabel+' Report</title>');
-  win.document.write('<style>body{font-family:Arial,sans-serif;padding:20px;background:#fff;color:#333;}');
-  win.document.write('h1{font-size:24px;margin-bottom:4px;}');
-  win.document.write('h2{font-size:16px;color:#1e3a5c;margin-top:20px;margin-bottom:8px;border-bottom:2px solid #1e3a5c;padding-bottom:4px;}');
-  win.document.write('table{width:100%;border-collapse:collapse;margin-bottom:16px;}');
-  win.document.write('th{background:#1e3a5c;color:#fff;padding:8px;text-align:left;font-size:11px;}');
-  win.document.write('td{padding:7px 8px;border-bottom:1px solid #e2e8f0;font-size:12px;}');
-  win.document.write('tr:nth-child(even){background:#f8fafc;}');
-  win.document.write('.stat{display:inline-block;margin:0 16px 12px 0;}');
-  win.document.write('.stat-val{font-size:28px;font-weight:700;color:#1e3a5c;}');
-  win.document.write('.stat-lbl{font-size:10px;color:#64748b;letter-spacing:1px;}');
-  win.document.write('</style></head><body>');
-  win.document.write('<h1>Hill Manufacturing - '+periodLabel+' Performance Report</h1>');
-  win.document.write('<p style="color:#64748b;font-size:12px;">Generated: '+new Date().toLocaleString()+' | Shift: 6:00 AM - 5:00 PM | Monday - Friday | 21 Machines</p>');
-
   var days = getReportDays();
   var agg  = aggregateDays(days);
-  var dateRange = days.length > 1 ? days[0].label+' - '+days[days.length-1].label : days[0].label;
-  win.document.write('<p style="font-size:12px;color:#475569;">Period: '+dateRange+'</p>');
+  if (!agg) return;
+  var periodLabel = {daily:'Daily',weekly:'Weekly',monthly:'Monthly',yearly:'Year to Date'}[_reportPeriod];
+  var dateRange = days.length > 1 ? days[0].label+' — '+days[days.length-1].label : days[0].label;
+  var maxParts = Math.max.apply(null, days.map(function(d){return d.totalParts;})) || 1;
+  var maxUtil  = Math.max.apply(null, agg.machArr.map(function(m){return m.avgUtil;})) || 1;
+  var totalDT  = agg.totAlarm + agg.totSetup + agg.totIdle || 1;
 
-  // Summary
-  win.document.write('<h2>Summary</h2>');
-  win.document.write('<div>');
-  win.document.write('<div class="stat"><div class="stat-val">'+agg.totParts.toLocaleString()+'</div><div class="stat-lbl">TOTAL PARTS</div></div>');
-  win.document.write('<div class="stat"><div class="stat-val">'+agg.avgUtil+'%</div><div class="stat-lbl">AVG UTILIZATION</div></div>');
-  win.document.write('<div class="stat"><div class="stat-val">'+agg.avgWin+'/21</div><div class="stat-lbl">AVG WINNING</div></div>');
-  win.document.write('<div class="stat"><div class="stat-val">'+fmtMins(agg.totAlarm+agg.totSetup)+'</div><div class="stat-lbl">TOTAL DOWNTIME</div></div>');
+  // Parts trend bars
+  var trendBars = days.map(function(d){
+    var pct = Math.round(d.totalParts/maxParts*100);
+    var isToday = d === days[days.length-1];
+    return '<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px;">'
+      +'<div style="font-size:10px;font-weight:700;color:#1e3a5c;">'+d.totalParts+'</div>'
+      +'<div style="width:100%;background:'+(isToday?'#f59e0b':'#3b82f6')+';height:'+(Math.max(pct*0.9,4))+'px;border-radius:4px 4px 0 0;"></div>'
+      +'<div style="font-size:9px;color:#64748b;white-space:nowrap;">'+d.label.split(',')[0]+'</div>'
+      +'</div>';
+  }).join('');
+
+  // Machine rows
+  var machRows = agg.machArr.map(function(m,i){
+    var color = m.avgUtil>=85?'#16a34a':m.avgUtil>=70?'#d97706':'#dc2626';
+    var status = m.avgUtil>=85?'STAR':m.avgUtil>=70?'GOOD':'NEEDS ATTENTION';
+    var medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':''+(i+1);
+    return '<tr>'
+      +'<td style="font-size:13px;text-align:center;">'+medal+'</td>'
+      +'<td style="font-weight:700;color:#1e3a5c;font-size:13px;">'+m.name+'</td>'
+      +'<td style="font-size:11px;color:#64748b;">'+m.cell+'</td>'
+      +'<td><div style="display:flex;align-items:center;gap:8px;">'
+      +'<div style="flex:1;background:#e2e8f0;border-radius:4px;height:10px;"><div style="width:'+m.avgUtil+'%;background:'+color+';height:100%;border-radius:4px;"></div></div>'
+      +'<span style="font-size:12px;font-weight:700;color:'+color+';min-width:36px;">'+m.avgUtil+'%</span>'
+      +'</div></td>'
+      +'<td style="font-weight:700;font-size:13px;text-align:center;">'+m.parts.toLocaleString()+'</td>'
+      +'<td><span style="background:'+(m.avgUtil>=85?'#dcfce7':m.avgUtil>=70?'#fef9c3':'#fee2e2')+';color:'+(m.avgUtil>=85?'#16a34a':m.avgUtil>=70?'#d97706':'#dc2626')+';padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;">'+status+'</span></td>'
+      +'</tr>';
+  }).join('');
+
+  // Day rows
+  var dayRows = days.length > 1 ? days.map(function(d){
+    return '<tr>'
+      +'<td style="font-weight:600;">'+d.label+'</td>'
+      +'<td style="font-weight:700;color:#2563eb;">'+d.totalParts.toLocaleString()+'</td>'
+      +'<td>'+d.avgUtil+'%</td>'
+      +'<td>'+d.winning+'/21</td>'
+      +'<td style="color:#dc2626;">'+fmtMins(d.totalAlarmMins)+'</td>'
+      +'<td style="color:#d97706;">'+fmtMins(d.totalSetupMins)+'</td>'
+      +'</tr>';
+  }).join('') : '';
+
+  var win = window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hill Mfg — '+periodLabel+' Report</title>');
+  win.document.write('<style>');
+  win.document.write('*{box-sizing:border-box;margin:0;padding:0;}');
+  win.document.write('body{font-family:"Segoe UI",Arial,sans-serif;background:#f8fafc;color:#1e293b;}');
+  win.document.write('.header{background:linear-gradient(135deg,#0f2338,#1e3a5c);color:white;padding:32px 40px;display:flex;justify-content:space-between;align-items:center;}');
+  win.document.write('.logo{font-size:26px;font-weight:900;letter-spacing:3px;text-transform:uppercase;}');
+  win.document.write('.logo span{color:#f59e0b;}');
+  win.document.write('.subtitle{font-size:13px;margin-top:6px;opacity:0.75;letter-spacing:1px;}');
+  win.document.write('.header-right{text-align:right;font-size:12px;opacity:0.8;line-height:1.8;}');
+  win.document.write('.content{padding:32px 40px;}');
+  win.document.write('.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}');
+  win.document.write('.stat-card{background:white;border-radius:12px;padding:20px 16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-top:4px solid #e2e8f0;position:relative;overflow:hidden;}');
+  win.document.write('.stat-card::after{content:"";position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(0,0,0,0.02));}');
+  win.document.write('.stat-card.blue{border-top-color:#2563eb;}');
+  win.document.write('.stat-card.green{border-top-color:#16a34a;}');
+  win.document.write('.stat-card.red{border-top-color:#dc2626;}');
+  win.document.write('.stat-card.yellow{border-top-color:#d97706;}');
+  win.document.write('.stat-val{font-size:38px;font-weight:900;line-height:1;letter-spacing:-1px;}');
+  win.document.write('.stat-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-top:6px;font-weight:600;}');
+  win.document.write('.section{background:white;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,0.06);}');
+  win.document.write('.section-title{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid #f1f5f9;display:flex;align-items:center;gap:8px;}');
+  win.document.write('.two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;}');
+  win.document.write('table{width:100%;border-collapse:collapse;}');
+  win.document.write('th{background:#f8fafc;color:#64748b;padding:10px 14px;text-align:left;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border-bottom:2px solid #e2e8f0;}');
+  win.document.write('td{padding:11px 14px;border-bottom:1px solid #f1f5f9;font-size:12px;vertical-align:middle;}');
+  win.document.write('tr:last-child td{border-bottom:none;}');
+  win.document.write('.footer{padding:20px 40px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;margin-top:8px;display:flex;justify-content:space-between;align-items:center;}');
+  win.document.write('.print-btn{position:fixed;top:20px;right:20px;background:#0f2338;color:white;border:none;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:999;}');
+  win.document.write('.trend-chart{display:flex;align-items:flex-end;gap:6px;height:120px;padding-top:16px;}');
+  win.document.write('.dt-item{display:flex;align-items:center;gap:12px;margin-bottom:12px;}');
+  win.document.write('.dt-label{font-size:11px;font-weight:600;min-width:120px;color:#1e293b;}');
+  win.document.write('.dt-bar-wrap{flex:1;background:#f1f5f9;border-radius:6px;height:14px;overflow:hidden;}');
+  win.document.write('.dt-bar-fill{height:100%;border-radius:6px;}');
+  win.document.write('.dt-val{font-size:11px;font-weight:700;min-width:60px;text-align:right;}');
+  win.document.write('@media print{.print-btn{display:none;}body{background:white;}@page{margin:0.4in;size:letter;}}');
+  win.document.write('</style></head><body>');
+
+  win.document.write('<button class="print-btn" onclick="window.print()">PRINT / SAVE PDF</button>');
+
+  // Header
+  win.document.write('<div class="header">');
+  win.document.write('<div><div class="logo">HILL <span>MANUFACTURING</span></div><div class="subtitle">'+periodLabel+' Performance Report &nbsp;·&nbsp; '+dateRange+'</div></div>');
+  win.document.write('<div class="header-right">');
+  win.document.write('<div>Generated: '+new Date().toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div>');
+  win.document.write('<div>Shift: 6:00 AM — 5:00 PM &nbsp;·&nbsp; Mon–Fri</div>');
+  win.document.write('<div>21 Machines &nbsp;·&nbsp; Confidential</div>');
+  win.document.write('</div></div>');
+
+  win.document.write('<div class="content">');
+
+  // Stat cards
+  win.document.write('<div class="stat-grid">');
+  win.document.write('<div class="stat-card blue"><div class="stat-val" style="color:#2563eb;">'+agg.totParts.toLocaleString()+'</div><div class="stat-lbl">Total Parts</div></div>');
+  win.document.write('<div class="stat-card green"><div class="stat-val" style="color:#16a34a;">'+agg.avgUtil+'%</div><div class="stat-lbl">Avg Utilization</div></div>');
+  win.document.write('<div class="stat-card yellow"><div class="stat-val" style="color:#d97706;">'+agg.avgWin+'/21</div><div class="stat-lbl">Avg Winning</div></div>');
+  win.document.write('<div class="stat-card red"><div class="stat-val" style="color:#dc2626;">'+fmtMins(agg.totAlarm+agg.totSetup)+'</div><div class="stat-lbl">Total Downtime</div></div>');
   win.document.write('</div>');
 
-  // Machine ranking
-  win.document.write('<h2>Machine Performance Ranking</h2>');
-  win.document.write('<table><thead><tr><th>#</th><th>Machine</th><th>Cell</th><th>Avg Util %</th><th>Parts Made</th><th>Work Order</th><th>Customer</th></tr></thead><tbody>');
-  agg.machArr.forEach(function(m, i) {
-    var status = m.avgUtil >= 85 ? 'STAR' : m.avgUtil >= 70 ? 'GOOD' : 'ATTENTION';
-    win.document.write('<tr><td>'+(i+1)+'</td><td><strong>'+m.name+'</strong></td><td>'+m.cell+'</td><td>'+m.avgUtil+'%</td><td>'+m.parts.toLocaleString()+'</td><td>'+m.wo+'</td><td>'+m.customer+'</td></tr>');
-  });
-  win.document.write('</tbody></table>');
-
-  // Downtime
-  win.document.write('<h2>Downtime Breakdown</h2>');
-  win.document.write('<table><thead><tr><th>Category</th><th>Total Time</th><th>% of Downtime</th></tr></thead><tbody>');
-  var total = agg.totAlarm+agg.totSetup+agg.totIdle;
-  win.document.write('<tr><td>Alarms</td><td>'+fmtMins(agg.totAlarm)+'</td><td>'+Math.round(agg.totAlarm/total*100)+'%</td></tr>');
-  win.document.write('<tr><td>Setup / Changeover</td><td>'+fmtMins(agg.totSetup)+'</td><td>'+Math.round(agg.totSetup/total*100)+'%</td></tr>');
-  win.document.write('<tr><td>Idle / Unspecified</td><td>'+fmtMins(agg.totIdle)+'</td><td>'+Math.round(agg.totIdle/total*100)+'%</td></tr>');
-  win.document.write('</tbody></table>');
-
-  // Daily breakdown if multi-day
+  // Trend chart + Downtime side by side
+  win.document.write('<div class="two-col">');
   if (days.length > 1) {
-    win.document.write('<h2>Daily Breakdown</h2>');
-    win.document.write('<table><thead><tr><th>Date</th><th>Total Parts</th><th>Avg Util %</th><th>Winning</th><th>Alarm Time</th><th>Setup Time</th></tr></thead><tbody>');
-    days.forEach(function(d) {
-      win.document.write('<tr><td>'+d.label+'</td><td>'+d.totalParts.toLocaleString()+'</td><td>'+d.avgUtil+'%</td><td>'+d.winning+'/21</td><td>'+fmtMins(d.totalAlarmMins)+'</td><td>'+fmtMins(d.totalSetupMins)+'</td></tr>');
-    });
-    win.document.write('</tbody></table>');
+    win.document.write('<div class="section"><div class="section-title">Parts Trend</div>');
+    win.document.write('<div class="trend-chart">'+trendBars+'</div></div>');
+  }
+  win.document.write('<div class="section"><div class="section-title">Downtime Breakdown</div>');
+  var dt1pct = Math.round(agg.totAlarm/totalDT*100);
+  var dt2pct = Math.round(agg.totSetup/totalDT*100);
+  var dt3pct = Math.round(agg.totIdle/totalDT*100);
+  win.document.write('<div class="dt-item"><div class="dt-label">Alarms</div><div class="dt-bar-wrap"><div class="dt-bar-fill" style="width:'+dt1pct+'%;background:#dc2626;"></div></div><div class="dt-val" style="color:#dc2626;">'+fmtMins(agg.totAlarm)+'</div></div>');
+  win.document.write('<div class="dt-item"><div class="dt-label">Setup / Changeover</div><div class="dt-bar-wrap"><div class="dt-bar-fill" style="width:'+dt2pct+'%;background:#d97706;"></div></div><div class="dt-val" style="color:#d97706;">'+fmtMins(agg.totSetup)+'</div></div>');
+  win.document.write('<div class="dt-item"><div class="dt-label">Idle / Unspecified</div><div class="dt-bar-wrap"><div class="dt-bar-fill" style="width:'+dt3pct+'%;background:#64748b;"></div></div><div class="dt-val" style="color:#64748b;">'+fmtMins(agg.totIdle)+'</div></div>');
+  win.document.write('</div></div>');
+
+  // Machine ranking
+  win.document.write('<div class="section"><div class="section-title">Machine Performance Ranking</div>');
+  win.document.write('<table><thead><tr><th>#</th><th>Machine</th><th>Cell</th><th>Utilization</th><th>Parts</th><th>Status</th></tr></thead><tbody>');
+  win.document.write(machRows);
+  win.document.write('</tbody></table></div>');
+
+  // Daily breakdown
+  if (days.length > 1) {
+    win.document.write('<div class="section"><div class="section-title">Daily Breakdown</div>');
+    win.document.write('<table><thead><tr><th>Date</th><th>Total Parts</th><th>Avg Util</th><th>Winning</th><th>Alarm Time</th><th>Setup Time</th></tr></thead><tbody>');
+    win.document.write(dayRows);
+    win.document.write('</tbody></table></div>');
   }
 
-  win.document.write('<p style="margin-top:30px;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:12px;">Hill Manufacturing &amp; Fabrication | Shop Floor Intelligence | Confidential</p>');
+  win.document.write('</div>');
+  win.document.write('<div class="footer"><span>Hill Manufacturing &amp; Fabrication</span><span>Shop Floor Intelligence Report</span><span>Confidential — Internal Use Only</span></div>');
   win.document.write('</body></html>');
   win.document.close();
-  win.print();
+  setTimeout(function(){ win.print(); }, 800);
 };
 
 // ── PATCH switchTab ──────────────────────────────────────────
@@ -12410,27 +12488,124 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._printDnxAlerts = function(){
     var alerts = window._dnxAlertHistory || [];
+    var total = alerts.length;
+    var resolved = alerts.filter(function(a){return a.resolved;}).length;
+    var unresolved = total - resolved;
+
+    // Machine frequency
+    var mc = {};
+    alerts.forEach(function(a){ if(a.machine) mc[a.machine]=(mc[a.machine]||0)+1; });
+    var topMachines = Object.entries(mc).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+
+    // Reason frequency
+    var rc = {};
+    alerts.forEach(function(a){
+      var r = (a.comment||a.resolveReason||'').split('|')[0].trim();
+      if(r&&r.length>2) rc[r]=(rc[r]||0)+1;
+    });
+    var topReasons = Object.entries(rc).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+
+    // Build chart bars for top machines
+    var maxMC = topMachines[0]?topMachines[0][1]:1;
+    var machBars = topMachines.map(function(m){
+      var pct = Math.round(m[1]/maxMC*100);
+      var color = m[1]>=5?'#dc2626':m[1]>=3?'#d97706':'#2563eb';
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+        +'<div style="width:80px;font-size:12px;font-weight:600;color:#1e293b;">'+m[0]+'</div>'
+        +'<div style="flex:1;background:#e2e8f0;border-radius:4px;height:20px;">'
+        +'<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;">'
+        +'<span style="font-size:11px;color:white;font-weight:700;">'+m[1]+'x</span>'
+        +'</div></div></div>';
+    }).join('');
+
+    var reasonBars = topReasons.map(function(r){
+      var pct = Math.round(r[1]/(topReasons[0]?topReasons[0][1]:1)*100);
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+        +'<div style="width:140px;font-size:11px;color:#1e293b;font-weight:600;">'+r[0]+'</div>'
+        +'<div style="flex:1;background:#e2e8f0;border-radius:4px;height:18px;">'
+        +'<div style="width:'+pct+'%;background:#7c3aed;height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;">'
+        +'<span style="font-size:10px;color:white;font-weight:700;">'+r[1]+'</span>'
+        +'</div></div></div>';
+    }).join('');
+
     var rows = alerts.map(function(a){
-      var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString() : '';
-      return '<tr style="border-bottom:1px solid #ddd;">'
-        +'<td style="padding:8px;">'+a.machine+'</td>'
-        +'<td style="padding:8px;">'+a.status+'</td>'
-        +'<td style="padding:8px;">'+a.duration+'</td>'
-        +'<td style="padding:8px;">'+ts+'</td>'
-        +'<td style="padding:8px;color:'+(a.resolved?'green':'red')+';">'+(a.resolved?'✅ '+( a.comment||''):'⚠ Unresolved')+'</td>'
+      var ts = a.receivedAt ? new Date(a.receivedAt.seconds?a.receivedAt.seconds*1000:a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      var reason = (a.comment||a.resolveReason||'').replace(/\|/g,' · ');
+      var emp = a.resolvedBy||a.employee||'';
+      return '<tr>'
+        +'<td style="font-weight:700;color:#1e3a5c;">'+a.machine+'</td>'
+        +'<td>'+a.duration+'</td>'
+        +'<td>'+ts+'</td>'
+        +'<td>'+(emp?'<span style="background:#dbeafe;color:#1d4ed8;padding:2px 6px;border-radius:4px;font-size:10px;">'+emp+'</span>':'')+'</td>'
+        +'<td style="color:'+(a.resolved?'#16a34a':'#dc2626')+';font-weight:600;">'+(a.resolved?reason||'Resolved':'⚠ Unresolved')+'</td>'
         +'</tr>';
     }).join('');
 
+    var resolvedPct = total>0?Math.round(resolved/total*100):0;
+
     var win = window.open('','_blank');
-    win.document.write('<html><head><title>Datanomix Alert Report — Hill Manufacturing</title>'
-      +'<style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th{background:#222;color:#fff;padding:8px;text-align:left;}tr:nth-child(even){background:#f5f5f5;}@media print{button{display:none;}}</style>'
-      +'</head><body>'
-      +'<h2>Datanomix Machine Alert Report</h2>'
-      +'<p>Hill Manufacturing | Generated: '+new Date().toLocaleString()+'</p>'
-      +'<p>Total alerts: '+alerts.length+' | Unresolved: '+alerts.filter(function(a){return !a.resolved;}).length+'</p>'
-      +'<button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#333;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 Print / Save as PDF</button>'
-      +'<table><thead><tr><th>Machine</th><th>Status</th><th>Duration</th><th>Received</th><th>Resolution</th></tr></thead><tbody>'
-      +rows+'</tbody></table></body></html>');
+    win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Datanomix Alert Report — Hill Manufacturing</title>');
+    win.document.write('<style>');
+    win.document.write('*{box-sizing:border-box;margin:0;padding:0;}');
+    win.document.write('body{font-family:"Segoe UI",Arial,sans-serif;background:#f8fafc;color:#1e293b;}');
+    win.document.write('.header{background:linear-gradient(135deg,#0f2338,#1e3a5c);color:white;padding:32px 40px;display:flex;justify-content:space-between;align-items:center;}');
+    win.document.write('.logo{font-size:24px;font-weight:900;letter-spacing:2px;text-transform:uppercase;}');
+    win.document.write('.logo span{color:#f59e0b;}');
+    win.document.write('.header-right{text-align:right;font-size:12px;opacity:0.8;}');
+    win.document.write('.content{padding:32px 40px;}');
+    win.document.write('.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}');
+    win.document.write('.stat-card{background:white;border-radius:12px;padding:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.08);border-top:4px solid #e2e8f0;}');
+    win.document.write('.stat-card.green{border-top-color:#16a34a;}');
+    win.document.write('.stat-card.red{border-top-color:#dc2626;}');
+    win.document.write('.stat-card.blue{border-top-color:#2563eb;}');
+    win.document.write('.stat-card.yellow{border-top-color:#d97706;}');
+    win.document.write('.stat-val{font-size:36px;font-weight:900;line-height:1;}');
+    win.document.write('.stat-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#64748b;margin-top:6px;}');
+    win.document.write('.section{background:white;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 1px 4px rgba(0,0,0,0.08);}');
+    win.document.write('.section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#64748b;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #f1f5f9;}');
+    win.document.write('.charts{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;}');
+    win.document.write('table{width:100%;border-collapse:collapse;}');
+    win.document.write('th{background:#f1f5f9;color:#475569;padding:10px 12px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;}');
+    win.document.write('td{padding:10px 12px;border-bottom:1px solid #f1f5f9;font-size:12px;vertical-align:middle;}');
+    win.document.write('tr:last-child td{border-bottom:none;}');
+    win.document.write('tr:hover td{background:#fafafa;}');
+    win.document.write('.progress-bar{background:#e2e8f0;border-radius:6px;height:8px;overflow:hidden;}');
+    win.document.write('.progress-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#16a34a,#22c55e);}');
+    win.document.write('.footer{background:#f1f5f9;padding:20px 40px;text-align:center;font-size:10px;color:#94a3b8;margin-top:8px;}');
+    win.document.write('.print-btn{position:fixed;top:16px;right:16px;background:#0f2338;color:white;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;z-index:999;}');
+    win.document.write('@media print{.print-btn{display:none;}body{background:white;}@page{margin:0.5in;}}');
+    win.document.write('</style></head><body>');
+    win.document.write('<button class="print-btn" onclick="window.print()">PRINT / SAVE PDF</button>');
+    win.document.write('<div class="header">');
+    win.document.write('<div><div class="logo">HILL <span>MANUFACTURING</span></div><div style="font-size:13px;margin-top:6px;opacity:0.8;">Datanomix Machine Alert Report</div></div>');
+    win.document.write('<div class="header-right"><div>Generated: '+new Date().toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div><div style="margin-top:4px;">Confidential — Internal Use Only</div></div>');
+    win.document.write('</div>');
+    win.document.write('<div class="content">');
+
+    // Stat cards
+    win.document.write('<div class="stat-grid">');
+    win.document.write('<div class="stat-card blue"><div class="stat-val" style="color:#2563eb;">'+total+'</div><div class="stat-lbl">Total Alerts</div></div>');
+    win.document.write('<div class="stat-card green"><div class="stat-val" style="color:#16a34a;">'+resolved+'</div><div class="stat-lbl">Resolved</div></div>');
+    win.document.write('<div class="stat-card red"><div class="stat-val" style="color:#dc2626;">'+unresolved+'</div><div class="stat-lbl">Unresolved</div></div>');
+    win.document.write('<div class="stat-card yellow"><div class="stat-val" style="color:#d97706;">'+resolvedPct+'%</div><div class="stat-lbl">Resolution Rate</div>');
+    win.document.write('<div class="progress-bar" style="margin-top:8px;"><div class="progress-fill" style="width:'+resolvedPct+'%;"></div></div></div>');
+    win.document.write('</div>');
+
+    // Charts
+    win.document.write('<div class="charts">');
+    win.document.write('<div class="section"><div class="section-title">Most Frequent Machines</div>'+machBars+'</div>');
+    win.document.write('<div class="section"><div class="section-title">Top Downtime Reasons</div>'+reasonBars+'</div>');
+    win.document.write('</div>');
+
+    // Full table
+    win.document.write('<div class="section">');
+    win.document.write('<div class="section-title">Full Alert Log ('+total+' Records)</div>');
+    win.document.write('<table><thead><tr><th>Machine</th><th>Duration</th><th>Received</th><th>Employee</th><th>Resolution</th></tr></thead><tbody>');
+    win.document.write(rows);
+    win.document.write('</tbody></table></div>');
+    win.document.write('</div>');
+    win.document.write('<div class="footer">Hill Manufacturing &amp; Fabrication &nbsp;|&nbsp; Shop Floor Intelligence &nbsp;|&nbsp; Datanomix Integration &nbsp;|&nbsp; Confidential</div>');
+    win.document.write('</body></html>');
     win.document.close();
   };
 
