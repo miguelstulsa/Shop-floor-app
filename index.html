@@ -1391,6 +1391,7 @@
 • Date — type "today", "this week", "this month"
 • Status — type "open" or "completed"
 • WO search — type "wo 26-1234"
+• Part # search — type the part number directly (e.g. "1110FX225-2") or "part 26.0585"
 
 Every result shows: date, time, operator, type, WO#, details, elapsed time, status — all printable as PDF.</div>
     </div>
@@ -12860,6 +12861,20 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       }
     }
 
+    // Check for PART NUMBER search (e.g. "part 26.0585" or "1110FX225-2")
+    var partMatch = msg.match(/part[#\s:]*([A-Za-z0-9][A-Za-z0-9\.\-]{2,})/i) || msg.match(/([A-Za-z0-9]{2,}[\.\-][A-Za-z0-9]{2,}[A-Za-z0-9\.\-]*)/);
+    if(partMatch && !woMatch && !/^(26-\d{4})$/.test((partMatch[1]||'').trim())){
+      var partNum = (partMatch[1]||'').trim();
+      _chatThinking = true;
+      var typingElP = addTyping();
+      var partReceipt = await _buildPartReceipt(partNum);
+      typingElP.remove();
+      _chatThinking = false;
+      addFullReceipt(partReceipt, 'PART');
+      _chatHistory.push({role:'assistant', content: 'Showing results for part ' + partNum});
+      return;
+    }
+
     // Check for ALL / open / completed / today / week searches first
     var msgLower = msg.toLowerCase();
     if(/^all requests?$|^all$|^show all|^everything/i.test(msg.trim())){
@@ -12970,7 +12985,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     try {
       typingEl.remove();
       _chatThinking = false;
-      addMessage('assistant', 'I can look up data from your shop floor. Try:\n\n• Type a WO number like "26-0173" → get full receipt\n• Type a name like "Jimmy Pollard" → see their request history\n• Type "requests sent to me" → see all requests you fulfilled\n• Type "Jimmy history" or "Dingo requests" → machinist summary');
+      addMessage('assistant', 'I can look up data from your shop floor. Try:\n\n• Type a WO number like "26-0173" → get full receipt\n• Type a part number like "1110FX225-2" or "part 26.0585" → all requests for that part\n• Type a name like "Jimmy Pollard" → see their request history\n• Type "requests sent to me" → see all requests you fulfilled\n• Type "Jimmy history" or "Dingo requests" → machinist summary');
       _chatHistory.push({role:'assistant', content: 'Data lookup help shown'});
 
     } catch(e) {
@@ -13206,6 +13221,46 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     } catch(e){}
 
     return { wo: woDashed||woNum, requests: requests, timeLogs: timeLogs };
+  }
+
+  // ── PART NUMBER RECEIPT ──────────────────────────────────────
+  async function _buildPartReceipt(partNum){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {part:partNum, requests:[], error:'Not connected'};
+    var requests = [];
+    try {
+      var snaps = await Promise.all([
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('partNumber','==',partNum), mods.limit(200))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillDnxLog'), mods.where('partNumber','==',partNum), mods.limit(200))),
+      ]);
+      var seen = {};
+      snaps.forEach(function(snap){
+        if(!snap||snap.empty) return;
+        snap.forEach(function(d){
+          if(seen[d.id]) return;
+          seen[d.id] = true;
+          var r = d.data(); r.id = d.id;
+          requests.push(r);
+        });
+      });
+      // Also client-side filter from cached requests if available
+      if(window._allCachedRequests && window._allCachedRequests.length){
+        window._allCachedRequests.forEach(function(r){
+          if(seen[r.id]) return;
+          var pn = (r.partNumber||r.part||'').toLowerCase();
+          if(pn && pn.indexOf(partNum.toLowerCase()) >= 0){
+            seen[r.id] = true;
+            requests.push(r);
+          }
+        });
+      }
+    } catch(e){ console.warn('Part lookup error:', e.message); }
+    requests.sort(function(a,b){
+      var at = a.createdAt&&a.createdAt.seconds ? a.createdAt.seconds : 0;
+      var bt = b.createdAt&&b.createdAt.seconds ? b.createdAt.seconds : 0;
+      return bt - at;
+    });
+    return { part: partNum, wo: 'Part: '+partNum, requests: requests, timeLogs: [] };
   }
 
   // ── REQUESTS TO ME RECEIPT ───────────────────────────────────
