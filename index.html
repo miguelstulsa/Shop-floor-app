@@ -1557,7 +1557,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       <button class="note-type-btn green" onclick="selectType('green')"><div class="note-type-label">🟢 Running WO</div><div class="note-type-desc">Currently running</div></button>
     </div>
     <div class="modal-form">
-      <select id="operatorName" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;margin-bottom:2px;">
+      <select id="operatorName" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;margin-bottom:2px;" onchange="window._checkModalSubmit()">
         <option value="">-- Select your name --</option>
         <option value="Brett Thompson">Brett Thompson</option>
         <option value="Bryan Sturman">Bryan Sturman</option>
@@ -1583,9 +1583,10 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         <option value="Tyler Stockham">Tyler Stockham</option>
       </select>
       <div style="display:flex;gap:8px;">
-        <input type="text" id="woInput" placeholder="WO# (e.g. 26-0288)" style="flex:2;" />
+        <input type="text" id="woInput" placeholder="WO# (e.g. 26-0288) *Required" style="flex:2;" oninput="window._checkModalSubmit()" />
         <input type="text" id="opInput" placeholder="OP# (e.g. 10)" style="flex:1;" />
       </div>
+      <input type="text" id="partInput" placeholder="Part Number (e.g. 26.0585) *Required" style="width:100%;" oninput="window._checkModalSubmit()" />
       <div id="assignField" style="display:none;margin-bottom:8px;">
         <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Assign Machinist to Run</div>
         <select id="assignedTo" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;">
@@ -1618,7 +1619,8 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     </div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-      <button class="btn btn-submit" onclick="submitNote()">Submit</button>
+      <div id="modal-validation-msg" style="font-size:11px;color:#f87171;margin-bottom:6px;display:none;">Employee name, WO#, and Part Number are required.</div>
+      <button class="btn btn-submit" id="modal-submit-btn" onclick="submitNote()" disabled style="opacity:0.4;cursor:not-allowed;">Submit</button>
     </div>
     <div class="existing-notes" id="existingNotes"></div>
   </div>
@@ -2944,12 +2946,29 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
   function openModal(machine, cell) {
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
-    document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
-    document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = '';
+    document.getElementById('modalMachineName').textContent = cell + ' -- ' + machine;
+    document.getElementById('woInput').value = '';
+    document.getElementById('noteText').value = '';
+    if(document.getElementById('opInput')) document.getElementById('opInput').value = '';
+    if(document.getElementById('partInput')) document.getElementById('partInput').value = '';
+    if(document.getElementById('operatorName')) document.getElementById('operatorName').value = '';
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
+    var btn = document.getElementById('modal-submit-btn');
+    if(btn){ btn.disabled=true; btn.style.opacity='0.4'; btn.style.cursor='not-allowed'; }
+    if(document.getElementById('modal-validation-msg')) document.getElementById('modal-validation-msg').style.display='none';
     if (window.renderExistingNotes) window.renderExistingNotes();
     document.getElementById('modalOverlay').classList.add('active');
   }
+  window._checkModalSubmit = function() {
+    var op = (document.getElementById('operatorName')||{}).value||'';
+    var wo = (document.getElementById('woInput')||{}).value||'';
+    var part = (document.getElementById('partInput')||{}).value||'';
+    var btn = document.getElementById('modal-submit-btn');
+    var msg = document.getElementById('modal-validation-msg');
+    var ok = op.trim().length > 0 && wo.trim().length > 0 && part.trim().length > 0;
+    if(btn){ btn.disabled=!ok; btn.style.opacity=ok?'1':'0.4'; btn.style.cursor=ok?'pointer':'not-allowed'; }
+    if(msg) msg.style.display = ok ? 'none' : 'block';
+  };
   function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); window.currentMachine = ''; }
   function handleOverlayClick(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
   function selectType(type) {
@@ -2963,17 +2982,20 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
 
   async function submitNote() {
     if (!selectedType) { showToast('red', 'Select a request type first!', 'Choose Blue, Red, Yellow or Green.'); return; }
-    const wo = document.getElementById('woInput').value.trim();
-    const detail = document.getElementById('noteText').value.trim();
+    const wo       = document.getElementById('woInput').value.trim();
+    const detail   = document.getElementById('noteText').value.trim();
     const operator = document.getElementById('operatorName').value.trim();
-    if (!wo) { showToast('red', 'Enter a WO# or description', 'This field is required.'); return; }
+    const partNum  = document.getElementById('partInput') ? document.getElementById('partInput').value.trim() : '';
+    if (!operator) { showToast('red', 'Select your name', 'Employee name is required.'); return; }
+    if (!wo)       { showToast('red', 'Enter a WO#', 'Work order number is required.'); return; }
+    if (!partNum)  { showToast('red', 'Enter a Part Number', 'Part number is required.'); return; }
     if (!window.submitNoteToFirebase) { showToast('red', 'Still connecting...', 'Wait a moment then try again.'); return; }
-    const btn = document.querySelector('#modalOverlay .btn-submit');
+    const btn = document.getElementById('modal-submit-btn') || document.querySelector('#modalOverlay .btn-submit');
     if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
     const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
     const assignedTo = (document.getElementById('assignedTo') && selectedType === 'blue')
       ? (document.getElementById('assignedTo').value || '') : '';
-    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op, assignedTo };
+    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op, assignedTo, partNumber: partNum };
     try { await window.submitNoteToFirebase(note); }
     catch(err) {
       if (btn) { btn.disabled=false; btn.textContent='Submit'; }
@@ -2982,46 +3004,21 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     }
     if (btn) { btn.disabled=false; btn.textContent='Submit'; }
     closeModal();
-    showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
+    showToast(selectedType, 'Request submitted for ' + currentMachine, wo + (partNum ? ' | ' + partNum : ''));
     if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue') {
-      // Store a dedup key so multi-session installs don't double-fire
       var _dedupKey = 'hillPushSent_' + Date.now();
       localStorage.setItem(_dedupKey, '1');
       setTimeout(function(){ localStorage.removeItem(_dedupKey); }, 10000);
       sendPushover(selectedType, currentCell, currentMachine, wo, detail, operator, op);
     }
-    // Admin personal alert — only for orange (Floor Support) since sendPushover
-    // already handles blue/yellow via safePushover. Prevents double notifications.
     if (selectedType === 'orange') {
       adminPushover(
-        '🟠 FLOOR SUPPORT — ' + currentMachine,
-        'WO# ' + wo + (op?' OP'+op:'') + (operator?' · '+operator:'') + ' · ' + currentCell + (detail?' · '+detail.slice(0,60):''),
+        'FLOOR SUPPORT -- ' + currentMachine,
+        'WO# ' + wo + (partNum?' Part:'+partNum:'') + (op?' OP'+op:'') + (operator?' - '+operator:'') + ' - ' + currentCell + (detail?' - '+detail.slice(0,60):''),
         'pushover', 0
       );
     }
   }
-
-  // ── PUSHOVER — universal alert function ──
-  // Used for: shop requests, DMs, group messages, video calls
-  window.sendPushoverAlert = function(title, message, sound, priority) {
-    // Use the group key if admin has configured it, otherwise fall back to default user key
-    const userKey = (typeof savedGroupKey !== 'undefined' && savedGroupKey)
-      ? savedGroupKey
-      : (localStorage.getItem('hillPushoverGroupKey') || 'uotiq5p4c7sycsw2wh1xv8mq9gpe4e');
-    const fd = new FormData();
-    fd.append('token',    'a3fz1eugorhyxgrjk5svuw9ym2nwy6');
-    fd.append('user',     userKey);
-    fd.append('title',    title);
-    fd.append('message',  message);
-    fd.append('sound',    sound    || 'pushover');
-    fd.append('priority', String(priority !== undefined ? priority : 0));
-    fetch('https://api.pushover.net/1/messages.json', {
-      method: 'POST',
-      mode:   'no-cors',
-      body:   fd
-    }).catch(function(e){ console.warn('Pushover error:', e.message); });
-  };
-
   // Shop floor request notifications
   function sendPushover(type, cell, machine, wo, detail, operator, op) {
     const titles = { red: '🔴 INSPECTION REQUEST', yellow: '🟡 MACHINIST REQUEST', blue: '🔵 PENDING WO' };
@@ -8979,16 +8976,27 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
   /* DNX RESOLVE MODAL */
   #dnx-resolve-modal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; }
   #dnx-resolve-modal.open { display:flex; }
-  .dnx-resolve-box { background:linear-gradient(135deg,#0d1f35,#1a3555); border:2px solid #7dd3fc; border-radius:16px; padding:28px; width:90%; max-width:480px; box-shadow:0 0 40px rgba(125,211,252,0.2); }
-  .dnx-resolve-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#7dd3fc; margin-bottom:4px; }
-  .dnx-resolve-machine { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#f5d050; letter-spacing:2px; margin-bottom:6px; }
-  .dnx-resolve-duration { font-size:12px; color:#94a3b8; margin-bottom:20px; }
-  .dnx-resolve-label { font-size:11px; font-weight:700; letter-spacing:1.5px; color:#7dd3fc; text-transform:uppercase; margin-bottom:8px; }
-  .dnx-resolve-textarea { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:12px; resize:vertical; min-height:100px; outline:none; box-sizing:border-box; }
+  .dnx-resolve-box { background:linear-gradient(135deg,#0d1f35,#1a3555); border:2px solid #7dd3fc; border-radius:16px; padding:22px; width:94%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 0 40px rgba(125,211,252,0.2); }
+  .dnx-resolve-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#7dd3fc; margin-bottom:2px; }
+  .dnx-resolve-machine { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#f5d050; letter-spacing:2px; margin-bottom:2px; }
+  .dnx-resolve-duration { font-size:12px; color:#94a3b8; margin-bottom:12px; }
+  .dnx-resolve-label { font-size:11px; font-weight:700; letter-spacing:1.5px; color:#7dd3fc; text-transform:uppercase; margin-bottom:6px; margin-top:12px; display:block; }
+  .dnx-resolve-textarea { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:10px; resize:none; min-height:60px; outline:none; box-sizing:border-box; }
   .dnx-resolve-textarea:focus { border-color:#7dd3fc; }
-  .dnx-resolve-charcount { font-size:10px; color:#475569; text-align:right; margin-top:4px; margin-bottom:18px; }
+  .dnx-resolve-input { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:9px 12px; outline:none; box-sizing:border-box; margin-bottom:0; }
+  .dnx-resolve-input:focus { border-color:#7dd3fc; }
+  .dnx-insight-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:8px; }
+  .dnx-insight-btn { padding:8px 10px; background:#0a1628; border:1px solid #1e3a5f; border-radius:8px; color:#94a3b8; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; cursor:pointer; text-align:left; transition:all 0.15s; }
+  .dnx-insight-btn:hover { border-color:#475569; color:#f0f4f8; }
+  .dnx-insight-btn.selected { background:rgba(125,211,252,0.12); border-color:#7dd3fc; color:#7dd3fc; }
+  .dnx-custom-row { display:flex; gap:8px; margin-top:6px; }
+  .dnx-custom-input { flex:1; background:#0a1628; border:1px solid #1e3a5f; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:13px; padding:8px 10px; outline:none; }
+  .dnx-custom-input:focus { border-color:#7dd3fc; }
+  .dnx-custom-add { padding:8px 14px; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; border-radius:8px; color:#f59e0b; font-family:'Bebas Neue',sans-serif; font-size:14px; cursor:pointer; white-space:nowrap; }
+  .dnx-two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .dnx-resolve-charcount { font-size:10px; color:#475569; text-align:right; margin-top:4px; margin-bottom:4px; }
   .dnx-resolve-charcount.ok { color:#4ade80; }
-  .dnx-resolve-btns { display:flex; gap:10px; }
+  .dnx-resolve-btns { display:flex; gap:10px; margin-top:14px; }
   .dnx-resolve-cancel { flex:1; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #2a5a8c; border-radius:8px; color:#64748b; font-family:'Bebas Neue',sans-serif; font-size:15px; cursor:pointer; }
   .dnx-resolve-submit { flex:2; padding:10px; background:rgba(125,211,252,0.15); border:1px solid #7dd3fc; border-radius:8px; color:#7dd3fc; font-family:'Bebas Neue',sans-serif; font-size:15px; cursor:pointer; }
   .dnx-resolve-submit:disabled { opacity:0.35; cursor:not-allowed; }
@@ -13613,48 +13621,78 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   };
 
 
-  // ── DNX RESOLVE MODAL ──────────────────────────────────────────────────
-  window._dnxResolvePending = null;
-  window._dnxReasonInput = function() {
-    var ta=document.getElementById('dnx-resolve-reason');
-    var cnt=document.getElementById('dnx-resolve-charcount');
-    var btn=document.getElementById('dnx-resolve-submit');
-    var len=(ta.value||'').trim().length;
-    cnt.textContent=len+' / 20 min characters';
-    cnt.className='dnx-resolve-charcount'+(len>=20?' ok':'');
-    btn.disabled=len<20;
+  // -- DNX RESOLVE MODAL v2 --
+  var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
+  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham'];
+  window._dnxResolvePending=null;
+  window._dnxSelectedInsight='';
+  window._dnxSelectInsight=function(val){
+    window._dnxSelectedInsight=val;
+    document.querySelectorAll('.dnx-insight-btn').forEach(function(b){b.classList.toggle('selected',b.dataset.val===val);});
+    document.getElementById('dnx-resolve-reason').value=val;
+    window._dnxCheckSubmit();
+  };
+  window._dnxBuildInsightGrid=function(){
+    var grid=document.getElementById('dnx-insight-grid');
+    grid.innerHTML='';
+    DNX_INSIGHTS.forEach(function(v){
+      var btn=document.createElement('button');
+      btn.className='dnx-insight-btn'; btn.dataset.val=v; btn.textContent=v;
+      btn.onclick=function(){window._dnxSelectInsight(v);};
+      grid.appendChild(btn);
+    });
+  };
+  window._dnxBuildEmployeeSelect=function(){
+    var sel=document.getElementById('dnx-resolve-employee');
+    sel.innerHTML='<option value="">-- Select Employee --</option>';
+    DNX_EMPLOYEES.forEach(function(e){
+      var o=document.createElement('option'); o.value=e; o.textContent=e; sel.appendChild(o);
+    });
+  };
+  window._dnxAddCustomInsight=function(){
+    var inp=document.getElementById('dnx-custom-text');
+    var val=(inp.value||'').trim(); if(!val)return;
+    DNX_INSIGHTS.push(val); inp.value='';
+    window._dnxBuildInsightGrid();
+    window._dnxSelectInsight(val);
+  };
+  window._dnxReasonInput=function(){window._dnxCheckSubmit();};
+  window._dnxCheckSubmit=function(){
+    var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
+    var employee=(document.getElementById('dnx-resolve-employee').value||'').trim();
+    document.getElementById('dnx-resolve-submit').disabled=!(reason.length>=3&&employee.length>=2);
   };
   window._dnxResolveCancel=function(){
     document.getElementById('dnx-resolve-modal').style.display='none';
-    window._dnxResolvePending=null;
-    document.getElementById('dnx-resolve-reason').value='';
-    document.getElementById('dnx-resolve-submit').disabled=true;
-    document.getElementById('dnx-resolve-submit').textContent='✓ CLOSE ALERT';
+    window._dnxResolvePending=null; window._dnxSelectedInsight='';
   };
   window.openDnxResolve=function(noteId,hillReqId,machine,duration){
-    // Accept machine/duration as direct params OR look up from machineNotes
     var note=null;
-    Object.values(window.machineNotes||{}).forEach(function(arr){
-      arr.forEach(function(n){if(n.id===noteId)note=n;});
-    });
-    var machineName = (note&&note.machine)||machine||'—';
-    var dur = (note&&note.duration)||duration||'';
+    Object.values(window.machineNotes||{}).forEach(function(arr){arr.forEach(function(n){if(n.id===noteId)note=n;});});
+    var machineName=(note&&note.machine)||machine||'--';
+    var dur=(note&&note.duration)||duration||'';
     window._dnxResolvePending={noteId:noteId,hillReqId:hillReqId,note:note,machine:machineName,duration:dur};
-    var modal = document.getElementById('dnx-resolve-modal');
-    if(!modal){ console.error('DNX modal not found'); return; }
+    window._dnxSelectedInsight='';
+    var modal=document.getElementById('dnx-resolve-modal');
+    if(!modal){console.error('DNX modal not found');return;}
     document.getElementById('dnx-modal-machine').textContent=machineName;
     document.getElementById('dnx-modal-duration').textContent=dur?'Inactive for: '+dur:'';
     document.getElementById('dnx-resolve-reason').value='';
-    document.getElementById('dnx-resolve-charcount').textContent='0 / 20 min characters';
-    document.getElementById('dnx-resolve-charcount').className='dnx-resolve-charcount';
+    document.getElementById('dnx-resolve-wo').value='';
+    document.getElementById('dnx-resolve-partnum').value='';
     document.getElementById('dnx-resolve-error').style.display='none';
     document.getElementById('dnx-resolve-submit').disabled=true;
-    document.getElementById('dnx-resolve-submit').textContent='✓ CLOSE ALERT';
+    document.getElementById('dnx-resolve-submit').textContent='CLOSE ALERT';
+    window._dnxBuildInsightGrid();
+    window._dnxBuildEmployeeSelect();
     modal.style.display='flex';
   };
   window._dnxResolveSubmit=async function(){
     var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
-    if(reason.length<20){document.getElementById('dnx-resolve-error').style.display='block';return;}
+    var employee=(document.getElementById('dnx-resolve-employee').value||'').trim();
+    var wo=(document.getElementById('dnx-resolve-wo').value||'').trim();
+    var partnum=(document.getElementById('dnx-resolve-partnum').value||'').trim();
+    if(reason.length<3||employee.length<2){document.getElementById('dnx-resolve-error').style.display='block';return;}
     var pending=window._dnxResolvePending; if(!pending)return;
     var machineName=pending.machine||'';
     var btn=document.getElementById('dnx-resolve-submit');
@@ -13667,7 +13705,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         elapsedMins=Math.round((now-new Date(note.createdAt.seconds*1000))/60000);
         elapsedStr=elapsedMins>=60?Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m':elapsedMins+'m';
       }
-      var payload={resolved:true,resolvedAt:mods.serverTimestamp(),resolvedBy:window.currentUser||'admin',resolveReason:reason,elapsedMins:elapsedMins,elapsedStr:elapsedStr,inProgress:false,jobStatus:'completed',completedAt:mods.serverTimestamp()};
+      var fullReason=reason+(wo?' | WO:'+wo:'')+(partnum?' | Part:'+partnum:'');
+      var payload={resolved:true,resolvedAt:mods.serverTimestamp(),resolvedBy:employee,resolveReason:fullReason,employee:employee,wo:wo,partNumber:partnum,downtimeInsight:reason,elapsedMins:elapsedMins,elapsedStr:elapsedStr,inProgress:false,jobStatus:'completed',completedAt:mods.serverTimestamp()};
       await mods.deleteDoc(mods.doc(db2,'notes',pending.noteId)).catch(function(){});
       var hrId=(pending.hillReqId&&pending.hillReqId!==pending.noteId&&pending.hillReqId!=='')?pending.hillReqId:null;
       if(hrId){await mods.updateDoc(mods.doc(db2,'hillRequests',hrId),payload).catch(function(){});}
@@ -13675,47 +13714,46 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('machine','==',note.machine||''),mods.where('resolved','==',false),mods.where('type','==','dnx'))).catch(function(){return null;});
         if(snap&&!snap.empty){var ups=[];snap.forEach(function(d){ups.push(mods.updateDoc(mods.doc(db2,'hillRequests',d.id),payload));});await Promise.all(ups).catch(function(){});}
       }
-      await mods.addDoc(mods.collection(db2,'hillDnxLog'),{machine:note.machine||'',duration:note.duration||'',since:note.since||'',status:note.status||'INACTIVE',resolveReason:reason,resolvedBy:window.currentUser||'admin',resolvedAt:mods.serverTimestamp(),elapsedMins:elapsedMins,autoAlert:true}).catch(function(){});
-      // Also mark the hillDnxAlerts record as resolved so the DNX tab updates
-      var dnxSnap = await mods.getDocs(mods.query(
-        mods.collection(db2,'hillDnxAlerts'),
-        mods.where('machine','==',machineName),
-        mods.where('resolved','==',false)
-      )).catch(function(){return null;});
-      if(dnxSnap&&!dnxSnap.empty){
-        var dnxUps=[];
-        dnxSnap.forEach(function(d){
-          dnxUps.push(mods.updateDoc(mods.doc(db2,'hillDnxAlerts',d.id),{
-            resolved:true, comment:reason, resolvedAt:mods.serverTimestamp(), resolvedBy:window.currentUser||'admin'
-          }));
-        });
-        await Promise.all(dnxUps).catch(function(){});
-      }
+      await mods.addDoc(mods.collection(db2,'hillDnxLog'),{machine:note.machine||'',duration:note.duration||'',since:note.since||'',status:note.status||'INACTIVE',resolveReason:fullReason,downtimeInsight:reason,employee:employee,wo:wo,partNumber:partnum,resolvedBy:employee,resolvedAt:mods.serverTimestamp(),elapsedMins:elapsedMins,elapsedStr:elapsedStr,autoAlert:true}).catch(function(){});
+      var dnxSnap=await mods.getDocs(mods.query(mods.collection(db2,'hillDnxAlerts'),mods.where('machine','==',machineName),mods.where('resolved','==',false))).catch(function(){return null;});
+      if(dnxSnap&&!dnxSnap.empty){var dnxUps=[];dnxSnap.forEach(function(d){dnxUps.push(mods.updateDoc(mods.doc(db2,'hillDnxAlerts',d.id),{resolved:true,comment:fullReason,resolvedAt:mods.serverTimestamp(),resolvedBy:employee}));});await Promise.all(dnxUps).catch(function(){});}
       document.getElementById('dnx-resolve-modal').style.display='none';
-      document.getElementById('dnx-resolve-reason').value='';
-      document.getElementById('dnx-resolve-submit').disabled=true;
-      document.getElementById('dnx-resolve-submit').textContent='✓ CLOSE ALERT';
-      window._dnxResolvePending=null;
-      if(window.showToast)window.showToast('blue','🔷 DNX Alert Closed',(note.machine||'Machine')+' — reason saved');
-    }catch(e){btn.disabled=false;btn.textContent='✓ CLOSE ALERT';if(window.showToast)window.showToast('red','Error',e.message);}
-  };
-
-})();
+      window._dnxResolvePending=null; window._dnxSelectedInsight='';
+      if(window.showToast)window.showToast('blue','DNX Alert Closed',(note.machine||'Machine')+' -- '+reason);
+    }catch(e){btn.disabled=false;btn.textContent='CLOSE ALERT';if(window.showToast)window.showToast('red','Error',e.message);}
+  };})();
 </script>
 
-<!-- DNX RESOLVE MODAL -->
+<!-- DNX RESOLVE MODAL v2 -->
 <div id="dnx-resolve-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
   <div class="dnx-resolve-box">
-    <div class="dnx-resolve-title">🔷 Close DNX Alert</div>
-    <div class="dnx-resolve-machine" id="dnx-modal-machine">—</div>
+    <div class="dnx-resolve-title">&#128311; Close DNX Alert</div>
+    <div class="dnx-resolve-machine" id="dnx-modal-machine">--</div>
     <div class="dnx-resolve-duration" id="dnx-modal-duration"></div>
-    <div class="dnx-resolve-label">Why did this machine sit idle? <span style="color:#ef4444;">*Required (20 char min)</span></div>
-    <textarea class="dnx-resolve-textarea" id="dnx-resolve-reason" placeholder="e.g. Operator on break, waiting for material, tool change, machine fault..." oninput="window._dnxReasonInput()"></textarea>
-    <div class="dnx-resolve-charcount" id="dnx-resolve-charcount">0 / 20 min characters</div>
-    <div style="font-size:11px;color:#f87171;margin-bottom:10px;display:none;" id="dnx-resolve-error">Please write at least 20 characters.</div>
+    <span class="dnx-resolve-label">Select Downtime Insight <span style="color:#ef4444;">*Required</span></span>
+    <div class="dnx-insight-grid" id="dnx-insight-grid"></div>
+    <div class="dnx-custom-row">
+      <input class="dnx-custom-input" id="dnx-custom-text" placeholder="Add custom reason...">
+      <button class="dnx-custom-add" onclick="window._dnxAddCustomInsight()">+ ADD</button>
+    </div>
+    <span class="dnx-resolve-label">Downtime Reason</span>
+    <textarea class="dnx-resolve-textarea" id="dnx-resolve-reason" rows="2" placeholder="Select above or type custom reason..." oninput="window._dnxReasonInput()"></textarea>
+    <span class="dnx-resolve-label">Employee Name <span style="color:#ef4444;">*Required</span></span>
+    <select class="dnx-resolve-input" id="dnx-resolve-employee" onchange="window._dnxCheckSubmit()" style="background:#0a1628;color:#f0f4f8;"></select>
+    <div class="dnx-two-col" style="margin-top:12px;">
+      <div>
+        <span class="dnx-resolve-label" style="margin-top:0">Work Order #</span>
+        <input class="dnx-resolve-input" id="dnx-resolve-wo" placeholder="e.g. 26-0449">
+      </div>
+      <div>
+        <span class="dnx-resolve-label" style="margin-top:0">Part Number</span>
+        <input class="dnx-resolve-input" id="dnx-resolve-partnum" placeholder="e.g. 26.0585">
+      </div>
+    </div>
+    <div style="font-size:11px;color:#f87171;margin-top:10px;display:none;" id="dnx-resolve-error">Please select a downtime reason and employee name.</div>
     <div class="dnx-resolve-btns">
       <button class="dnx-resolve-cancel" onclick="window._dnxResolveCancel()">CANCEL</button>
-      <button class="dnx-resolve-submit" id="dnx-resolve-submit" onclick="window._dnxResolveSubmit()" disabled>✓ CLOSE ALERT</button>
+      <button class="dnx-resolve-submit" id="dnx-resolve-submit" onclick="window._dnxResolveSubmit()" disabled>&#10003; CLOSE ALERT</button>
     </div>
   </div>
 </div>
