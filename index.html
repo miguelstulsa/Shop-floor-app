@@ -3038,25 +3038,20 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
 
   window._uploadPhoto = async function(file, reqId) {
     try {
-      var sm = window.fbStorageModules;
-      if (!sm || !sm.ref) { console.warn('Storage not ready'); return null; }
-      // iOS fix: read file as ArrayBuffer first
-      var buffer = await new Promise(function(resolve, reject) {
-        var reader = new FileReader();
-        reader.onload = function(e) { resolve(e.target.result); };
-        reader.onerror = function(e) { reject(e); };
-        reader.readAsArrayBuffer(file);
+      var formData = new FormData();
+      formData.append('photo', file, file.name || 'photo.jpg');
+      formData.append('reqId', reqId);
+      var res = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/upload-photo', {
+        method: 'POST',
+        body: formData
       });
-      var ext = (file.name || 'photo.jpg').split('.').pop().toLowerCase() || 'jpg';
-      var mimeType = file.type || 'image/jpeg';
-      var path = 'request-photos/' + reqId + '_' + Date.now() + '.' + ext;
-      var storage = window.fbStorage;
-      if (!storage) { console.warn('No storage instance'); return null; }
-      var storRef = sm.ref(storage, path);
-      var blob = new Blob([buffer], { type: mimeType });
-      var snapshot = await sm.uploadBytes(storRef, blob, { contentType: mimeType });
-      var url = await sm.getDownloadURL(snapshot.ref);
-      return url;
+      if (!res.ok) {
+        var err = await res.text();
+        console.warn('Photo upload failed:', err);
+        return null;
+      }
+      var data = await res.json();
+      return data.url || null;
     } catch(e) {
       console.warn('Photo upload error:', e.message);
       return null;
