@@ -825,6 +825,18 @@
 
   @media (max-width: 900px) {
     .shop-page.active { grid-template-columns: 1fr !important; grid-template-rows: 1fr auto !important; height: calc(100vh - 82px) !important; }
+    /* Android compact fixes */
+    #sparky-btn-wrap { padding:6px 10px !important; margin-bottom:4px !important; gap:6px !important; }
+    #sparky-avatar { width:34px !important; height:34px !important; font-size:16px !important; flex-shrink:0 !important; }
+    #sparky-status-text { font-size:9px !important; }
+    #sparky-btn-wrap button { padding:4px 6px !important; font-size:11px !important; }
+    .floor-grid { gap:3px !important; padding:4px !important; }
+    .cell { padding:3px !important; }
+    .cell-title { font-size:10px !important; letter-spacing:1px !important; margin-bottom:2px !important; padding-bottom:2px !important; }
+    .machine-body { padding:3px 5px 2px 7px !important; }
+    .machine-name { font-size:12px !important; }
+    .machine-notes { padding:2px 5px 2px 5px !important; gap:2px !important; }
+    .motto-banner { display:none !important; }
     .sidebar { position: fixed; bottom: 0; left: 0; right: 0; height: 48px; max-height: 48px; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); z-index: 50; background: #0a1829; border-top: 2px solid #f59e0b; border-left: none; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; }
     .sidebar.open { max-height: 80vh; display: flex !important; flex-direction: column; overflow: hidden; }
     .sidebar { display: none; }
