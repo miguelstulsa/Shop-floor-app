@@ -156,6 +156,11 @@
   .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border: none; }
   .btn-cancel { background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid #2a5a8c; }
   .btn-submit { background: #f59e0b; color: #0f2338; }
+  .photo-upload-area { border:2px dashed #1e3a5f; border-radius:10px; padding:12px; text-align:center; cursor:pointer; transition:all 0.2s; margin-top:6px; }
+  .photo-upload-area:hover { border-color:#3b82f6; background:rgba(59,130,246,0.05); }
+  .photo-upload-area.has-photo { border-color:#22c55e; border-style:solid; background:rgba(34,197,94,0.05); }
+  .photo-preview { width:100%; max-height:140px; object-fit:cover; border-radius:8px; margin-top:8px; display:none; }
+  .photo-thumbnail { width:48px; height:48px; object-fit:cover; border-radius:6px; cursor:pointer; border:2px solid #1e3a5f; }
   .existing-notes { margin-top: 16px; border-top: 1px solid #2a5a8c; padding-top: 14px; }
   .existing-notes-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #475569; margin-bottom: 8px; }
   .existing-note-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; margin-bottom: 6px; }
@@ -1619,6 +1624,13 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         </select>
       </div>
       <textarea id="noteText" rows="3" placeholder="Additional details..."></textarea>
+      <!-- PHOTO ATTACHMENT -->
+      <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none;" onchange="window._handlePhotoSelect(this)">
+      <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('photoFileInput').click()">
+        <div id="photoUploadLabel" style="color:#64748b;font-size:13px;">📷 Tap to attach a photo <span style="font-size:11px;opacity:0.6;">(optional)</span></div>
+        <img id="photoPreview" class="photo-preview" alt="Preview">
+      </div>
+      <div id="photoUploadProgress" style="display:none;font-size:11px;color:#f59e0b;margin-top:4px;text-align:center;">Uploading photo...</div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
@@ -1957,6 +1969,21 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         appVersion: 'v35'
       });
     }
+    return reqRef.id;
+  };
+  window._viewPhoto = function(url) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    overlay.onclick = function(){ document.body.removeChild(overlay); };
+    var img = document.createElement('img');
+    img.src = url;
+    img.style.cssText = 'max-width:92vw;max-height:88vh;border-radius:12px;box-shadow:0 0 60px rgba(0,0,0,0.8);';
+    var close = document.createElement('div');
+    close.style.cssText = 'position:absolute;top:20px;right:24px;color:white;font-size:28px;cursor:pointer;font-weight:700;';
+    close.textContent = '✕';
+    overlay.appendChild(img);
+    overlay.appendChild(close);
+    document.body.appendChild(overlay);
   };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
 
@@ -2955,6 +2982,11 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     if(document.getElementById('opInput')) document.getElementById('opInput').value = '';
     if(document.getElementById('partInput')) document.getElementById('partInput').value = '';
     if(document.getElementById('operatorName')) document.getElementById('operatorName').value = '';
+    if(document.getElementById('photoFileInput')) document.getElementById('photoFileInput').value = '';
+    if(document.getElementById('photoPreview')){ document.getElementById('photoPreview').style.display='none'; document.getElementById('photoPreview').src=''; }
+    if(document.getElementById('photoUploadArea')) document.getElementById('photoUploadArea').classList.remove('has-photo');
+    if(document.getElementById('photoUploadLabel')) document.getElementById('photoUploadLabel').textContent='📷 Tap to attach a photo (optional)';
+    window._pendingPhotoFile = null;
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
     var btn=document.getElementById('modal-submit-btn');
     if(btn){btn.disabled=true;btn.style.opacity='0.4';btn.style.cursor='not-allowed';}
@@ -2983,6 +3015,41 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     document.querySelector('.note-type-btn.' + type).classList.add('selected');
   }
 
+  // ── PHOTO ATTACHMENT ─────────────────────────────────────────
+  window._pendingPhotoFile = null;
+  window._handlePhotoSelect = function(input) {
+    var file = input.files[0];
+    if (!file) return;
+    window._pendingPhotoFile = file;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var preview = document.getElementById('photoPreview');
+      var area    = document.getElementById('photoUploadArea');
+      var label   = document.getElementById('photoUploadLabel');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      area.classList.add('has-photo');
+      label.textContent = '✅ Photo attached — tap to change';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window._uploadPhoto = async function(file, reqId) {
+    try {
+      var sm = window.fbStorageModules;
+      var storage = window.fbStorage || getStorage(window.fbApp);
+      var ext = file.name.split('.').pop() || 'jpg';
+      var path = 'request-photos/' + reqId + '.' + ext;
+      var storRef = sm.ref(storage, path);
+      await sm.uploadBytes(storRef, file);
+      var url = await sm.getDownloadURL(storRef);
+      return url;
+    } catch(e) {
+      console.warn('Photo upload error:', e.message);
+      return null;
+    }
+  };
+
   async function submitNote() {
     if (!selectedType) { showToast('red', 'Select a request type first!', 'Choose Blue, Red, Yellow or Green.'); return; }
     const wo       = document.getElementById('woInput').value.trim();
@@ -2998,9 +3065,27 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
     const assignedTo = (document.getElementById('assignedTo') && selectedType === 'blue') ? (document.getElementById('assignedTo').value || '') : '';
     const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op, assignedTo, partNumber: partNum };
-    try { await window.submitNoteToFirebase(note); }
+    let photoUrl = null;
+    let reqId = null;
+    try {
+      reqId = await window.submitNoteToFirebase(note);
+      // Upload photo if attached
+      if (window._pendingPhotoFile && reqId) {
+        document.getElementById('photoUploadProgress').style.display = 'block';
+        photoUrl = await window._uploadPhoto(window._pendingPhotoFile, reqId);
+        if (photoUrl) {
+          // Update both records with photo URL
+          var db2 = window.fbDb, mods = window._fbModules;
+          if (db2 && mods) {
+            await mods.updateDoc(mods.doc(db2, 'hillRequests', reqId), { photoUrl }).catch(()=>{});
+          }
+        }
+        document.getElementById('photoUploadProgress').style.display = 'none';
+      }
+    }
     catch(err) {
       if (btn) { btn.disabled=false; btn.textContent='Submit'; }
+      document.getElementById('photoUploadProgress').style.display = 'none';
       showToast('red', 'Save failed', (err&&err.message)?err.message.slice(0,80):'Check connection.');
       return;
     }
