@@ -3106,47 +3106,73 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         try {
           var url = await window._uploadPhoto(photoFileCopy, reqId);
           if (url) {
-            var db2 = window.fbDb, mods = window._fbModules;
-            if (db2 && mods) {
-              // Update hillRequests
-              await mods.updateDoc(mods.doc(db2, 'hillRequests', reqId), { photoUrl: url }).catch(function(){});
-              // Update notes collection (find by hillReqId) — this drives the live feed cards
-              var notesSnap = await mods.getDocs(mods.query(
-                mods.collection(db2, 'notes'),
-                mods.where('hillReqId', '==', reqId)
-              )).catch(function(){ return null; });
-              if (notesSnap && !notesSnap.empty) {
-                var noteUpdates = [];
-                notesSnap.forEach(function(d) {
-                  noteUpdates.push(mods.updateDoc(mods.doc(db2, 'notes', d.id), { photoUrl: url }));
-                  // Also update the in-memory machineNotes so card re-renders immediately
+            var FBKEY = 'AIzaSyD8lZqvva1twE8MBD38bFmk8zw1QQ5smpI';
+            var FBBASE = 'https://firestore.googleapis.com/v1/projects/hill-manufacturing/databases/(default)/documents';
+
+            // 1. Update hillRequests via REST
+            await fetch(FBBASE + '/hillRequests/' + reqId + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fields: { photoUrl: { stringValue: url } } })
+            }).catch(function(){});
+
+            // 2. Find and update the matching notes doc via REST query
+            var queryRes = await fetch(FBBASE + ':runQuery?key=' + FBKEY, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                structuredQuery: {
+                  from: [{ collectionId: 'notes' }],
+                  where: {
+                    fieldFilter: {
+                      field: { fieldPath: 'hillReqId' },
+                      op: 'EQUAL',
+                      value: { stringValue: reqId }
+                    }
+                  },
+                  limit: 5
+                }
+              })
+            }).then(function(r){ return r.json(); }).catch(function(){ return []; });
+
+            // 3. Update each matching note doc
+            var noteIds = [];
+            if (Array.isArray(queryRes)) {
+              queryRes.forEach(function(item) {
+                if (item.document && item.document.name) {
+                  var parts = item.document.name.split('/');
+                  var noteId = parts[parts.length - 1];
+                  noteIds.push(noteId);
+                  // Update note doc
+                  fetch(FBBASE + '/notes/' + noteId + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fields: { photoUrl: { stringValue: url } } })
+                  }).catch(function(){});
+                  // Update in-memory machineNotes
                   Object.values(window.machineNotes || {}).forEach(function(arr) {
                     arr.forEach(function(n) {
-                      if (n.id === d.id || n.hillReqId === reqId) {
-                        n.photoUrl = url;
-                      }
+                      if (n.id === noteId || n.hillReqId === reqId) n.photoUrl = url;
                     });
                   });
-                });
-                await Promise.all(noteUpdates).catch(function(){});
-              }
-              // Also patch any in-memory actionable list
-              if (window._lastActionable) {
-                window._lastActionable.forEach(function(n) {
-                  if (n.hillReqId === reqId || n.id === reqId) n.photoUrl = url;
-                });
-                // Re-render the request list with updated data
-                if (window.renderRequestsList && window._lastActionable) {
-                  window.renderRequestsList(window._lastActionable, window._reqFilter || 'all');
                 }
-                if (window.updateNotifFeed && window._lastActionable) {
-                  window.updateNotifFeed(window._lastActionable);
-                }
-              }
+              });
             }
+
+            // 4. Update in-memory actionable list and re-render
+            if (window._lastActionable) {
+              window._lastActionable.forEach(function(n) {
+                if (n.hillReqId === reqId || n.id === reqId || noteIds.indexOf(n.id) > -1) {
+                  n.photoUrl = url;
+                }
+              });
+              if (window.renderRequestsList) window.renderRequestsList(window._lastActionable, window._reqFilter || 'all');
+              if (window.updateNotifFeed)    window.updateNotifFeed(window._lastActionable);
+            }
+
             showToast('green', '📷 Photo attached', 'Photo is now visible on the request card');
           } else {
-            showToast('red', 'Photo failed', 'Could not upload photo — try again');
+            showToast('red', 'Photo failed', 'Could not upload — check connection');
           }
         } catch(e) {
           console.warn('Background photo upload failed:', e.message);
