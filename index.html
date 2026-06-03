@@ -3100,31 +3100,58 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     }
     // Upload photo in background after modal closes
     if (window._pendingPhotoFile && reqId) {
+      var photoFileCopy = window._pendingPhotoFile;
+      window._pendingPhotoFile = null;
       (async function() {
         try {
-          var url = await window._uploadPhoto(window._pendingPhotoFile, reqId);
+          var url = await window._uploadPhoto(photoFileCopy, reqId);
           if (url) {
             var db2 = window.fbDb, mods = window._fbModules;
             if (db2 && mods) {
               // Update hillRequests
               await mods.updateDoc(mods.doc(db2, 'hillRequests', reqId), { photoUrl: url }).catch(function(){});
-              // Update notes collection (find by hillReqId)
+              // Update notes collection (find by hillReqId) — this drives the live feed cards
               var notesSnap = await mods.getDocs(mods.query(
                 mods.collection(db2, 'notes'),
                 mods.where('hillReqId', '==', reqId)
               )).catch(function(){ return null; });
               if (notesSnap && !notesSnap.empty) {
+                var noteUpdates = [];
                 notesSnap.forEach(function(d) {
-                  mods.updateDoc(mods.doc(db2, 'notes', d.id), { photoUrl: url }).catch(function(){});
+                  noteUpdates.push(mods.updateDoc(mods.doc(db2, 'notes', d.id), { photoUrl: url }));
+                  // Also update the in-memory machineNotes so card re-renders immediately
+                  Object.values(window.machineNotes || {}).forEach(function(arr) {
+                    arr.forEach(function(n) {
+                      if (n.id === d.id || n.hillReqId === reqId) {
+                        n.photoUrl = url;
+                      }
+                    });
+                  });
                 });
+                await Promise.all(noteUpdates).catch(function(){});
+              }
+              // Also patch any in-memory actionable list
+              if (window._lastActionable) {
+                window._lastActionable.forEach(function(n) {
+                  if (n.hillReqId === reqId || n.id === reqId) n.photoUrl = url;
+                });
+                // Re-render the request list with updated data
+                if (window.renderRequestsList && window._lastActionable) {
+                  window.renderRequestsList(window._lastActionable, window._reqFilter || 'all');
+                }
+                if (window.updateNotifFeed && window._lastActionable) {
+                  window.updateNotifFeed(window._lastActionable);
+                }
               }
             }
-            showToast('green', '📷 Photo uploaded', 'Photo attached to request');
+            showToast('green', '📷 Photo attached', 'Photo is now visible on the request card');
+          } else {
+            showToast('red', 'Photo failed', 'Could not upload photo — try again');
           }
         } catch(e) {
           console.warn('Background photo upload failed:', e.message);
+          showToast('red', 'Photo failed', e.message ? e.message.slice(0,60) : 'Upload error');
         }
-        window._pendingPhotoFile = null;
       })();
     } else {
       window._pendingPhotoFile = null;
