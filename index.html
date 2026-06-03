@@ -1177,7 +1177,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
-  <div class="nav-tab admin-only" onclick="switchTab(document.getElementById('page-dnxalerts').style.display==='block'?'shop':'dnxalerts')" id="tab-dnxalerts" style="display:none">⚠️ Alerts</div>
+  <div class="nav-tab admin-only" onclick="switchTab('dnxalerts')" id="tab-dnxalerts" style="display:none">⚠️ Alerts</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
@@ -2931,7 +2931,6 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     document.getElementById('page-board').style.display    = tab === 'board'    ? 'block' : 'none';
     var annEl = document.getElementById('page-announce'); if(annEl) annEl.style.display = tab === 'announce' ? 'block' : 'none';
     var dnxEl = document.getElementById('page-dnxalerts'); if(dnxEl) dnxEl.style.display = tab === 'dnxalerts' ? 'block' : 'none';
-    if (tab === 'dnxalerts' && window._dnxAlertHistory) _renderDnxTab(window._dnxAlertHistory);
     var aiEl = document.getElementById('page-aichat'); if(aiEl) aiEl.style.display = tab === 'aichat' ? 'flex' : 'none';
     if(tab === 'announce') window._loadAnnounceHistory && window._loadAnnounceHistory();
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
