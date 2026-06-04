@@ -12691,15 +12691,70 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     win.document.write('<div class="header"><div><div class="logo">HILL <span>MANUFACTURING</span></div><div style="font-size:12px;margin-top:4px;opacity:0.75;">Datanomix Alert Report — '+label+'</div></div>');
     win.document.write('<div style="text-align:right;font-size:11px;opacity:0.8;"><div>Generated: '+new Date().toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div><div>'+alerts.length+' alerts</div></div></div>');
     win.document.write('<div class="content">');
-    win.document.write('<div class="stat-grid">');
+    // Calculate total downtime
+    var totalDowntimeMins = 0;
+    alerts.forEach(function(a){
+      var dur = a.duration || '';
+      var hm = dur.match(/(\d+)\s*hour/i);
+      var mm = dur.match(/(\d+)\s*min/i);
+      var sm = dur.match(/(\d+)\s*sec/i);
+      var mins = 0;
+      if(hm) mins += parseInt(hm[1])*60;
+      if(mm) mins += parseInt(mm[1]);
+      if(sm) mins += Math.round(parseInt(sm[1])/60);
+      // Also handle "30 minutes 4 seconds" format
+      if(!hm && !mm) {
+        var plain = dur.match(/^(\d+)/);
+        if(plain) mins = parseInt(plain[1]);
+      }
+      totalDowntimeMins += mins;
+    });
+    var dtHours = Math.floor(totalDowntimeMins/60);
+    var dtMins  = totalDowntimeMins % 60;
+    var dtStr   = dtHours>0 ? dtHours+'h '+dtMins+'m' : totalDowntimeMins+'m';
+
+    // Downtime by machine
+    var machDT = {};
+    alerts.forEach(function(a){
+      if(!a.machine) return;
+      var dur = a.duration || '';
+      var hm = dur.match(/(\d+)\s*hour/i);
+      var mm = dur.match(/(\d+)\s*min/i);
+      var sm = dur.match(/(\d+)\s*sec/i);
+      var mins = 0;
+      if(hm) mins += parseInt(hm[1])*60;
+      if(mm) mins += parseInt(mm[1]);
+      if(sm) mins += Math.round(parseInt(sm[1])/60);
+      if(!hm && !mm){ var plain=dur.match(/^(\d+)/); if(plain) mins=parseInt(plain[1]); }
+      machDT[a.machine] = (machDT[a.machine]||0) + mins;
+    });
+    var machDTArr = Object.entries(machDT).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    var maxDT = machDTArr[0]?machDTArr[0][1]:1;
+    var dtBars = machDTArr.map(function(m){
+      var pct = Math.round(m[1]/maxDT*100);
+      var h2=Math.floor(m[1]/60), m2=m[1]%60;
+      var lbl = h2>0?h2+'h '+m2+'m':m[1]+'m';
+      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+        +'<div style="width:72px;font-size:12px;font-weight:700;color:#1e293b;">'+m[0]+'</div>'
+        +'<div style="flex:1;background:#e2e8f0;border-radius:4px;height:20px;">'
+        +'<div style="width:'+pct+'%;background:#dc2626;height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;">'
+        +'<span style="font-size:11px;color:white;font-weight:700;">'+lbl+'</span></div></div></div>';
+    }).join('');
+
+    win.document.write('<div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">');
     win.document.write('<div class="stat" style="border-top-color:#2563eb;"><div class="stat-val" style="color:#2563eb;">'+alerts.length+'</div><div class="stat-lbl">Total Alerts</div></div>');
     win.document.write('<div class="stat" style="border-top-color:#16a34a;"><div class="stat-val" style="color:#16a34a;">'+alerts.filter(function(a){return a.resolved;}).length+'</div><div class="stat-lbl">Resolved</div></div>');
     win.document.write('<div class="stat" style="border-top-color:#dc2626;"><div class="stat-val" style="color:#dc2626;">'+alerts.filter(function(a){return !a.resolved;}).length+'</div><div class="stat-lbl">Unresolved</div></div>');
     win.document.write('<div class="stat" style="border-top-color:#d97706;"><div class="stat-val" style="color:#d97706;">'+resolvedPct+'%</div><div class="stat-lbl">Resolution Rate</div></div>');
+    win.document.write('<div class="stat" style="border-top-color:#7c3aed;"><div class="stat-val" style="color:#7c3aed;font-size:'+(dtStr.length>4?'22':'32')+'px;">'+dtStr+'</div><div class="stat-lbl">Total Downtime</div></div>');
     win.document.write('</div>');
     win.document.write('<div class="charts">');
     win.document.write('<div class="section"><div class="section-title">Most Frequent Machines</div>'+(machBars||'<div style="color:#94a3b8;font-size:12px;">No data</div>')+'</div>');
     win.document.write('<div class="section"><div class="section-title">Top Downtime Reasons</div>'+(reasonBars||'<div style="color:#94a3b8;font-size:12px;">No data</div>')+'</div>');
+    win.document.write('</div>');
+    win.document.write('<div class="charts">');
+    win.document.write('<div class="section"><div class="section-title">Total Downtime by Machine</div>'+(dtBars||'<div style="color:#94a3b8;font-size:12px;">No data</div>')+'</div>');
+    win.document.write('<div class="section"><div class="section-title">Summary</div><table><thead><tr><th>Machine</th><th>Alerts</th><th>Total Downtime</th><th>Avg per Alert</th></tr></thead><tbody>'+machDTArr.map(function(m){var avg=Math.round(m[1]/mc[m[0]]);return'<tr><td style="font-weight:700;">'+m[0]+'</td><td>'+mc[m[0]]+'</td><td style="color:#dc2626;font-weight:700;">'+( Math.floor(m[1]/60)>0?Math.floor(m[1]/60)+'h '+(m[1]%60)+'m':m[1]+'m')+'</td><td>'+avg+'m</td></tr>';}).join('')+"</tbody></table></div>");
     win.document.write('</div>');
     win.document.write('<div class="section"><div class="section-title">Full Alert Log ('+alerts.length+' Records)</div>');
     win.document.write('<table><thead><tr><th>Machine</th><th>Duration</th><th>Received</th><th>Employee</th><th>Resolution</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
