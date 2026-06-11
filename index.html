@@ -149,6 +149,13 @@
   .modal-form input:-webkit-autofill, .modal-form input:-webkit-autofill:hover, .modal-form input:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0px 1000px #0f2338 inset !important; -webkit-text-fill-color: #f0f4f8 !important; border-color: #f59e0b; }
   .modal-form select option { background: #0f2338; }
   .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+  /* QUICK RECALL CHIPS */
+  .recall-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; min-height: 0; }
+  .recall-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.8px; cursor: pointer; border: 1px solid rgba(245,158,11,0.35); background: rgba(245,158,11,0.08); color: #fbbf24; transition: all 0.15s; white-space: nowrap; }
+  .recall-chip:hover { background: rgba(245,158,11,0.22); border-color: #f59e0b; color: #fde68a; }
+  .recall-chip.op-chip { border-color: rgba(125,211,252,0.35); background: rgba(125,211,252,0.07); color: #7dd3fc; }
+  .recall-chip.op-chip:hover { background: rgba(125,211,252,0.18); border-color: #7dd3fc; }
+  .recall-label { font-size: 10px; color: #475569; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin-bottom: 3px; }
   .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border: none; }
   .btn-cancel { background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid #2a5a8c; }
   .btn-submit { background: #f59e0b; color: #0f2338; }
@@ -1594,9 +1601,18 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         <option value="Tony Lang">Tony Lang</option>
         <option value="Tyler Stockham">Tyler Stockham</option>
       </select>
+      <!-- RECALL CHIPS — WO & OP -->
+      <div id="woRecallWrap" style="display:none;margin-bottom:2px;">
+        <div class="recall-label">⚡ Recent WO#</div>
+        <div class="recall-row" id="woRecallRow"></div>
+      </div>
       <div style="display:flex;gap:8px;">
         <input type="text" id="woInput" placeholder="WO# (e.g. 26-0288)" style="flex:2;" />
         <input type="text" id="opInput" placeholder="OP# (e.g. 10)" style="flex:1;" />
+      </div>
+      <div id="opRecallWrap" style="display:none;margin-top:-4px;margin-bottom:6px;">
+        <div class="recall-label" style="margin-top:4px;">⚡ Recent OP#</div>
+        <div class="recall-row" id="opRecallRow"></div>
       </div>
       <div id="assignField" style="display:none;margin-bottom:8px;">
         <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Assign Machinist to Run</div>
@@ -2972,6 +2988,82 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
   const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert' };
   const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
 
+  // ── QUICK RECALL SYSTEM ─────────────────────────────────────────────────────
+  // Saves per-machine history of WO#, OP#, last supply item, last operator.
+  // Keys: hillRecall_<machine>  → { wos:[], ops:[], supply:'', operator:'' }
+  //       hillLastOperator      → last operator name (cross-machine)
+
+  function recallKey(machine) { return 'hillRecall_' + (machine||'').replace(/[^a-zA-Z0-9\-]/g,'_'); }
+
+  function recallLoad(machine) {
+    try { return JSON.parse(localStorage.getItem(recallKey(machine))) || {}; } catch(e) { return {}; }
+  }
+
+  function recallSave(machine, wo, op, supply, operator) {
+    var d = recallLoad(machine);
+    // WO history — max 4 unique, most recent first
+    if (wo) {
+      var wos = (d.wos || []).filter(function(v){ return v !== wo; });
+      wos.unshift(wo);
+      d.wos = wos.slice(0, 4);
+    }
+    // OP history — max 4 unique per machine
+    if (op) {
+      var ops = (d.ops || []).filter(function(v){ return v !== op; });
+      ops.unshift(op);
+      d.ops = ops.slice(0, 4);
+    }
+    if (supply) d.supply = supply;
+    if (operator) { d.operator = operator; localStorage.setItem('hillLastOperator', operator); }
+    localStorage.setItem(recallKey(machine), JSON.stringify(d));
+  }
+
+  function recallRenderChips(machine) {
+    var d = recallLoad(machine);
+    // WO chips
+    var woRow = document.getElementById('woRecallRow');
+    var woWrap = document.getElementById('woRecallWrap');
+    if (woRow && woWrap) {
+      var wos = d.wos || [];
+      woWrap.style.display = wos.length ? 'block' : 'none';
+      woRow.innerHTML = wos.map(function(v) {
+        return '<button type="button" class="recall-chip" onclick="recallFill(\'wo\',\''+v.replace(/'/g,"\\'")+'\')" title="Tap to fill">'+v+'</button>';
+      }).join('');
+    }
+    // OP chips
+    var opRow = document.getElementById('opRecallRow');
+    var opWrap = document.getElementById('opRecallWrap');
+    if (opRow && opWrap) {
+      var ops = d.ops || [];
+      opWrap.style.display = ops.length ? 'block' : 'none';
+      opRow.innerHTML = ops.map(function(v) {
+        return '<button type="button" class="recall-chip op-chip" onclick="recallFill(\'op\',\''+v.replace(/'/g,"\\'")+'\')" title="Tap to fill">OP '+v+'</button>';
+      }).join('');
+    }
+    // Pre-fill operator name from last session on this device
+    var lastOp = d.operator || localStorage.getItem('hillLastOperator') || '';
+    if (lastOp) {
+      var opSel = document.getElementById('operatorName');
+      if (opSel && !opSel.value) opSel.value = lastOp;
+    }
+    // Pre-select last supply item
+    if (d.supply) { window._recallSupply = d.supply; } else { window._recallSupply = ''; }
+  }
+
+  function recallFill(field, value) {
+    if (field === 'wo') {
+      var inp = document.getElementById('woInput');
+      if (inp) { inp.value = value; inp.focus(); }
+    } else if (field === 'op') {
+      var inp2 = document.getElementById('opInput');
+      if (inp2) { inp2.value = value; inp2.focus(); }
+    }
+  }
+
+  // When yellow type selected, also pre-select last supply item for this machine
+  var _origSelectType = null;
+  // ────────────────────────────────────────────────────────────────────────────
+
   function openModal(machine, cell) {
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
@@ -2984,6 +3076,8 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     window._selectedGloveSize = '';
     document.querySelectorAll('.glove-size-btn').forEach(b => { b.style.background='rgba(255,255,255,0.05)'; b.style.borderColor='#2a5a8c'; b.style.color='#94a3b8'; });
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
+    // Load recall history for this machine
+    recallRenderChips(machine);
     if (window.renderExistingNotes) window.renderExistingNotes();
     document.getElementById('modalOverlay').classList.add('active');
   }
@@ -2997,6 +3091,10 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     // Show supply dropdown only for Machinist Req (yellow)
     var supplyField = document.getElementById('machinistSupplyField');
     if(supplyField) supplyField.style.display = type === 'yellow' ? 'block' : 'none';
+    if(type === 'yellow' && window._recallSupply) {
+      var si2 = document.getElementById('supplyItem');
+      if(si2 && !si2.value) { si2.value = window._recallSupply; handleSupplyChange(); }
+    }
     if(type !== 'yellow') {
       var si = document.getElementById('supplyItem'); if(si) si.value = '';
       var gsf = document.getElementById('gloveSizeField'); if(gsf) gsf.style.display = 'none';
@@ -3062,6 +3160,9 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       return;
     }
     if (btn) { btn.disabled=false; btn.textContent='Submit'; }
+    // Save to quick recall
+    var _supplyForRecall = (selectedType === 'yellow' && document.getElementById('supplyItem')) ? document.getElementById('supplyItem').value : '';
+    recallSave(currentMachine, wo, op, _supplyForRecall, operator);
     closeModal();
     showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
     if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue') {
