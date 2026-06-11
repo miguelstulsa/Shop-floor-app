@@ -57,7 +57,7 @@
   .shop-page.active { display: grid; grid-template-columns: 1fr 320px; height: calc(100vh - 88px); overflow: hidden; }
   .floor-section { padding: 10px 12px; overflow-y: auto; height: 100%; box-sizing: border-box; }
   .floor-title { font-size: 11px; letter-spacing: 2px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-  .floor-grid { background: #0f2035; border-radius: 10px; padding: 8px; border: 1px solid #1e4a7c; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(2, 1fr); gap: 6px; }
+  .floor-grid { background: #0f2035; border-radius: 10px; padding: 4px; border: 1px solid #1e4a7c; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: auto; gap: 3px; }
   .hill-center { grid-column: 3; grid-row: 2; background: linear-gradient(135deg, #1e3a5f, #2a5080); border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid #f59e0b; min-height: 80px; }
   .hill-logo-text { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #f59e0b; letter-spacing: 4px; }
   .cell { background: linear-gradient(175deg, #112845 0%, #1a3555 100%); border-radius: 8px; padding: 6px 5px; display: flex; flex-direction: column; border: 1px solid rgba(59,130,246,0.35); box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06); }
@@ -73,12 +73,11 @@
   .machine.has-red::after { background: #ef4444; opacity:1; box-shadow: 0 0 8px #ef4444; }
   .machine.has-yellow::after { background: #eab308; opacity:1; box-shadow: 0 0 8px #eab308; }
   .machine.has-green::after { background: #22c55e; opacity:1; box-shadow: 0 0 8px #22c55e; }
-  .machine.has-dnx::after  { background: #7dd3fc; opacity:1; box-shadow: 0 0 8px #7dd3fc; }
   .machine.has-blue::after { background: #3b82f6; opacity:1; box-shadow: 0 0 8px #3b82f6; }
-  .machine-body { padding: 8px 10px 6px 12px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .machine-body { padding: 4px 6px 3px 8px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
   .machine-left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
   .machine-label { display: none; }
-  .machine-name { font-family: 'Bebas Neue', sans-serif; font-size: clamp(18px, 2.2vw, 26px); letter-spacing: 1.5px; color: #f5d050; text-shadow: 0 0 10px rgba(245,208,80,0.4); text-shadow: 0 0 10px rgba(245,208,80,0.5), 0 1px 3px rgba(0,0,0,0.7); line-height: 1; white-space: nowrap; overflow: visible; text-overflow: unset; display: block; transform-origin: left center; }
+  .machine-name { font-family: 'Bebas Neue', sans-serif; font-size: clamp(11px, 1.4vw, 16px); letter-spacing: 1.5px; color: #f5d050; text-shadow: 0 0 10px rgba(245,208,80,0.4); text-shadow: 0 0 10px rgba(245,208,80,0.5), 0 1px 3px rgba(0,0,0,0.7); line-height: 1; white-space: nowrap; overflow: visible; text-overflow: unset; display: block; transform-origin: left center; }
   .machine-right { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 14px; }
   .machine-led { display: none; }
 
@@ -95,7 +94,6 @@
   .note-dot.red    { background: #ef4444; box-shadow: 0 0 10px 3px rgba(239,68,68,.9);   animation: blink-red    0.7s step-end infinite; }
   .note-dot.yellow { background: #eab308; box-shadow: 0 0 10px 3px rgba(234,179,8,.9);   animation: blink-yellow 1.2s step-end infinite; }
   .note-dot.green  { background: #22c55e; box-shadow: 0 0 10px 3px rgba(34,197,94,.9);   animation: blink-green  2.0s step-end infinite; }
-  .note-dot.dnx    { background: #7dd3fc; box-shadow: 0 0 10px 3px rgba(125,211,252,.9); animation: blink-blue   1.6s step-end infinite; }
   @keyframes blink        { 0%,100%{opacity:1} 50%{opacity:.2} }
   @keyframes blink-red    { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
   @keyframes blink-yellow { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
@@ -111,13 +109,11 @@
   .notif-item.yellow { border-left-color: #eab308; background: rgba(234,179,8,0.15); box-shadow: inset 0 0 30px rgba(234,179,8,0.08), 0 0 0 1px rgba(234,179,8,0.2); }
   .notif-item.blue   { border-left-color: #3b82f6; background: rgba(59,130,246,0.15); box-shadow: inset 0 0 30px rgba(59,130,246,0.08), 0 0 0 1px rgba(59,130,246,0.2); }
   .notif-item.green  { border-left-color: #22c55e; background: rgba(34,197,94,0.15); box-shadow: inset 0 0 30px rgba(34,197,94,0.08), 0 0 0 1px rgba(34,197,94,0.2); }
-  .notif-item.dnx    { border-left-color: #7dd3fc; background: rgba(125,211,252,0.08); box-shadow: inset 0 0 30px rgba(125,211,252,0.06), 0 0 0 1px rgba(125,211,252,0.2); }
   .notif-blink-dot { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; }
   .notif-item.red    .notif-blink-dot { background: #ef4444; box-shadow: 0 0 12px 4px #ef4444; animation: blink-red    0.7s step-end infinite; }
   .notif-item.yellow .notif-blink-dot { background: #eab308; box-shadow: 0 0 12px 4px #eab308; animation: blink-yellow 1.2s step-end infinite; }
   .notif-item.blue   .notif-blink-dot { background: #3b82f6; box-shadow: 0 0 12px 4px #3b82f6; animation: blink-blue   1.6s step-end infinite; }
   .notif-item.green  .notif-blink-dot { background: #22c55e; box-shadow: 0 0 8px #22c55e; animation: blink-green  2.0s step-end infinite; }
-  .notif-item.dnx    .notif-blink-dot { background: #7dd3fc; box-shadow: 0 0 8px #7dd3fc; animation: blink-blue   1.6s step-end infinite; }
   .notif-type { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 3px; }
   .notif-item.red .notif-type { color: #f87171; } .notif-item.yellow .notif-type { color: #fbbf24; }
   .notif-item.blue .notif-type { color: #60a5fa; } .notif-item.green .notif-type { color: #4ade80; }
@@ -156,11 +152,6 @@
   .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; border: none; }
   .btn-cancel { background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid #2a5a8c; }
   .btn-submit { background: #f59e0b; color: #0f2338; }
-  .photo-upload-area { border:2px dashed #1e3a5f; border-radius:10px; padding:12px; text-align:center; cursor:pointer; transition:all 0.2s; margin-top:6px; }
-  .photo-upload-area:hover { border-color:#3b82f6; background:rgba(59,130,246,0.05); }
-  .photo-upload-area.has-photo { border-color:#22c55e; border-style:solid; background:rgba(34,197,94,0.05); }
-  .photo-preview { width:100%; max-height:140px; object-fit:cover; border-radius:8px; margin-top:8px; display:none; }
-  .photo-thumbnail { width:48px; height:48px; object-fit:cover; border-radius:6px; cursor:pointer; border:2px solid #1e3a5f; }
   .existing-notes { margin-top: 16px; border-top: 1px solid #2a5a8c; padding-top: 14px; }
   .existing-notes-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #475569; margin-bottom: 8px; }
   .existing-note-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; background: rgba(255,255,255,0.03); border-radius: 6px; margin-bottom: 6px; }
@@ -215,7 +206,6 @@
   .dash-req-card.type-yellow::before { background:#eab308; }
   .dash-req-card.type-blue::before   { background:#3b82f6; }
   .dash-req-card.type-green::before  { background:#22c55e; }
-  .dash-req-card.type-dnx::before    { background:#7dd3fc; }
   .dash-req-card.resolved { opacity:0.4; }
   .req-timer-btn { border:none;border-radius:6px;padding:5px 12px;font-family:"Bebas Neue",sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;transition:all .15s; }
   .req-start-btn  { background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.4); }
@@ -511,7 +501,6 @@
   .req-card.yellow { border-left-color: #eab308; background: rgba(234,179,8,0.1); box-shadow: 0 0 0 1px rgba(234,179,8,0.2); }
   .req-card.blue   { border-left-color: #3b82f6; background: rgba(59,130,246,0.1); box-shadow: 0 0 0 1px rgba(59,130,246,0.2); }
   .req-card.green  { border-left-color: #22c55e; background: rgba(34,197,94,0.1); box-shadow: 0 0 0 1px rgba(34,197,94,0.2); }
-    .req-card.dnx  { border-left-color: #7dd3fc; background: rgba(125,211,252,0.1); box-shadow: 0 0 0 1px rgba(125,211,252,0.2); }
   .req-dot-col { display: flex; align-items: flex-start; padding-top: 4px; }
   .req-blink-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; display: block; }
   .req-blink-dot.red    { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.9); animation: blink-red    0.7s step-end infinite; }
@@ -1193,8 +1182,8 @@
 <!-- SHOP FLOOR PAGE -->
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
-    <div class="floor-title">Live Shop Floor — Tap any machine to add a request</div>
-    <div id="miguel-time-log" style="display:none;background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;margin:6px 16px;overflow:hidden;">
+    <div class="floor-title" style="font-size:10px;padding:3px 8px;">Live Shop Floor — Tap any machine to add a request</div>
+    <div id="miguel-time-log" style="display:none;background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;margin:3px 8px;overflow:hidden;">
       <div onclick="window._toggleTimeLog()" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;">
         <span id="miguel-time-log-header" style="font-size:12px;color:#f5c842;font-weight:700;">⏱ MY TIME LOG</span>
         <span id="miguel-time-log-toggle" style="font-size:11px;color:#475569;">▼ SHOW</span>
@@ -1209,7 +1198,7 @@
       <span style="font-family:'Bebas Neue',sans-serif;font-size:11px;color:#f5c842;letter-spacing:2px;">⚡ LIVE FEED</span>
       <span style="font-size:10px;color:#64748b;letter-spacing:1px;">TAP TO VIEW ▼</span>
     </div>
-    <div id="live-status-strip" onclick="window._toggleLiveStrip()" style="background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;padding:10px 14px;margin-bottom:8px;min-height:52px;display:flex;align-items:center;gap:10px;overflow-x:hidden;scrollbar-width:none;flex-wrap:nowrap;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:rgba(245,200,0,0.2);">
+    <div id="live-status-strip" onclick="window._toggleLiveStrip()" style="background:#060d1a;border:1px solid #1e3a5c;border-radius:6px;padding:5px 10px;margin-bottom:4px;min-height:52px;display:flex;align-items:center;gap:10px;overflow-x:hidden;scrollbar-width:none;flex-wrap:nowrap;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:rgba(245,200,0,0.2);">
       <div id="live-strip-content" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;width:100%;">
         <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
           <span style="font-size:11px;color:#334155;letter-spacing:2px;font-family:'Bebas Neue',sans-serif;">LIVE FEED</span>
@@ -1223,21 +1212,21 @@
     <!-- Hidden Audio Player for background music -->
     <audio id="sparky-audio" preload="none" style="display:none;"></audio>
 
-    <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:flex;align-items:center;gap:12px;margin-bottom:8px;background:linear-gradient(135deg,#1a0033,#2d0060);border:2px solid rgba(139,92,246,0.6);border-radius:14px;padding:12px 16px;cursor:pointer;box-shadow:0 4px 20px rgba(139,92,246,0.2);">
+    <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:10px;padding:6px 12px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,0.15);">
       <!-- Sparky Icon -->
-      <div id="sparky-avatar" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:2px solid rgba(196,181,253,0.5);position:relative;box-shadow:0 0 16px rgba(139,92,246,0.4);">
+      <div id="sparky-avatar" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid rgba(196,181,253,0.4);position:relative;box-shadow:0 0 8px rgba(139,92,246,0.3);">
         🎙️
-        <div id="sparky-pulse" style="display:none;position:absolute;inset:-5px;border-radius:50%;border:2px solid rgba(139,92,246,0.7);animation:sparkypulse 1.4s ease-out infinite;"></div>
+        <div id="sparky-pulse" style="display:none;position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(139,92,246,0.7);animation:sparkypulse 1.4s ease-out infinite;"></div>
       </div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#c4b5fd;letter-spacing:2px;">SPARKY</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#c4b5fd;letter-spacing:2px;">SPARKY</div>
           <span id="sparky-onair" style="display:none;background:rgba(239,68,68,0.25);border:1px solid rgba(239,68,68,0.6);border-radius:999px;padding:2px 8px;font-size:10px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">&#11044; ON AIR</span>
         </div>
-        <div id="sparky-status-text" style="font-size:11px;color:#7c3aed;">TAP TO ACTIVATE YOUR SHOP VOICE</div>
+        <div id="sparky-status-text" style="font-size:9px;color:#7c3aed;">TAP TO ACTIVATE</div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
-        <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;">SPEAK</button>
+        <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:4px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;">SPEAK</button>
         <button onclick="event.stopPropagation();if(window._sparkyNextSong)window._sparkyNextSong();" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Next song">&#9654;&#9654;</button>
         <button onclick="event.stopPropagation();if(window._sparkyMusicToggle)window._sparkyMusicToggle();" id="sparky-music-btn" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Toggle music">&#127925;</button>
         <button id="sparky-mute-btn" onclick="event.stopPropagation();if(window._sparkyMute)window._sparkyMute();" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;letter-spacing:1px;">🔊 MUTE</button>
@@ -1303,6 +1292,9 @@
       <div class="cell" style="grid-column:3;grid-row:2;"><div class="cell-title">Horizontal</div><div class="machines"><div class="machine" onclick="openModal('2G','Horizontal')"><div class="perf-bar pending" id="perf-2G" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">2G</div></div><div class="machine-right"><div class="machine-led" id="light-2G"></div></div></div><div class="machine-notes" id="notes-2G"></div></div><div class="machine" onclick="openModal('SH-403','Horizontal')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SH-403</div></div><div class="machine-right"><div class="machine-led" id="light-SH-403"></div></div></div><div class="machine-notes" id="notes-SH-403"></div></div><div class="machine" onclick="openModal('EMCO','Horizontal')"><div class="machine-body"><div class="machine-left"><div class="machine-name">EMCO</div></div><div class="machine-right"><div class="machine-led" id="light-EMCO"></div></div></div><div class="machine-notes" id="notes-EMCO"></div></div><div class="machine" onclick="openModal('5000','Horizontal')"><div class="machine-body"><div class="machine-left"><div class="machine-name">5000</div></div><div class="machine-right"><div class="machine-led" id="light-5000"></div></div></div><div class="machine-notes" id="notes-5000"></div></div></div></div>
       <div class="cell" style="grid-column:4;grid-row:2;"><div class="cell-title">Automation Cell</div><div class="machines"><div class="machine" onclick="openModal('PUMA-1','Automation')"><div class="perf-bar pending" id="perf-PUMA-1" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-1</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-1"></div></div></div><div class="machine-notes" id="notes-PUMA-1"></div></div><div class="machine" onclick="openModal('303-B','Automation')"><div class="perf-bar pending" id="perf-303-B" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">303-B</div></div><div class="machine-right"><div class="machine-led" id="light-303-B"></div></div></div><div class="machine-notes" id="notes-303-B"></div></div><div class="machine" onclick="openModal('TWIN','Automation')"><div class="perf-bar pending" id="perf-TWIN" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">TWIN</div></div><div class="machine-right"><div class="machine-led" id="light-TWIN"></div></div></div><div class="machine-notes" id="notes-TWIN"></div></div><div class="machine" onclick="openModal('2500-Y','Automation')"><div class="perf-bar pending" id="perf-2500-Y" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">2500-Y</div></div><div class="machine-right"><div class="machine-led" id="light-2500-Y"></div></div></div><div class="machine-notes" id="notes-2500-Y"></div></div></div></div>
 
+      <!-- FABRICATION CELL -->
+      <div class="cell-group"><div class="cell-label">● FABRICATION</div><div class="machines"><div class="machine" onclick="openModal('SAW-1','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW-1</div></div><div class="machine-right"><div class="machine-led" id="light-SAW-1"></div></div></div><div class="machine-notes" id="notes-SAW-1"></div></div><div class="machine" onclick="openModal('SAW-2','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW-2</div></div><div class="machine-right"><div class="machine-led" id="light-SAW-2"></div></div></div><div class="machine-notes" id="notes-SAW-2"></div></div><div class="machine" onclick="openModal('MANUAL','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">MANUAL</div></div><div class="machine-right"><div class="machine-led" id="light-MANUAL"></div></div></div><div class="machine-notes" id="notes-MANUAL"></div></div><div class="machine" onclick="openModal('WELDERS','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">WELDERS</div></div><div class="machine-right"><div class="machine-led" id="light-WELDERS"></div></div></div><div class="machine-notes" id="notes-WELDERS"></div></div></div></div>
+
     </div>
   </div>
   <div class="sidebar" id="sidebar">
@@ -1355,32 +1347,9 @@
 <div class="page" id="page-aichat" style="display:none;flex-direction:column;height:calc(100vh - 120px);max-width:700px;margin:0 auto;padding:0;">
 
   <!-- Chat header -->
-  <div style="padding:10px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+  <div style="padding:12px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:2px;">🤖 HILL AI ASSISTANT</div>
-
-    <!-- Quick search buttons -->
-    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;">
-      <button onclick="window._aiQuickSearch('all')"       style="background:rgba(245,200,66,0.12);border:1px solid #f5c842;color:#f5c842;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">📋 ALL</button>
-      <button onclick="window._aiQuickSearch('pending')"   style="background:rgba(96,165,250,0.12);border:1px solid #60a5fa;color:#60a5fa;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🔵 PENDING WO</button>
-      <button onclick="window._aiQuickSearch('machinist')" style="background:rgba(251,191,36,0.12);border:1px solid #fbbf24;color:#fbbf24;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🟡 MACHINIST</button>
-      <button onclick="window._aiQuickSearch('inspection')" style="background:rgba(248,113,113,0.12);border:1px solid #f87171;color:#f87171;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🔴 INSPECTION</button>
-      <button onclick="window._aiQuickSearch('running')"   style="background:rgba(74,222,128,0.12);border:1px solid #4ade80;color:#4ade80;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🟢 RUNNING WO</button>
-      <button onclick="window._aiQuickSearch('datanomix')" style="background:rgba(125,211,252,0.12);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🔷 DATANOMIX</button>
-      <button onclick="window._aiQuickSearch('open')"      style="background:rgba(249,115,22,0.12);border:1px solid #f97316;color:#f97316;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">⏳ OPEN</button>
-      <button onclick="window._aiQuickSearch('completed')" style="background:rgba(74,222,128,0.12);border:1px solid #4ade80;color:#4ade80;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">✅ COMPLETED</button>
-      <button onclick="window._aiQuickSearch('today')"     style="background:rgba(167,139,250,0.12);border:1px solid #a78bfa;color:#a78bfa;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">📅 TODAY</button>
-      <button onclick="window._aiQuickSearch('week')"      style="background:rgba(167,139,250,0.12);border:1px solid #a78bfa;color:#a78bfa;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">📅 THIS WEEK</button>
-    </div>
-  </div>
-
-  <!-- Input first (top) -->
-  <div style="padding:10px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;display:flex;gap:8px;align-items:flex-end;">
-    <textarea id="ai-input" placeholder="Search... WO#, machine, name, type, date range..."
-      style="flex:1;background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;color:#f0f4f8;font-size:14px;padding:10px 12px;resize:none;font-family:inherit;min-height:44px;max-height:120px;line-height:1.4;"
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window._sendAIChat();}"
-      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
-    <button onclick="window._sendAIChat()"
-      style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#000;border-radius:10px;padding:10px 16px;font-size:18px;cursor:pointer;flex-shrink:0;height:44px;">➤</button>
+    <div style="font-size:11px;color:#475569;">Ask anything about your floor, jobs, machinists, or operations.</div>
   </div>
 
   <!-- Messages -->
@@ -1390,20 +1359,18 @@
 
 🔍 SEARCH OPTIONS:
 • WO# — type "26-0173" → every request on that job, who touched it, timestamps, times
-• Employee — type "Jimmy" → full history of their requests
-• Request type — use the quick buttons above, or type "machinist", "inspection", "pending", etc.
+• Employee — type "Jimmy Pollard" or "Jimmy" → full history of their requests
+• Request type — type "pending", "machinist", "inspection", "datanomix", "floor support" → all requests of that type
+• "requests sent to me" → everything you fulfilled, by person
 • Machine — type "3000-A" or "VF-3" → all requests on that machine
-• Date — type "today", "this week", "this month"
-• Status — type "open" or "completed"
-• WO search — type "wo 26-1234"
 
-Every result shows: date, time, operator, type, WO#, details, elapsed time, status — all printable as PDF.</div>
+Every result shows: date, time, operator, type, WO#, details, elapsed time, status.</div>
     </div>
   </div>
 
   <!-- Input -->
   <div style="padding:12px 16px;border-top:1px solid #1e3a5f;flex-shrink:0;display:flex;gap:8px;align-items:flex-end;">
-    <textarea id="ai-input" placeholder="Search... WO#, machine, name, type, date range..." 
+    <textarea id="ai-input" placeholder="Ask anything... e.g. How long has VF-3 been running? Who has the most requests today?" 
       style="flex:1;background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;color:#f0f4f8;font-size:14px;padding:10px 12px;resize:none;font-family:inherit;min-height:44px;max-height:120px;line-height:1.4;"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window._sendAIChat();}"
       oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
@@ -1414,27 +1381,36 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
 
 <!-- ═══ DATANOMIX ALERTS PAGE ═══ -->
 <div class="page" id="page-dnxalerts" style="display:none;padding:16px;max-width:700px;margin:0 auto;">
+
+  <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f87171;letter-spacing:2px;">⚠️ DATANOMIX ALERTS</div>
     <button onclick="window._printDnxAlerts()" style="background:rgba(255,255,255,0.08);border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">🖨 PRINT / PDF</button>
   </div>
-  <div style="font-size:12px;color:#475569;margin-bottom:14px;">Machines inactive 30+ minutes. Click RESOLVE to stop flashing and document the issue.</div>
-  <div id="dnx-summary-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;"></div>
-  <div id="dnx-active-alerts" style="margin-bottom:16px;"></div>
-  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
-    <span style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;align-self:center;">History:</span>
-    <button id="dnx-btn-today" onclick="window._dnxSetRange('today')" style="padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;border-radius:6px;border:1px solid #f87171;background:rgba(248,113,113,0.15);color:#f87171;cursor:pointer;">Today</button>
-    <button id="dnx-btn-week" onclick="window._dnxSetRange('week')" style="padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;border-radius:6px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer;">This Week</button>
-    <button id="dnx-btn-all" onclick="window._dnxSetRange('all')" style="padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;border-radius:6px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer;">All Time</button>
-  </div>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#94a3b8;letter-spacing:1px;margin-bottom:8px;">BY MACHINE</div>
-  <div id="dnx-by-machine" style="margin-bottom:16px;"></div>
+  <div style="font-size:12px;color:#475569;margin-bottom:16px;">Machines inactive 30+ minutes. Click RESOLVE to stop flashing and document the issue.</div>
+
+  <!-- Active unresolved alerts -->
+  <div id="dnx-active-alerts" style="margin-bottom:20px;"></div>
+
+  <!-- Alert history -->
   <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#94a3b8;letter-spacing:1px;margin-bottom:8px;">FULL ALERT HISTORY</div>
   <div id="dnx-alerts-list"></div>
 </div>
 
 <!-- Resolve Modal -->
-
+<div id="dnx-resolve-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#0d1f35;border:1px solid #ef4444;border-radius:16px;padding:24px;max-width:420px;width:100%;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f87171;letter-spacing:2px;margin-bottom:4px;">RESOLVE ALERT</div>
+    <div id="dnx-resolve-machine" style="font-size:13px;color:#94a3b8;margin-bottom:16px;"></div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:6px;">What was the issue? (required)</div>
+    <textarea id="dnx-resolve-comment" placeholder="e.g. Operator on break, tool change, part measurement, machine down..." 
+      style="width:100%;box-sizing:border-box;background:#060d1a;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;font-size:14px;padding:10px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:12px;"></textarea>
+    <div style="display:flex;gap:8px;">
+      <button onclick="window._confirmResolveDnx()" style="flex:1;background:linear-gradient(135deg,#059669,#10b981);border:none;color:#fff;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">✓ RESOLVE</button>
+      <button onclick="document.getElementById('dnx-resolve-modal').style.display='none'" style="background:rgba(255,255,255,0.05);border:1px solid #334155;color:#64748b;border-radius:8px;padding:12px 16px;cursor:pointer;">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ ANNOUNCEMENTS PAGE ═══ -->
 <div class="page" id="page-announce" style="display:none;padding:16px;max-width:600px;margin:0 auto;">
@@ -1563,9 +1539,10 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       <button class="note-type-btn red" onclick="selectType('red')"><div class="note-type-label">🔴 Inspection</div><div class="note-type-desc">Quality check needed</div></button>
       <button class="note-type-btn yellow" onclick="selectType('yellow')"><div class="note-type-label">🟡 Machinist Req</div><div class="note-type-desc">Tool or fixture request</div></button>
       <button class="note-type-btn green" onclick="selectType('green')"><div class="note-type-label">🟢 Running WO</div><div class="note-type-desc">Currently running</div></button>
+      <button class="note-type-btn" style="border-color:#7dd3fc;color:#7dd3fc;" onclick="selectType('dnx')"><div class="note-type-label">🔷 Datanomix</div><div class="note-type-desc">Machine alert / issue</div></button>
     </div>
     <div class="modal-form">
-      <select id="operatorName" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;margin-bottom:2px;" onchange="window._checkModalSubmit()">
+      <select id="operatorName" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;margin-bottom:2px;">
         <option value="">-- Select your name --</option>
         <option value="Brett Thompson">Brett Thompson</option>
         <option value="Bryan Sturman">Bryan Sturman</option>
@@ -1591,10 +1568,9 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         <option value="Tyler Stockham">Tyler Stockham</option>
       </select>
       <div style="display:flex;gap:8px;">
-        <input type="text" id="woInput" placeholder="WO# *Required" style="flex:2;" oninput="window._checkModalSubmit()" />
+        <input type="text" id="woInput" placeholder="WO# (e.g. 26-0288)" style="flex:2;" />
         <input type="text" id="opInput" placeholder="OP# (e.g. 10)" style="flex:1;" />
       </div>
-      <input type="text" id="partInput" placeholder="Part Number *Required" style="width:100%;margin-top:6px;" oninput="window._checkModalSubmit()" />
       <div id="assignField" style="display:none;margin-bottom:8px;">
         <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Assign Machinist to Run</div>
         <select id="assignedTo" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;">
@@ -1624,18 +1600,10 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         </select>
       </div>
       <textarea id="noteText" rows="3" placeholder="Additional details..."></textarea>
-      <!-- PHOTO ATTACHMENT -->
-      <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none;" onchange="window._handlePhotoSelect(this)">
-      <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('photoFileInput').click()">
-        <div id="photoUploadLabel" style="color:#64748b;font-size:13px;">📷 Tap to attach a photo <span style="font-size:11px;opacity:0.6;">(optional)</span></div>
-        <img id="photoPreview" class="photo-preview" alt="Preview">
-      </div>
-      <div id="photoUploadProgress" style="display:none;font-size:11px;color:#f59e0b;margin-top:4px;text-align:center;">Uploading photo...</div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-      <div id="modal-validation-msg" style="font-size:11px;color:#f87171;margin-bottom:6px;display:none;">Employee name, WO#, and Part Number are required.</div>
-      <button class="btn btn-submit" id="modal-submit-btn" onclick="submitNote()" disabled style="opacity:0.4;cursor:not-allowed;">Submit</button>
+      <button class="btn btn-submit" onclick="submitNote()">Submit</button>
     </div>
     <div class="existing-notes" id="existingNotes"></div>
   </div>
@@ -1757,7 +1725,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     }
   }, 5000);
   const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢', dnx: '🔷' };
+  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
 
   // MACHINE NOTES
   const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
@@ -1772,7 +1740,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
     document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
     document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green'); });
-    const priority = { red:4, yellow:3, blue:2, dnx:1.5, green:1 };
+    const priority = { red:4, yellow:3, blue:2, green:1 };
     const machinePriority = {};
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
@@ -1791,14 +1759,14 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       const notesEl = document.getElementById('notes-' + mid);
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
-    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.type === 'dnx' || n.inProgress);
+    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.inProgress);
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
-        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'orange' || n.type === 'dnx')) {
+        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'orange')) {
           // Only browser notification from listener — Pushover fires from submit button only
           sendBrowserNotif(n);
-          showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.type==='dnx' ? (n.machine + ': ' + (n.detail||'INACTIVE')) : (n.cell + ' — ' + n.machine + ': ' + n.wo));
+          showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.cell + ' — ' + n.machine + ': ' + n.wo);
           // DJ announces new requests to the floor
           setTimeout(function(){ window._djAnnounceNew(n); }, 1500);
         }
@@ -1818,7 +1786,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
     document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
     document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green'); });
-    const priority = { red:4, yellow:3, blue:2, dnx:1.5, green:1 };
+    const priority = { red:4, yellow:3, blue:2, green:1 };
     const machinePriority = {};
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
@@ -1862,9 +1830,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var inProg  = n.inProgress;
       var onHold  = n.onHold;
       var timerBtns = isAdmin
-        ? (n.type === 'dnx'
-            ? '<div style="margin-top:6px;"><button class="req-timer-btn req-finish-btn" style="background:rgba(125,211,252,0.15);border-color:#7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 CLOSE ALERT</button></div>'
-            : onHold
+        ? (onHold
             ? '<div style="margin-top:6px;"><div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<div style="display:flex;gap:6px;">' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
@@ -1885,9 +1851,8 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       item.innerHTML =
         '<div class="notif-blink-dot"></div>' +
         '<div class="notif-type">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
-        '<div class="notif-machine">' + (n.type==='dnx' ? n.machine : (n.cell + ' — ' + n.machine)) + '</div>' +
+        '<div class="notif-machine">' + n.cell + ' — ' + n.machine + '</div>' +
         '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + n.wo + (n.detail ? ' · ' + n.detail : '') + '</div>' +
-        (n.photoUrl ? '<img src="' + n.photoUrl + '" onclick="window._viewPhoto(\'' + n.photoUrl + '\')" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:6px;cursor:pointer;border:2px solid #1e3a5f;" title="Tap to view photo">' : '') +
         '<div class="notif-time">Today at ' + timeStr + '</div>' +
         timerBtns +
         '<button class="notif-dismiss" data-id="' + n.id + '">✕</button>';
@@ -1913,9 +1878,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var onHold2  = n.onHold;
       var adminBtns = isAdmin2
         ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
-          (n.type === 'dnx'
-            ? '<button class="req-timer-btn req-finish-btn" style="background:rgba(125,211,252,0.15);border-color:#7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 CLOSE ALERT</button>'
-            : onHold2
+          (onHold2
             ? '<div style="width:100%;font-size:9px;color:#f59e0b;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>'
@@ -1932,13 +1895,12 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         '<div class="req-dot-col"><span class="req-blink-dot ' + n.type + '"></span></div>' +
         '<div class="req-body">' +
           '<div class="req-machine">' + n.machine + '</div>' +
-          (n.type!=='dnx' ? '<div class="req-cell">' + n.cell + '</div>' : '') +
+          '<div class="req-cell">' + n.cell + '</div>' +
           '<div class="req-type-label">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
           (n.wo     ? '<div class="req-wo">WO: '      + n.wo     + '</div>' : '') +
           (n.assignedTo ? '<div class="req-wo" style="color:#93c5fd;">🔧 Assigned to: ' + n.assignedTo + '</div>' : '') +
           (n.detail ? '<div class="req-detail">'      + n.detail + '</div>' : '') +
           (n.operator ? '<div class="req-operator">👤 ' + n.operator + '</div>' : '') +
-          (n.photoUrl ? '<div style="margin-top:8px;"><img src="' + n.photoUrl + '" onclick="window._viewPhoto(\'' + n.photoUrl + '\')" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid #1e3a5f;" title="Tap to view full photo"></div>' : '') +
           '<div class="req-time">⏱ Today at ' + timeStr + '</div>' +
           adminBtns +
         '</div>' +
@@ -1950,7 +1912,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
 
   function sendBrowserNotif(n) {
     if (Notification.permission === 'granted') {
-      new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: n.type==='dnx' ? (n.machine + ' INACTIVE for ' + n.duration) : (n.cell + ' — ' + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + n.wo), tag: n.id, requireInteraction: true });
+      new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: n.cell + ' — ' + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + n.wo, tag: n.id, requireInteraction: true });
     }
   }
 
@@ -1971,21 +1933,6 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         appVersion: 'v35'
       });
     }
-    return reqRef.id;
-  };
-  window._viewPhoto = function(url) {
-    var overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;cursor:pointer;';
-    overlay.onclick = function(){ document.body.removeChild(overlay); };
-    var img = document.createElement('img');
-    img.src = url;
-    img.style.cssText = 'max-width:92vw;max-height:88vh;border-radius:12px;box-shadow:0 0 60px rgba(0,0,0,0.8);';
-    var close = document.createElement('div');
-    close.style.cssText = 'position:absolute;top:20px;right:24px;color:white;font-size:28px;cursor:pointer;font-weight:700;';
-    close.textContent = '✕';
-    overlay.appendChild(img);
-    overlay.appendChild(close);
-    document.body.appendChild(overlay);
   };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
 
@@ -2973,39 +2920,17 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
   let currentMachine = '', currentCell = '', selectedType = null;
   window.machineNotes = {}; window.currentMachine = '';
   const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢', dnx: '🔷' };
+  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
 
   function openModal(machine, cell) {
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
-    document.getElementById('modalMachineName').textContent = cell + ' -- ' + machine;
-    document.getElementById('woInput').value = '';
-    document.getElementById('noteText').value = '';
-    if(document.getElementById('opInput')) document.getElementById('opInput').value = '';
-    if(document.getElementById('partInput')) document.getElementById('partInput').value = '';
-    if(document.getElementById('operatorName')) document.getElementById('operatorName').value = '';
-    if(document.getElementById('photoFileInput')) document.getElementById('photoFileInput').value = '';
-    if(document.getElementById('photoPreview')){ document.getElementById('photoPreview').style.display='none'; document.getElementById('photoPreview').src=''; }
-    if(document.getElementById('photoUploadArea')) document.getElementById('photoUploadArea').classList.remove('has-photo');
-    if(document.getElementById('photoUploadLabel')) document.getElementById('photoUploadLabel').textContent='📷 Tap to attach a photo (optional)';
-    window._pendingPhotoFile = null;
+    document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
+    document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = '';
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
-    var btn=document.getElementById('modal-submit-btn');
-    if(btn){btn.disabled=true;btn.style.opacity='0.4';btn.style.cursor='not-allowed';}
-    if(document.getElementById('modal-validation-msg')) document.getElementById('modal-validation-msg').style.display='none';
     if (window.renderExistingNotes) window.renderExistingNotes();
     document.getElementById('modalOverlay').classList.add('active');
   }
-  window._checkModalSubmit=function(){
-    var op=(document.getElementById('operatorName')||{}).value||'';
-    var wo=(document.getElementById('woInput')||{}).value||'';
-    var part=(document.getElementById('partInput')||{}).value||'';
-    var btn=document.getElementById('modal-submit-btn');
-    var msg=document.getElementById('modal-validation-msg');
-    var ok=op.trim().length>0&&wo.trim().length>0&&part.trim().length>0;
-    if(btn){btn.disabled=!ok;btn.style.opacity=ok?'1':'0.4';btn.style.cursor=ok?'pointer':'not-allowed';}
-    if(msg) msg.style.display=ok?'none':'block';
-  };
   function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); window.currentMachine = ''; }
   function handleOverlayClick(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
   function selectType(type) {
@@ -3017,169 +2942,67 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     document.querySelector('.note-type-btn.' + type).classList.add('selected');
   }
 
-  // ── PHOTO ATTACHMENT ─────────────────────────────────────────
-  window._pendingPhotoFile = null;
-  window._handlePhotoSelect = function(input) {
-    var file = input.files[0];
-    if (!file) return;
-    window._pendingPhotoFile = file;
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var preview = document.getElementById('photoPreview');
-      var area    = document.getElementById('photoUploadArea');
-      var label   = document.getElementById('photoUploadLabel');
-      preview.src = e.target.result;
-      preview.style.display = 'block';
-      area.classList.add('has-photo');
-      label.textContent = '✅ Photo attached — tap to change';
-    };
-    reader.readAsDataURL(file);
-  };
-
-  window._uploadPhoto = async function(file, reqId) {
-    try {
-      var formData = new FormData();
-      formData.append('photo', file, file.name || 'photo.jpg');
-      formData.append('reqId', reqId);
-      var res = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/upload-photo', {
-        method: 'POST',
-        body: formData
-      });
-      if (!res.ok) {
-        var err = await res.text();
-        console.warn('Photo upload failed:', err);
-        return null;
-      }
-      var data = await res.json();
-      return data.url || null;
-    } catch(e) {
-      console.warn('Photo upload error:', e.message);
-      return null;
-    }
-  };
-
   async function submitNote() {
     if (!selectedType) { showToast('red', 'Select a request type first!', 'Choose Blue, Red, Yellow or Green.'); return; }
-    const wo       = document.getElementById('woInput').value.trim();
-    const detail   = document.getElementById('noteText').value.trim();
+    const wo = document.getElementById('woInput').value.trim();
+    const detail = document.getElementById('noteText').value.trim();
     const operator = document.getElementById('operatorName').value.trim();
-    const partNum  = document.getElementById('partInput') ? document.getElementById('partInput').value.trim() : '';
-    if (!operator) { showToast('red', 'Select your name', 'Employee name is required.'); return; }
-    if (!wo)       { showToast('red', 'Enter a WO#', 'Work order number is required.'); return; }
-    if (!partNum)  { showToast('red', 'Enter a Part Number', 'Part number is required.'); return; }
+    if (!wo) { showToast('red', 'Enter a WO# or description', 'This field is required.'); return; }
     if (!window.submitNoteToFirebase) { showToast('red', 'Still connecting...', 'Wait a moment then try again.'); return; }
-    const btn = document.getElementById('modal-submit-btn') || document.querySelector('#modalOverlay .btn-submit');
+    const btn = document.querySelector('#modalOverlay .btn-submit');
     if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
     const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
-    const assignedTo = (document.getElementById('assignedTo') && selectedType === 'blue') ? (document.getElementById('assignedTo').value || '') : '';
-    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op, assignedTo, partNumber: partNum };
-    let photoUrl = null;
-    let reqId = null;
-    try {
-      reqId = await window.submitNoteToFirebase(note);
-    } catch(err) {
+    const assignedTo = (document.getElementById('assignedTo') && selectedType === 'blue')
+      ? (document.getElementById('assignedTo').value || '') : '';
+    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op, assignedTo };
+    try { await window.submitNoteToFirebase(note); }
+    catch(err) {
       if (btn) { btn.disabled=false; btn.textContent='Submit'; }
       showToast('red', 'Save failed', (err&&err.message)?err.message.slice(0,80):'Check connection.');
       return;
     }
-    // Close modal immediately — don't make user wait for photo upload
     if (btn) { btn.disabled=false; btn.textContent='Submit'; }
     closeModal();
-    showToast(selectedType, 'Request submitted for ' + currentMachine, wo + (partNum?' | '+partNum:''));
+    showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
     if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue') {
-      var _dk='hillPushSent_'+Date.now(); localStorage.setItem(_dk,'1'); setTimeout(function(){localStorage.removeItem(_dk);},10000);
+      // Store a dedup key so multi-session installs don't double-fire
+      var _dedupKey = 'hillPushSent_' + Date.now();
+      localStorage.setItem(_dedupKey, '1');
+      setTimeout(function(){ localStorage.removeItem(_dedupKey); }, 10000);
       sendPushover(selectedType, currentCell, currentMachine, wo, detail, operator, op);
     }
-    if (selectedType==='orange') {
-      adminPushover('FLOOR SUPPORT -- '+currentMachine,'WO# '+wo+(partNum?' Part:'+partNum:'')+(op?' OP'+op:'')+(operator?' - '+operator:'')+' - '+currentCell+(detail?' - '+detail.slice(0,60):''),'pushover',0);
+    // Admin personal alert — only for orange (Floor Support) since sendPushover
+    // already handles blue/yellow via safePushover. Prevents double notifications.
+    if (selectedType === 'orange') {
+      adminPushover(
+        '🟠 FLOOR SUPPORT — ' + currentMachine,
+        'WO# ' + wo + (op?' OP'+op:'') + (operator?' · '+operator:'') + ' · ' + currentCell + (detail?' · '+detail.slice(0,60):''),
+        'pushover', 0
+      );
     }
-    // Upload photo in background after modal closes
-    if (window._pendingPhotoFile && reqId) {
-      var photoFileCopy = window._pendingPhotoFile;
-      window._pendingPhotoFile = null;
-      (async function() {
-        try {
-          var url = await window._uploadPhoto(photoFileCopy, reqId);
-          if (url) {
-            var FBKEY = 'AIzaSyD8lZqvva1twE8MBD38bFmk8zw1QQ5smpI';
-            var FBBASE = 'https://firestore.googleapis.com/v1/projects/hill-manufacturing/databases/(default)/documents';
-
-            // 1. Update hillRequests via REST
-            await fetch(FBBASE + '/hillRequests/' + reqId + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ fields: { photoUrl: { stringValue: url } } })
-            }).catch(function(){});
-
-            // 2. Find and update the matching notes doc via REST query
-            var queryRes = await fetch(FBBASE + ':runQuery?key=' + FBKEY, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                structuredQuery: {
-                  from: [{ collectionId: 'notes' }],
-                  where: {
-                    fieldFilter: {
-                      field: { fieldPath: 'hillReqId' },
-                      op: 'EQUAL',
-                      value: { stringValue: reqId }
-                    }
-                  },
-                  limit: 5
-                }
-              })
-            }).then(function(r){ return r.json(); }).catch(function(){ return []; });
-
-            // 3. Update each matching note doc
-            var noteIds = [];
-            if (Array.isArray(queryRes)) {
-              queryRes.forEach(function(item) {
-                if (item.document && item.document.name) {
-                  var parts = item.document.name.split('/');
-                  var noteId = parts[parts.length - 1];
-                  noteIds.push(noteId);
-                  // Update note doc
-                  fetch(FBBASE + '/notes/' + noteId + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fields: { photoUrl: { stringValue: url } } })
-                  }).catch(function(){});
-                  // Update in-memory machineNotes
-                  Object.values(window.machineNotes || {}).forEach(function(arr) {
-                    arr.forEach(function(n) {
-                      if (n.id === noteId || n.hillReqId === reqId) n.photoUrl = url;
-                    });
-                  });
-                }
-              });
-            }
-
-            // 4. Update in-memory actionable list and re-render
-            if (window._lastActionable) {
-              window._lastActionable.forEach(function(n) {
-                if (n.hillReqId === reqId || n.id === reqId || noteIds.indexOf(n.id) > -1) {
-                  n.photoUrl = url;
-                }
-              });
-              if (window.renderRequestsList) window.renderRequestsList(window._lastActionable, window._reqFilter || 'all');
-              if (window.updateNotifFeed)    window.updateNotifFeed(window._lastActionable);
-            }
-
-            showToast('green', '📷 Photo attached', 'Photo is now visible on the request card');
-          } else {
-            showToast('red', 'Photo failed', 'Could not upload — check connection');
-          }
-        } catch(e) {
-          console.warn('Background photo upload failed:', e.message);
-          showToast('red', 'Photo failed', e.message ? e.message.slice(0,60) : 'Upload error');
-        }
-      })();
-    } else {
-      window._pendingPhotoFile = null;
-    }
-    // Early return since we already called closeModal above
-    return;
   }
+
+  // ── PUSHOVER — universal alert function ──
+  // Used for: shop requests, DMs, group messages, video calls
+  window.sendPushoverAlert = function(title, message, sound, priority) {
+    // Use the group key if admin has configured it, otherwise fall back to default user key
+    const userKey = (typeof savedGroupKey !== 'undefined' && savedGroupKey)
+      ? savedGroupKey
+      : (localStorage.getItem('hillPushoverGroupKey') || 'uotiq5p4c7sycsw2wh1xv8mq9gpe4e');
+    const fd = new FormData();
+    fd.append('token',    'a3fz1eugorhyxgrjk5svuw9ym2nwy6');
+    fd.append('user',     userKey);
+    fd.append('title',    title);
+    fd.append('message',  message);
+    fd.append('sound',    sound    || 'pushover');
+    fd.append('priority', String(priority !== undefined ? priority : 0));
+    fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST',
+      mode:   'no-cors',
+      body:   fd
+    }).catch(function(e){ console.warn('Pushover error:', e.message); });
+  };
+
   // Shop floor request notifications
   function sendPushover(type, cell, machine, wo, detail, operator, op) {
     const titles = { red: '🔴 INSPECTION REQUEST', yellow: '🟡 MACHINIST REQUEST', blue: '🔵 PENDING WO' };
@@ -6247,40 +6070,32 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     }
 
     var css = [
-      '*{box-sizing:border-box;margin:0;padding:0;}',
-      'body{font-family:"Segoe UI",Arial,sans-serif;background:#f8fafc;color:#1e293b;font-size:12px;}',
-      '.report-header{background:linear-gradient(135deg,#0f2338,#1e3a5c);color:white;padding:24px 32px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}',
-      '.report-logo{font-size:22px;font-weight:900;letter-spacing:2px;text-transform:uppercase;}',
-      '.report-logo span{color:#f59e0b;}',
-      '.report-meta{text-align:right;font-size:11px;opacity:0.8;line-height:1.8;}',
-      '.wo-card{background:white;border-radius:12px;margin:0 24px 24px;overflow:hidden;page-break-inside:avoid;box-shadow:0 2px 8px rgba(0,0,0,0.06);}',
-      '.wo-header{background:linear-gradient(135deg,#0f2338,#1e3a5c);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start;}',
-      '.wo-title{font-size:22px;font-weight:900;letter-spacing:2px;color:#f59e0b;}',
-      '.wo-sub{font-size:11px;opacity:.7;margin-top:3px;}',
+      'body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#111;font-size:12px;}',
+      'h1{color:#1a3a6a;border-bottom:3px solid #f59e0b;padding-bottom:8px;font-size:20px;}',
+      'h2{color:#1a3a6a;font-size:15px;margin:20px 0 6px;border-bottom:1px solid #e2e8f0;padding-bottom:4px;}',
+      '.wo-card{border:1px solid #e2e8f0;border-radius:8px;margin-bottom:20px;overflow:hidden;page-break-inside:avoid;}',
+      '.wo-header{background:#1a3a6a;color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;}',
+      '.wo-title{font-size:18px;font-weight:900;letter-spacing:1px;}',
+      '.wo-sub{font-size:11px;opacity:.7;margin-top:2px;}',
       '.wo-stats{text-align:right;}',
-      '.wo-stat-big{font-size:22px;font-weight:900;}',
-      '.wo-stat-lbl{font-size:10px;opacity:.7;letter-spacing:1px;}',
-      '.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #f1f5f9;}',
-      '.summary-cell{padding:14px 16px;border-right:1px solid #f1f5f9;text-align:center;}',
+      '.wo-stat-big{font-size:20px;font-weight:900;}',
+      '.wo-stat-lbl{font-size:10px;opacity:.7;}',
+      '.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid #e2e8f0;}',
+      '.summary-cell{padding:10px 14px;border-right:1px solid #e2e8f0;text-align:center;}',
       '.summary-cell:last-child{border-right:none;}',
-      '.summary-num{font-size:24px;font-weight:900;}',
-      '.summary-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-top:3px;}',
+      '.summary-num{font-size:22px;font-weight:900;}',
+      '.summary-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#666;margin-top:2px;}',
       'table{width:100%;border-collapse:collapse;}',
       'thead tr{background:#f8fafc;}',
-      'th{padding:9px 12px;text-align:left;font-size:9px;color:#64748b;border-bottom:2px solid #e2e8f0;text-transform:uppercase;letter-spacing:1px;font-weight:700;}',
-      'td{padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:11px;vertical-align:middle;}',
+      'th{padding:8px 10px;text-align:left;font-size:11px;color:#475569;border-bottom:1px solid #e2e8f0;}',
+      'td{padding:7px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;}',
       'tr:last-child td{border-bottom:none;}',
-      '.req-table-wrap{padding:16px 20px;}',
-      '.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}',
-      '.print-btn{position:fixed;top:16px;right:16px;background:#0f2338;color:white;border:none;padding:10px 20px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;z-index:999;}',
-      '@media print{.print-btn{display:none!important;}.no-print{display:none!important;}@page{margin:0.4in;}}',
+      '.badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;}',
+      '@media print{button{display:none!important;}.no-print{display:none!important;}}',
     ].join('');
 
-    var bodyHtml = '<button class="print-btn" onclick="window.print()">PRINT / SAVE PDF</button>'
-      +'<div class="report-header">'
-      +'<div><div class="report-logo">HILL <span>MANUFACTURING</span></div><div style="font-size:12px;margin-top:4px;opacity:0.75;">Work Order Report</div></div>'
-      +'<div class="report-meta"><div>Generated: '+new Date().toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div><div>'+toPrint.length+' Work Order'+(toPrint.length!==1?'s':'')+' | All Time</div><div>Confidential</div></div>'
-      +'</div>';
+    var bodyHtml = '<h1>Hill Manufacturing — Work Order Report</h1>'
+      +'<p style="color:#666;margin:-8px 0 20px;">Generated: '+new Date().toLocaleString()+' | '+toPrint.length+' Work Order'+(toPrint.length!==1?'s':'')+' | Period: All Time</p>';
 
     toPrint.forEach(function(w) {
       var ops = Object.keys(w.ops).sort();
@@ -6389,7 +6204,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     });
 
     // Status counts
-    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0, dnxAlerts=0;
+    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
       // Count ALL blue requests (pending WO) regardless of resolved status
@@ -6397,7 +6212,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       if (r.type === 'yellow') { machinistReqs++; }
       if (r.type === 'green')  { running++; }
       if (r.type === 'red')    { inspections++; }
-      if (r.type === 'dnx')    { dnxAlerts++; }
+      if (r.type === 'dnx')    { machinistReqs++; } // DNX counts with machinist reqs
       // Completed = any request resolved
       if (r.resolved) completed++;
 
@@ -6858,146 +6673,212 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var ts=r.createdAt?new Date(r.createdAt.seconds*1000):new Date(0);
       return ts>=start && ts<printEnd;
     });
-    var counts={red:0,yellow:0,blue:0,green:0,orange:0};
+    var counts={red:0,yellow:0,blue:0,green:0};
     periodAll.forEach(function(r){if(counts[r.type]!==undefined)counts[r.type]++;});
 
-    var resolvedWithTime=periodAll.filter(function(r){return r.resolved&&r.elapsedMins!=null;});
-    var totalMins=resolvedWithTime.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
-    var avgMins=resolvedWithTime.length>0?Math.round(totalMins/resolvedWithTime.length):0;
-    var longestReq=resolvedWithTime.slice().sort(function(a,b){return (b.elapsedMins||0)-(a.elapsedMins||0);})[0]||null;
+    // ── TIME TRACKING CALCULATIONS ──────────────────────────────
+    var resolvedWithTime = periodAll.filter(function(r){ return r.resolved && r.elapsedMins != null; });
+    var totalMins = resolvedWithTime.reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
+    var avgMins   = resolvedWithTime.length > 0 ? Math.round(totalMins / resolvedWithTime.length) : 0;
+    var longestReq = resolvedWithTime.slice().sort(function(a,b){ return (b.elapsedMins||0)-(a.elapsedMins||0); })[0] || null;
+    var shortestReq = resolvedWithTime.slice().sort(function(a,b){ return (a.elapsedMins||0)-(b.elapsedMins||0); })[0] || null;
 
-    function fmtM(m){if(!m&&m!==0)return '—';return m>=60?Math.floor(m/60)+'h '+Math.round(m%60)+'m':m+'m';}
+    function fmtM(m) {
+      if (!m && m!==0) return '—';
+      return m >= 60 ? Math.floor(m/60)+'h '+Math.round(m%60)+'m' : m+'m';
+    }
 
-    var timByMachine={};
-    resolvedWithTime.forEach(function(r){var m=r.machine||'Unknown';if(!timByMachine[m])timByMachine[m]={mins:0,count:0};timByMachine[m].mins+=r.elapsedMins||0;timByMachine[m].count+=1;});
-    var timMachArr=Object.entries(timByMachine).sort(function(a,b){return b[1].mins-a[1].mins;});
+    // Time by machine
+    var timByMachine = {};
+    resolvedWithTime.forEach(function(r) {
+      var m = r.machine || 'Unknown';
+      if (!timByMachine[m]) timByMachine[m] = { mins:0, count:0 };
+      timByMachine[m].mins  += r.elapsedMins||0;
+      timByMachine[m].count += 1;
+    });
+    var timMachArr = Object.entries(timByMachine)
+      .sort(function(a,b){ return b[1].mins - a[1].mins; });
 
+    // Time by type
+    var timByType = {};
+    resolvedWithTime.forEach(function(r) {
+      var t = r.type || 'other';
+      if (!timByType[t]) timByType[t] = 0;
+      timByType[t] += r.elapsedMins||0;
+    });
+
+    var timeTrackedTotal = resolvedWithTime.length;
+    var timeNotTracked   = periodAll.filter(function(r){ return r.resolved && r.elapsedMins == null; }).length;
+
+    // Build time summary HTML block
+    var timeSummaryHtml = timeTrackedTotal === 0
+      ? '<p style="color:#888;font-style:italic;">No timed requests in this period. Use the START/FINISH buttons on requests to begin tracking time.</p>'
+      : [
+          '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;">',
+            '<div style="background:#eff6ff;border:2px solid #3b82f6;border-radius:8px;padding:14px;text-align:center;">',
+              '<div style="font-size:32px;font-weight:900;color:#1d4ed8;">'+fmtM(totalMins)+'</div>',
+              '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#1d4ed8;margin-top:4px;">TOTAL TIME</div>',
+            '</div>',
+            '<div style="background:#f0fdf4;border:2px solid #22c55e;border-radius:8px;padding:14px;text-align:center;">',
+              '<div style="font-size:32px;font-weight:900;color:#15803d;">'+fmtM(avgMins)+'</div>',
+              '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#15803d;margin-top:4px;">AVG PER REQUEST</div>',
+            '</div>',
+            '<div style="background:#fff7ed;border:2px solid #f97316;border-radius:8px;padding:14px;text-align:center;">',
+              '<div style="font-size:32px;font-weight:900;color:#c2410c;">'+timeTrackedTotal+'</div>',
+              '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#c2410c;margin-top:4px;">REQUESTS TIMED</div>',
+            '</div>',
+            '<div style="background:#faf5ff;border:2px solid #a855f7;border-radius:8px;padding:14px;text-align:center;">',
+              '<div style="font-size:32px;font-weight:900;color:#7e22ce;">'+fmtM(longestReq?longestReq.elapsedMins:0)+'</div>',
+              '<div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7e22ce;margin-top:4px;">LONGEST REQUEST</div>',
+            '</div>',
+          '</div>',
+          // Time by machine table
+          timMachArr.length > 0 ? [
+            '<table style="margin-top:8px;">',
+            '<thead><tr><th>Machine</th><th>Total Time</th><th>Requests</th><th>Avg per Request</th></tr></thead>',
+            '<tbody>',
+            timMachArr.map(function(e) {
+              var avg2 = Math.round(e[1].mins / e[1].count);
+              return '<tr><td style="padding:6px 10px;font-weight:700;">'+e[0]+'</td>'
+                +'<td style="padding:6px 10px;font-weight:700;color:#1d4ed8;">'+fmtM(e[1].mins)+'</td>'
+                +'<td style="padding:6px 10px;">'+e[1].count+'</td>'
+                +'<td style="padding:6px 10px;color:#666;">'+fmtM(avg2)+'</td></tr>';
+            }).join(''),
+            '</tbody></table>',
+          ].join('') : '',
+          timeNotTracked > 0
+            ? '<p style="margin-top:8px;font-size:11px;color:#888;">'+timeNotTracked+' resolved request(s) not timed (submitted before START/FINISH feature was added).</p>'
+            : '',
+        ].join('');
     var machines={};
     periodAll.forEach(function(r){if(r.machine)machines[r.machine]=(machines[r.machine]||0)+1;});
-    var machList=Object.entries(machines).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
-    var maxM=machList.length>0?machList[0][1]:1;
-
-    var pending2=0,running2=0,completed2=0;
-    periodAll.forEach(function(r){var s=getJobStatus(r);if(s==='completed')completed2++;else if(s==='running')running2++;else if(s==='pending')pending2++;});
-
+    var topM=Object.entries(machines).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
     var typeLabels={red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
     var typeColors={red:'#dc2626',yellow:'#d97706',orange:'#ea580c',blue:'#2563eb',green:'#16a34a'};
-
     var rows=periodAll.map(function(r){
       var ts=r.createdAt?new Date(r.createdAt.seconds*1000):null;
-      var t=ts?ts.toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'--';
-      var desc=r.detail||r.note||'';
-      if(r.floorSupportType&&r.type==='orange') desc=(desc?desc+' · ':'')+r.floorSupportType;
-      var statusColor=r.resolved?'#16a34a':r.onHold?'#d97706':r.inProgress?'#d97706':'#64748b';
-      var status=r.resolved?'Resolved'+(r.elapsedStr?' ('+r.elapsedStr+')':''):r.onHold?'On Hold':r.inProgress?'In Progress':'Open';
-      var partNum=r.partNumber||'';
-      return '<tr>'
-        +'<td style="white-space:nowrap;font-size:10px;">'+t+'</td>'
-        +'<td style="font-weight:700;color:#1e3a5c;">'+( r.machine||'--')+'</td>'
-        +'<td style="font-size:10px;color:#64748b;">'+(r.cell||'--')+'</td>'
-        +'<td style="font-weight:700;color:'+(typeColors[r.type]||'#475569')+';font-size:10px;">'+(typeLabels[r.type]||r.type)+'</td>'
-        +'<td style="font-weight:700;">'+(r.wo||'--')+'</td>'
-        +(partNum?'<td style="font-size:10px;color:#7c3aed;">'+partNum+'</td>':'<td style="color:#94a3b8;">—</td>')
-        +'<td style="font-size:10px;max-width:200px;">'+(desc||'—')+'</td>'
-        +'<td style="font-size:10px;">'+(r.operator||'--')+'</td>'
-        +'<td style="font-weight:700;font-size:10px;color:'+statusColor+';">'+status+'</td>'
-        +'</tr>';
+      var t=ts?ts.toLocaleDateString()+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'--';
+      // Build description from all available fields
+      var desc = '';
+      if (r.detail)          desc = r.detail;
+      else if (r.note)       desc = r.note;
+      if (r.floorSupportType && r.type==='orange') desc = (desc ? desc+' · ' : '') + r.floorSupportType;
+      var typeColor = typeColors[r.type] || '#666';
+      var typeLabel = typeLabels[r.type] || r.type;
+      return [
+        '<tr style="border-bottom:1px solid #eee;">',
+        '<td style="padding:6px 10px;white-space:nowrap;font-size:11px;">'+t+'</td>',
+        '<td style="padding:6px 10px;font-weight:700;">'+(r.machine||'--')+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;">'+(r.cell||'--')+'</td>',
+        '<td style="padding:6px 10px;font-weight:700;color:'+typeColor+';">'+typeLabel+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;">'+(r.wo||'--')+'</td>',
+        '<td style="padding:6px 10px;font-size:12px;max-width:280px;">'+(desc||'<span style="color:#aaa;">—</span>')+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;">'+(r.operator||'--')+'</td>',
+        '<td style="padding:6px 10px;font-size:11px;color:'+(r.resolved?'#16a34a':r.onHold?'#f59e0b':r.inProgress?'#f5c500':'#d97706')+';font-weight:700;">'+(r.resolved?'Resolved'+(r.elapsedStr?' ('+r.elapsedStr+')':''):r.onHold?'⏸ On Hold'+(r.holdReason?' — '+r.holdReason:''):r.inProgress?'In Progress':'Open')+'</td>',
+        '</tr>'
+      ].join('');
     }).join('');
-
-    // Machine bars
-    var machBars=machList.map(function(e){
-      var pct=Math.round(e[1]/maxM*100);
-      var color=e[1]>=5?'#dc2626':e[1]>=3?'#d97706':'#f59e0b';
-      return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
-        +'<div style="width:72px;font-size:12px;font-weight:700;color:#1e293b;">'+e[0]+'</div>'
-        +'<div style="flex:1;background:#e2e8f0;border-radius:4px;height:20px;">'
-        +'<div style="width:'+pct+'%;background:'+color+';height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;">'
-        +'<span style="font-size:11px;color:white;font-weight:700;">'+e[1]+'</span></div></div></div>';
+    var topRows=topM.map(function(e,i){
+      var medals=['1st','2nd','3rd','4th','5th'];
+      var pct=periodAll.length>0?Math.round(e[1]/periodAll.length*100):0;
+      var bar='<div style="background:#eee;border-radius:4px;height:8px;width:100%;margin-top:3px;"><div style="background:#f59e0b;height:8px;border-radius:4px;width:'+pct+'%;"></div></div>';
+      return [
+        '<tr>',
+        '<td style="padding:8px 10px;font-weight:700;">'+medals[i]+'</td>',
+        '<td style="padding:8px 10px;font-weight:700;">'+e[0]+'</td>',
+        '<td style="padding:8px 10px;">'+e[1]+' requests'+bar+'</td>',
+        '<td style="padding:8px 10px;color:#666;">'+pct+'% of total</td>',
+        '</tr>'
+      ].join('');
     }).join('');
+    var css = [
+      'body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#111;}',
+      'h1{color:#1a3a6a;border-bottom:3px solid #f59e0b;padding-bottom:8px;}',
+      'h2{color:#1a3a6a;margin-top:24px;font-size:15px;text-transform:uppercase;letter-spacing:1px;}',
+      '.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;}',
+      '.sc{border-radius:8px;padding:14px;text-align:center;}',
+      '.sc .n{font-size:36px;font-weight:900;line-height:1;}',
+      '.sc .l{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:4px;opacity:0.7;}',
+      'table{width:100%;border-collapse:collapse;font-size:12px;}',
+      'thead tr{background:#1a3a6a;color:#fff;}',
+      'thead th{padding:8px 10px;text-align:left;}',
+      'tbody tr:nth-child(even){background:#f9f9f9;}',
+      '@media print{button{display:none!important;}}'
+    ].join('');
+    var body = [
+      '<h1>Hill Manufacturing - Production Log</h1>',
+      '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
+      '<div class="sg">',
+        '<div class="sc" style="background:#fff0f0;border:2px solid #ef4444;"><div class="n" style="color:#ef4444;">'+counts.red+'</div><div class="l" style="color:#ef4444;">Inspections</div></div>',
+        '<div class="sc" style="background:#fffbeb;border:2px solid #f59e0b;"><div class="n" style="color:#f59e0b;">'+counts.yellow+'</div><div class="l" style="color:#f59e0b;">Machinist Req</div></div>',
+        '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+counts.blue+'</div><div class="l" style="color:#3b82f6;">Pending WO</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+counts.green+'</div><div class="l" style="color:#22c55e;">Running WO</div></div>',
+      '</div>',
+      '<h2>Top Machines by Request Volume</h2>',
+      '<table><thead><tr><th></th><th>Machine</th><th>Requests</th><th>% of Total</th></tr></thead><tbody>'+topRows+'</tbody></table>',
+      '<h2>Full Request Log ('+periodAll.length+' requests)</h2>',
+      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Description</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+      '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;">Print / Save as PDF</button>'
+    ].join('');
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+body+'</body></html>';
+    // Build chart bars for print report
+    var chartRows = '';
+    var machines2 = {};
+    periodAll.forEach(function(r){ var m=r.machine||'Unknown'; machines2[m]=(machines2[m]||0)+1; });
+    var machList = Object.entries(machines2).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+    var maxM = machList.length > 0 ? machList[0][1] : 1;
+    machList.forEach(function(e) {
+      var pct = Math.round(e[1]/maxM*100);
+      var issC = 0;
+      periodAll.forEach(function(r){ if(r.machine===e[0]&&getJobStatus(r)==='issue') issC++; });
+      chartRows += '<tr><td style="padding:6px 10px;font-weight:700;">'+(issC>=3?'⚠ ':'')+e[0]+'</td>';
+      chartRows += '<td style="padding:6px 10px;"><div style="background:#eee;border-radius:4px;height:14px;"><div style="background:'+(issC>=3?'#ef4444':'#f59e0b')+';width:'+pct+'%;height:14px;border-radius:4px;"></div></div></td>';
+      chartRows += '<td style="padding:6px 10px;">'+e[1]+'</td>';
+      chartRows += '<td style="padding:6px 10px;color:#666;">'+(issC>=3?issC+' issues':'')+'</td></tr>';
+    });
 
-    // Time by machine table rows
-    var timRows=timMachArr.map(function(e){
-      var avg2=Math.round(e[1].mins/e[1].count);
-      return '<tr><td style="font-weight:700;color:#1e3a5c;">'+e[0]+'</td>'
-        +'<td style="font-weight:700;color:#2563eb;">'+fmtM(e[1].mins)+'</td>'
-        +'<td>'+e[1].count+'</td>'
-        +'<td style="color:#64748b;">'+fmtM(avg2)+'</td></tr>';
-    }).join('');
+    // Status counts
+    var pending2=0,running2=0,completed2=0,issues2=0;
+    periodAll.forEach(function(r){
+      var s=getJobStatus(r);
+      if(s==='completed')completed2++;else if(s==='running')running2++;else if(s==='pending')pending2++;else issues2++;
+    });
 
-    var w=window.open('','_blank');
-    if(!w) return;
-    w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hill Mfg — Production Log</title>');
-    w.document.write('<style>');
-    w.document.write('*{box-sizing:border-box;margin:0;padding:0;}');
-    w.document.write('body{font-family:"Segoe UI",Arial,sans-serif;background:#f8fafc;color:#1e293b;}');
-    w.document.write('.header{background:linear-gradient(135deg,#0f2338,#1e3a5c);color:white;padding:28px 40px;display:flex;justify-content:space-between;align-items:center;}');
-    w.document.write('.logo{font-size:24px;font-weight:900;letter-spacing:2px;text-transform:uppercase;}');
-    w.document.write('.logo span{color:#f59e0b;}');
-    w.document.write('.header-right{text-align:right;font-size:12px;opacity:0.8;line-height:1.8;}');
-    w.document.write('.content{padding:28px 40px;}');
-    w.document.write('.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}');
-    w.document.write('.stat-card{background:white;border-radius:12px;padding:18px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-top:4px solid #e2e8f0;}');
-    w.document.write('.stat-card.blue{border-top-color:#2563eb;}.stat-card.green{border-top-color:#16a34a;}.stat-card.yellow{border-top-color:#d97706;}.stat-card.purple{border-top-color:#7c3aed;}');
-    w.document.write('.stat-val{font-size:34px;font-weight:900;line-height:1;}.stat-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#94a3b8;margin-top:5px;}');
-    w.document.write('.section{background:white;border-radius:12px;padding:22px;margin-bottom:22px;box-shadow:0 2px 8px rgba(0,0,0,0.06);}');
-    w.document.write('.section-title{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #f1f5f9;}');
-    w.document.write('.two-col{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:22px;}');
-    w.document.write('table{width:100%;border-collapse:collapse;}');
-    w.document.write('th{background:#f8fafc;color:#64748b;padding:9px 12px;text-align:left;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;border-bottom:2px solid #e2e8f0;}');
-    w.document.write('td{padding:9px 12px;border-bottom:1px solid #f1f5f9;font-size:11px;vertical-align:middle;}');
-    w.document.write('tr:last-child td{border-bottom:none;}');
-    w.document.write('.time-stat{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}');
-    w.document.write('.time-card{background:#f8fafc;border-radius:8px;padding:14px;text-align:center;border:1px solid #e2e8f0;}');
-    w.document.write('.time-val{font-size:24px;font-weight:900;}.time-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-top:4px;}');
-    w.document.write('.footer{padding:18px 40px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;}');
-    w.document.write('.print-btn{position:fixed;top:18px;right:18px;background:#0f2338;color:white;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;z-index:999;}');
-    w.document.write('@media print{.print-btn{display:none;}@page{margin:0.4in;}}');
-    w.document.write('</style></head><body>');
-    w.document.write('<button class="print-btn" onclick="window.print()">PRINT / SAVE PDF</button>');
-    w.document.write('<div class="header">');
-    w.document.write('<div><div class="logo">HILL <span>MANUFACTURING</span></div><div style="font-size:13px;margin-top:5px;opacity:0.75;letter-spacing:1px;">Production Log — '+label+'</div></div>');
-    w.document.write('<div class="header-right"><div>Generated: '+new Date().toLocaleString('en-US',{month:'long',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div><div>Total Records: '+periodAll.length+'</div><div>Confidential</div></div>');
-    w.document.write('</div><div class="content">');
+    var newBody = [
+      '<h1>Hill Manufacturing - Production Log</h1>',
+      '<p style="color:#666;margin:-8px 0 16px;">Period: <strong>'+label+'</strong> | Generated: '+new Date().toLocaleString()+'</p>',
+      '<div class="sg">',
+        '<div class="sc" style="background:#eff6ff;border:2px solid #3b82f6;"><div class="n" style="color:#3b82f6;">'+pending2+'</div><div class="l">Pending</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #22c55e;"><div class="n" style="color:#22c55e;">'+running2+'</div><div class="l">Running</div></div>',
+        '<div class="sc" style="background:#f0fdf4;border:2px solid #16a34a;"><div class="n" style="color:#16a34a;">'+completed2+'</div><div class="l">Completed</div></div>',
+        '<div class="sc" style="background:#f8f9fa;border:2px solid #94a3b8;"><div class="n" style="color:#475569;">'+periodAll.length+'</div><div class="l">Total Requests</div></div>',
+      '</div>',
+      '<h2>⏱ Time Tracking Summary</h2>',
+      timeSummaryHtml,
+      '<h2>Machine Activity Chart</h2>',
+      '<table><thead><tr><th>Machine</th><th>Volume</th><th>Requests</th><th>Flags</th></tr></thead><tbody>'+chartRows+'</tbody></table>',
+      '<h2>Full Request Log ('+periodAll.length+' records)</h2>',
+      '<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Description</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>',
+      '<br><button onclick="window.print()" style="background:#1a3a6a;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;margin-right:10px;">Print / Save as PDF</button>'
+    ].join('');
 
-    // Stat cards
-    w.document.write('<div class="stat-grid">');
-    w.document.write('<div class="stat-card blue"><div class="stat-val" style="color:#2563eb;">'+pending2+'</div><div class="stat-lbl">Pending</div></div>');
-    w.document.write('<div class="stat-card" style="border-top-color:#22c55e;"><div class="stat-val" style="color:#16a34a;">'+running2+'</div><div class="stat-lbl">Running</div></div>');
-    w.document.write('<div class="stat-card green"><div class="stat-val" style="color:#16a34a;">'+completed2+'</div><div class="stat-lbl">Completed</div></div>');
-    w.document.write('<div class="stat-card yellow"><div class="stat-val" style="color:#d97706;">'+periodAll.length+'</div><div class="stat-lbl">Total Requests</div></div>');
-    w.document.write('</div>');
+    var newHtml = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Hill Mfg Report</title><style>'+css+'</style></head><body>'+newBody+'</body></html>';
 
-    // Two col: machine activity + time tracking
-    w.document.write('<div class="two-col">');
-    w.document.write('<div class="section"><div class="section-title">Machine Activity</div>'+machBars+'</div>');
-    w.document.write('<div class="section"><div class="section-title">Time Tracking Summary</div>');
-    if(resolvedWithTime.length>0){
-      w.document.write('<div class="time-stat">');
-      w.document.write('<div class="time-card"><div class="time-val" style="color:#2563eb;">'+fmtM(totalMins)+'</div><div class="time-lbl">Total Time</div></div>');
-      w.document.write('<div class="time-card"><div class="time-val" style="color:#16a34a;">'+fmtM(avgMins)+'</div><div class="time-lbl">Avg / Request</div></div>');
-      w.document.write('<div class="time-card"><div class="time-val" style="color:#d97706;">'+resolvedWithTime.length+'</div><div class="time-lbl">Timed</div></div>');
-      w.document.write('<div class="time-card"><div class="time-val" style="color:#7c3aed;">'+fmtM(longestReq?longestReq.elapsedMins:0)+'</div><div class="time-lbl">Longest</div></div>');
-      w.document.write('</div>');
-      if(timRows) w.document.write('<table><thead><tr><th>Machine</th><th>Total Time</th><th>Requests</th><th>Avg</th></tr></thead><tbody>'+timRows+'</tbody></table>');
+    // iOS-safe: open new window and write directly
+    var w = window.open('', '_blank');
+    if (w) {
+      w.document.open();
+      w.document.write(newHtml);
+      w.document.close();
     } else {
-      w.document.write('<div style="color:#94a3b8;font-size:13px;padding:20px 0;text-align:center;">No timed requests in this period.</div>');
+      // Fallback: blob download
+      var blob = new Blob([newHtml], {type:'text/html'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'hill-report-'+label.replace(/ /g,'-')+'.html';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
     }
-    w.document.write('</div></div>');
-
-    // Request type breakdown
-    w.document.write('<div class="section"><div class="section-title">Request Type Breakdown</div>');
-    w.document.write('<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">');
-    var types=[['red','Inspection','#dc2626'],['yellow','Machinist Req','#d97706'],['blue','Pending WO','#2563eb'],['green','Running WO','#16a34a'],['orange','Floor Support','#ea580c']];
-    types.forEach(function(t){w.document.write('<div style="background:#f8fafc;border-radius:8px;padding:12px;text-align:center;border-top:3px solid '+t[2]+';"><div style="font-size:24px;font-weight:900;color:'+t[2]+';">'+(counts[t[0]]||0)+'</div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-top:4px;">'+t[1]+'</div></div>');});
-    w.document.write('</div></div>');
-
-    // Full log
-    w.document.write('<div class="section"><div class="section-title">Full Request Log ('+periodAll.length+' Records)</div>');
-    w.document.write('<table><thead><tr><th>Date/Time</th><th>Machine</th><th>Cell</th><th>Type</th><th>WO#</th><th>Part #</th><th>Description</th><th>Operator</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>');
-    w.document.write('</div></div>');
-    w.document.write('<div class="footer"><span>Hill Manufacturing &amp; Fabrication</span><span>Production Log — '+label+'</span><span>Confidential — Internal Use Only</span></div>');
-    w.document.write('</body></html>');
-    w.document.close();
   }
 </script>
 
@@ -8554,8 +8435,8 @@ window.plannerSetView = function(view) {
     var mods = window._fbModules, db2 = window._db;
     // Load from both hillInspections (permanent archive) and hillRequests (red type)
     Promise.all([
-      mods.getDocs(mods.query(mods.collection(db2,'hillInspections'))),
-      mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('type','==','red')))
+      mods.getDocs(mods.query(mods.collection(db2,'hillInspections'), mods.orderBy('createdAt','desc'))),
+      mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('type','==','red'), mods.orderBy('createdAt','desc')))
     ]).then(function(results){
       var seen = new Set();
       inspRecords = [];
@@ -9076,34 +8957,6 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px
 #page-dashboard .dash-summary-card:nth-child(4){animation-delay:.18s;}
 #page-dashboard .dash-summary-card:nth-child(5){animation-delay:.24s;}
 @media(max-width:640px){.legend{display:none!important;}.logo p{display:none!important;}}
-  /* DNX RESOLVE MODAL */
-  #dnx-resolve-modal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; }
-  #dnx-resolve-modal.open { display:flex; }
-  .dnx-resolve-box { background:linear-gradient(135deg,#0d1f35,#1a3555); border:2px solid #7dd3fc; border-radius:16px; padding:22px; width:94%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 0 40px rgba(125,211,252,0.2); }
-  .dnx-resolve-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#7dd3fc; margin-bottom:2px; }
-  .dnx-resolve-machine { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#f5d050; letter-spacing:2px; margin-bottom:2px; }
-  .dnx-resolve-duration { font-size:12px; color:#94a3b8; margin-bottom:12px; }
-  .dnx-resolve-label { font-size:11px; font-weight:700; letter-spacing:1.5px; color:#7dd3fc; text-transform:uppercase; margin-bottom:6px; margin-top:12px; display:block; }
-  .dnx-resolve-textarea { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:10px; resize:none; min-height:60px; outline:none; box-sizing:border-box; }
-  .dnx-resolve-textarea:focus { border-color:#7dd3fc; }
-  .dnx-resolve-input { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:9px 12px; outline:none; box-sizing:border-box; }
-  .dnx-resolve-input:focus { border-color:#7dd3fc; }
-  .dnx-insight-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:8px; }
-  .dnx-insight-btn { padding:8px 10px; background:#0a1628; border:1px solid #1e3a5f; border-radius:8px; color:#94a3b8; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; cursor:pointer; text-align:left; transition:all 0.15s; }
-  .dnx-insight-btn:hover { border-color:#475569; color:#f0f4f8; }
-  .dnx-insight-btn.selected { background:rgba(125,211,252,0.12); border-color:#7dd3fc; color:#7dd3fc; }
-  .dnx-custom-row { display:flex; gap:8px; margin-top:6px; }
-  .dnx-custom-input { flex:1; background:#0a1628; border:1px solid #1e3a5f; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:13px; padding:8px 10px; outline:none; }
-  .dnx-custom-input:focus { border-color:#7dd3fc; }
-  .dnx-custom-add { padding:8px 14px; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; border-radius:8px; color:#f59e0b; font-family:'Bebas Neue',sans-serif; font-size:14px; cursor:pointer; white-space:nowrap; }
-  .dnx-two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .dnx-resolve-charcount { font-size:10px; color:#475569; text-align:right; margin-top:4px; margin-bottom:4px; }
-  .dnx-resolve-charcount.ok { color:#4ade80; }
-  .dnx-resolve-btns { display:flex; gap:10px; margin-top:14px; }
-  .dnx-resolve-cancel { flex:1; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #2a5a8c; border-radius:8px; color:#64748b; font-family:'Bebas Neue',sans-serif; font-size:15px; cursor:pointer; }
-  .dnx-resolve-submit { flex:2; padding:10px; background:rgba(125,211,252,0.15); border:1px solid #7dd3fc; border-radius:8px; color:#7dd3fc; font-family:'Bebas Neue',sans-serif; font-size:15px; cursor:pointer; }
-  .dnx-resolve-submit:disabled { opacity:0.35; cursor:not-allowed; }
-
 </style>
 <!-- ═══ JOB INFO MODAL ═══ -->
 <div id="jobInfoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:20px;">
@@ -9763,7 +9616,7 @@ window.filterJobs = function(filter) {
 window.loadJobTracker = function() {
   if (!window.fbDb || !window.fbFirestore) { setTimeout(window.loadJobTracker, 800); return; }
   var mods = window.fbFirestore;
-  mods.onSnapshot(mods.query(mods.collection(window.fbDb,'hillJobs')), function(snap) {
+  mods.onSnapshot(mods.query(mods.collection(window.fbDb,'hillJobs'),mods.orderBy('createdAt','desc')), function(snap) {
     _allJobs = [];
     snap.forEach(function(d){ var j=d.data(); j.id=d.id; _allJobs.push(j); });
     loadLinkedRequests();
@@ -12178,48 +12031,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(window.showToast)window.showToast(_muted?'yellow':'green',_muted?'🔇 You are muted':'🔊 Unmuted','');
   };
 
-  // ── NEXT SONG ──────────────────────────────────────────────
-  window._sparkyNextSong=function(){
-    if(!SONGS||!SONGS.length) return;
-    if(_audio){ try{_audio.pause();}catch(e){} _audio.src=''; }
-    _idx = (_idx + 1) % SONGS.length;
-    var song = SONGS[_idx];
-    if(song && song.url){
-      playSong(song, function(){
-        _idx = (_idx + 1) % SONGS.length;
-        if(SONGS[_idx] && SONGS[_idx].url) playSong(SONGS[_idx], function(){});
-      });
-      if(window.showToast) window.showToast('green', '🎵 ' + song.title, 'Now playing');
-    }
-  };
-
-  // ── MUSIC TOGGLE (pause/resume) ────────────────────────────
-  var _musicPaused = false;
-  window._sparkyMusicToggle=function(){
-    if(!_audio) return;
-    var btn = document.getElementById('sparky-music-btn');
-    if(_audio.paused){
-      _audio.play().catch(function(){});
-      _musicPaused = false;
-      if(btn) btn.style.opacity='1';
-      if(window.showToast) window.showToast('green','▶ Music resumed','');
-    } else {
-      _audio.pause();
-      _musicPaused = true;
-      if(btn) btn.style.opacity='0.4';
-      if(window.showToast) window.showToast('yellow','⏸ Music paused','');
-    }
-  };
-
   window._djAnnounceNew=function(n){
     if(!n)return;
     var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'someone';
     var wo=n.wo?'work order '+n.wo:'',detail=n.detail||'';
-    if(n.type==='dnx'){
-      var dur=n.duration||'30 minutes';
-      var dnxMsgs=['Miguel. '+machine+' has been down for '+dur+'. You need to find out why.','Hey Miguel, '+machine+' is inactive. '+dur+' and nobody has addressed it.','Alert. '+machine+' has been sitting idle for '+dur+'. Miguel, go find out what is going on.'];
-      say(pick(dnxMsgs),function(){}); return;
-    }
     var lines={blue:['Setup request. '+name+' on '+machine+(wo?', '+wo:'')+' is ready. Tooling, you are up.'],yellow:[name+' at '+machine+' needs '+(detail||'something')+'. Someone go help.'],orange:['Floor support at '+machine+'. '+name+' is waiting.'],red:['Quality — '+name+' on '+machine+' has parts ready. Do not let that sit.']};
     say(pick(lines[n.type]||lines.yellow),function(){});
   };
@@ -12318,14 +12133,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   function _sparkySayInactive(machine, duration){
     if(!window.say) return;
-    var m = machine || 'a machine';
-    var d = duration || '30 minutes';
     var msgs = [
-      'Miguel. ' + m + ' has been down for ' + d + '. You need to find out why.',
-      'Hey Miguel, ' + m + ' is showing inactive. ' + d + ' and nobody has addressed it. Go check it out.',
-      'Heads up Miguel. ' + m + ' has not been cutting for ' + d + '. That needs your attention.',
-      'Miguel, Datanomix is flagging ' + m + '. Down for ' + d + '. Somebody needs to get eyes on that machine.',
-      'Alert. ' + m + ' has been sitting idle for ' + d + '. Miguel, go find out what is going on.',
+      'Attention. ' + machine + ' has been inactive for ' + duration + '. Somebody needs to check on that machine.',
+      'Hey, heads up. ' + machine + ' just hit the 30 minute mark on downtime. ' + duration + ' and counting. Lets get eyes on it.',
+      machine + ' is showing inactive. Duration: ' + duration + '. Worth looking into.',
     ];
     var msg = msgs[Math.floor(Math.random()*msgs.length)];
     window.say(msg, function(){});
@@ -12333,178 +12144,59 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   var _dnxPendingResolveId = null;
 
-  window._dnxToggle=function(uid){var e=document.getElementById(uid);if(e)e.style.display=e.style.display==='none'?'block':'none';};
-  var _dnxCurrentRange='today';
-  window._dnxSetRange=function(range){
-    _dnxCurrentRange=range;
-    ['today','week','all'].forEach(function(r){
-      var b=document.getElementById('dnx-btn-'+r); if(!b) return;
-      if(r===range){b.style.background='rgba(248,113,113,0.15)';b.style.borderColor='#f87171';b.style.color='#f87171';}
-      else{b.style.background='transparent';b.style.borderColor='#1e3a5f';b.style.color='#64748b';}
-    });
-    if(window._dnxAlertHistory) _renderDnxTab(window._dnxAlertHistory);
-  };
-  function _dnxTs(a){
-    if(a.receivedAt&&a.receivedAt.seconds) return a.receivedAt.seconds*1000;
-    if(a.receivedAt) return new Date(a.receivedAt).getTime();
-    return 0;
-  }
-  function _dnxFilterRange(alerts){
-    var now=new Date(), cutoff=0, ceiling=null;
-    if(_dnxCurrentRange==='today'){
-      // Shift: 6:00 AM — 5:00 PM
-      var shiftStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),6,0,0,0);
-      var shiftEnd  =new Date(now.getFullYear(),now.getMonth(),now.getDate(),17,0,0,0);
-      // If before 6am, show yesterday's shift
-      if(now.getHours()<6){
-        shiftStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1,6,0,0,0);
-        shiftEnd  =new Date(now.getFullYear(),now.getMonth(),now.getDate()-1,17,0,0,0);
-      }
-      cutoff  = shiftStart.getTime();
-      ceiling = shiftEnd.getTime() > now.getTime() ? now.getTime() : shiftEnd.getTime();
-    } else if(_dnxCurrentRange==='week'){
-      var weekStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-now.getDay(),6,0,0,0);
-      cutoff=weekStart.getTime();
-    }
-    return alerts.filter(function(a){
-      var ts=_dnxTs(a);
-      return ts>=cutoff && (ceiling===null||ts<=ceiling);
-    });
-  }
   function _renderDnxTab(alerts){
-    var active=document.getElementById('dnx-active-alerts');
-    var hist=document.getElementById('dnx-alerts-list');
-    var stats=document.getElementById('dnx-summary-stats');
-    var byMach=document.getElementById('dnx-by-machine');
-    if(!alerts||!alerts.length){
-      if(active) active.innerHTML='<div style="font-size:13px;color:#4ade80;padding:12px 0;">No active alerts.</div>';
-      if(hist)   hist.innerHTML='<div style="font-size:13px;color:#475569;padding:12px 0;">No alert history yet.</div>';
-      if(stats)  stats.innerHTML='';
-      if(byMach) byMach.innerHTML='';
+    var active = document.getElementById('dnx-active-alerts');
+    var hist = document.getElementById('dnx-alerts-list');
+    if(!alerts || !alerts.length){
+      if(active) active.innerHTML = '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ No active alerts right now.</div>';
+      if(hist) hist.innerHTML = '<div style="font-size:13px;color:#475569;padding:12px 0;">No alert history yet.</div>';
       return;
     }
-    var unresolved=alerts.filter(function(a){return !a.resolved;});
-    var filtered=_dnxFilterRange(alerts);
-    // ACTIVE
+
+    var unresolved = alerts.filter(function(a){ return !a.resolved; });
+    var resolved   = alerts.filter(function(a){ return a.resolved; });
+
+    // Active unresolved alerts
     if(active){
       if(!unresolved.length){
-        active.innerHTML='<div style="font-size:13px;color:#4ade80;padding:10px 0;">✅ All alerts resolved.</div>';
+        active.innerHTML = '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ All alerts resolved.</div>';
       } else {
-        active.innerHTML='<div style="font-size:12px;color:#f87171;font-weight:700;letter-spacing:1px;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
-          +unresolved.map(function(a){
-            var ts=_dnxTs(a)?new Date(_dnxTs(a)).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-            var safeM=(a.machine||'').replace(/"/g,'');
-            var safeD=(a.duration||'').replace(/"/g,'');
+        active.innerHTML = '<div style="font-size:12px;color:#f87171;font-weight:700;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
+          + unresolved.map(function(a){
+            var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
             return '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">'
-              +'<span style="font-size:22px;">🔴</span>'
+              +'<span style="font-size:22px;animation:dnxPulse 1.5s infinite;">🔴</span>'
               +'<div style="flex:1;">'
-              +'<div style="font-size:16px;font-weight:700;color:#f87171;font-family:Bebas Neue,sans-serif;letter-spacing:1px;">'+safeM+'</div>'
-              +'<div style="font-size:11px;color:#94a3b8;">'+(a.status||'INACTIVE')+' — '+safeD+'</div>'
-              +'<div style="font-size:10px;color:#475569;">'+ts+'</div>'
+              +'<div style="font-size:14px;font-weight:700;color:#f87171;">'+a.machine+'</div>'
+              +'<div style="font-size:11px;color:#64748b;">'+a.status+' — '+a.duration+'</div>'
+              +'<div style="font-size:10px;color:#334155;">'+ts+'</div>'
               +'</div>'
-              +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">'
-              +'<button data-aid="'+a.id+'" data-amachine="'+safeM+'" data-aduration="'+safeD+'" onclick="window.openDnxResolve(this.dataset.aid,null,this.dataset.amachine,this.dataset.aduration)" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:Bebas Neue,sans-serif;">RESOLVE</button>'
-              +'<button data-delid="'+a.id+'" onclick="window._deleteDnxAlert(this.dataset.delid)" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:5px 12px;font-size:10px;cursor:pointer;">DELETE</button>'
-              +'</div></div>';
+              +'<button onclick="window._openResolveDnx(this)" data-id="'+a.id+'" data-machine="'+a.machine+'" '
+              +'style="background:linear-gradient(135deg,#059669,#10b981);border:none;color:#fff;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;flex-shrink:0;">RESOLVE</button>'
+              +'</div>';
           }).join('');
       }
     }
-    // STATS
-    if(stats){
-      var mc={},rc={};
-      filtered.forEach(function(a){
-        if(a.machine) mc[a.machine]=(mc[a.machine]||0)+1;
-        var r=(a.comment||a.resolveReason||'').split('|')[0].trim();
-        if(r&&r.length>2) rc[r]=(rc[r]||0)+1;
-      });
-      var topM=Object.entries(mc).sort(function(a,b){return b[1]-a[1];})[0];
-      var topR=Object.entries(rc).sort(function(a,b){return b[1]-a[1];})[0];
-      var ss='background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;padding:12px;text-align:center;';
-      stats.innerHTML=''
-        +'<div style="'+ss+'"><div style="font-family:Bebas Neue,sans-serif;font-size:28px;color:#f87171;">'+filtered.length+'</div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Alerts</div></div>'
-        +'<div style="'+ss+'"><div style="font-family:Bebas Neue,sans-serif;font-size:'+(topM&&topM[0].length>5?'16':'24')+'px;color:#f59e0b;">'+(topM?topM[0]:'—')+'</div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Top Machine</div></div>'
-        +'<div style="'+ss+'"><div style="font-family:Bebas Neue,sans-serif;font-size:12px;color:#a78bfa;">'+(topR?topR[0]:'—')+'</div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Top Reason</div></div>';
-    }
-    // BY MACHINE
-    if(byMach){
-      var groups={};
-      filtered.forEach(function(a){
-        if(!a.machine) return;
-        if(!groups[a.machine]) groups[a.machine]={alerts:[],resolved:0,unresolved:0,reasons:[]};
-        groups[a.machine].alerts.push(a);
-        if(a.resolved){groups[a.machine].resolved++;var r=(a.comment||a.resolveReason||'').split('|')[0].trim();if(r)groups[a.machine].reasons.push(r);}
-        else groups[a.machine].unresolved++;
-      });
-      var sorted=Object.entries(groups).sort(function(a,b){return b[1].alerts.length-a[1].alerts.length;});
-      if(!sorted.length){byMach.innerHTML='<div style="font-size:13px;color:#475569;padding:8px 0;">No alerts in this range.</div>';}
-      else {
-        byMach.innerHTML=sorted.map(function(entry,gi){
-          var m=entry[0],g=entry[1],total=g.alerts.length;
-          var bc=g.unresolved>0?'#ef4444':total>=3?'#f59e0b':'#1e3a5f';
-          var dc=g.unresolved>0?'#ef4444':total>=3?'#f59e0b':'#22c55e';
-          var uid='dnxg'+gi;
-          var topR2=g.reasons.slice(0,3);
-          return '<div style="background:#0d1f35;border:1px solid '+bc+';border-radius:10px;margin-bottom:8px;overflow:hidden;">'
-            +'<div data-uid="'+uid+'" onclick="window._dnxToggle(this.dataset.uid);" style="display:flex;align-items:center;gap:10px;padding:12px;cursor:pointer;">'
-            +'<div style="width:10px;height:10px;border-radius:50%;background:'+dc+';flex-shrink:0;"></div>'
-            +'<div style="flex:1;">'
-            +'<span style="font-family:Bebas Neue,sans-serif;font-size:17px;color:#f0f4f8;letter-spacing:1px;">'+m+'</span>'
-            +(g.unresolved?'<span style="background:#ef4444;color:white;font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;margin-left:8px;">'+g.unresolved+' ACTIVE</span>':'')
-            +'</div>'
-            +'<div style="font-family:Bebas Neue,sans-serif;font-size:20px;color:'+(total>=3?'#ef4444':total>=2?'#f59e0b':'#94a3b8')+';">'+total+'x</div>'
-            +'<div style="color:#475569;margin-left:6px;">▼</div>'
-            +'</div>'
-            +(topR2.length?'<div style="padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:6px;">'+topR2.map(function(r){return '<span style="background:#0a1628;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px;font-size:11px;color:#94a3b8;">'+r+'</span>';}).join('')+'</div>':'')
-            +'<div id="'+uid+'" style="display:none;border-top:1px solid #1e3a5f;padding:10px 12px;">'
-            +g.alerts.map(function(a){
-              var ts2=_dnxTs(a)?new Date(_dnxTs(a)).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-              var r2=(a.comment||a.resolveReason||'');
-              var safeM2=(a.machine||'').replace(/"/g,'');
-              var safeD2=(a.duration||'').replace(/"/g,'');
-              return '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #0a1628;">'
-                +'<span>'+(a.resolved?'✅':'🔴')+'</span>'
-                +'<div style="flex:1;">'
-                +'<div style="font-size:11px;color:#64748b;">'+ts2+' — '+safeD2+'</div>'
-                +(r2?'<div style="font-size:12px;color:#94a3b8;font-style:italic;">'+r2.substring(0,80)+'</div>':'')
-                +'</div>'
-                +(!a.resolved?'<button data-aid="'+a.id+'" data-amachine="'+safeM2+'" data-aduration="'+safeD2+'" onclick="window.openDnxResolve(this.dataset.aid,null,this.dataset.amachine,this.dataset.aduration)" style="background:rgba(125,211,252,0.1);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;white-space:nowrap;">RESOLVE</button>':'')
-                +'</div>';
-            }).join('')
-            +'</div></div>';
-        }).join('');
-      }
-    }
-    // HISTORY
+
+    // History
     if(hist){
-      hist.innerHTML=filtered.slice(0,150).map(function(a){
-        var ts3=_dnxTs(a)?new Date(_dnxTs(a)).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-        var reason3=(a.comment||a.resolveReason||'');
-        var emp3=(a.resolvedBy||a.employee||'');
-        return '<div style="padding:8px 4px;border-bottom:1px solid #0d1f35;display:flex;align-items:flex-start;gap:8px;">'
+      hist.innerHTML = alerts.slice(0,100).map(function(a){
+        var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+        var resolvedStr = a.resolved ? '<div style="font-size:10px;color:#4ade80;">✅ Resolved: '+( a.comment||'no comment')+'</div>' : '<span style="font-size:10px;color:#f87171;">⚠ Unresolved</span>';
+        return '<div style="padding:8px 0;border-bottom:1px solid #0d1f35;">'
+          +'<div style="display:flex;align-items:center;gap:8px;">'
           +'<span>'+(a.resolved?'✅':'🔴')+'</span>'
           +'<div style="flex:1;">'
-          +'<span style="font-size:13px;font-weight:700;color:'+(a.resolved?'#94a3b8':'#f87171')+';">'+a.machine+'</span>'
+          +'<span style="font-size:12px;font-weight:700;color:'+(a.resolved?'#94a3b8':'#f87171')+';">'+a.machine+'</span>'
           +' <span style="font-size:10px;color:#475569;">'+a.duration+'</span>'
-          +(emp3?'<span style="font-size:10px;color:#3b82f6;margin-left:6px;">'+emp3+'</span>':'')
-          +'<div style="font-size:10px;color:#334155;">'+ts3+'</div>'
-          +(reason3?'<div style="font-size:11px;color:#4ade80;margin-top:2px;">✅ '+reason3.substring(0,100)+'</div>':'<div style="font-size:10px;color:#f87171;">⚠ Unresolved</div>')
           +'</div>'
-          +'<button data-delid="'+a.id+'" onclick="window._deleteDnxAlert(this.dataset.delid)" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);color:#f87171;border-radius:6px;padding:3px 8px;font-size:9px;cursor:pointer;flex-shrink:0;">X</button>'
+          +'<div style="font-size:10px;color:#334155;">'+ts+'</div>'
+          +'</div>'
+          +resolvedStr
           +'</div>';
       }).join('');
     }
   }
-  window._deleteDnxAlert = async function(id){
-    if(!id||!confirm('Delete this alert permanently?')) return;
-    var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return;
-    try {
-      await mods.deleteDoc(mods.doc(db2,'hillDnxAlerts',id));
-      if(window.showToast) window.showToast('blue','🗑 Deleted','Alert removed');
-    } catch(e) {
-      if(window.showToast) window.showToast('red','Error',e.message);
-    }
-  };
 
   window._openResolveDnx = function(btn){
     _dnxPendingResolveId = btn.getAttribute('data-id');
@@ -12517,48 +12209,29 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._confirmResolveDnx = async function(){
     var comment = (document.getElementById('dnx-resolve-comment').value || '').trim();
-    if(comment.length < 20){ alert('Please write at least 20 characters explaining the issue.'); return; }
+    if(!comment){ alert('Please describe the issue before resolving.'); return; }
     if(!_dnxPendingResolveId) return;
+
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
-    var machine = document.getElementById('dnx-resolve-machine').textContent || '';
+
     try {
-      // Mark hillDnxAlerts as resolved
       await mods.updateDoc(mods.doc(db2,'hillDnxAlerts',_dnxPendingResolveId),{
-        resolved:true, comment:comment, resolvedAt:mods.serverTimestamp(), resolvedBy:window.currentUser||'admin'
+        resolved: true,
+        comment: comment,
+        resolvedAt: mods.serverTimestamp(),
+        resolvedBy: window.currentUser || 'admin'
       });
-      // Also clean up any live notes for this machine
-      if(machine){
-        var notesSnap = await mods.getDocs(mods.query(
-          mods.collection(db2,'notes'),
-          mods.where('machine','==',machine),
-          mods.where('type','==','dnx')
-        )).catch(function(){return null;});
-        if(notesSnap&&!notesSnap.empty){
-          notesSnap.forEach(function(d){ mods.deleteDoc(mods.doc(db2,'notes',d.id)).catch(function(){}); });
-        }
-        // Also update hillRequests
-        var hrSnap = await mods.getDocs(mods.query(
-          mods.collection(db2,'hillRequests'),
-          mods.where('machine','==',machine),
-          mods.where('type','==','dnx'),
-          mods.where('resolved','==',false)
-        )).catch(function(){return null;});
-        if(hrSnap&&!hrSnap.empty){
-          hrSnap.forEach(function(d){
-            mods.updateDoc(mods.doc(db2,'hillRequests',d.id),{
-              resolved:true, resolveReason:comment, resolvedAt:mods.serverTimestamp(), resolvedBy:window.currentUser||'admin'
-            }).catch(function(){});
-          });
-        }
-      }
+
+      // Remove machine highlight
       document.querySelectorAll('.dnx-inactive').forEach(function(card){
         card.classList.remove('dnx-inactive');
-        var badge=card.querySelector('.dnx-badge'); if(badge)badge.remove();
+        var badge = card.querySelector('.dnx-badge');
+        if(badge) badge.remove();
       });
-      var modal = document.getElementById('dnx-resolve-modal-tab') || document.getElementById('dnx-resolve-modal-tab');
-      if(modal) modal.style.display='none';
-      if(window.showToast) window.showToast('blue','🔷 Alert Resolved', machine + ' — ' + comment.substring(0,40));
+
+      document.getElementById('dnx-resolve-modal').style.display = 'none';
+      if(window.showToast) window.showToast('green','✅ Alert Resolved', comment);
     } catch(e){
       alert('Error resolving: ' + e.message);
     }
@@ -12871,211 +12544,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
 
 
-  // ── QUICK SEARCH ─────────────────────────────────────────
-  window._aiQuickSearch = async function(type) {
-    // For type filters, use _buildAllReceipt directly with type filter
-    var typeFilters = ['pending','machinist','inspection','running','datanomix'];
-    var directFilters = ['all','open','completed','today','week'];
-    
-    if(typeFilters.indexOf(type) >= 0 || directFilters.indexOf(type) >= 0) {
-      var msgs = document.getElementById('ai-messages');
-      // Add user message bubble
-      var userDiv = document.createElement('div');
-      userDiv.className = 'ai-msg ai-msg-user';
-      var labelMap = {
-        all:'All Requests', pending:'Pending WO', machinist:'Machinist Requests',
-        inspection:'Inspection Requests', running:'Running WO', datanomix:'Datanomix Alerts',
-        open:'Open Requests', completed:'Completed Requests', today:"Today", week:"This Week"
-      };
-      userDiv.innerHTML = '<div class="ai-bubble ai-bubble-user">'+labelMap[type]+'</div>';
-      msgs.appendChild(userDiv);
-      msgs.scrollTop = msgs.scrollHeight;
-
-      // Show typing indicator
-      var typingDiv = document.createElement('div');
-      typingDiv.className = 'ai-msg ai-msg-assistant';
-      typingDiv.innerHTML = '<div class="ai-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
-      msgs.appendChild(typingDiv);
-      msgs.scrollTop = msgs.scrollHeight;
-
-      var data = await _buildAllReceipt(type);
-      typingDiv.remove();
-      addAllReceipt(data);
-      return;
-    }
-    
-    // Fallback for anything else
-    var input = document.getElementById('ai-input');
-    input.value = type;
-    window._sendAIChat();
-  };
-
-  // ── BUILD ALL REQUESTS RECEIPT ────────────────────────────
-  async function _buildAllReceipt(filter) {
-    var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return {requests:[]};
-    try {
-      // No orderBy to avoid index requirement - sort in JS
-      var snap = await mods.getDocs(mods.collection(db2,'hillRequests'));
-      var now = new Date();
-      var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      var weekStart  = new Date(todayStart); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-      var reqs = [];
-      snap.forEach(function(d){
-        var r = Object.assign({id:d.id}, d.data());
-        var ts = r.createdAt && r.createdAt.seconds ? new Date(r.createdAt.seconds*1000) : null;
-
-        // Apply filter
-        if (filter === 'open'      && r.resolved) return;
-        if (filter === 'completed' && !r.resolved) return;
-        if (filter === 'today'     && (!ts || ts < todayStart)) return;
-        if (filter === 'week'      && (!ts || ts < weekStart)) return;
-        if (filter === 'pending'   && r.type !== 'blue') return;
-        if (filter === 'machinist' && r.type !== 'yellow') return;
-        if (filter === 'inspection'&& r.type !== 'red') return;
-        if (filter === 'running'   && r.type !== 'green') return;
-        if (filter === 'datanomix' && r.type !== 'dnx') return;
-
-        reqs.push(r);
-      });
-      // Sort by createdAt descending in JS
-      reqs.sort(function(a,b){
-        var ta = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : 0;
-        var tb = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : 0;
-        return tb - ta;
-      });
-      return {requests: reqs, filter: filter};
-    } catch(e) {
-      return {requests:[], error: e.message};
-    }
-  }
-
-  // ── PRINT ALL RECEIPT ─────────────────────────────────────
-  window._printAllReceipt = function(btn) {
-    var container = btn.closest('[data-receipt]');
-    if(!container) return;
-    var data = JSON.parse(container.getAttribute('data-receipt'));
-    var reqs = data.reqs || [];
-    var typeLabel = {red:'Inspection',yellow:'Machinist Req',blue:'Pending WO',green:'Running WO',orange:'Floor Support',dnx:'Datanomix'};
-    var typeColor = {red:'#c0392b',yellow:'#d68910',blue:'#1a5276',green:'#1d8348',orange:'#d35400',dnx:'#1a6899'};
-
-    var rows = reqs.map(function(r){
-      var ts = r.createdAt && r.createdAt.seconds ? new Date(r.createdAt.seconds*1000).toLocaleString() : '';
-      var color = typeColor[r.type] || '#333';
-      var label = typeLabel[r.type] || r.type || '';
-      var status = r.resolved ? '✅ Done' : r.onHold ? '⏸ Hold' : r.inProgress ? '⏱ Running' : '🔵 Open';
-      return '<tr>'
-        +'<td>'+ts+'</td>'
-        +'<td style="color:'+color+';font-weight:bold;">'+label+'</td>'
-        +'<td>'+(r.machine||'')+'</td>'
-        +'<td>'+(r.wo||'')+(r.op?' OP'+r.op:'')+'</td>'
-        +'<td>'+(r.operator||'')+'</td>'
-        +'<td>'+(r.assignedTo||'')+'</td>'
-        +'<td>'+(r.detail||'')+'</td>'
-        +'<td>'+(r.elapsedStr||'—')+'</td>'
-        +'<td>'+status+'</td>'
-        +'</tr>';
-    }).join('');
-
-    var title = data.title || 'All Requests';
-    var completed = reqs.filter(function(r){return r.resolved;}).length;
-    var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
-    var win = window.open('','_blank');
-    win.document.write('<!DOCTYPE html><html><head><title>'+title+' — Hill Manufacturing</title>'
-      +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#222;}h1{font-size:20px;margin-bottom:4px;}h2{font-size:13px;color:#666;font-weight:normal;margin-bottom:16px;}table{width:100%;border-collapse:collapse;font-size:11px;}th{background:#1a2744;color:#fff;padding:7px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;}tr:nth-child(even){background:#f9fafb;}.stats{display:flex;gap:20px;margin-bottom:16px;padding:12px;background:#f3f4f6;border-radius:6px;}.stat{text-align:center;}.stat-num{font-size:20px;font-weight:bold;color:#1a2744;}.stat-lbl{font-size:11px;color:#666;}@media print{.no-print{display:none!important;}}</style></head><body>'
-      +'<div class="no-print" style="margin-bottom:16px;"><button onclick="window.print()" style="padding:8px 20px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button></div>'
-      +'<h1>Hill Manufacturing — '+title+'</h1>'
-      +'<h2>Generated: '+new Date().toLocaleString()+' | Total: '+reqs.length+' requests</h2>'
-      +'<div class="stats">'
-      +'<div class="stat"><div class="stat-num">'+reqs.length+'</div><div class="stat-lbl">Total</div></div>'
-      +'<div class="stat"><div class="stat-num">'+completed+'</div><div class="stat-lbl">Completed</div></div>'
-      +'<div class="stat"><div class="stat-num">'+(reqs.length-completed)+'</div><div class="stat-lbl">Open</div></div>'
-      +'<div class="stat"><div class="stat-num">'+totalMins+'m</div><div class="stat-lbl">Time Tracked</div></div>'
-      +'</div>'
-      +'<table><thead><tr><th>Date/Time</th><th>Type</th><th>Machine</th><th>WO/OP</th><th>Operator</th><th>Assigned To</th><th>Details</th><th>Time</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>'
-      +'</body></html>');
-    win.document.close();
-  };
-
-  // ── DISPLAY ALL REQUESTS ──────────────────────────────────
-  function addAllReceipt(data) {
-    var msgs = document.getElementById('ai-messages');
-    if(!msgs) return;
-    var div = document.createElement('div');
-    div.className = 'ai-msg ai-msg-assistant';
-    var reqs = data.requests || [];
-    var filterLabel = {
-      all:'All Requests', pending:'Pending WO', machinist:'Machinist Requests',
-      inspection:'Inspection Requests', running:'Running WO', datanomix:'Datanomix Alerts',
-      open:'Open Requests', completed:'Completed Requests', today:"Today's Requests", week:"This Week's Requests"
-    };
-    var title = filterLabel[data.filter] || 'All Requests';
-    var typeLabel = {red:'🔴 Inspection',yellow:'🟡 Machinist',blue:'🔵 Pending WO',green:'🟢 Running WO',orange:'🟠 Floor Support',dnx:'🔷 Datanomix'};
-    var typeColor = {red:'#f87171',yellow:'#fbbf24',blue:'#60a5fa',green:'#4ade80',orange:'#fb923c',dnx:'#7dd3fc'};
-
-    var completed = reqs.filter(function(r){return r.resolved;}).length;
-    var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
-    var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'';
-
-    if(!reqs.length){
-      div.innerHTML = '<div class="ai-bubble">No records found for <strong>'+title+'</strong>.</div>';
-      msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return;
-    }
-
-    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;max-width:100%;">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #1e3a5f;">';
-    html += '<div><div style="font-size:11px;color:#475569;letter-spacing:1px;">HILL MANUFACTURING</div>'
-          + '<div style="font-size:16px;font-weight:700;color:#f5c842;">'+title+'</div>'
-          + '<div style="font-size:11px;color:#475569;margin-top:2px;">'+reqs.length+' records · '+completed+' completed'+(totalStr?' · ⏱ '+totalStr:'')+'</div></div>';
-    html += '<button onclick="window._printAllReceipt(this)" style="background:rgba(255,255,255,0.06);border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;flex-shrink:0;">🖨 PDF</button>';
-    html += '</div>';
-
-    // Stats row
-    var byType = {};
-    reqs.forEach(function(r){ byType[r.type] = (byType[r.type]||0)+1; });
-    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">';
-    Object.keys(byType).forEach(function(t){
-      var c = typeColor[t]||'#94a3b8';
-      var l = (typeLabel[t]||t).replace(/[🔴🟡🔵🟢🟠🔷]/,'').trim();
-      html += '<span style="background:'+c+'22;color:'+c+';border:1px solid '+c+'44;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">'+l+': '+byType[t]+'</span>';
-    });
-    html += '</div>';
-
-    // Request rows
-    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:6px;">REQUEST TRAIL</div>';
-    reqs.slice(0,150).forEach(function(r){
-      var dateStr = r.createdAt && r.createdAt.seconds
-        ? new Date(r.createdAt.seconds*1000).toLocaleString('en-US',{month:'numeric',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
-      var color = typeColor[r.type]||'#94a3b8';
-      var label = (typeLabel[r.type]||r.type||'').replace(/[🔴🟡🔵🟢🟠🔷]/,'').trim();
-      var status = r.resolved?'✅':r.onHold?'⏸':r.inProgress?'⏱':'🔵';
-      html += '<div style="border-left:3px solid '+color+';padding:6px 8px;margin-bottom:4px;background:rgba(255,255,255,0.02);border-radius:0 6px 6px 0;">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">';
-      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
-      html += '<span style="font-size:9px;background:'+color+'22;color:'+color+';border-radius:3px;padding:1px 5px;font-weight:700;">'+label+'</span>';
-      if(r.machine) html += '<span style="font-size:11px;color:#f0f4f8;font-weight:700;">'+r.machine+'</span>';
-      if(r.wo)      html += '<span style="font-size:10px;color:#64748b;">WO '+r.wo+'</span>';
-      if(r.op)      html += '<span style="font-size:10px;color:#475569;">OP '+r.op+'</span>';
-      html += '<span style="font-size:11px;">'+status+'</span>';
-      html += '</div>';
-      html += '<span style="font-size:9px;color:#334155;">'+dateStr+'</span>';
-      html += '</div>';
-      if(r.operator) html += '<div style="font-size:10px;color:#64748b;margin-top:1px;">👤 '+r.operator+'</div>';
-      if(r.detail)   html += '<div style="font-size:10px;color:#475569;margin-top:1px;">'+r.detail+'</div>';
-      if(r.assignedTo) html += '<div style="font-size:10px;color:#7dd3fc;margin-top:1px;">→ '+r.assignedTo+'</div>';
-      if(r.elapsedStr) html += '<div style="font-size:10px;color:#f5c842;margin-top:1px;">⏱ '+r.elapsedStr+'</div>';
-      html += '</div>';
-    });
-    if(reqs.length > 150) html += '<div style="font-size:11px;color:#475569;text-align:center;padding:8px;">Showing 150 of '+reqs.length+' — use PDF for full export</div>';
-    html += '</div>';
-
-    div.setAttribute('data-receipt', JSON.stringify({title:title, reqs:reqs.slice(0,500)}));
-    div.innerHTML = html;
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
-  }
-
   window._sendAIChat = async function(){
     var input = document.getElementById('ai-input');
     var msg = (input.value || '').trim();
@@ -13088,7 +12556,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _chatHistory.push({role:'user', content: msg});
 
     // Check if message is a WO lookup
-    var woMatch = msg.match(/(2\d-\d{4}|\d{2}-\d{4}|WO[\s\-#]?\d+)/i);
+    var woMatch = msg.match(/(26-?\d{4}|25-?\d{4}|24-?\d{4}|WO[\s-]?\d+|\d{5,6})/i);
     if(woMatch || /work order|WO#|lookup|receipt|pull up|show me/i.test(msg)){
       var woNum = woMatch ? woMatch[0].toUpperCase().replace(/\s/g,'') : null;
       if(woNum){
@@ -13102,51 +12570,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         _chatHistory.push({role:'assistant', content: 'Receipt shown for WO ' + woNum});
         return;
       }
-    }
-
-    // PART NUMBER search
-    var partMatch=msg.match(/part[#\s:]*([A-Za-z0-9][A-Za-z0-9\.\-]{2,})/i)||(!woMatch&&msg.match(/([A-Za-z0-9]{2,}[\.\-][A-Za-z0-9]{2,}[A-Za-z0-9\.\-]*)/));
-    if(partMatch&&!woMatch){
-      var partNum2=(partMatch[1]||'').trim();
-      if(!/^\d+$/.test(partNum2)){
-        _chatThinking=true; var typingElP=addTyping();
-        var partReceipt=await _buildPartReceipt(partNum2);
-        typingElP.remove(); _chatThinking=false;
-        addFullReceipt(partReceipt,'PART');
-        _chatHistory.push({role:'assistant',content:'Showing results for part '+partNum2});
-        return;
-      }
-    }
-    // Check for ALL / open / completed / today / week searches first
-    var msgLower = msg.toLowerCase();
-    if(/^all requests?$|^all$|^show all|^everything/i.test(msg.trim())){
-      _chatThinking = true;
-      var typingElA = addTyping();
-      var allData = await _buildAllReceipt('all');
-      typingElA.remove(); _chatThinking = false;
-      addAllReceipt(allData);
-      _chatHistory.push({role:'assistant', content:'Showing all requests'});
-      return;
-    }
-    if(/^open requests?$|^open$/i.test(msg.trim())){
-      _chatThinking = true; var tEl = addTyping();
-      var d = await _buildAllReceipt('open');
-      tEl.remove(); _chatThinking = false; addAllReceipt(d); return;
-    }
-    if(/^completed requests?$|^completed$/i.test(msg.trim())){
-      _chatThinking = true; var tEl2 = addTyping();
-      var d2 = await _buildAllReceipt('completed');
-      tEl2.remove(); _chatThinking = false; addAllReceipt(d2); return;
-    }
-    if(/^today'?s? requests?$|^today$/i.test(msg.trim())){
-      _chatThinking = true; var tEl3 = addTyping();
-      var d3 = await _buildAllReceipt('today');
-      tEl3.remove(); _chatThinking = false; addAllReceipt(d3); return;
-    }
-    if(/^this week'?s? requests?$|^this week$/i.test(msg.trim())){
-      _chatThinking = true; var tEl4 = addTyping();
-      var d4 = await _buildAllReceipt('week');
-      tEl4.remove(); _chatThinking = false; addAllReceipt(d4); return;
     }
 
     // Check for request TYPE search
@@ -13202,6 +12625,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
     // Check if message is a machinist name lookup
     var machinists = ['Brett Thompson', 'Bryan Sturman', 'Caleb Dooley', 'Chuck Whitfield', 'Corey Bartmier', 'Daniel McGarvey', 'Dingo Mikles', 'Hank Anglin', 'Jacob Nail', 'Jared Stuart', 'Jimmy Pollard', 'Justin Gray', 'Keith Groden', 'Matthew Carrico', 'Miguel Sanchez', 'Mike Payne', 'Rhett Dawson', 'Scott Smith', 'Sean Surratt', 'Steven Riggs', 'Tony Lang', 'Tyler Stockham'];
+    var msgLower = msg.toLowerCase();
     var foundMachinist = null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase()) >= 0) foundMachinist = name;
@@ -13210,13 +12634,59 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       if(first.length > 3 && msgLower.indexOf(first) >= 0 && !foundMachinist) foundMachinist = name;
     });
     if(foundMachinist){
+      // Always fetch real data and pass to Claude for accurate answers
       _chatThinking = true;
       var typingEl2 = addTyping();
       var mReceipt = await _buildMachinistReceipt(foundMachinist);
-      typingEl2.remove();
-      _chatThinking = false;
-      addFullReceipt(mReceipt, 'MACHINIST');
-      _chatHistory.push({role:'assistant', content: 'Showing all requests for ' + foundMachinist});
+      var reqs = mReceipt.requests || [];
+      var completed = reqs.filter(function(r){return r.resolved;});
+      var open = reqs.filter(function(r){return !r.resolved;});
+      var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
+      var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'no time tracked';
+      var machines = [...new Set(reqs.map(function(r){return r.machine;}).filter(Boolean))];
+      var byType = {blue:0,yellow:0,red:0,green:0};
+      reqs.forEach(function(r){ if(byType[r.type]!==undefined) byType[r.type]++; });
+      var recent = reqs.slice(0,5).map(function(r){
+        var d = r.createdAt&&r.createdAt.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString():'';
+        return d+' '+r.machine+' '+(r.type==='blue'?'Pending WO':r.type==='yellow'?'Machinist Req':r.type)+' '+(r.wo?'WO '+r.wo:'')+(r.resolved?' [done]':' [open]');
+      }).join('; ');
+
+      // Build context and let Claude answer naturally
+      var machinistContext = 'MACHINIST DATA FOR ' + foundMachinist + ': '
+        + 'Total requests: ' + reqs.length + '. '
+        + 'Completed: ' + completed.length + '. '
+        + 'Open: ' + open.length + '. '
+        + 'Pending WO: ' + byType.blue + '. '
+        + 'Machinist Requests: ' + byType.yellow + '. '
+        + 'Inspections: ' + byType.red + '. '
+        + 'Total time tracked: ' + totalStr + '. '
+        + 'Machines used: ' + (machines.join(', ')||'none recorded') + '. '
+        + 'Recent activity: ' + (recent||'none');
+
+      _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
+
+      try {
+        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
+            messages: _chatHistory.slice(-10)
+          })
+        });
+        var data2 = await resp2.json();
+        var text2 = data2.content && data2.content[0] && data2.content[0].text;
+        typingEl2.remove();
+        _chatThinking = false;
+        if(text2){
+          addMessage('assistant', text2);
+          _chatHistory.push({role:'assistant', content: text2});
+        }
+      } catch(e){
+        typingEl2.remove();
+        _chatThinking = false;
+        addMessage('assistant', 'I had trouble pulling data for ' + foundMachinist + '. Try asking again or type their full name like "Jimmy Pollard".');
+      }
       return;
     }
 
@@ -13260,6 +12730,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var snap = await mods.getDocs(
         mods.query(mods.collection(db2,'hillRequests'),
           mods.where('type','==',type),
+          mods.orderBy('createdAt','desc'),
           mods.limit(200))
       );
       if(snap && !snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
@@ -13276,6 +12747,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var snap = await mods.getDocs(
         mods.query(mods.collection(db2,'hillRequests'),
           mods.where('machine','==',machine),
+          mods.orderBy('createdAt','desc'),
           mods.limit(200))
       );
       if(snap && !snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
@@ -13465,23 +12937,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return { wo: woDashed||woNum, requests: requests, timeLogs: timeLogs };
   }
 
-  // -- PART NUMBER RECEIPT --
-  async function _buildPartReceipt(partNum){
-    var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return {part:partNum,requests:[],error:'Not connected'};
-    var requests=[],seen={};
-    try{
-      var snaps=await Promise.all([
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('partNumber','==',partNum),mods.limit(200))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillDnxLog'),mods.where('partNumber','==',partNum),mods.limit(200))),
-      ]);
-      snaps.forEach(function(snap){if(!snap||snap.empty)return;snap.forEach(function(d){if(seen[d.id])return;seen[d.id]=true;var r=d.data();r.id=d.id;requests.push(r);});});
-    }catch(e){console.warn('Part lookup:',e.message);}
-    requests.sort(function(a,b){var at=a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;var bt=b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;return bt-at;});
-    return {part:partNum,wo:'Part: '+partNum,requests:requests,timeLogs:[]};
-  }
-
-  // -- REQUESTS TO ME RECEIPT --──────────────────────────────────
+  // ── REQUESTS TO ME RECEIPT ───────────────────────────────────
   async function _buildRequestsToMeReceipt(){
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return {requests:[]};
@@ -13574,11 +13030,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var lastName = name.split(' ')[1] || '';
       // Search by full name, first name only, and assignedTo
       var snaps = await Promise.all([
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.limit(100))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.limit(100))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.limit(100))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.limit(100))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
       ]);
       var seen = {};
       snaps.forEach(function(snap){
@@ -13875,6 +13331,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!hist) return;
     mods.getDocs(
       mods.query(mods.collection(db,'hillAnnouncements'),
+      mods.orderBy('createdAt','desc'),
       mods.limit(10))
     ).then(function(snap){
       if(!snap||!snap.docs||!snap.docs.length){
@@ -13893,139 +13350,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }).catch(function(){});
   };
 
-
-  // -- DNX RESOLVE MODAL v2 --
-  var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
-  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham'];
-  window._dnxResolvePending=null;
-  window._dnxSelectedInsight='';
-  window._dnxSelectInsight=function(val){
-    window._dnxSelectedInsight=val;
-    document.querySelectorAll('.dnx-insight-btn').forEach(function(b){b.classList.toggle('selected',b.dataset.val===val);});
-    document.getElementById('dnx-resolve-reason').value=val;
-    window._dnxCheckSubmit();
-  };
-  window._dnxBuildInsightGrid=function(){
-    var grid=document.getElementById('dnx-insight-grid');
-    grid.innerHTML='';
-    DNX_INSIGHTS.forEach(function(v){
-      var btn=document.createElement('button');
-      btn.className='dnx-insight-btn'; btn.dataset.val=v; btn.textContent=v;
-      btn.onclick=function(){window._dnxSelectInsight(v);};
-      grid.appendChild(btn);
-    });
-  };
-  window._dnxBuildEmployeeSelect=function(){
-    var sel=document.getElementById('dnx-resolve-employee');
-    sel.innerHTML='<option value="">-- Select Employee --</option>';
-    DNX_EMPLOYEES.forEach(function(e){var o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o);});
-  };
-  window._dnxAddCustomInsight=function(){
-    var inp=document.getElementById('dnx-custom-text');
-    var val=(inp.value||'').trim(); if(!val)return;
-    DNX_INSIGHTS.push(val); inp.value='';
-    window._dnxBuildInsightGrid();
-    window._dnxSelectInsight(val);
-  };
-  window._dnxReasonInput=function(){window._dnxCheckSubmit();};
-  window._dnxCheckSubmit=function(){
-    var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
-    document.getElementById('dnx-resolve-submit').disabled=!(reason.length>=3);
-  };
-  window._dnxResolveCancel=function(){
-    document.getElementById('dnx-resolve-modal').style.display='none';
-    window._dnxResolvePending=null; window._dnxSelectedInsight='';
-  };
-  window.openDnxResolve=function(noteId,hillReqId,machine,duration){
-    var note=null;
-    Object.values(window.machineNotes||{}).forEach(function(arr){arr.forEach(function(n){if(n.id===noteId)note=n;});});
-    var machineName=(note&&note.machine)||machine||'--';
-    var dur=(note&&note.duration)||duration||'';
-    window._dnxResolvePending={noteId:noteId,hillReqId:hillReqId,note:note,machine:machineName,duration:dur};
-    window._dnxSelectedInsight='';
-    var modal=document.getElementById('dnx-resolve-modal');
-    if(!modal){console.error('DNX modal not found');return;}
-    document.getElementById('dnx-modal-machine').textContent=machineName;
-    document.getElementById('dnx-modal-duration').textContent=dur?'Inactive for: '+dur:'';
-    document.getElementById('dnx-resolve-reason').value='';
-    document.getElementById('dnx-resolve-wo').value='';
-    document.getElementById('dnx-resolve-partnum').value='';
-    document.getElementById('dnx-resolve-error').style.display='none';
-    document.getElementById('dnx-resolve-submit').disabled=true;
-    document.getElementById('dnx-resolve-submit').textContent='CLOSE ALERT';
-    window._dnxBuildInsightGrid();
-    window._dnxBuildEmployeeSelect();
-    modal.style.display='flex';
-  };
-  window._dnxResolveSubmit=async function(){
-    var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
-    var employee=(document.getElementById('dnx-resolve-employee').value||'').trim();
-    var wo=(document.getElementById('dnx-resolve-wo').value||'').trim();
-    var partnum=(document.getElementById('dnx-resolve-partnum').value||'').trim();
-    if(reason.length<3){document.getElementById('dnx-resolve-error').style.display='block';return;}
-    var pending=window._dnxResolvePending; if(!pending)return;
-    var machineName=pending.machine||'';
-    var btn=document.getElementById('dnx-resolve-submit');
-    btn.disabled=true; btn.textContent='SAVING...';
-    var db2=window.fbDb||window._db, mods=window._fbModules, now=new Date();
-    try{
-      var note=pending.note||{};
-      var elapsedMins=null,elapsedStr='unknown';
-      if(note.createdAt&&note.createdAt.seconds){
-        elapsedMins=Math.round((now-new Date(note.createdAt.seconds*1000))/60000);
-        elapsedStr=elapsedMins>=60?Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m':elapsedMins+'m';
-      }
-      var fullReason=reason+(wo?' | WO:'+wo:'')+(partnum?' | Part:'+partnum:'');
-      var payload={resolved:true,resolvedAt:mods.serverTimestamp(),resolvedBy:employee||'admin',resolveReason:fullReason,employee:employee,wo:wo,partNumber:partnum,downtimeInsight:reason,elapsedMins:elapsedMins,elapsedStr:elapsedStr,inProgress:false,jobStatus:'completed',completedAt:mods.serverTimestamp()};
-      await mods.deleteDoc(mods.doc(db2,'notes',pending.noteId)).catch(function(){});
-      var hrId=(pending.hillReqId&&pending.hillReqId!==pending.noteId&&pending.hillReqId!=='')?pending.hillReqId:null;
-      if(hrId){await mods.updateDoc(mods.doc(db2,'hillRequests',hrId),payload).catch(function(){});}
-      else{
-        var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('machine','==',note.machine||''),mods.where('resolved','==',false),mods.where('type','==','dnx'))).catch(function(){return null;});
-        if(snap&&!snap.empty){var ups=[];snap.forEach(function(d){ups.push(mods.updateDoc(mods.doc(db2,'hillRequests',d.id),payload));});await Promise.all(ups).catch(function(){});}
-      }
-      await mods.addDoc(mods.collection(db2,'hillDnxLog'),{machine:note.machine||'',duration:note.duration||'',since:note.since||'',status:note.status||'INACTIVE',resolveReason:fullReason,downtimeInsight:reason,employee:employee,wo:wo,partNumber:partnum,resolvedBy:employee||'admin',resolvedAt:mods.serverTimestamp(),elapsedMins:elapsedMins,elapsedStr:elapsedStr,autoAlert:true}).catch(function(){});
-      var dnxSnap=await mods.getDocs(mods.query(mods.collection(db2,'hillDnxAlerts'),mods.where('machine','==',machineName),mods.where('resolved','==',false))).catch(function(){return null;});
-      if(dnxSnap&&!dnxSnap.empty){var dnxUps=[];dnxSnap.forEach(function(d){dnxUps.push(mods.updateDoc(mods.doc(db2,'hillDnxAlerts',d.id),{resolved:true,comment:fullReason,resolvedAt:mods.serverTimestamp(),resolvedBy:employee||'admin'}));});await Promise.all(dnxUps).catch(function(){});}
-      document.getElementById('dnx-resolve-modal').style.display='none';
-      window._dnxResolvePending=null; window._dnxSelectedInsight='';
-      if(window.showToast)window.showToast('blue','DNX Alert Closed',(note.machine||machineName)+' -- '+reason);
-    }catch(e){btn.disabled=false;btn.textContent='CLOSE ALERT';if(window.showToast)window.showToast('red','Error',e.message);}
-  };})();
+})();
 </script>
-
-<!-- DNX RESOLVE MODAL v2 -->
-<div id="dnx-resolve-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
-  <div class="dnx-resolve-box">
-    <div class="dnx-resolve-title">&#128311; Close DNX Alert</div>
-    <div class="dnx-resolve-machine" id="dnx-modal-machine">--</div>
-    <div class="dnx-resolve-duration" id="dnx-modal-duration"></div>
-    <span class="dnx-resolve-label">Select Downtime Insight <span style="color:#ef4444;">*Required</span></span>
-    <div class="dnx-insight-grid" id="dnx-insight-grid"></div>
-    <div class="dnx-custom-row">
-      <input class="dnx-custom-input" id="dnx-custom-text" placeholder="Add custom reason...">
-      <button class="dnx-custom-add" onclick="window._dnxAddCustomInsight()">+ ADD</button>
-    </div>
-    <span class="dnx-resolve-label">Downtime Reason</span>
-    <textarea class="dnx-resolve-textarea" id="dnx-resolve-reason" rows="2" placeholder="Select above or type custom reason..." oninput="window._dnxReasonInput()"></textarea>
-    <span class="dnx-resolve-label">Employee Name</span>
-    <select class="dnx-resolve-input" id="dnx-resolve-employee" style="background:#0a1628;color:#f0f4f8;"></select>
-    <div class="dnx-two-col" style="margin-top:12px;">
-      <div>
-        <span class="dnx-resolve-label" style="margin-top:0">Work Order #</span>
-        <input class="dnx-resolve-input" id="dnx-resolve-wo" placeholder="e.g. 26-0449">
-      </div>
-      <div>
-        <span class="dnx-resolve-label" style="margin-top:0">Part Number</span>
-        <input class="dnx-resolve-input" id="dnx-resolve-partnum" placeholder="e.g. 26.0585">
-      </div>
-    </div>
-    <div style="font-size:11px;color:#f87171;margin-top:10px;display:none;" id="dnx-resolve-error">Please select a downtime reason.</div>
-    <div class="dnx-resolve-btns">
-      <button class="dnx-resolve-cancel" onclick="window._dnxResolveCancel()">CANCEL</button>
-      <button class="dnx-resolve-submit" id="dnx-resolve-submit" onclick="window._dnxResolveSubmit()" disabled>&#10003; CLOSE ALERT</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
