@@ -812,6 +812,28 @@
 
   @media (max-height: 700px) { .motto-banner { display: none !important; } .floor-title { display: none !important; } }
 
+  /* MOBILE COMPACT MODE */
+  @media (max-width: 768px) {
+    .floor-grid {
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 2px !important;
+      padding: 3px !important;
+    }
+    .machine-body { padding: 3px 4px 2px 6px !important; }
+    .machine-name { font-size: 10px !important; }
+    .machine-notes { display: none !important; }
+    .perf-bar { height: 3px !important; }
+    .machine-led { width: 6px !important; height: 6px !important; }
+    #sparky-btn-wrap { padding: 4px 8px !important; margin-bottom: 2px !important; }
+    #sparky-avatar { width: 28px !important; height: 28px !important; font-size: 14px !important; }
+    .floor-title { font-size: 9px !important; padding: 2px 6px !important; }
+    #miguel-time-log { margin: 2px 6px !important; }
+    #live-status-strip { padding: 3px 8px !important; margin-bottom: 2px !important; }
+    .live-strip-tap-btn { padding: 4px 10px !important; margin-bottom: 3px !important; }
+    .nav-bar { padding: 0 !important; }
+    .nav-tab { padding: 6px 8px !important; font-size: 9px !important; }
+  }
+
   @media (max-width: 900px) {
     .shop-page.active { grid-template-columns: 1fr !important; grid-template-rows: 1fr auto !important; height: calc(100vh - 82px) !important; }
     .sidebar { position: fixed; bottom: 0; left: 0; right: 0; height: 48px; max-height: 48px; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); z-index: 50; background: #0a1829; border-top: 2px solid #f59e0b; border-left: none; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; }
@@ -1183,13 +1205,7 @@
 <div class="shop-page active" id="page-shop">
   <div class="floor-section">
     <div class="floor-title" style="font-size:10px;padding:3px 8px;">Live Shop Floor — Tap any machine to add a request</div>
-    <div id="miguel-time-log" style="display:none;background:#060d1a;border:1px solid #1e3a5c;border-radius:10px;margin:3px 8px;overflow:hidden;">
-      <div onclick="window._toggleTimeLog()" style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;cursor:pointer;">
-        <span id="miguel-time-log-header" style="font-size:12px;color:#f5c842;font-weight:700;">⏱ MY TIME LOG</span>
-        <span id="miguel-time-log-toggle" style="font-size:11px;color:#475569;">▼ SHOW</span>
-      </div>
-      <div id="miguel-time-log-body" style="display:none;padding:0 14px 10px;max-height:220px;overflow-y:auto;"></div>
-    </div>
+
     <div id="proshop-live-bar" style="display:none;background:rgba(0,7,26,0.9);border-bottom:1px solid #1e3a5c;padding:6px 16px;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;min-height:36px;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:10px;color:#475569;letter-spacing:2px;flex-shrink:0;">PROSHOP</span>
     </div>
