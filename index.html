@@ -1626,6 +1626,29 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
           <option>Tyler Stockham</option>
         </select>
       </div>
+      <!-- MACHINIST SUPPLY REQUEST — shown only for yellow type -->
+      <div id="machinistSupplyField" style="display:none;margin-bottom:10px;">
+        <div style="font-size:11px;color:#fbbf24;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">⚙️ Supply Item</div>
+        <select id="supplyItem" onchange="handleSupplyChange()" style="width:100%;background:#1a1000;border:1px solid #92400e;border-radius:8px;color:#fcd34d;padding:10px 14px;font-size:14px;margin-bottom:6px;font-family:'Barlow',sans-serif;">
+          <option value="">-- Select supply item --</option>
+          <option value="120 Grit Orange Disc">120 Grit Orange Disc</option>
+          <option value="80 Grit Orange Disc">80 Grit Orange Disc</option>
+          <option value='2" Maroon Wheel'>2" Maroon Wheel</option>
+          <option value='3" Maroon Wheel'>3" Maroon Wheel</option>
+          <option value="Nitrile Gloves">Nitrile Gloves</option>
+          <option value="other">Other / See details below…</option>
+        </select>
+        <!-- Glove size — only shown when Nitrile Gloves selected -->
+        <div id="gloveSizeField" style="display:none;">
+          <div style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;font-weight:600;">Glove Size</div>
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="glove-size-btn" onclick="selectGloveSize('S')" style="flex:1;padding:8px 4px;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:7px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;transition:all 0.15s;">S</button>
+            <button type="button" class="glove-size-btn" onclick="selectGloveSize('M')" style="flex:1;padding:8px 4px;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:7px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;transition:all 0.15s;">M</button>
+            <button type="button" class="glove-size-btn" onclick="selectGloveSize('L')" style="flex:1;padding:8px 4px;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:7px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;transition:all 0.15s;">L</button>
+            <button type="button" class="glove-size-btn" onclick="selectGloveSize('XL')" style="flex:1;padding:8px 4px;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:7px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;transition:all 0.15s;">XL</button>
+          </div>
+        </div>
+      </div>
       <textarea id="noteText" rows="3" placeholder="Additional details..."></textarea>
     </div>
     <div class="modal-actions">
@@ -2954,6 +2977,12 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
     document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = '';
+    // Reset supply dropdown
+    var si = document.getElementById('supplyItem'); if(si) si.value = '';
+    var gsf = document.getElementById('gloveSizeField'); if(gsf) gsf.style.display = 'none';
+    var msf = document.getElementById('machinistSupplyField'); if(msf) msf.style.display = 'none';
+    window._selectedGloveSize = '';
+    document.querySelectorAll('.glove-size-btn').forEach(b => { b.style.background='rgba(255,255,255,0.05)'; b.style.borderColor='#2a5a8c'; b.style.color='#94a3b8'; });
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
     if (window.renderExistingNotes) window.renderExistingNotes();
     document.getElementById('modalOverlay').classList.add('active');
@@ -2965,8 +2994,40 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     // Show assign field only for Pending WO (blue)
     var assignField = document.getElementById('assignField');
     if(assignField) assignField.style.display = type === 'blue' ? 'block' : 'none';
+    // Show supply dropdown only for Machinist Req (yellow)
+    var supplyField = document.getElementById('machinistSupplyField');
+    if(supplyField) supplyField.style.display = type === 'yellow' ? 'block' : 'none';
+    if(type !== 'yellow') {
+      var si = document.getElementById('supplyItem'); if(si) si.value = '';
+      var gsf = document.getElementById('gloveSizeField'); if(gsf) gsf.style.display = 'none';
+      window._selectedGloveSize = '';
+    }
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('.note-type-btn.' + type).classList.add('selected');
+  }
+
+  function handleSupplyChange() {
+    var val = document.getElementById('supplyItem').value;
+    var gsf = document.getElementById('gloveSizeField');
+    if (gsf) gsf.style.display = val === 'Nitrile Gloves' ? 'block' : 'none';
+    if (val !== 'Nitrile Gloves') {
+      window._selectedGloveSize = '';
+      document.querySelectorAll('.glove-size-btn').forEach(b => {
+        b.style.background = 'rgba(255,255,255,0.05)';
+        b.style.borderColor = '#2a5a8c';
+        b.style.color = '#94a3b8';
+      });
+    }
+  }
+
+  function selectGloveSize(size) {
+    window._selectedGloveSize = size;
+    document.querySelectorAll('.glove-size-btn').forEach(b => {
+      var isThis = b.textContent.trim() === size;
+      b.style.background    = isThis ? 'rgba(234,179,8,0.2)'  : 'rgba(255,255,255,0.05)';
+      b.style.borderColor   = isThis ? '#eab308' : '#2a5a8c';
+      b.style.color         = isThis ? '#fbbf24' : '#94a3b8';
+    });
   }
 
   async function submitNote() {
@@ -2981,7 +3042,19 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
     const assignedTo = (document.getElementById('assignedTo') && selectedType === 'blue')
       ? (document.getElementById('assignedTo').value || '') : '';
-    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail, operator, op, assignedTo };
+    // Build supply prefix for machinist requests
+    var supplyPrefix = '';
+    if (selectedType === 'yellow') {
+      var supplyItem = (document.getElementById('supplyItem') ? document.getElementById('supplyItem').value : '');
+      if (supplyItem && supplyItem !== 'other') {
+        supplyPrefix = supplyItem;
+        if (supplyItem === 'Nitrile Gloves' && window._selectedGloveSize) {
+          supplyPrefix += ' — Size ' + window._selectedGloveSize;
+        }
+      }
+    }
+    var combinedDetail = supplyPrefix ? (supplyPrefix + (detail ? '\n' + detail : '')) : detail;
+    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, assignedTo };
     try { await window.submitNoteToFirebase(note); }
     catch(err) {
       if (btn) { btn.disabled=false; btn.textContent='Submit'; }
