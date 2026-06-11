@@ -800,21 +800,23 @@
   html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
   .shop-page.active { display: block !important; height: calc(100vh - 82px) !important; max-height: calc(100vh - 82px) !important; overflow: hidden !important; }
   .floor-section { overflow: hidden !important; height: calc(100dvh - 150px) !important; padding: 4px 6px !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; }
-  .floor-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; grid-template-rows: repeat(2, 1fr) auto !important; gap: 4px !important; padding: 4px !important; flex: 1 !important; min-height: 0 !important; overflow: hidden !important; }
+  .floor-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; grid-template-rows: repeat(2, 1fr) auto !important; gap: 4px !important; padding: 4px !important; flex: 1 !important; min-height: 0 !important; overflow: hidden !important; align-items: stretch !important; }
+  .cell { padding: 5px !important; border-radius: 7px !important; display: flex !important; flex-direction: column !important; min-height: 0 !important; }
+  .machines { display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; gap: 3px !important; }
+  .machine { flex: 1 !important; margin-bottom: 0 !important; border-radius: 6px !important; display: flex !important; flex-direction: column !important; min-height: 0 !important; }
+  .machine-body { padding: 0 6px !important; flex: 1 !important; display: flex !important; align-items: center !important; }
+  .machine-notes { padding: 0 6px 2px 6px !important; gap: 3px !important; }
   .cell-fab { grid-column: 1 / -1 !important; display: flex !important; flex-direction: row !important; gap: 4px !important; padding: 4px 6px !important; align-items: center !important; border-color: rgba(217,119,6,0.5) !important; }
-  .cell-fab .cell-title { white-space: nowrap !important; margin-bottom: 0 !important; padding-bottom: 0 !important; border-bottom: none !important; padding-right: 8px !important; border-right: 1px solid rgba(125,211,252,0.25) !important; margin-right: 4px !important; color: #fcd34d !important; }
+  .cell-fab .cell-title { white-space: nowrap !important; margin-bottom: 0 !important; padding-bottom: 0 !important; border-bottom: none !important; padding-right: 8px !important; border-right: 1px solid rgba(125,211,252,0.25) !important; margin-right: 4px !important; color: #fcd34d !important; flex: 0 0 auto !important; }
   .cell-fab .cell-title::before { background: #d97706 !important; box-shadow: 0 0 8px #d97706 !important; }
-  .cell-fab .machines { flex-direction: row !important; flex: 1 !important; gap: 4px !important; }
-  .cell-fab .machine { flex: 1 !important; margin-bottom: 0 !important; }
+  .cell-fab .machines { flex-direction: row !important; flex: 1 !important; gap: 4px !important; min-height: 0 !important; }
+  .cell-fab .machine { flex: 1 !important; margin-bottom: 0 !important; min-height: 36px !important; max-height: 44px !important; }
   .cell-fab .machine-notes { display: none !important; }
-  .cell { padding: 4px !important; border-radius: 7px !important; }
-  .cell-title { font-size: 18px !important; letter-spacing: 3px !important; margin-bottom: 6px !important; padding-bottom: 3px !important; }
-  .machine { margin-bottom: 3px !important; border-radius: 6px !important; }
-  .machine-body { padding: 4px 6px !important; }
-  .machine-name { font-size: clamp(16px, 2vw, 26px) !important; letter-spacing: 1px !important; }
-  .perf-bar { height: 16px !important; }
-  .note-dot { width: 10px !important; height: 10px !important; }
-  .machine-notes { padding: 2px 6px 3px 6px !important; gap: 3px !important; }
+  .cell-fab .machine-body { flex: 1 !important; }
+  .cell-title { font-size: 13px !important; letter-spacing: 2px !important; margin-bottom: 4px !important; padding-bottom: 3px !important; flex-shrink: 0 !important; }
+  .machine-name { font-size: clamp(13px, 1.5vw, 22px) !important; letter-spacing: 1px !important; }
+  .perf-bar { height: 3px !important; flex-shrink: 0 !important; }
+  .note-dot { width: 8px !important; height: 8px !important; }
   .machine-led { width: 8px !important; height: 8px !important; }
   .sidebar { overflow: hidden; display: flex !important; flex-direction: column !important; height: 100% !important; border-radius: 16px 16px 0 0; }  .notif-list { overflow-y: auto !important; flex: 1 !important; }
   .notif-list { overflow-y: auto !important; flex: 1 !important; padding: 8px !important; min-height: 0 !important; -webkit-overflow-scrolling: touch !important; }
@@ -1318,7 +1320,7 @@
       <div class="cell" style="grid-column:4;grid-row:2;"><div class="cell-title">Automation Cell</div><div class="machines"><div class="machine" onclick="openModal('PUMA-1','Automation')"><div class="perf-bar pending" id="perf-PUMA-1" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-1</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-1"></div></div></div><div class="machine-notes" id="notes-PUMA-1"></div></div><div class="machine" onclick="openModal('303-B','Automation')"><div class="perf-bar pending" id="perf-303-B" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">303-B</div></div><div class="machine-right"><div class="machine-led" id="light-303-B"></div></div></div><div class="machine-notes" id="notes-303-B"></div></div><div class="machine" onclick="openModal('TWIN','Automation')"><div class="perf-bar pending" id="perf-TWIN" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">TWIN</div></div><div class="machine-right"><div class="machine-led" id="light-TWIN"></div></div></div><div class="machine-notes" id="notes-TWIN"></div></div><div class="machine" onclick="openModal('2500-Y','Automation')"><div class="perf-bar pending" id="perf-2500-Y" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">2500-Y</div></div><div class="machine-right"><div class="machine-led" id="light-2500-Y"></div></div></div><div class="machine-notes" id="notes-2500-Y"></div></div></div></div>
 
       <!-- FABRICATION CELL -->
-      <div class="cell cell-fab"><div class="cell-title">Fabrication</div><div class="machines"><div class="machine" onclick="openModal('SAW-1','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW-1</div></div><div class="machine-right"><div class="machine-led" id="light-SAW-1"></div></div></div><div class="machine-notes" id="notes-SAW-1"></div></div><div class="machine" onclick="openModal('SAW-2','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW-2</div></div><div class="machine-right"><div class="machine-led" id="light-SAW-2"></div></div></div><div class="machine-notes" id="notes-SAW-2"></div></div><div class="machine" onclick="openModal('MANUAL','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">MANUAL</div></div><div class="machine-right"><div class="machine-led" id="light-MANUAL"></div></div></div><div class="machine-notes" id="notes-MANUAL"></div></div><div class="machine" onclick="openModal('WELDERS','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">WELDERS</div></div><div class="machine-right"><div class="machine-led" id="light-WELDERS"></div></div></div><div class="machine-notes" id="notes-WELDERS"></div></div></div></div>
+      <div class="cell cell-fab"><div class="cell-title">Fabrication</div><div class="machines"><div class="machine" onclick="openModal('SAW','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW</div></div><div class="machine-right"><div class="machine-led" id="light-SAW"></div></div></div><div class="machine-notes" id="notes-SAW"></div></div><div class="machine" onclick="openModal('MANUAL','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">MANUAL</div></div><div class="machine-right"><div class="machine-led" id="light-MANUAL"></div></div></div><div class="machine-notes" id="notes-MANUAL"></div></div><div class="machine" onclick="openModal('WELDERS','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">WELDERS</div></div><div class="machine-right"><div class="machine-led" id="light-WELDERS"></div></div></div><div class="machine-notes" id="notes-WELDERS"></div></div></div></div>
 
     </div>
   </div>
@@ -3700,7 +3702,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     '5000':   null, 'SHARP':  null, '3000-C': 1803,
     'SYIL':   null, '3000-A': 1703, 'EMCO':   null,
     '2G':     1973, 'PUMA-1': 453,  '303-B':  103,
-    'TWIN':   1403, '2500-Y': 1653, 'SAW-1':  null, 'SAW-2': null
+    'TWIN':   1403, '2500-Y': 1653, 'SAW': null
   };
 
   // ── PASTE YOUR API KEY HERE WHEN YOU GET IT ──
@@ -4013,8 +4015,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     { name:'303-B',  cell:'Automation',  id:103,  hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=103'  },
     { name:'TWIN',   cell:'Automation',  id:1403, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1403' },
     { name:'2500-Y', cell:'Automation',  id:1653, hud:'https://hillmanufacturing.datanomix.app/machine-hud?machineId=1653' },
-    { name:'SAW-1',  cell:'Saws',        id:null, hud:null },
-    { name:'SAW-2',  cell:'Saws',        id:null, hud:null },
+    { name:'SAW',   cell:'Fabrication',  id:null, hud:null },
   ];
 
   var dnxView = 'all';
@@ -7467,7 +7468,7 @@ window.plannerSetView = function(view) {
     {name:'3000-C',cell:'3000 Cell'},{name:'SYIL',cell:'3000 Cell'},{name:'3000-A',cell:'3000 Cell'},
     {name:'EMCO',cell:'Horizontal'},{name:'2G',cell:'Horizontal'},
     {name:'PUMA-1',cell:'Automation'},{name:'303-B',cell:'Automation'},{name:'TWIN',cell:'Automation'},{name:'2500-Y',cell:'Automation'},
-    {name:'SAW-1',cell:'Saws'},{name:'SAW-2',cell:'Saws'}
+    {name:'SAW',cell:'Saws'}
   ];
 
   // ── Persistence ──
@@ -12621,7 +12622,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Check for machine search
-    var machines = ['1050-B','7000','VF-6','5100-B','2500','PUMA-3','ST35','VF-3','VF-2','PUMA-2','403-A','403-B','403-C','5100-A','3000-C','3000-A','2G','PUMA-1','303-B','TWIN','2500-Y','SHARP','SH-403','5000','SYIL','EMCO','SAW-1','SAW-2'];
+    var machines = ['1050-B','7000','VF-6','5100-B','2500','PUMA-3','ST35','VF-3','VF-2','PUMA-2','403-A','403-B','403-C','5100-A','3000-C','3000-A','2G','PUMA-1','303-B','TWIN','2500-Y','SHARP','SH-403','5000','SYIL','EMCO','SAW'];
     var machineFound = null;
     machines.forEach(function(m){
       if(msgLower.indexOf(m.toLowerCase()) >= 0) machineFound = m;
@@ -13379,4 +13380,3 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 </script>
 </body>
 </html>
-          
