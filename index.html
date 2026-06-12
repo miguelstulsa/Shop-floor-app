@@ -12755,7 +12755,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     addMessage('user', msg);
     _chatHistory.push({role:'user', content: msg});
 
-    // Check if message is a WO lookup
+    // Define msgLower HERE so every branch below can use it
+    var msgLower = msg.toLowerCase();
     var woMatch = msg.match(/(26-?\d{4}|25-?\d{4}|24-?\d{4}|WO[\s-]?\d+|\d{5,6})/i);
     if(woMatch || /work order|WO#|lookup|receipt|pull up|show me/i.test(msg)){
       var woNum = woMatch ? woMatch[0].toUpperCase().replace(/\s/g,'') : null;
@@ -12825,7 +12826,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
     // Check if message is a machinist name lookup
     var machinists = ['Brett Thompson', 'Bryan Sturman', 'Caleb Dooley', 'Chuck Whitfield', 'Corey Bartmier', 'Daniel McGarvey', 'Dingo Mikles', 'Hank Anglin', 'Jacob Nail', 'Jared Stuart', 'Jimmy Pollard', 'Justin Gray', 'Keith Groden', 'Matthew Carrico', 'Miguel Sanchez', 'Mike Payne', 'Rhett Dawson', 'Scott Smith', 'Sean Surratt', 'Steven Riggs', 'Tony Lang', 'Tyler Stockham'];
-    var msgLower = msg.toLowerCase();
     var foundMachinist = null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase()) >= 0) foundMachinist = name;
@@ -12890,20 +12890,33 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       return;
     }
 
-    // Show typing indicator
+    // General question — send to Claude via worker
     _chatThinking = true;
     var typingEl = addTyping();
 
     try {
+      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          system: 'You are Sparky, the AI assistant for Hill Manufacturing shop floor app. You help machinists, supervisors, and Miguel (admin) with questions about their floor. You can answer general questions and give helpful advice about machining, tooling, work orders, and shop operations. Keep answers concise and practical.',
+          messages: _chatHistory.slice(-10)
+        })
+      });
+      var data = await resp.json();
+      var text = data.content && data.content[0] && data.content[0].text;
       typingEl.remove();
       _chatThinking = false;
-      addMessage('assistant', 'I can look up data from your shop floor. Try:\n\n• Type a WO number like "26-0173" → get full receipt\n• Type a name like "Jimmy Pollard" → see their request history\n• Type "requests sent to me" → see all requests you fulfilled\n• Type "Jimmy history" or "Dingo requests" → machinist summary');
-      _chatHistory.push({role:'assistant', content: 'Data lookup help shown'});
-
+      if(text){
+        addMessage('assistant', text);
+        _chatHistory.push({role:'assistant', content: text});
+      } else {
+        addMessage('assistant', 'No response from server. Check worker logs.');
+      }
     } catch(e) {
       typingEl.remove();
       _chatThinking = false;
-      addMessage('assistant', 'Connection error: ' + e.message);
+      addMessage('assistant', 'Connection error: ' + e.message + '. Make sure the Cloudflare worker is running.');
     }
   };
 
