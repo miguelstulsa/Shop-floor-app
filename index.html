@@ -2166,6 +2166,19 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var _nd3 = window._lastActionable && window._lastActionable.find(function(n){ return n.id === noteId; });
       if (_nd3) { setTimeout(function(){ window._djAnnounceStart(_nd3); }, 800); }
 
+      // ── NOTIFY MACHINIST via Pushover ──
+      if (_nd3 && _nd3.operator) {
+        var _woStr = _nd3.wo ? ' · WO# ' + _nd3.wo : '';
+        var _opStr = _nd3.op ? ' · OP ' + _nd3.op : '';
+        var _detStr = _nd3.detail ? ' · ' + _nd3.detail.slice(0,60) : '';
+        window.sendPushoverAlert(
+          '✅ Setup Started — ' + (_nd3.machine || ''),
+          'Miguel is on your job now.' + _woStr + _opStr + _detStr + '\nYou\'ll be cutting soon.',
+          'magic',
+          0
+        );
+      }
+
     } catch(e) {
       showToast('red', 'Error starting', e.message);
     }
@@ -12241,7 +12254,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   window._djAnnounceStart=function(n){
     if(!n)return;
     var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'the operator';
-    say(pick(['Timer started. Miguel on '+machine+', setting up '+(n.wo?'work order '+n.wo:'the job')+(n.op?', operation '+n.op:'')+'. '+name+', you will be cutting soon.','Setup underway on '+machine+'. Miguel clocked in. '+name+', stand by.']),function(){});
+    say(pick([
+      'Timer started on '+machine+'. '+name+', Miguel is on his way. '+( n.wo?'Work order '+n.wo+'.':'')+' Stand by.',
+      'Setup is underway on '+machine+'. '+name+', Miguel just clocked in'+(n.wo?' on work order '+n.wo:'')+'. You will be cutting soon.',
+      'Attention '+name+' — Miguel has started your setup on '+machine+'.'+(n.wo?' Work order '+n.wo+'.':'')+' Sit tight.'
+    ]),function(){});
   };
   window._djAnnouncePending=window._djAnnounceNew;
   window._djAnnounceComment=function(noteId,text,machine,wo,author){
