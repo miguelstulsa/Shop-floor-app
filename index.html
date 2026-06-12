@@ -12855,55 +12855,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       _chatThinking = true;
       var typingEl2 = addTyping();
       var mReceipt = await _buildMachinistReceipt(foundMachinist);
-      var reqs = mReceipt.requests || [];
-      var completed = reqs.filter(function(r){return r.resolved;});
-      var open = reqs.filter(function(r){return !r.resolved;});
-      var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
-      var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'no time tracked';
-      var machines = [...new Set(reqs.map(function(r){return r.machine;}).filter(Boolean))];
-      var byType = {blue:0,yellow:0,red:0,green:0};
-      reqs.forEach(function(r){ if(byType[r.type]!==undefined) byType[r.type]++; });
-      var recent = reqs.slice(0,5).map(function(r){
-        var d = r.createdAt&&r.createdAt.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString():'';
-        return d+' '+r.machine+' '+(r.type==='blue'?'Pending WO':r.type==='yellow'?'Machinist Req':r.type)+' '+(r.wo?'WO '+r.wo:'')+(r.resolved?' [done]':' [open]');
-      }).join('; ');
-
-      // Build context and let Claude answer naturally
-      var machinistContext = 'MACHINIST DATA FOR ' + foundMachinist + ': '
-        + 'Total requests: ' + reqs.length + '. '
-        + 'Completed: ' + completed.length + '. '
-        + 'Open: ' + open.length + '. '
-        + 'Pending WO: ' + byType.blue + '. '
-        + 'Machinist Requests: ' + byType.yellow + '. '
-        + 'Inspections: ' + byType.red + '. '
-        + 'Total time tracked: ' + totalStr + '. '
-        + 'Machines used: ' + (machines.join(', ')||'none recorded') + '. '
-        + 'Recent activity: ' + (recent||'none');
-
-      _chatHistory.push({role:'user', content: msg + ' [DATA: ' + machinistContext + ']'});
-
-      try {
-        var resp2 = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            system: 'You are an AI assistant for Hill Manufacturing. Answer questions about machinists accurately using only the data provided. Never make up numbers.',
-            messages: _chatHistory.slice(-10)
-          })
-        });
-        var data2 = await resp2.json();
-        var text2 = data2.content && data2.content[0] && data2.content[0].text;
-        typingEl2.remove();
-        _chatThinking = false;
-        if(text2){
-          addMessage('assistant', text2);
-          _chatHistory.push({role:'assistant', content: text2});
-        }
-      } catch(e){
-        typingEl2.remove();
-        _chatThinking = false;
-        addMessage('assistant', 'I had trouble pulling data for ' + foundMachinist + '. Try asking again or type their full name like "Jimmy Pollard".');
-      }
+      typingEl2.remove();
+      _chatThinking = false;
+      // Show the receipt UI directly — no worker needed for display
+      mReceipt.name = foundMachinist;
+      addFullReceipt(mReceipt, 'MACHINIST');
+      _chatHistory.push({role:'assistant', content: 'Showed receipt for ' + foundMachinist});
       return;
     }
 
@@ -12928,7 +12885,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         addMessage('assistant', text);
         _chatHistory.push({role:'assistant', content: text});
       } else {
-        addMessage('assistant', 'No response from server. Check worker logs.');
+        // Show raw response to help debug worker issues
+        var errDetail = data.error ? data.error : (data.type || JSON.stringify(data).slice(0,120));
+        addMessage('assistant', 'Worker returned no text. Raw: ' + errDetail + '\n\nCheck your Cloudflare worker /claude route.');
       }
     } catch(e) {
       typingEl.remove();
@@ -12999,7 +12958,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     // Title
     var title = searchType === 'TYPE' ? (typeLabel[data.type] || data.type) + ' — All Requests'
               : searchType === 'MACHINE' ? '📍 ' + data.machine + ' — All Requests'
-              : data.wo ? 'WO ' + data.wo : data.name;
+              : searchType === 'MACHINIST' ? '👤 ' + data.name
+              : data.wo ? 'WO ' + data.wo : (data.name || 'Search Results');
 
     if(!reqs.length){
       div.innerHTML = '<div class="ai-bubble">No records found for <strong>' + title + '</strong>.</div>';
