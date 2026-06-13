@@ -5731,6 +5731,18 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     e.stopPropagation();
     btn.disabled = true;
     btn.textContent = '...';
+
+    // If this is a DNX note, clear the machine flash immediately
+    var noteCard = btn.closest('.notif-item, .req-card');
+    if(noteCard && (noteCard.classList.contains('dnx') || (noteCard.querySelector('.notif-type') && noteCard.querySelector('.notif-type').textContent.indexOf('Datanomix') >= 0))) {
+      var machineText = noteCard.querySelector('.notif-machine, .req-machine');
+      if(machineText) {
+        // Extract just the machine name (after the dash)
+        var machineName = machineText.textContent.replace(/.*—\s*/,'').trim();
+        window._clearMachineFlash(machineName);
+      }
+    }
+
     if (window.removeNoteById) {
       window.removeNoteById(id).then(function() {
         // Firestore snapshot will auto-update the UI
@@ -12304,6 +12316,20 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _dnxAlerts = {};
   var _dnxLastAnnounced = {};
 
+  // ── PUBLIC helper: remove DNX flash from a machine card ──────
+  window._clearMachineFlash = function(machineName) {
+    if(!machineName) return;
+    delete _dnxAlerts[machineName];
+    // By notes- id
+    var notesEl = document.getElementById('notes-' + machineName);
+    if(notesEl){ var mc=notesEl.closest('.machine'); if(mc){ mc.classList.remove('dnx-inactive'); var b=mc.querySelector('.dnx-badge'); if(b) b.remove(); } }
+    // By name text sweep
+    document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
+      var nameEl=card.querySelector('.machine-name');
+      if(nameEl && nameEl.textContent.trim()===machineName){ card.classList.remove('dnx-inactive'); var b2=card.querySelector('.dnx-badge'); if(b2) b2.remove(); }
+    });
+  };
+
   function _startDnxListener(){
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
@@ -12357,8 +12383,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           var b=card.querySelector('.dnx-badge'); if(b) b.remove();
         });
 
-        // Only highlight UNRESOLVED alerts
-        alerts.filter(function(a){ return !a.resolved; }).forEach(function(a){
+        // Only highlight UNRESOLVED alerts received in the last 4 hours
+        var fourHoursAgo = Date.now() - (4 * 60 * 60 * 1000);
+        alerts.filter(function(a){
+          if(a.resolved) return false;
+          var ts = a.receivedAt && a.receivedAt.seconds ? a.receivedAt.seconds * 1000
+                 : a.receivedAt ? new Date(a.receivedAt).getTime() : 0;
+          return ts > fourHoursAgo;
+        }).forEach(function(a){
           if(a.machine) _highlightMachine(a.machine, a.duration);
         });
       }
@@ -12487,19 +12519,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var resolvedMachine = document.getElementById('dnx-resolve-machine').textContent.replace('Machine: ','').trim();
 
     // ── Remove highlight IMMEDIATELY (before async) to avoid race with snapshot ──
-    delete _dnxAlerts[resolvedMachine];
-    var notesEl = document.getElementById('notes-' + resolvedMachine);
-    if(notesEl){
-      var mCard = notesEl.closest('.machine');
-      if(mCard){ mCard.classList.remove('dnx-inactive'); var b=mCard.querySelector('.dnx-badge'); if(b) b.remove(); }
-    }
-    document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
-      var nameEl = card.querySelector('.machine-name');
-      if(nameEl && nameEl.textContent.trim() === resolvedMachine){
-        card.classList.remove('dnx-inactive');
-        var badge = card.querySelector('.dnx-badge'); if(badge) badge.remove();
-      }
-    });
+    window._clearMachineFlash(resolvedMachine);
     document.getElementById('dnx-resolve-modal').style.display = 'none';
     if(window.showToast) window.showToast('green','✅ Alert Resolved', comment);
 
