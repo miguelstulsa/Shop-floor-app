@@ -12483,6 +12483,26 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
 
+    // Get machine name BEFORE closing
+    var resolvedMachine = document.getElementById('dnx-resolve-machine').textContent.replace('Machine: ','').trim();
+
+    // ── Remove highlight IMMEDIATELY (before async) to avoid race with snapshot ──
+    delete _dnxAlerts[resolvedMachine];
+    var notesEl = document.getElementById('notes-' + resolvedMachine);
+    if(notesEl){
+      var mCard = notesEl.closest('.machine');
+      if(mCard){ mCard.classList.remove('dnx-inactive'); var b=mCard.querySelector('.dnx-badge'); if(b) b.remove(); }
+    }
+    document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
+      var nameEl = card.querySelector('.machine-name');
+      if(nameEl && nameEl.textContent.trim() === resolvedMachine){
+        card.classList.remove('dnx-inactive');
+        var badge = card.querySelector('.dnx-badge'); if(badge) badge.remove();
+      }
+    });
+    document.getElementById('dnx-resolve-modal').style.display = 'none';
+    if(window.showToast) window.showToast('green','✅ Alert Resolved', comment);
+
     try {
       await mods.updateDoc(mods.doc(db2,'hillDnxAlerts',_dnxPendingResolveId),{
         resolved: true,
@@ -12490,16 +12510,6 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         resolvedAt: mods.serverTimestamp(),
         resolvedBy: window.currentUser || 'admin'
       });
-
-      // Remove machine highlight
-      document.querySelectorAll('.dnx-inactive').forEach(function(card){
-        card.classList.remove('dnx-inactive');
-        var badge = card.querySelector('.dnx-badge');
-        if(badge) badge.remove();
-      });
-
-      document.getElementById('dnx-resolve-modal').style.display = 'none';
-      if(window.showToast) window.showToast('green','✅ Alert Resolved', comment);
     } catch(e){
       alert('Error resolving: ' + e.message);
     }
