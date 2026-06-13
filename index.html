@@ -1381,9 +1381,31 @@
 <div class="page" id="page-aichat" style="display:none;flex-direction:column;height:calc(100vh - 120px);max-width:700px;margin:0 auto;padding:0;">
 
   <!-- Chat header -->
-  <div style="padding:12px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+  <div style="padding:10px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:2px;">🤖 HILL AI ASSISTANT</div>
-    <div style="font-size:11px;color:#475569;">Ask anything about your floor, jobs, machinists, or operations.</div>
+    <!-- Quick search buttons -->
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;">
+      <button onclick="window._aiQuickSearch('all')"        style="background:rgba(245,200,66,0.12);border:1px solid #f5c842;color:#f5c842;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">📋 ALL</button>
+      <button onclick="window._aiQuickSearch('pending')"    style="background:rgba(96,165,250,0.12);border:1px solid #60a5fa;color:#60a5fa;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🔵 PENDING WO</button>
+      <button onclick="window._aiQuickSearch('machinist')"  style="background:rgba(251,191,36,0.12);border:1px solid #fbbf24;color:#fbbf24;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🟡 MACHINIST</button>
+      <button onclick="window._aiQuickSearch('inspection')" style="background:rgba(248,113,113,0.12);border:1px solid #f87171;color:#f87171;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🔴 INSPECTION</button>
+      <button onclick="window._aiQuickSearch('running')"    style="background:rgba(74,222,128,0.12);border:1px solid #4ade80;color:#4ade80;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🟢 RUNNING WO</button>
+      <button onclick="window._aiQuickSearch('datanomix')"  style="background:rgba(125,211,252,0.12);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">🔷 DATANOMIX</button>
+      <button onclick="window._aiQuickSearch('open')"       style="background:rgba(249,115,22,0.12);border:1px solid #f97316;color:#f97316;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">⏳ OPEN</button>
+      <button onclick="window._aiQuickSearch('completed')"  style="background:rgba(74,222,128,0.12);border:1px solid #4ade80;color:#4ade80;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">✅ COMPLETED</button>
+      <button onclick="window._aiQuickSearch('today')"      style="background:rgba(167,139,250,0.12);border:1px solid #a78bfa;color:#a78bfa;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">📅 TODAY</button>
+      <button onclick="window._aiQuickSearch('week')"       style="background:rgba(167,139,250,0.12);border:1px solid #a78bfa;color:#a78bfa;border-radius:6px;padding:4px 10px;font-size:10px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;">📅 THIS WEEK</button>
+    </div>
+  </div>
+
+  <!-- Input (top) -->
+  <div style="padding:10px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;display:flex;gap:8px;align-items:flex-end;">
+    <textarea id="ai-input" placeholder="Search... WO#, machine, name, type, date range..."
+      style="flex:1;background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;color:#f0f4f8;font-size:14px;padding:10px 12px;resize:none;font-family:inherit;min-height:44px;max-height:120px;line-height:1.4;"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window._sendAIChat();}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+    <button onclick="window._sendAIChat()"
+      style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#000;border-radius:10px;padding:10px 16px;font-size:18px;cursor:pointer;flex-shrink:0;height:44px;">➤</button>
   </div>
 
   <!-- Messages -->
@@ -1393,23 +1415,14 @@
 
 🔍 SEARCH OPTIONS:
 • WO# — type "26-0173" → every request on that job, who touched it, timestamps, times
-• Employee — type "Jimmy Pollard" or "Jimmy" → full history of their requests
-• Request type — type "pending", "machinist", "inspection", "datanomix", "floor support" → all requests of that type
-• "requests sent to me" → everything you fulfilled, by person
+• Employee — type "Jimmy" → full history of their requests
+• Request type — use the quick buttons above, or type "machinist", "inspection", "pending", etc.
 • Machine — type "3000-A" or "VF-3" → all requests on that machine
+• Date — type "today", "this week"
+• Status — type "open" or "completed"
 
-Every result shows: date, time, operator, type, WO#, details, elapsed time, status.</div>
+Every result shows: date, time, operator, type, WO#, details, elapsed time, status — all printable as PDF.</div>
     </div>
-  </div>
-
-  <!-- Input -->
-  <div style="padding:12px 16px;border-top:1px solid #1e3a5f;flex-shrink:0;display:flex;gap:8px;align-items:flex-end;">
-    <textarea id="ai-input" placeholder="Ask anything... e.g. How long has VF-3 been running? Who has the most requests today?" 
-      style="flex:1;background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;color:#f0f4f8;font-size:14px;padding:10px 12px;resize:none;font-family:inherit;min-height:44px;max-height:120px;line-height:1.4;"
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window._sendAIChat();}"
-      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
-    <button onclick="window._sendAIChat()" 
-      style="background:linear-gradient(135deg,#b8860b,#f5c842);border:none;color:#000;border-radius:10px;padding:10px 16px;font-size:18px;cursor:pointer;flex-shrink:0;height:44px;">➤</button>
   </div>
 </div>
 
@@ -1963,7 +1976,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
           '<div class="req-machine">' + n.machine + '</div>' +
           '<div class="req-cell">' + n.cell + '</div>' +
           '<div class="req-type-label">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
-          (n.wo     ? '<div class="req-wo">WO: '      + n.wo     + '</div>' : '') +
+          (n.wo     ? '<div class="req-wo">WO: ' + n.wo + (n.op ? '  ·  OP: ' + n.op : '') + '</div>' : '') +
           (n.assignedTo ? '<div class="req-wo" style="color:#93c5fd;">🔧 Assigned to: ' + n.assignedTo + '</div>' : '') +
           (n.detail ? '<div class="req-detail">'      + n.detail + '</div>' : '') +
           (n.operator ? '<div class="req-operator">👤 ' + n.operator + '</div>' : '') +
@@ -2152,7 +2165,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       // Show live banner on shop floor for everyone
       if (window._addActiveJob) {
         var nd2 = window._lastActionable && window._lastActionable.find(function(n){ return n.id === noteId; });
-        window._addActiveJob(noteId, nd2 ? nd2.machine : '', nd2 ? nd2.wo : '', nd2 ? nd2.detail : '', nd2 ? nd2.operator : '', Math.floor(Date.now()/1000));
+        window._addActiveJob(noteId, nd2 ? nd2.machine : '', nd2 ? nd2.wo : '', nd2 ? nd2.detail : '', nd2 ? nd2.operator : '', Math.floor(Date.now()/1000), nd2 ? nd2.op : '');
       }
       // Also update the in-memory note so re-renders show FINISH
       if (window._lastActionable) {
@@ -3146,17 +3159,24 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     const wo = document.getElementById('woInput').value.trim();
     const detail = document.getElementById('noteText').value.trim();
     const operator = document.getElementById('operatorName').value.trim();
-    if (!wo) { showToast('red', 'Enter a WO# or description', 'This field is required.'); return; }
+    // For machinist requests: WO not required if a supply item is selected
+    var supplyItem = (selectedType === 'yellow' && document.getElementById('supplyItem')) ? document.getElementById('supplyItem').value : '';
+    var hasSupply = supplyItem && supplyItem !== 'other' && supplyItem !== '';
+    const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
+    if (selectedType === 'yellow' && !hasSupply) {
+      if (!wo) { showToast('red', 'WO# required', 'Enter a work order number or select a supply item.'); return; }
+      if (!op) { showToast('red', 'OP# required', 'Enter an operation number for this machinist request.'); return; }
+    }
+    if (!wo && !hasSupply) { showToast('red', 'Enter a WO# or select a supply item', 'At least one is required.'); return; }
+    if (!wo && selectedType !== 'yellow') { showToast('red', 'Enter a WO# or description', 'This field is required.'); return; }
     if (!window.submitNoteToFirebase) { showToast('red', 'Still connecting...', 'Wait a moment then try again.'); return; }
     const btn = document.querySelector('#modalOverlay .btn-submit');
     if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
-    const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
     const assignedTo = (document.getElementById('assignedTo') && selectedType === 'blue')
       ? (document.getElementById('assignedTo').value || '') : '';
     // Build supply prefix for machinist requests
     var supplyPrefix = '';
     if (selectedType === 'yellow') {
-      var supplyItem = (document.getElementById('supplyItem') ? document.getElementById('supplyItem').value : '');
       if (supplyItem && supplyItem !== 'other') {
         supplyPrefix = supplyItem;
         if (supplyItem === 'Nitrile Gloves' && window._selectedGloveSize) {
@@ -11249,7 +11269,7 @@ function _buildJobCard(job, now, large) {
     '<div style="width:'+(large?'12':'8')+'px;height:'+(large?'12':'8')+'px;border-radius:50%;background:'+timeColor+';animation:pulse-green 1s infinite;flex-shrink:0;"></div>'
   + '<div style="flex:1;min-width:0;">'
     + '<div style="font-family:Bebas Neue,sans-serif;font-size:'+nameSz+';letter-spacing:1px;color:#f5d050;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'
-        + (job.machine || '') + (job.wo ? ' · WO ' + job.wo : '')
+        + (job.machine || '') + (job.wo ? ' · WO ' + job.wo : '') + (job.op ? ' · OP ' + job.op : '')
       + '</div>'
     + (job.detail ? '<div style="font-size:'+detailSz+';color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px;">' + job.detail + '</div>' : '')
     + (large && job.operator ? '<div style="font-size:11px;color:#475569;margin-top:4px;">👤 '+job.operator+'</div>' : '')
@@ -12671,352 +12691,81 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _chatHistory = [];
   var _chatThinking = false;
 
-  function buildFloorContext(){
-    var notes = window._lastActionable || [];
-    var now = Math.floor(Date.now()/1000);
-    var active = notes.filter(function(n){ return !n.resolved; });
-    var running = active.filter(function(n){ return n.inProgress || (n.startedAt && n.startedAt.seconds); });
-    var pending = active.filter(function(n){ return n.type === 'blue' && !n.inProgress; });
-    var machReq = active.filter(function(n){ return n.type === 'yellow'; });
-    var inspect = active.filter(function(n){ return n.type === 'red'; });
-    var onHold  = active.filter(function(n){ return n.onHold; });
+  // ── QUICK SEARCH ─────────────────────────────────────────
+  window._aiQuickSearch = async function(type) {
+    var typeFilters = ['pending','machinist','inspection','running','datanomix'];
+    var directFilters = ['all','open','completed','today','week'];
 
-    var allNotes = window._allDashRequests || notes;
-    var today = new Date(); var todayStart = new Date(today.getFullYear(),today.getMonth(),today.getDate()).getTime()/1000;
-    var todayNotes = allNotes.filter(function(n){ return n.createdAt && n.createdAt.seconds >= todayStart; });
-    var completed  = todayNotes.filter(function(n){ return n.resolved; });
+    if(typeFilters.indexOf(type) >= 0 || directFilters.indexOf(type) >= 0) {
+      var msgs = document.getElementById('ai-messages');
+      var userDiv = document.createElement('div');
+      userDiv.className = 'ai-msg ai-msg-user';
+      var labelMap = {
+        all:'All Requests', pending:'Pending WO', machinist:'Machinist Requests',
+        inspection:'Inspection Requests', running:'Running WO', datanomix:'Datanomix Alerts',
+        open:'Open Requests', completed:'Completed Requests', today:"Today", week:"This Week"
+      };
+      userDiv.innerHTML = '<div class="ai-bubble ai-bubble-user">'+labelMap[type]+'</div>';
+      msgs.appendChild(userDiv);
+      msgs.scrollTop = msgs.scrollHeight;
 
-    var lines = [];
-    lines.push('Current date/time: ' + new Date().toLocaleString('en-US',{weekday:'long',hour:'2-digit',minute:'2-digit'}));
-    lines.push('Shop: Hill Manufacturing, Tulsa Oklahoma');
-    lines.push('You are the AI assistant for Miguel Sanchez (admin/tooling manager)');
-    lines.push('');
-    lines.push('=== LIVE FLOOR STATUS ===');
-    if(running.length){
-      lines.push('RUNNING (' + running.length + '):');
-      running.forEach(function(n){
-        var elapsed = n.startedAt && n.startedAt.seconds ? Math.floor((now - n.startedAt.seconds)/60) : 0;
-        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | WO ' + (n.wo||'?') + ' OP ' + (n.op||'?') + ' | ' + elapsed + ' min running' + (n.detail?' | '+n.detail:''));
-      });
-    }
-    if(pending.length){
-      lines.push('PENDING SETUP (' + pending.length + '):');
-      pending.forEach(function(n){
-        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | WO ' + (n.wo||'?') + (n.assignedTo?' | Assigned to: '+n.assignedTo:''));
-      });
-    }
-    if(machReq.length){
-      lines.push('MACHINIST REQUESTS (' + machReq.length + '):');
-      machReq.forEach(function(n){
-        lines.push('  ' + (n.operator||'?') + ' | ' + n.machine + ' | ' + (n.detail||'needs help'));
-      });
-    }
-    if(inspect.length){
-      lines.push('INSPECTIONS NEEDED (' + inspect.length + '):');
-      inspect.forEach(function(n){
-        lines.push('  ' + n.machine + ' | WO ' + (n.wo||'?') + ' | ' + (n.operator||'?'));
-      });
-    }
-    if(onHold.length){
-      lines.push('ON HOLD (' + onHold.length + '):');
-      onHold.forEach(function(n){
-        lines.push('  ' + n.machine + ' | ' + (n.holdReason||'reason unknown'));
-      });
-    }
-    lines.push('');
-    lines.push("=== TODAY'S STATS ===");
-    lines.push('Total requests today: ' + todayNotes.length);
-    lines.push('Completed: ' + completed.length);
-    lines.push('Still open: ' + (todayNotes.length - completed.length));
+      var typingDiv = document.createElement('div');
+      typingDiv.className = 'ai-msg ai-msg-assistant';
+      typingDiv.innerHTML = '<div class="ai-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+      msgs.appendChild(typingDiv);
+      msgs.scrollTop = msgs.scrollHeight;
 
-    // ProShop data if available
-    var psJobs = window._proShopJobs || [];
-    var psActive = psJobs.filter(function(j){ return j.active; });
-    if(psActive.length){
-      lines.push('');
-      lines.push('=== PROSHOP ACTIVE LABOR ===');
-      psActive.forEach(function(j){
-        lines.push('  ' + j.name + ' | WO ' + j.wo + ' OP ' + j.op + ' | ' + j.category + ' | ' + j.elapsed + 'h elapsed' + (j.doing?' | '+j.doing:''));
-      });
+      var data = await _buildAllReceipt(type);
+      typingDiv.remove();
+      addAllReceipt(data);
+      return;
     }
 
-    var wx = window._wx || null;
-    lines.push('');
-    lines.push('=== WEATHER ===');
-    if(wx){
-      lines.push('Tulsa: ' + wx.temp + 'F, ' + wx.desc + '. High ' + wx.hi + ' Low ' + wx.lo);
-    } else {
-      lines.push('Tulsa Oklahoma weather data not yet loaded.');
-    }
-
-    lines.push('');
-    lines.push('=== GENERAL CONTEXT ===');
-    lines.push('City: Tulsa, Oklahoma');
-    lines.push('Industry: CNC Machine Shop / Manufacturing');
-    lines.push('Current user: Miguel Sanchez (tooling manager / admin)');
-    lines.push('Manager: Corey Bartmier');
-
-    return lines.join("\n");
-  }
-
-
-
-  window._sendAIChat = async function(){
     var input = document.getElementById('ai-input');
-    var msg = (input.value || '').trim();
-    if(!msg || _chatThinking) return;
-    input.value = '';
-    input.style.height = '44px';
-
-    // Add user message
-    addMessage('user', msg);
-    _chatHistory.push({role:'user', content: msg});
-
-    // Define msgLower HERE so every branch below can use it
-    var msgLower = msg.toLowerCase();
-    var woMatch = msg.match(/(26-?\d{4}|25-?\d{4}|24-?\d{4}|WO[\s-]?\d+|\d{5,6})/i);
-    if(woMatch || /work order|WO#|lookup|receipt|pull up|show me/i.test(msg)){
-      var woNum = woMatch ? woMatch[0].toUpperCase().replace(/\s/g,'') : null;
-      if(woNum){
-        _chatThinking = true;
-        var typingEl = addTyping();
-        var receipt = await _buildWOReceipt(woNum);
-        typingEl.remove();
-        _chatThinking = false;
-        receipt.wo = woNum;
-        addFullReceipt(receipt, 'WO');
-        _chatHistory.push({role:'assistant', content: 'Receipt shown for WO ' + woNum});
-        return;
-      }
-    }
-
-    // Check for request TYPE search
-    var typeSearchMap = {
-      'pending': 'blue', 'pending wo': 'blue',
-      'machinist': 'yellow', 'machinist req': 'yellow', 'machinist request': 'yellow',
-      'inspection': 'red',
-      'datanomix': 'dnx', 'dnx': 'dnx',
-      'floor support': 'orange', 'support': 'orange',
-      'running': 'green', 'running wo': 'green'
-    };
-    var typeFound = null;
-    Object.keys(typeSearchMap).forEach(function(k){
-      if(msgLower.indexOf(k) >= 0) typeFound = typeSearchMap[k];
-    });
-    if(typeFound && !/jimmy|dingo|corey|bryan|caleb|chuck|jacob|jared|justin|keith|matthew|miguel|mike|rhett|scott|sean|steven|tony|tyler|brett|hank|daniel/i.test(msg)){
-      _chatThinking = true;
-      var typingElT = addTyping();
-      var typeReceipt = await _buildTypeReceipt(typeFound, msg);
-      typingElT.remove();
-      _chatThinking = false;
-      addFullReceipt(typeReceipt, 'TYPE');
-      return;
-    }
-
-    // Check for machine search
-    var machines = ['1050-B','7000','VF-6','5100-B','2500','PUMA-3','ST35','VF-3','VF-2','PUMA-2','403-A','403-B','403-C','5100-A','3000-C','3000-A','2G','PUMA-1','303-B','TWIN','2500-Y','SHARP','SH-403','5000','SYIL','EMCO','SAW'];
-    var machineFound = null;
-    machines.forEach(function(m){
-      if(msgLower.indexOf(m.toLowerCase()) >= 0) machineFound = m;
-    });
-    if(machineFound){
-      _chatThinking = true;
-      var typingElM = addTyping();
-      var machReceipt = await _buildMachineReceipt(machineFound);
-      typingElM.remove();
-      _chatThinking = false;
-      addFullReceipt(machReceipt, 'MACHINE');
-      return;
-    }
-
-    // Check for "requests to me" / "sent to me" queries
-    if(/sent to me|my requests|requests to me|how many.*sent|who sent|count.*requests/i.test(msg)){
-      _chatThinking = true;
-      var typingEl3 = addTyping();
-      var myReceipt = await _buildRequestsToMeReceipt();
-      typingEl3.remove();
-      _chatThinking = false;
-      addRequestsToMeMessage(myReceipt);
-      _chatHistory.push({role:'assistant', content: 'Here is your incoming request summary'});
-      return;
-    }
-
-    // Check if message is a machinist name lookup
-    var machinists = ['Brett Thompson', 'Bryan Sturman', 'Caleb Dooley', 'Chuck Whitfield', 'Corey Bartmier', 'Daniel McGarvey', 'Dingo Mikles', 'Hank Anglin', 'Jacob Nail', 'Jared Stuart', 'Jimmy Pollard', 'Justin Gray', 'Keith Groden', 'Matthew Carrico', 'Miguel Sanchez', 'Mike Payne', 'Rhett Dawson', 'Scott Smith', 'Sean Surratt', 'Steven Riggs', 'Tony Lang', 'Tyler Stockham'];
-    var foundMachinist = null;
-    machinists.forEach(function(name){
-      if(msgLower.indexOf(name.toLowerCase()) >= 0) foundMachinist = name;
-      // Also match first name only
-      var first = name.split(' ')[0].toLowerCase();
-      if(first.length > 3 && msgLower.indexOf(first) >= 0 && !foundMachinist) foundMachinist = name;
-    });
-    if(foundMachinist){
-      // Always fetch real data and pass to Claude for accurate answers
-      _chatThinking = true;
-      var typingEl2 = addTyping();
-      var mReceipt = await _buildMachinistReceipt(foundMachinist);
-      typingEl2.remove();
-      _chatThinking = false;
-      // Show the receipt UI directly — no worker needed for display
-      mReceipt.name = foundMachinist;
-      addFullReceipt(mReceipt, 'MACHINIST');
-      _chatHistory.push({role:'assistant', content: 'Showed receipt for ' + foundMachinist});
-      return;
-    }
-
-    // General question — send to Claude via worker
-    _chatThinking = true;
-    var typingEl = addTyping();
-
-    try {
-      var resp = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          system: 'You are Sparky, the AI assistant for Hill Manufacturing shop floor app. You help machinists, supervisors, and Miguel (admin) with questions about their floor. You can answer general questions and give helpful advice about machining, tooling, work orders, and shop operations. Keep answers concise and practical.',
-          messages: _chatHistory.slice(-10)
-        })
-      });
-      var data = await resp.json();
-      var text = data.content && data.content[0] && data.content[0].text;
-      typingEl.remove();
-      _chatThinking = false;
-      if(text){
-        addMessage('assistant', text);
-        _chatHistory.push({role:'assistant', content: text});
-      } else {
-        // Show raw response to help debug worker issues
-        var errDetail = data.error ? data.error : (data.type || JSON.stringify(data).slice(0,120));
-        addMessage('assistant', 'Worker returned no text. Raw: ' + errDetail + '\n\nCheck your Cloudflare worker /claude route.');
-      }
-    } catch(e) {
-      typingEl.remove();
-      _chatThinking = false;
-      addMessage('assistant', 'Connection error: ' + e.message + '. Make sure the Cloudflare worker is running.');
-    }
+    input.value = type;
+    window._sendAIChat();
   };
 
-  function addMessage(role, text){
-    var msgs = document.getElementById('ai-messages');
-    if(!msgs) return;
-    var div = document.createElement('div');
-    div.className = 'ai-msg ai-msg-' + role;
-    var bubble = document.createElement('div');
-    bubble.className = 'ai-bubble';
-    bubble.textContent = text;
-    div.appendChild(bubble);
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
-    return div;
-  }
-
-  // ── TYPE RECEIPT BUILDER ──────────────────────────────────
-  async function _buildTypeReceipt(type, originalMsg){
+  // ── BUILD ALL REQUESTS RECEIPT ────────────────────────────
+  async function _buildAllReceipt(filter) {
     var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return {type:type, requests:[]};
-    var requests = [];
+    if(!db2||!mods) return {requests:[]};
     try {
-      var snap = await mods.getDocs(
-        mods.query(mods.collection(db2,'hillRequests'),
-          mods.where('type','==',type),
-          mods.orderBy('createdAt','desc'),
-          mods.limit(200))
-      );
-      if(snap && !snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
-    } catch(e){ console.warn('Type receipt:', e.message); }
-    return {type:type, requests:requests, query:originalMsg};
-  }
+      var snap = await mods.getDocs(mods.collection(db2,'hillRequests'));
+      var now = new Date();
+      var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      var weekStart  = new Date(todayStart); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
 
-  // ── MACHINE RECEIPT BUILDER ────────────────────────────────
-  async function _buildMachineReceipt(machine){
-    var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return {machine:machine, requests:[]};
-    var requests = [];
-    try {
-      var snap = await mods.getDocs(
-        mods.query(mods.collection(db2,'hillRequests'),
-          mods.where('machine','==',machine),
-          mods.orderBy('createdAt','desc'),
-          mods.limit(200))
-      );
-      if(snap && !snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
-    } catch(e){ console.warn('Machine receipt:', e.message); }
-    return {machine:machine, requests:requests};
-  }
+      var reqs = [];
+      snap.forEach(function(d){
+        var r = Object.assign({id:d.id}, d.data());
+        var ts = r.createdAt && r.createdAt.seconds ? new Date(r.createdAt.seconds*1000) : null;
 
-  // ── UNIFIED FULL RECEIPT DISPLAY + PRINT ──────────────────
-  function addFullReceipt(data, searchType){
-    var msgs = document.getElementById('ai-messages');
-    if(!msgs) return;
-    var div = document.createElement('div');
-    div.className = 'ai-msg ai-msg-assistant';
-    var reqs = data.requests || [];
+        if (filter === 'open'      && r.resolved) return;
+        if (filter === 'completed' && !r.resolved) return;
+        if (filter === 'today'     && (!ts || ts < todayStart)) return;
+        if (filter === 'week'      && (!ts || ts < weekStart)) return;
+        if (filter === 'pending'   && r.type !== 'blue') return;
+        if (filter === 'machinist' && r.type !== 'yellow') return;
+        if (filter === 'inspection'&& r.type !== 'red') return;
+        if (filter === 'running'   && r.type !== 'green') return;
+        if (filter === 'datanomix' && r.type !== 'dnx') return;
 
-    var typeLabel = {red:'🔴 Inspection', yellow:'🟡 Machinist Req', blue:'🔵 Pending WO', green:'🟢 Running WO', orange:'🟠 Floor Support', dnx:'🔷 Datanomix'};
-    var typeColor = {red:'#f87171', yellow:'#fbbf24', blue:'#60a5fa', green:'#4ade80', orange:'#fb923c', dnx:'#7dd3fc'};
-
-    // Title
-    var title = searchType === 'TYPE' ? (typeLabel[data.type] || data.type) + ' — All Requests'
-              : searchType === 'MACHINE' ? '📍 ' + data.machine + ' — All Requests'
-              : searchType === 'MACHINIST' ? '👤 ' + data.name
-              : data.wo ? 'WO ' + data.wo : (data.name || 'Search Results');
-
-    if(!reqs.length){
-      div.innerHTML = '<div class="ai-bubble">No records found for <strong>' + title + '</strong>.</div>';
-      msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; return;
+        reqs.push(r);
+      });
+      reqs.sort(function(a,b){
+        var ta = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : 0;
+        var tb = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : 0;
+        return tb - ta;
+      });
+      return {requests: reqs, filter: filter};
+    } catch(e) {
+      return {requests:[], error: e.message};
     }
-
-    // Stats
-    var completed = reqs.filter(function(r){return r.resolved;}).length;
-    var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
-    var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'';
-
-    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;max-width:100%;">';
-
-    // Header
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #1e3a5f;">';
-    html += '<div><div style="font-size:11px;color:#475569;letter-spacing:1px;">HILL MANUFACTURING REPORT</div>'
-          + '<div style="font-size:16px;font-weight:700;color:#f5c842;">'+title+'</div>'
-          + '<div style="font-size:11px;color:#475569;margin-top:2px;">'+reqs.length+' requests · '+completed+' completed'+(totalStr?' · ⏱ '+totalStr+' tracked':'')+'</div></div>';
-    html += '<button onclick="window._printFullReceipt(this)" data-title="'+title+'" style="background:rgba(255,255,255,0.06);border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;flex-shrink:0;">🖨 PDF</button>';
-    html += '</div>';
-
-    // Request rows
-    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:6px;">REQUEST TRAIL</div>';
-    reqs.forEach(function(r){
-      var dateStr = r.createdAt && r.createdAt.seconds
-        ? new Date(r.createdAt.seconds*1000).toLocaleString('en-US',{month:'numeric',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
-      var color = typeColor[r.type] || '#94a3b8';
-      var label = (typeLabel[r.type] || r.type || '').replace(/[🔴🟡🔵🟢🟠🔷]/,'').trim();
-      var status = r.resolved ? '✅' : r.onHold ? '⏸ Hold' : r.inProgress ? '⏱ Running' : '🔵 Open';
-      html += '<div style="border-left:3px solid '+color+';padding:6px 8px;margin-bottom:5px;background:rgba(255,255,255,0.02);border-radius:0 6px 6px 0;">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">';
-      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
-      html += '<span style="font-size:10px;background:'+color+'22;color:'+color+';border-radius:3px;padding:1px 5px;font-weight:700;">'+label+'</span>';
-      if(r.machine) html += '<span style="font-size:11px;color:#f0f4f8;font-weight:700;">'+r.machine+'</span>';
-      if(r.wo) html += '<span style="font-size:10px;color:#64748b;">WO '+r.wo+'</span>';
-      if(r.op) html += '<span style="font-size:10px;color:#475569;">OP '+r.op+'</span>';
-      html += '</div>';
-      html += '<span style="font-size:9px;color:#334155;">'+dateStr+'</span>';
-      html += '</div>';
-      if(r.operator) html += '<div style="font-size:10px;color:#64748b;margin-top:2px;">👤 '+r.operator+'</div>';
-      if(r.detail) html += '<div style="font-size:10px;color:#475569;margin-top:1px;">'+r.detail+'</div>';
-      if(r.assignedTo) html += '<div style="font-size:10px;color:#7dd3fc;margin-top:1px;">🔧 → '+r.assignedTo+'</div>';
-      if(r.elapsedStr) html += '<div style="font-size:10px;color:#f5c842;margin-top:1px;">⏱ '+r.elapsedStr+'</div>';
-      if(r.holdReason) html += '<div style="font-size:10px;color:#f97316;margin-top:1px;">⏸ '+r.holdReason+'</div>';
-      html += '<div style="font-size:10px;margin-top:2px;">'+status+'</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-
-    // Store data for printing
-    div.setAttribute('data-receipt', JSON.stringify({title:title, reqs:reqs.slice(0,200)}));
-    div.innerHTML = html;
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
   }
 
-  window._printFullReceipt = function(btn){
+  // ── PRINT ALL RECEIPT ─────────────────────────────────────
+  window._printAllReceipt = function(btn) {
     var container = btn.closest('[data-receipt]');
     if(!container) return;
     var data = JSON.parse(container.getAttribute('data-receipt'));
@@ -13028,377 +12777,523 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var ts = r.createdAt && r.createdAt.seconds ? new Date(r.createdAt.seconds*1000).toLocaleString() : '';
       var color = typeColor[r.type] || '#333';
       var label = typeLabel[r.type] || r.type || '';
+      var status = r.resolved ? '✅ Done' : r.onHold ? '⏸ Hold' : r.inProgress ? '⏱ Running' : '🔵 Open';
       return '<tr>'
         +'<td>'+ts+'</td>'
         +'<td style="color:'+color+';font-weight:bold;">'+label+'</td>'
-        +'<td>'+( r.machine||'')+'</td>'
+        +'<td>'+(r.machine||'')+'</td>'
         +'<td>'+(r.wo||'')+(r.op?' OP'+r.op:'')+'</td>'
         +'<td>'+(r.operator||'')+'</td>'
         +'<td>'+(r.assignedTo||'')+'</td>'
         +'<td>'+(r.detail||'')+'</td>'
         +'<td>'+(r.elapsedStr||'—')+'</td>'
-        +'<td>'+(r.resolved?'✅ Done':r.onHold?'⏸ Hold':r.inProgress?'Running':'Open')+'</td>'
+        +'<td>'+status+'</td>'
         +'</tr>';
     }).join('');
 
+    var title = data.title || 'All Requests';
+    var completed = reqs.filter(function(r){return r.resolved;}).length;
+    var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
     var win = window.open('','_blank');
-    win.document.write(`<!DOCTYPE html><html><head><title>${data.title} — Hill Manufacturing</title>
-    <style>
-      body{font-family:Arial,sans-serif;padding:24px;color:#222;}
-      h1{font-size:20px;margin-bottom:4px;}
-      h2{font-size:14px;color:#666;font-weight:normal;margin-bottom:16px;}
-      table{width:100%;border-collapse:collapse;font-size:11px;}
-      th{background:#1a2744;color:#fff;padding:7px 8px;text-align:left;}
-      td{padding:6px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;}
-      tr:nth-child(even){background:#f9fafb;}
-      .stats{display:flex;gap:24px;margin-bottom:16px;padding:12px;background:#f3f4f6;border-radius:6px;}
-      .stat{text-align:center;} .stat-num{font-size:20px;font-weight:bold;color:#1a2744;} .stat-lbl{font-size:11px;color:#666;}
-      @media print{button{display:none!important;}.no-print{display:none!important;}}
-    </style></head><body>
-    <div class="no-print" style="margin-bottom:16px;">
-      <button onclick="window.print()" style="padding:8px 20px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button>
-    </div>
-    <h1>Hill Manufacturing — ${data.title}</h1>
-    <h2>Generated: ${new Date().toLocaleString()} &nbsp;|&nbsp; Total: ${reqs.length} requests</h2>
-    <div class="stats">
-      <div class="stat"><div class="stat-num">${reqs.length}</div><div class="stat-lbl">Total</div></div>
-      <div class="stat"><div class="stat-num">${reqs.filter(r=>r.resolved).length}</div><div class="stat-lbl">Completed</div></div>
-      <div class="stat"><div class="stat-num">${reqs.filter(r=>!r.resolved).length}</div><div class="stat-lbl">Open</div></div>
-      <div class="stat"><div class="stat-num">${Math.round(reqs.reduce((s,r)=>s+(r.elapsedMins||0),0))}m</div><div class="stat-lbl">Time Tracked</div></div>
-    </div>
-    <table>
-      <thead><tr><th>Date / Time</th><th>Type</th><th>Machine</th><th>WO / OP</th><th>Operator</th><th>Assigned To</th><th>Details</th><th>Time</th><th>Status</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </body></html>`);
+    win.document.write('<!DOCTYPE html><html><head><title>'+title+' — Hill Manufacturing</title>'
+      +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#222;}h1{font-size:20px;margin-bottom:4px;}h2{font-size:13px;color:#666;font-weight:normal;margin-bottom:16px;}table{width:100%;border-collapse:collapse;font-size:11px;}th{background:#1a2744;color:#fff;padding:7px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;}tr:nth-child(even){background:#f9fafb;}.stats{display:flex;gap:20px;margin-bottom:16px;padding:12px;background:#f3f4f6;border-radius:6px;}.stat{text-align:center;}.stat-num{font-size:20px;font-weight:bold;color:#1a2744;}.stat-lbl{font-size:11px;color:#666;}@media print{.no-print{display:none!important;}}</style></head><body>'
+      +'<div class="no-print" style="margin-bottom:16px;"><button onclick="window.print()" style="padding:8px 20px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button></div>'
+      +'<h1>Hill Manufacturing — '+title+'</h1>'
+      +'<h2>Generated: '+new Date().toLocaleString()+' | Total: '+reqs.length+' requests</h2>'
+      +'<div class="stats">'
+      +'<div class="stat"><div class="stat-num">'+reqs.length+'</div><div class="stat-lbl">Total</div></div>'
+      +'<div class="stat"><div class="stat-num">'+completed+'</div><div class="stat-lbl">Completed</div></div>'
+      +'<div class="stat"><div class="stat-num">'+(reqs.length-completed)+'</div><div class="stat-lbl">Open</div></div>'
+      +'<div class="stat"><div class="stat-num">'+totalMins+'m</div><div class="stat-lbl">Time Tracked</div></div>'
+      +'</div>'
+      +'<table><thead><tr><th>Date/Time</th><th>Type</th><th>Machine</th><th>WO/OP</th><th>Operator</th><th>Assigned To</th><th>Details</th><th>Time</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table>'
+      +'</body></html>');
     win.document.close();
   };
 
-  function addTyping(){
-    var msgs = document.getElementById('ai-messages');
-    var div = document.createElement('div');
-    div.className = 'ai-msg ai-msg-assistant';
-    div.innerHTML = '<div class="ai-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
-    return div;
-  }
-
-  // ── WO RECEIPT BUILDER ────────────────────────────────────
-  async function _buildWOReceipt(woNum){
-    var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return {wo:woNum, requests:[], error:'Not connected'};
-
-    // Normalize WO — try with and without dashes
-    var woClean = woNum.replace(/^WO[-\s]?/i,'').replace(/-/g,'');
-    var woDashed = woClean.length === 6 ? woClean.slice(0,2)+'-'+woClean.slice(2) : woNum;
-
-    var requests = [];
-    try {
-      // Search hillRequests for this WO
-      var snaps = await Promise.all([
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('wo','==',woNum))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('wo','==',woDashed))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('wo','==',woClean))),
-      ]);
-      var seen = {};
-      snaps.forEach(function(snap){
-        if(!snap||snap.empty) return;
-        snap.forEach(function(d){
-          if(seen[d.id]) return;
-          seen[d.id] = true;
-          var r = d.data(); r.id = d.id;
-          requests.push(r);
-        });
-      });
-    } catch(e){ console.warn('WO lookup error:', e.message); }
-
-    // Also check hillTimeLog
-    var timeLogs = [];
-    try {
-      var tlSnap = await mods.getDocs(
-        mods.query(mods.collection(db2,'hillTimeLog'), mods.where('wo','==',woDashed))
-      );
-      if(tlSnap && !tlSnap.empty){
-        tlSnap.forEach(function(d){ var t=d.data(); t.id=d.id; timeLogs.push(t); });
-      }
-    } catch(e){}
-
-    return { wo: woDashed||woNum, requests: requests, timeLogs: timeLogs };
-  }
-
-  // ── REQUESTS TO ME RECEIPT ───────────────────────────────────
-  async function _buildRequestsToMeReceipt(){
-    var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return {requests:[]};
-    var requests = [];
-    try {
-      var snap = await mods.getDocs(
-        mods.query(
-          mods.collection(db2,'hillRequests'),
-          mods.where('resolvedBy','==','hilladmin'),
-          mods.orderBy('resolvedAt','desc'),
-          mods.limit(500)
-        )
-      );
-      if(snap && !snap.empty){
-        snap.forEach(function(d){
-          var r=d.data(); r.id=d.id;
-          if(r.type==='blue'||r.type==='yellow') requests.push(r);
-        });
-      }
-    } catch(e){ console.warn('Requests to me:', e.message); }
-    return {requests:requests};
-  }
-
-  function addRequestsToMeMessage(data){
+  // ── DISPLAY ALL REQUESTS ──────────────────────────────────
+  function addAllReceipt(data) {
     var msgs = document.getElementById('ai-messages');
     if(!msgs) return;
     var div = document.createElement('div');
     div.className = 'ai-msg ai-msg-assistant';
     var reqs = data.requests || [];
+    var filterLabel = {
+      all:'All Requests', pending:'Pending WO', machinist:'Machinist Requests',
+      inspection:'Inspection Requests', running:'Running WO', datanomix:'Datanomix Alerts',
+      open:'Open Requests', completed:'Completed Requests', today:"Today's Requests", week:"This Week's Requests"
+    };
+    var title = filterLabel[data.filter] || 'All Requests';
+    var typeLabel = {red:'🔴 Inspection',yellow:'🟡 Machinist',blue:'🔵 Pending WO',green:'🟢 Running WO',orange:'🟠 Floor Support',dnx:'🔷 Datanomix'};
+    var typeColor = {red:'#f87171',yellow:'#fbbf24',blue:'#60a5fa',green:'#4ade80',orange:'#fb923c',dnx:'#7dd3fc'};
+
+    var completed = reqs.filter(function(r){return r.resolved;}).length;
+    var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
+    var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'';
 
     if(!reqs.length){
-      div.innerHTML = '<div class="ai-bubble">No completed requests found for you yet. Complete some Pending WO or Machinist Requests and they will show up here.</div>';
+      div.innerHTML = '<div class="ai-bubble">No records found for <strong>'+title+'</strong>.</div>';
       msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return;
     }
 
-    // Count by who submitted (operator field)
-    var byOperator = {};
-    var byType = {blue:0, yellow:0};
-    var totalMins = 0;
-    reqs.forEach(function(r){
-      var op = r.operator || 'Unknown';
-      if(!byOperator[op]) byOperator[op] = {total:0, blue:0, yellow:0, mins:0};
-      byOperator[op].total++;
-      if(r.type==='blue') { byOperator[op].blue++; byType.blue++; }
-      if(r.type==='yellow') { byOperator[op].yellow++; byType.yellow++; }
-      byOperator[op].mins += r.elapsedMins||0;
-      totalMins += r.elapsedMins||0;
-    });
+    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;max-width:100%;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #1e3a5f;">';
+    html += '<div><div style="font-size:11px;color:#475569;letter-spacing:1px;">HILL MANUFACTURING</div>'
+          + '<div style="font-size:16px;font-weight:700;color:#f5c842;">'+title+'</div>'
+          + '<div style="font-size:11px;color:#475569;margin-top:2px;">'+reqs.length+' records · '+completed+' completed'+(totalStr?' · ⏱ '+totalStr:'')+'</div></div>';
+    html += '<button onclick="window._printAllReceipt(this)" style="background:rgba(255,255,255,0.06);border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;flex-shrink:0;">🖨 PDF</button>';
+    html += '</div>';
 
-    var sortedOps = Object.entries(byOperator).sort(function(a,b){return b[1].total-a[1].total;});
-    var totalStr = totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m';
-
-    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;min-width:260px;max-width:100%;">';
-    html += '<div style="padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #1e3a5f;">';
-    html += '<div style="font-size:11px;color:#475569;letter-spacing:1px;">REQUESTS TO ME</div>';
-    html += '<div style="font-size:18px;font-weight:700;color:#f5c842;">Miguel Sanchez</div>';
-    html += '<div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">';
-    html += '<span style="font-size:11px;color:#94a3b8;">'+reqs.length+' total</span>';
-    html += '<span style="font-size:11px;color:#60a5fa;">🔵 '+byType.blue+' Pending WO</span>';
-    html += '<span style="font-size:11px;color:#fbbf24;">🟡 '+byType.yellow+' Machinist Req</span>';
-    if(totalMins>0) html += '<span style="font-size:11px;color:#f5c842;">⏱ '+totalStr+' tracked</span>';
-    html += '</div></div>';
-
-    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:8px;">SENT BY</div>';
-    sortedOps.forEach(function(entry){
-      var op=entry[0], d=entry[1];
-      var opStr = d.mins>0?(d.mins>=60?Math.floor(d.mins/60)+'h '+(d.mins%60)+'m':d.mins+'m'):'';
-      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #0d1f35;">';
-      html += '<span style="font-size:12px;color:#f0f4f8;font-weight:700;flex:1;">'+op+'</span>';
-      if(d.blue>0) html += '<span style="font-size:10px;color:#60a5fa;background:rgba(96,165,250,0.1);border-radius:4px;padding:1px 6px;">🔵 '+d.blue+'</span>';
-      if(d.yellow>0) html += '<span style="font-size:10px;color:#fbbf24;background:rgba(251,191,36,0.1);border-radius:4px;padding:1px 6px;">🟡 '+d.yellow+'</span>';
-      html += '<span style="font-size:11px;color:#94a3b8;font-weight:700;">'+d.total+' total</span>';
-      if(opStr) html += '<span style="font-size:10px;color:#f5c842;">⏱'+opStr+'</span>';
-      html += '</div>';
+    var byType = {};
+    reqs.forEach(function(r){ byType[r.type] = (byType[r.type]||0)+1; });
+    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">';
+    Object.keys(byType).forEach(function(t){
+      var c = typeColor[t]||'#94a3b8';
+      var l = (typeLabel[t]||t).replace(/[🔴🟡🔵🟢🟠🔷]/,'').trim();
+      html += '<span style="background:'+c+'22;color:'+c+';border:1px solid '+c+'44;border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700;">'+l+': '+byType[t]+'</span>';
     });
     html += '</div>';
 
+    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:6px;">REQUEST TRAIL</div>';
+    reqs.slice(0,150).forEach(function(r){
+      var dateStr = r.createdAt && r.createdAt.seconds
+        ? new Date(r.createdAt.seconds*1000).toLocaleString('en-US',{month:'numeric',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+      var color = typeColor[r.type]||'#94a3b8';
+      var label = (typeLabel[r.type]||r.type||'').replace(/[🔴🟡🔵🟢🟠🔷]/,'').trim();
+      var status = r.resolved?'✅':r.onHold?'⏸':r.inProgress?'⏱':'🔵';
+      html += '<div style="border-left:3px solid '+color+';padding:6px 8px;margin-bottom:4px;background:rgba(255,255,255,0.02);border-radius:0 6px 6px 0;">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">';
+      html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      html += '<span style="font-size:9px;background:'+color+'22;color:'+color+';border-radius:3px;padding:1px 5px;font-weight:700;">'+label+'</span>';
+      if(r.machine) html += '<span style="font-size:11px;color:#f0f4f8;font-weight:700;">'+r.machine+'</span>';
+      if(r.wo)      html += '<span style="font-size:10px;color:#64748b;">WO '+r.wo+'</span>';
+      if(r.op)      html += '<span style="font-size:10px;color:#475569;">OP '+r.op+'</span>';
+      html += '<span style="font-size:11px;">'+status+'</span>';
+      html += '</div>';
+      html += '<span style="font-size:9px;color:#334155;">'+dateStr+'</span>';
+      html += '</div>';
+      if(r.operator)   html += '<div style="font-size:10px;color:#64748b;margin-top:1px;">👤 '+r.operator+'</div>';
+      if(r.detail)     html += '<div style="font-size:10px;color:#475569;margin-top:1px;">'+r.detail+'</div>';
+      if(r.assignedTo) html += '<div style="font-size:10px;color:#7dd3fc;margin-top:1px;">→ '+r.assignedTo+'</div>';
+      if(r.elapsedStr) html += '<div style="font-size:10px;color:#f5c842;margin-top:1px;">⏱ '+r.elapsedStr+'</div>';
+      html += '</div>';
+    });
+    if(reqs.length > 150) html += '<div style="font-size:11px;color:#475569;text-align:center;padding:8px;">Showing 150 of '+reqs.length+' — use PDF for full export</div>';
+    html += '</div>';
+
+    div.setAttribute('data-receipt', JSON.stringify({title:title, reqs:reqs.slice(0,500)}));
     div.innerHTML = html;
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  window._sendAIChat = async function(){
+    var input = document.getElementById('ai-input');
+    var msg = (input.value || '').trim();
+    if(!msg || _chatThinking) return;
+    input.value = '';
+    input.style.height = '44px';
+
+    addMessage('user', msg);
+    _chatHistory.push({role:'user', content: msg});
+
+    var msgLower = msg.toLowerCase();
+
+    // WO lookup
+    var woMatch = msg.match(/(2\d-\d{4}|\d{2}-\d{4}|WO[\s\-#]?\d+)/i);
+    if(woMatch || /work order|WO#|lookup|receipt|pull up|show me/i.test(msg)){
+      var woNum = woMatch ? woMatch[0].toUpperCase().replace(/\s/g,'') : null;
+      if(woNum){
+        _chatThinking = true;
+        var typingEl = addTyping();
+        var receipt = await _buildWOReceipt(woNum);
+        typingEl.remove(); _chatThinking = false;
+        receipt.wo = woNum;
+        addFullReceipt(receipt, 'WO');
+        _chatHistory.push({role:'assistant', content: 'Receipt shown for WO ' + woNum});
+        return;
+      }
+    }
+
+    // Part number search
+    var partMatch = msg.match(/part[#\s:]*([A-Za-z0-9][A-Za-z0-9\.\-]{2,})/i) || (!woMatch && msg.match(/([A-Za-z0-9]{2,}[\.\-][A-Za-z0-9]{2,}[A-Za-z0-9\.\-]*)/));
+    if(partMatch && !woMatch){
+      var partNum2 = (partMatch[1]||'').trim();
+      if(!/^\d+$/.test(partNum2)){
+        _chatThinking=true; var typingElP=addTyping();
+        var partReceipt=await _buildPartReceipt(partNum2);
+        typingElP.remove(); _chatThinking=false;
+        addFullReceipt(partReceipt,'PART');
+        _chatHistory.push({role:'assistant',content:'Showing results for part '+partNum2});
+        return;
+      }
+    }
+
+    // ALL / open / completed / today / week
+    if(/^all requests?$|^all$|^show all|^everything/i.test(msg.trim())){
+      _chatThinking=true; var tElA=addTyping();
+      var allData=await _buildAllReceipt('all');
+      tElA.remove(); _chatThinking=false; addAllReceipt(allData);
+      _chatHistory.push({role:'assistant',content:'Showing all requests'}); return;
+    }
+    if(/^open requests?$|^open$/i.test(msg.trim())){
+      _chatThinking=true; var tEl=addTyping();
+      var d=await _buildAllReceipt('open');
+      tEl.remove(); _chatThinking=false; addAllReceipt(d); return;
+    }
+    if(/^completed requests?$|^completed$/i.test(msg.trim())){
+      _chatThinking=true; var tEl2=addTyping();
+      var d2=await _buildAllReceipt('completed');
+      tEl2.remove(); _chatThinking=false; addAllReceipt(d2); return;
+    }
+    if(/^today'?s? requests?$|^today$/i.test(msg.trim())){
+      _chatThinking=true; var tEl3=addTyping();
+      var d3=await _buildAllReceipt('today');
+      tEl3.remove(); _chatThinking=false; addAllReceipt(d3); return;
+    }
+    if(/^this week'?s? requests?$|^this week$/i.test(msg.trim())){
+      _chatThinking=true; var tEl4=addTyping();
+      var d4=await _buildAllReceipt('week');
+      tEl4.remove(); _chatThinking=false; addAllReceipt(d4); return;
+    }
+
+    // Type search
+    var typeSearchMap = {
+      'pending':'blue','pending wo':'blue',
+      'machinist':'yellow','machinist req':'yellow','machinist request':'yellow',
+      'inspection':'red',
+      'datanomix':'dnx','dnx':'dnx',
+      'floor support':'orange','support':'orange',
+      'running':'green','running wo':'green'
+    };
+    var typeFound = null;
+    Object.keys(typeSearchMap).forEach(function(k){ if(msgLower.indexOf(k)>=0) typeFound=typeSearchMap[k]; });
+    if(typeFound && !/jimmy|dingo|corey|bryan|caleb|chuck|jacob|jared|justin|keith|matthew|miguel|mike|rhett|scott|sean|steven|tony|tyler|brett|hank|daniel/i.test(msg)){
+      _chatThinking=true; var typingElT=addTyping();
+      var typeReceipt=await _buildTypeReceipt(typeFound, msg);
+      typingElT.remove(); _chatThinking=false;
+      addFullReceipt(typeReceipt,'TYPE'); return;
+    }
+
+    // Machine search
+    var allMachines=['1050-B','7000','VF-6','5100-B','2500','PUMA-3','ST35','VF-3','VF-2','PUMA-2','403-A','403-B','403-C','5100-A','3000-C','3000-A','2G','PUMA-1','303-B','TWIN','2500-Y','SHARP','SH-403','5000','SYIL','EMCO','SAW'];
+    var machineFound=null;
+    allMachines.forEach(function(m){ if(msgLower.indexOf(m.toLowerCase())>=0) machineFound=m; });
+    if(machineFound){
+      _chatThinking=true; var typingElM=addTyping();
+      var machReceipt=await _buildMachineReceipt(machineFound);
+      typingElM.remove(); _chatThinking=false;
+      addFullReceipt(machReceipt,'MACHINE'); return;
+    }
+
+    // Requests to me
+    if(/sent to me|my requests|requests to me|how many.*sent|who sent|count.*requests/i.test(msg)){
+      _chatThinking=true; var typingEl3=addTyping();
+      var myReceipt=await _buildRequestsToMeReceipt();
+      typingEl3.remove(); _chatThinking=false;
+      addRequestsToMeMessage(myReceipt);
+      _chatHistory.push({role:'assistant',content:'Incoming request summary shown'}); return;
+    }
+
+    // Machinist name search
+    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham'];
+    var foundMachinist=null;
+    machinists.forEach(function(name){
+      if(msgLower.indexOf(name.toLowerCase())>=0) foundMachinist=name;
+      var first=name.split(' ')[0].toLowerCase();
+      if(first.length>3 && msgLower.indexOf(first)>=0 && !foundMachinist) foundMachinist=name;
+    });
+    if(foundMachinist){
+      _chatThinking=true; var typingEl2=addTyping();
+      var mReceipt=await _buildMachinistReceipt(foundMachinist);
+      typingEl2.remove(); _chatThinking=false;
+      mReceipt.name=foundMachinist;
+      addFullReceipt(mReceipt,'MACHINIST');
+      _chatHistory.push({role:'assistant',content:'Showing all requests for '+foundMachinist}); return;
+    }
+
+    // General fallback → Claude via worker
+    _chatThinking=true; var typingElG=addTyping();
+    try {
+      var resp=await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/claude',{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          system:'You are Sparky, the AI assistant for Hill Manufacturing shop floor app. Answer questions about machining, tooling, work orders, and shop operations. Be concise and practical.',
+          messages:_chatHistory.slice(-10)
+        })
+      });
+      var gdata=await resp.json();
+      var gtext=gdata.content&&gdata.content[0]&&gdata.content[0].text;
+      typingElG.remove(); _chatThinking=false;
+      if(gtext){ addMessage('assistant',gtext); _chatHistory.push({role:'assistant',content:gtext}); }
+      else { var errDetail=gdata.error?gdata.error:(gdata.type||JSON.stringify(gdata).slice(0,120)); addMessage('assistant','Worker returned no text. Raw: '+errDetail); }
+    } catch(e){
+      typingElG.remove(); _chatThinking=false;
+      addMessage('assistant','Connection error: '+e.message);
+    }
+  };
+
+  function addMessage(role, text){
+    var msgs=document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div=document.createElement('div'); div.className='ai-msg ai-msg-'+role;
+    var bubble=document.createElement('div'); bubble.className='ai-bubble';
+    bubble.textContent=text; div.appendChild(bubble); msgs.appendChild(div);
+    msgs.scrollTop=msgs.scrollHeight; return div;
+  }
+
+  function addTyping(){
+    var msgs=document.getElementById('ai-messages');
+    var div=document.createElement('div'); div.className='ai-msg ai-msg-assistant';
+    div.innerHTML='<div class="ai-bubble"><div class="ai-typing"><span></span><span></span><span></span></div></div>';
+    msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return div;
+  }
+
+  // ── TYPE RECEIPT BUILDER ──────────────────────────────────
+  async function _buildTypeReceipt(type, originalMsg){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {type:type,requests:[]};
+    var requests=[];
+    try {
+      var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('type','==',type),mods.limit(200)));
+      if(snap&&!snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
+    } catch(e){ console.warn('Type receipt:',e.message); }
+    return {type:type,requests:requests,query:originalMsg};
+  }
+
+  // ── MACHINE RECEIPT BUILDER ────────────────────────────────
+  async function _buildMachineReceipt(machine){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {machine:machine,requests:[]};
+    var requests=[];
+    try {
+      var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('machine','==',machine),mods.limit(200)));
+      if(snap&&!snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
+    } catch(e){ console.warn('Machine receipt:',e.message); }
+    return {machine:machine,requests:requests};
+  }
+
+  // ── UNIFIED FULL RECEIPT DISPLAY ──────────────────────────
+  function addFullReceipt(data, searchType){
+    var msgs=document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div=document.createElement('div'); div.className='ai-msg ai-msg-assistant';
+    var reqs=data.requests||[];
+    var typeLabel={red:'🔴 Inspection',yellow:'🟡 Machinist Req',blue:'🔵 Pending WO',green:'🟢 Running WO',orange:'🟠 Floor Support',dnx:'🔷 Datanomix'};
+    var typeColor={red:'#f87171',yellow:'#fbbf24',blue:'#60a5fa',green:'#4ade80',orange:'#fb923c',dnx:'#7dd3fc'};
+
+    var title = searchType==='TYPE'    ? (typeLabel[data.type]||data.type)+' — All Requests'
+              : searchType==='MACHINE'  ? '📍 '+data.machine+' — All Requests'
+              : searchType==='MACHINIST'? '👤 '+data.name
+              : searchType==='PART'     ? '🔩 Part: '+data.part
+              : data.wo                 ? 'WO '+data.wo
+              : (data.name||'Search Results');
+
+    if(!reqs.length){
+      div.innerHTML='<div class="ai-bubble">No records found for <strong>'+title+'</strong>.</div>';
+      msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return;
+    }
+
+    var completed=reqs.filter(function(r){return r.resolved;}).length;
+    var totalMins=reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
+    var totalStr=totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'';
+
+    var html='<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;max-width:100%;">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #1e3a5f;">';
+    html+='<div><div style="font-size:11px;color:#475569;letter-spacing:1px;">HILL MANUFACTURING REPORT</div>'
+         +'<div style="font-size:16px;font-weight:700;color:#f5c842;">'+title+'</div>'
+         +'<div style="font-size:11px;color:#475569;margin-top:2px;">'+reqs.length+' requests · '+completed+' completed'+(totalStr?' · ⏱ '+totalStr+' tracked':'')+'</div></div>';
+    html+='<button onclick="window._printFullReceipt(this)" data-title="'+title+'" style="background:rgba(255,255,255,0.06);border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;flex-shrink:0;">🖨 PDF</button>';
+    html+='</div>';
+
+    html+='<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:6px;">REQUEST TRAIL</div>';
+    reqs.forEach(function(r){
+      var dateStr=r.createdAt&&r.createdAt.seconds?new Date(r.createdAt.seconds*1000).toLocaleString('en-US',{month:'numeric',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+      var color=typeColor[r.type]||'#94a3b8';
+      var label=(typeLabel[r.type]||r.type||'').replace(/[🔴🟡🔵🟢🟠🔷]/,'').trim();
+      var status=r.resolved?'✅':r.onHold?'⏸ Hold':r.inProgress?'⏱ Running':'🔵 Open';
+      html+='<div style="border-left:3px solid '+color+';padding:6px 8px;margin-bottom:5px;background:rgba(255,255,255,0.02);border-radius:0 6px 6px 0;">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">';
+      html+='<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">';
+      html+='<span style="font-size:10px;background:'+color+'22;color:'+color+';border-radius:3px;padding:1px 5px;font-weight:700;">'+label+'</span>';
+      if(r.machine) html+='<span style="font-size:11px;color:#f0f4f8;font-weight:700;">'+r.machine+'</span>';
+      if(r.wo)      html+='<span style="font-size:10px;color:#64748b;">WO '+r.wo+'</span>';
+      if(r.op)      html+='<span style="font-size:10px;color:#475569;">OP '+r.op+'</span>';
+      html+='</div>';
+      html+='<span style="font-size:9px;color:#334155;">'+dateStr+'</span>';
+      html+='</div>';
+      if(r.operator)   html+='<div style="font-size:10px;color:#64748b;margin-top:2px;">👤 '+r.operator+'</div>';
+      if(r.detail)     html+='<div style="font-size:10px;color:#475569;margin-top:1px;">'+r.detail+'</div>';
+      if(r.assignedTo) html+='<div style="font-size:10px;color:#7dd3fc;margin-top:1px;">🔧 → '+r.assignedTo+'</div>';
+      if(r.elapsedStr) html+='<div style="font-size:10px;color:#f5c842;margin-top:1px;">⏱ '+r.elapsedStr+'</div>';
+      if(r.holdReason) html+='<div style="font-size:10px;color:#f97316;margin-top:1px;">⏸ '+r.holdReason+'</div>';
+      html+='<div style="font-size:10px;margin-top:2px;">'+status+'</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+    div.setAttribute('data-receipt',JSON.stringify({title:title,reqs:reqs.slice(0,200)}));
+    div.innerHTML=html; msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
+  }
+
+  window._printFullReceipt = function(btn){
+    var container=btn.closest('[data-receipt]');
+    if(!container) return;
+    var data=JSON.parse(container.getAttribute('data-receipt'));
+    var reqs=data.reqs||[];
+    var typeLabel={red:'Inspection',yellow:'Machinist Req',blue:'Pending WO',green:'Running WO',orange:'Floor Support',dnx:'Datanomix'};
+    var typeColor={red:'#c0392b',yellow:'#d68910',blue:'#1a5276',green:'#1d8348',orange:'#d35400',dnx:'#1a6899'};
+    var rows=reqs.map(function(r){
+      var ts=r.createdAt&&r.createdAt.seconds?new Date(r.createdAt.seconds*1000).toLocaleString():'';
+      var color=typeColor[r.type]||'#333'; var label=typeLabel[r.type]||r.type||'';
+      return '<tr>'+'<td>'+ts+'</td>'+'<td style="color:'+color+';font-weight:bold;">'+label+'</td>'
+        +'<td>'+(r.machine||'')+'</td>'+'<td>'+(r.wo||'')+(r.op?' OP'+r.op:'')+'</td>'
+        +'<td>'+(r.operator||'')+'</td>'+'<td>'+(r.assignedTo||'')+'</td>'+'<td>'+(r.detail||'')+'</td>'
+        +'<td>'+(r.elapsedStr||'—')+'</td>'
+        +'<td>'+(r.resolved?'✅ Done':r.onHold?'⏸ Hold':r.inProgress?'Running':'Open')+'</td>'+'</tr>';
+    }).join('');
+    var win=window.open('','_blank');
+    win.document.write('<!DOCTYPE html><html><head><title>'+data.title+' — Hill Manufacturing</title>'
+      +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#222;}h1{font-size:20px;margin-bottom:4px;}h2{font-size:14px;color:#666;font-weight:normal;margin-bottom:16px;}table{width:100%;border-collapse:collapse;font-size:11px;}th{background:#1a2744;color:#fff;padding:7px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;}tr:nth-child(even){background:#f9fafb;}.stats{display:flex;gap:24px;margin-bottom:16px;padding:12px;background:#f3f4f6;border-radius:6px;}.stat{text-align:center;}.stat-num{font-size:20px;font-weight:bold;color:#1a2744;}.stat-lbl{font-size:11px;color:#666;}@media print{button{display:none!important;}}</style></head><body>'
+      +'<div style="margin-bottom:16px;"><button onclick="window.print()" style="padding:8px 20px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button></div>'
+      +'<h1>Hill Manufacturing — '+data.title+'</h1>'
+      +'<h2>Generated: '+new Date().toLocaleString()+' | Total: '+reqs.length+' requests</h2>'
+      +'<div class="stats">'
+      +'<div class="stat"><div class="stat-num">'+reqs.length+'</div><div class="stat-lbl">Total</div></div>'
+      +'<div class="stat"><div class="stat-num">'+reqs.filter(function(r){return r.resolved;}).length+'</div><div class="stat-lbl">Completed</div></div>'
+      +'<div class="stat"><div class="stat-num">'+reqs.filter(function(r){return !r.resolved;}).length+'</div><div class="stat-lbl">Open</div></div>'
+      +'<div class="stat"><div class="stat-num">'+Math.round(reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0))+'m</div><div class="stat-lbl">Time Tracked</div></div>'
+      +'</div>'
+      +'<table><thead><tr><th>Date/Time</th><th>Type</th><th>Machine</th><th>WO/OP</th><th>Operator</th><th>Assigned To</th><th>Details</th><th>Time</th><th>Status</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table></body></html>');
+    win.document.close();
+  };
+
+  // ── WO RECEIPT BUILDER ────────────────────────────────────
+  async function _buildWOReceipt(woNum){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {wo:woNum,requests:[],error:'Not connected'};
+    var woClean=woNum.replace(/^WO[-\s]?/i,'').replace(/-/g,'');
+    var woDashed=woClean.length===6?woClean.slice(0,2)+'-'+woClean.slice(2):woNum;
+    var requests=[];
+    try {
+      var snaps=await Promise.all([
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('wo','==',woNum))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('wo','==',woDashed))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('wo','==',woClean))),
+      ]);
+      var seen={};
+      snaps.forEach(function(snap){
+        if(!snap||snap.empty) return;
+        snap.forEach(function(d){ if(seen[d.id]) return; seen[d.id]=true; var r=d.data(); r.id=d.id; requests.push(r); });
+      });
+    } catch(e){ console.warn('WO lookup:',e.message); }
+    var timeLogs=[];
+    try {
+      var tlSnap=await mods.getDocs(mods.query(mods.collection(db2,'hillTimeLog'),mods.where('wo','==',woDashed)));
+      if(tlSnap&&!tlSnap.empty) tlSnap.forEach(function(d){ var t=d.data(); t.id=d.id; timeLogs.push(t); });
+    } catch(e){}
+    return {wo:woDashed||woNum,requests:requests,timeLogs:timeLogs};
+  }
+
+  // ── PART NUMBER RECEIPT ───────────────────────────────────
+  async function _buildPartReceipt(partNum){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {part:partNum,requests:[],error:'Not connected'};
+    var requests=[],seen={};
+    try{
+      var snaps=await Promise.all([
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('partNumber','==',partNum),mods.limit(200))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillDnxLog'),mods.where('partNumber','==',partNum),mods.limit(200))),
+      ]);
+      snaps.forEach(function(snap){if(!snap||snap.empty)return;snap.forEach(function(d){if(seen[d.id])return;seen[d.id]=true;var r=d.data();r.id=d.id;requests.push(r);});});
+    }catch(e){console.warn('Part lookup:',e.message);}
+    requests.sort(function(a,b){var at=a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;var bt=b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;return bt-at;});
+    return {part:partNum,wo:'Part: '+partNum,requests:requests,timeLogs:[]};
+  }
+
+  // ── REQUESTS TO ME RECEIPT ────────────────────────────────
+  async function _buildRequestsToMeReceipt(){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {requests:[]};
+    var requests=[];
+    try {
+      var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('resolvedBy','==','hilladmin'),mods.orderBy('resolvedAt','desc'),mods.limit(500)));
+      if(snap&&!snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; if(r.type==='blue'||r.type==='yellow') requests.push(r); });
+    } catch(e){ console.warn('Requests to me:',e.message); }
+    return {requests:requests};
+  }
+
+  function addRequestsToMeMessage(data){
+    var msgs=document.getElementById('ai-messages');
+    if(!msgs) return;
+    var div=document.createElement('div'); div.className='ai-msg ai-msg-assistant';
+    var reqs=data.requests||[];
+    if(!reqs.length){
+      div.innerHTML='<div class="ai-bubble">No completed requests found for you yet.</div>';
+      msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return;
+    }
+    var byOperator={}, byType={blue:0,yellow:0}, totalMins=0;
+    reqs.forEach(function(r){
+      var op=r.operator||'Unknown';
+      if(!byOperator[op]) byOperator[op]={total:0,blue:0,yellow:0,mins:0};
+      byOperator[op].total++;
+      if(r.type==='blue'){byOperator[op].blue++;byType.blue++;}
+      if(r.type==='yellow'){byOperator[op].yellow++;byType.yellow++;}
+      byOperator[op].mins+=r.elapsedMins||0; totalMins+=r.elapsedMins||0;
+    });
+    var sortedOps=Object.entries(byOperator).sort(function(a,b){return b[1].total-a[1].total;});
+    var totalStr=totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m';
+    var html='<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;min-width:260px;max-width:100%;">';
+    html+='<div style="padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #1e3a5f;">';
+    html+='<div style="font-size:11px;color:#475569;letter-spacing:1px;">REQUESTS TO ME</div>';
+    html+='<div style="font-size:18px;font-weight:700;color:#f5c842;">Miguel Sanchez</div>';
+    html+='<div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap;">';
+    html+='<span style="font-size:11px;color:#94a3b8;">'+reqs.length+' total</span>';
+    html+='<span style="font-size:11px;color:#60a5fa;">🔵 '+byType.blue+' Pending WO</span>';
+    html+='<span style="font-size:11px;color:#fbbf24;">🟡 '+byType.yellow+' Machinist Req</span>';
+    if(totalMins>0) html+='<span style="font-size:11px;color:#f5c842;">⏱ '+totalStr+' tracked</span>';
+    html+='</div></div>';
+    html+='<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:8px;">SENT BY</div>';
+    sortedOps.forEach(function(entry){
+      var op=entry[0],d=entry[1];
+      var opStr=d.mins>0?(d.mins>=60?Math.floor(d.mins/60)+'h '+(d.mins%60)+'m':d.mins+'m'):'';
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #0d1f35;">';
+      html+='<span style="font-size:12px;color:#f0f4f8;font-weight:700;flex:1;">'+op+'</span>';
+      if(d.blue>0) html+='<span style="font-size:10px;color:#60a5fa;background:rgba(96,165,250,0.1);border-radius:4px;padding:1px 6px;">🔵 '+d.blue+'</span>';
+      if(d.yellow>0) html+='<span style="font-size:10px;color:#fbbf24;background:rgba(251,191,36,0.1);border-radius:4px;padding:1px 6px;">🟡 '+d.yellow+'</span>';
+      html+='<span style="font-size:11px;color:#94a3b8;font-weight:700;">'+d.total+' total</span>';
+      if(opStr) html+='<span style="font-size:10px;color:#f5c842;">⏱'+opStr+'</span>';
+      html+='</div>';
+    });
+    html+='</div>';
+    div.innerHTML=html; msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
   }
 
   // ── MACHINIST RECEIPT BUILDER ──────────────────────────────
   async function _buildMachinistReceipt(name){
     var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return {name:name, requests:[]};
-    var requests = [];
+    if(!db2||!mods) return {name:name,requests:[]};
+    var requests=[], firstName=name.split(' ')[0];
     try {
-      var firstName = name.split(' ')[0];
-      var lastName = name.split(' ')[1] || '';
-      // Search by full name, first name only, and assignedTo
-      var snaps = await Promise.all([
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toLowerCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('operator','==',firstName.toUpperCase()), mods.orderBy('createdAt','desc'), mods.limit(50))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'), mods.where('assignedTo','==',name), mods.orderBy('createdAt','desc'), mods.limit(50))),
+      var snaps=await Promise.all([
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',name),mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName),mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName.toLowerCase()),mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName.toUpperCase()),mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('assignedTo','==',name),mods.limit(100))),
       ]);
-      var seen = {};
+      var seen={};
       snaps.forEach(function(snap){
         if(!snap||snap.empty) return;
-        snap.forEach(function(d){
-          if(seen[d.id]) return;
-          seen[d.id] = true;
-          var r = d.data(); r.id = d.id;
-          requests.push(r);
-        });
+        snap.forEach(function(d){ if(seen[d.id]) return; seen[d.id]=true; var r=d.data(); r.id=d.id; requests.push(r); });
       });
       requests.sort(function(a,b){
-        var at = a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
-        var bt = b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;
+        var at=a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
+        var bt=b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;
         return bt-at;
       });
-    } catch(e){ console.warn('Machinist lookup:', e.message); }
-    return {name:name, requests:requests};
-  }
-
-  function addMachinistReceiptMessage(receipt){
-    var msgs = document.getElementById('ai-messages');
-    if(!msgs) return;
-    var div = document.createElement('div');
-    div.className = 'ai-msg ai-msg-assistant';
-    var reqs = receipt.requests || [];
-
-    if(!reqs.length){
-      div.innerHTML = '<div class="ai-bubble">No requests found for <strong>'+receipt.name+'</strong>.</div>';
-      msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; return;
-    }
-
-    var typeLabel = {red:'🔴 Inspection', yellow:'🟡 Machinist Req', blue:'🔵 Pending WO', green:'🟢 Running WO'};
-    var typeColor = {red:'#f87171', yellow:'#fbbf24', blue:'#60a5fa', green:'#4ade80'};
-
-    // Stats
-    var completed = reqs.filter(function(r){return r.resolved;}).length;
-    var totalMins = reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0);
-    var totalStr = totalMins>0?(totalMins>=60?Math.floor(totalMins/60)+'h '+(totalMins%60)+'m':totalMins+'m'):'';
-    var machines = [...new Set(reqs.map(function(r){return r.machine;}).filter(Boolean))];
-    var byType = {};
-    reqs.forEach(function(r){ byType[r.type]=(byType[r.type]||0)+1; });
-
-    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;min-width:260px;max-width:100%;">';
-    html += '<div style="padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #1e3a5f;">';
-    html += '<div style="font-size:11px;color:#475569;letter-spacing:1px;">MACHINIST RECEIPT</div>';
-    html += '<div style="font-size:18px;font-weight:700;color:#f5c842;">'+receipt.name+'</div>';
-    html += '<div style="display:flex;gap:12px;margin-top:6px;">';
-    html += '<span style="font-size:11px;color:#94a3b8;">'+reqs.length+' total requests</span>';
-    html += '<span style="font-size:11px;color:#4ade80;">'+completed+' completed</span>';
-    if(totalStr) html += '<span style="font-size:11px;color:#f5c842;">⏱ '+totalStr+'</span>';
-    html += '</div></div>';
-
-    // Type breakdown
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">';
-    Object.entries(byType).forEach(function(e){
-      var color = typeColor[e[0]]||'#94a3b8';
-      var label = (typeLabel[e[0]]||e[0]).replace(/[🔴🟡🔵🟢]/,'').trim();
-      html += '<span style="font-size:10px;background:'+color+'22;color:'+color+';border-radius:4px;padding:2px 7px;font-weight:700;">'+label+': '+e[1]+'</span>';
-    });
-    html += '</div>';
-
-    if(machines.length) html += '<div style="font-size:11px;color:#64748b;margin-bottom:10px;">📍 '+machines.slice(0,5).join(', ')+(machines.length>5?' +more':'')+'</div>';
-
-    // Recent requests
-    html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:6px;">RECENT REQUESTS</div>';
-    reqs.slice(0,10).forEach(function(r){
-      var dateStr='';
-      if(r.createdAt&&r.createdAt.seconds){
-        var d=new Date(r.createdAt.seconds*1000);
-        dateStr=(d.getMonth()+1)+'/'+(d.getDate());
-      }
-      var color=typeColor[r.type]||'#94a3b8';
-      var label=(typeLabel[r.type]||r.type).replace(/[🔴🟡🔵🟢]/,'').trim();
-      html+='<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #0d1f35;">';
-      html+='<span style="font-size:9px;color:'+color+';font-weight:700;flex-shrink:0;">'+label+'</span>';
-      html+='<span style="font-size:10px;color:#64748b;flex-shrink:0;">'+dateStr+'</span>';
-      html+='<span style="font-size:11px;color:#94a3b8;">'+r.machine+'</span>';
-      if(r.wo) html+='<span style="font-size:10px;color:#475569;">WO '+r.wo+'</span>';
-      if(r.elapsedStr) html+='<span style="font-size:11px;color:#f5c842;margin-left:auto;">'+r.elapsedStr+'</span>';
-      else html+='<span style="font-size:10px;color:#334155;margin-left:auto;">'+(r.resolved?'✅':'⏳')+'</span>';
-      html+='</div>';
-    });
-    if(reqs.length>10) html+='<div style="font-size:10px;color:#334155;margin-top:6px;">...and '+(reqs.length-10)+' more</div>';
-    html += '</div>';
-
-    div.innerHTML = html;
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
-  }
-
-  function addReceiptMessage(receipt){
-    var msgs = document.getElementById('ai-messages');
-    if(!msgs) return;
-    var div = document.createElement('div');
-    div.className = 'ai-msg ai-msg-assistant';
-
-    var reqs = receipt.requests || [];
-    var timeLogs = receipt.timeLogs || [];
-
-    if(!reqs.length && !timeLogs.length){
-      div.innerHTML = '<div class="ai-bubble">No records found for WO <strong>' + receipt.wo + '</strong>. Try checking the WO number format — e.g. 26-0173.</div>';
-      msgs.appendChild(div);
-      msgs.scrollTop = msgs.scrollHeight;
-      return;
-    }
-
-    // Sort requests by date
-    reqs.sort(function(a,b){
-      var at = a.createdAt && a.createdAt.seconds ? a.createdAt.seconds : 0;
-      var bt = b.createdAt && b.createdAt.seconds ? b.createdAt.seconds : 0;
-      return at - bt;
-    });
-
-    // Type colors and labels
-    var typeLabel = {red:'🔴 Inspection', yellow:'🟡 Machinist Req', blue:'🔵 Pending WO', green:'🟢 Running WO'};
-    var typeColor = {red:'#f87171', yellow:'#fbbf24', blue:'#60a5fa', green:'#4ade80'};
-
-    // Compute totals
-    var totalMins = reqs.reduce(function(s,r){ return s+(r.elapsedMins||0); },0);
-    var totalStr  = totalMins > 0 ? (totalMins >= 60 ? Math.floor(totalMins/60)+'h '+(totalMins%60)+'m' : totalMins+'m') : '';
-    var machines  = [...new Set(reqs.map(function(r){ return r.machine; }).filter(Boolean))];
-    var operators = [...new Set(reqs.map(function(r){ return r.operator; }).filter(Boolean))];
-
-    var html = '<div style="background:#060d1a;border:1px solid #1e3a5f;border-radius:12px;padding:14px;min-width:260px;max-width:100%;">';
-    // Header
-    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #1e3a5f;">';
-    html += '<div><div style="font-size:11px;color:#475569;letter-spacing:1px;">WORK ORDER RECEIPT</div>';
-    html += '<div style="font-size:18px;font-weight:700;color:#f5c842;">WO ' + receipt.wo + '</div></div>';
-    html += '<div style="text-align:right;"><div style="font-size:11px;color:#475569;">' + reqs.length + ' request' + (reqs.length!==1?'s':'') + '</div>';
-    if(totalStr) html += '<div style="font-size:13px;color:#4ade80;font-weight:700;">' + totalStr + ' tracked</div>';
-    html += '</div></div>';
-
-    // Summary row
-    if(machines.length) html += '<div style="font-size:11px;color:#64748b;margin-bottom:6px;">📍 ' + machines.join(', ') + '</div>';
-    if(operators.length) html += '<div style="font-size:11px;color:#64748b;margin-bottom:10px;">👤 ' + operators.join(', ') + '</div>';
-
-    // Request list
-    reqs.forEach(function(r){
-      var dateStr = '';
-      if(r.createdAt && r.createdAt.seconds){
-        var d = new Date(r.createdAt.seconds*1000);
-        dateStr = (d.getMonth()+1)+'/'+(d.getDate())+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-      }
-      var color = typeColor[r.type] || '#94a3b8';
-      var label = typeLabel[r.type] || r.type;
-      var status = r.resolved ? '✅' : r.onHold ? '⏸' : r.inProgress ? '⏱' : '🔵';
-      html += '<div style="border-left:3px solid '+color+';padding:6px 8px;margin-bottom:6px;background:rgba(255,255,255,0.02);border-radius:0 6px 6px 0;">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;">';
-      html += '<span style="font-size:11px;color:'+color+';font-weight:700;">'+label+'</span>';
-      html += '<span style="font-size:10px;color:#334155;">'+dateStr+'</span>';
-      html += '</div>';
-      if(r.detail) html += '<div style="font-size:11px;color:#64748b;margin-top:2px;">'+r.detail+'</div>';
-      if(r.operator) html += '<div style="font-size:10px;color:#475569;">👤 '+r.operator+'</div>';
-      if(r.assignedTo) html += '<div style="font-size:10px;color:#475569;">🔧 '+r.assignedTo+'</div>';
-      if(r.elapsedStr) html += '<div style="font-size:11px;color:#f5c842;font-weight:700;">⏱ '+r.elapsedStr+'</div>';
-      html += status + (r.resolved ? ' <span style="font-size:10px;color:#4ade80;">Completed</span>' : '');
-      html += '</div>';
-    });
-
-    // Time log entries
-    if(timeLogs.length){
-      html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #1e3a5f;">';
-      html += '<div style="font-size:10px;color:#475569;margin-bottom:6px;letter-spacing:1px;">TIME LOG</div>';
-      timeLogs.forEach(function(t){
-        html += '<div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">⏱ '+t.person+' — '+(t.elapsedStr||'?')+' ('+t.role+')</div>';
-      });
-      html += '</div>';
-    }
-
-    html += '</div>';
-    div.innerHTML = html;
-    msgs.appendChild(div);
-    msgs.scrollTop = msgs.scrollHeight;
+    } catch(e){ console.warn('Machinist lookup:',e.message); }
+    return {name:name,requests:requests};
   }
 
 })();
