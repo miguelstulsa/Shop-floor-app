@@ -12334,6 +12334,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
 
+    // Clear any lingering highlights from previous session on startup
+    document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
+      card.classList.remove('dnx-inactive');
+      var b=card.querySelector('.dnx-badge'); if(b) b.remove();
+    });
+    _dnxAlerts = {};
+    _dnxLastAnnounced = {};
+
     // Listen to latest alert — fires on any write to hillSettings/latestDnxAlert
     mods.onSnapshot(mods.doc(db2,'hillSettings','latestDnxAlert'), function(snap){
       if(!snap||!snap.exists||!snap.exists()) return;
@@ -12345,7 +12353,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       // Use receivedAt timestamp to avoid re-announcing old alerts on page load
       var receivedMs = d.receivedAt && d.receivedAt.seconds ? d.receivedAt.seconds * 1000 : 0;
       var ageSeconds = (Date.now() - receivedMs) / 1000;
-      var isFresh = ageSeconds < 120; // only announce if alert arrived in last 2 minutes
+      var isFresh = ageSeconds < 300; // only flash if alert arrived in last 5 minutes
 
       if(!_dnxLastAnnounced[key] && isFresh){
         _dnxLastAnnounced[key] = true;
@@ -12383,16 +12391,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           var b=card.querySelector('.dnx-badge'); if(b) b.remove();
         });
 
-        // Only highlight UNRESOLVED alerts received in the last 4 hours
-        var fourHoursAgo = Date.now() - (4 * 60 * 60 * 1000);
-        alerts.filter(function(a){
-          if(a.resolved) return false;
-          var ts = a.receivedAt && a.receivedAt.seconds ? a.receivedAt.seconds * 1000
-                 : a.receivedAt ? new Date(a.receivedAt).getTime() : 0;
-          return ts > fourHoursAgo;
-        }).forEach(function(a){
-          if(a.machine) _highlightMachine(a.machine, a.duration);
-        });
+        // DO NOT re-highlight from history — only live new alerts trigger flash
+        // (history is for display/reference only)
       }
     );
   }
