@@ -1282,22 +1282,29 @@
   .ai-typing span:nth-child(2) { animation-delay:.2s; }
   .ai-typing span:nth-child(3) { animation-delay:.4s; }
   @keyframes aiDot { 0%,80%,100%{opacity:.2;transform:scale(.8)} 40%{opacity:1;transform:scale(1)} }
-  /* Datanomix inactive machine alert */
+  /* Datanomix inactive machine alert — full card flash */
   .dnx-inactive {
-    border: 2px solid #ef4444 !important;
-    box-shadow: 0 0 12px rgba(239,68,68,0.5) !important;
-    animation: dnxPulse 2s ease-in-out infinite;
+    animation: dnxFlash 1.4s ease-in-out infinite !important;
+    border: 1px solid rgba(125,211,252,0.8) !important;
   }
-  @keyframes dnxPulse {
-    0%, 100% { box-shadow: 0 0 8px rgba(239,68,68,0.4); }
-    50% { box-shadow: 0 0 20px rgba(239,68,68,0.9); }
+  @keyframes dnxFlash {
+    0%, 100% {
+      background: linear-gradient(160deg, #1c3f62 0%, #162f4a 50%, #112535 100%);
+      box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+    }
+    50% {
+      background: linear-gradient(160deg, #0c3a5a 0%, #0a4a6e 40%, #0c3a5a 100%);
+      box-shadow: 0 0 18px rgba(125,211,252,0.7), 0 0 40px rgba(125,211,252,0.3), inset 0 0 20px rgba(125,211,252,0.12);
+    }
   }
   .dnx-badge {
-    position: absolute; top: 6px; right: 6px;
-    background: #ef4444; color: #fff;
-    font-size: 9px; font-weight: 700;
+    position: absolute; top: 4px; right: 4px;
+    background: rgba(125,211,252,0.2); color: #7dd3fc;
+    border: 1px solid rgba(125,211,252,0.6);
+    font-size: 8px; font-weight: 700;
     border-radius: 4px; padding: 2px 5px;
     letter-spacing: 0.5px; z-index: 10;
+    white-space: nowrap;
   }
   </style>
 
@@ -1585,8 +1592,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       <button class="note-type-btn blue" onclick="selectType('blue')"><div class="note-type-label">🔵 Pending WO</div><div class="note-type-desc">Work order pending</div></button>
       <button class="note-type-btn red" onclick="selectType('red')"><div class="note-type-label">🔴 Inspection</div><div class="note-type-desc">Quality check needed</div></button>
       <button class="note-type-btn yellow" onclick="selectType('yellow')"><div class="note-type-label">🟡 Machinist Req</div><div class="note-type-desc">Tool or fixture request</div></button>
-      <button class="note-type-btn green" onclick="selectType('green')"><div class="note-type-label">🟢 Running WO</div><div class="note-type-desc">Currently running</div></button>
-      <button class="note-type-btn" style="border-color:#7dd3fc;color:#7dd3fc;" onclick="selectType('dnx')"><div class="note-type-label">🔷 Datanomix</div><div class="note-type-desc">Machine alert / issue</div></button>
+      
     </div>
     <div class="modal-form">
       <select id="operatorName" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;margin-bottom:2px;">
@@ -12302,23 +12308,40 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
 
-    // Listen to latest alert
+    // Listen to latest alert — fires on any write to hillSettings/latestDnxAlert
     mods.onSnapshot(mods.doc(db2,'hillSettings','latestDnxAlert'), function(snap){
       if(!snap||!snap.exists||!snap.exists()) return;
       var d = snap.data();
       if(!d.machine) return;
 
       var key = d.machine + '_' + d.since;
-      // Only announce if we haven't seen this exact alert yet
-      if(!_dnxLastAnnounced[key]){
+      // Only announce if we haven't seen this exact alert yet THIS session
+      // Use receivedAt timestamp to avoid re-announcing old alerts on page load
+      var receivedMs = d.receivedAt && d.receivedAt.seconds ? d.receivedAt.seconds * 1000 : 0;
+      var ageSeconds = (Date.now() - receivedMs) / 1000;
+      var isFresh = ageSeconds < 120; // only announce if alert arrived in last 2 minutes
+
+      if(!_dnxLastAnnounced[key] && isFresh){
         _dnxLastAnnounced[key] = true;
         _dnxAlerts[d.machine] = d;
         _highlightMachine(d.machine, d.duration);
         _sparkySayInactive(d.machine, d.duration);
+        // Push to phone
+        if(window.sendPushoverAlert){
+          window.sendPushoverAlert(
+            '⚠️ DNX ALERT — ' + d.machine,
+            (d.machine) + ' has been INACTIVE for ' + (d.duration||'30+ min') + '.\nCheck the floor.',
+            'siren', 1
+          );
+        }
+      } else {
+        // Still highlight on page load even if not fresh
+        _dnxAlerts[d.machine] = d;
+        _highlightMachine(d.machine, d.duration);
       }
     });
 
-    // Listen to alert history
+    // Listen to alert history — re-highlights all unresolved on any change
     mods.onSnapshot(
       mods.query(mods.collection(db2,'hillDnxAlerts'), mods.orderBy('receivedAt','desc')),
       function(snap){
@@ -12343,23 +12366,31 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   function _highlightMachine(machineName, duration){
-    // Find machine card and add red flash
-    var cards = document.querySelectorAll('.machine-card, [data-machine]');
-    cards.forEach(function(card){
-      var nameEl = card.querySelector('.machine-name, h3, .mname');
-      var cardName = nameEl ? nameEl.textContent.trim() : card.getAttribute('data-machine') || '';
-      if(cardName === machineName || card.textContent.indexOf(machineName) >= 0){
-        card.classList.add('dnx-inactive');
-        // Add badge
-        var existing = card.querySelector('.dnx-badge');
-        if(existing) existing.remove();
-        var badge = document.createElement('div');
-        badge.className = 'dnx-badge';
-        badge.textContent = '⚠ INACTIVE ' + duration;
-        card.style.position = 'relative';
-        card.appendChild(badge);
+    // Match .machine divs — find by .machine-name text content
+    // Also try notes- id pattern as a reliable fallback
+    var notesEl = document.getElementById('notes-' + machineName);
+    if(notesEl){
+      var machineDiv = notesEl.closest('.machine');
+      if(machineDiv) _applyDnxHighlight(machineDiv, machineName, duration);
+    }
+    // Also sweep all .machine divs in case id pattern differs
+    document.querySelectorAll('.machine').forEach(function(card){
+      var nameEl = card.querySelector('.machine-name');
+      if(nameEl && nameEl.textContent.trim() === machineName){
+        _applyDnxHighlight(card, machineName, duration);
       }
     });
+  }
+
+  function _applyDnxHighlight(card, machineName, duration){
+    card.classList.add('dnx-inactive');
+    card.style.position = 'relative';
+    var existing = card.querySelector('.dnx-badge');
+    if(existing) existing.remove();
+    var badge = document.createElement('div');
+    badge.className = 'dnx-badge';
+    badge.textContent = '⚠ ' + (duration || 'INACTIVE');
+    card.appendChild(badge);
   }
 
   function _refreshMachineHighlights(){
