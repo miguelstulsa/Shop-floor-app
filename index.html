@@ -12351,11 +12351,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       if(!d.machine) return;
 
       var key = d.machine + '_' + d.since;
-      // Only announce if we haven't seen this exact alert yet THIS session
-      // Use receivedAt timestamp to avoid re-announcing old alerts on page load
-      var receivedMs = d.receivedAt && d.receivedAt.seconds ? d.receivedAt.seconds * 1000 : 0;
+      // receivedAt may be a Firestore Timestamp {seconds:...} OR a plain ISO string
+      var receivedMs = 0;
+      if(d.receivedAt && d.receivedAt.seconds) {
+        receivedMs = d.receivedAt.seconds * 1000;          // Firestore Timestamp
+      } else if(d.receivedAt && typeof d.receivedAt === 'string') {
+        receivedMs = new Date(d.receivedAt).getTime();     // ISO string from worker
+      }
       var ageSeconds = (Date.now() - receivedMs) / 1000;
-      var isFresh = ageSeconds < 300; // only flash if alert arrived in last 5 minutes
+      var isFresh = ageSeconds < 300;
 
       if(!_dnxLastAnnounced[key] && isFresh){
         _dnxLastAnnounced[key] = true;
