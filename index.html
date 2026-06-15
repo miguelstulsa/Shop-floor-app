@@ -1617,6 +1617,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         <option value="Scott Smith">Scott Smith</option>
         <option value="Sean Surratt">Sean Surratt</option>
         <option value="Steven Riggs">Steven Riggs</option>
+        <option value="Steven Stout">Steven Stout</option>
         <option value="Tony Lang">Tony Lang</option>
         <option value="Tyler Stockham">Tyler Stockham</option>
       </select>
@@ -1657,6 +1658,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
           <option>Scott Smith</option>
           <option>Sean Surratt</option>
           <option>Steven Riggs</option>
+          <option>Steven Stout</option>
           <option>Tony Lang</option>
           <option>Tyler Stockham</option>
         </select>
@@ -12360,22 +12362,18 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         _dnxAlerts[d.machine] = d;
         _highlightMachine(d.machine, d.duration);
         _sparkySayInactive(d.machine, d.duration);
-        // Push to phone
         if(window.sendPushoverAlert){
           window.sendPushoverAlert(
             '⚠️ DNX ALERT — ' + d.machine,
-            (d.machine) + ' has been INACTIVE for ' + (d.duration||'30+ min') + '.\nCheck the floor.',
+            d.machine + ' has been INACTIVE for ' + (d.duration||'30+ min') + '.\nCheck the floor.',
             'siren', 1
           );
         }
-      } else {
-        // Still highlight on page load even if not fresh
-        _dnxAlerts[d.machine] = d;
-        _highlightMachine(d.machine, d.duration);
       }
+      // stale alerts on page load: no flash, no announce
     });
 
-    // Listen to alert history — re-highlights all unresolved on any change
+    // Listen to alert history — for tab display only, never touches machine highlights
     mods.onSnapshot(
       mods.query(mods.collection(db2,'hillDnxAlerts'), mods.orderBy('receivedAt','desc')),
       function(snap){
@@ -12384,15 +12382,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         snap.forEach(function(d){ var a=d.data(); a.id=d.id; alerts.push(a); });
         window._dnxAlertHistory = alerts;
         _renderDnxTab(alerts);
-
-        // Clear all existing highlights first
-        document.querySelectorAll('.dnx-inactive').forEach(function(card){
-          card.classList.remove('dnx-inactive');
-          var b=card.querySelector('.dnx-badge'); if(b) b.remove();
-        });
-
-        // DO NOT re-highlight from history — only live new alerts trigger flash
-        // (history is for display/reference only)
+        // NOTE: do NOT touch machine highlights here — that's handled by
+        // latestDnxAlert (flash on) and _clearMachineFlash (flash off)
       }
     );
   }
@@ -13057,7 +13048,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Machinist name search
-    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham'];
+    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
     var foundMachinist=null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase())>=0) foundMachinist=name;
