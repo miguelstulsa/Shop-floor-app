@@ -12470,10 +12470,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         _dnxAlerts[d.machine] = d;
         _highlightMachine(d.machine, d.duration);
         _sparkySayInactive(d.machine, d.duration);
-        // NOTE: Pushover is already sent by the Cloudflare worker directly
-        // Do NOT send again here — would cause double notification
+        // NOTE: Pushover sent directly by Cloudflare worker — not duplicated here
       }
-      // Old alert on page load — mark as seen so it doesn't fire when it ages out
+      // Always mark as seen — prevents re-announce if alert ages out and comes back
       _dnxLastAnnounced[key] = true;
     });
 
@@ -12492,17 +12491,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           card.classList.remove('dnx-inactive');
           var b=card.querySelector('.dnx-badge'); if(b) b.remove();
         });
-        // Only re-highlight UNRESOLVED alerts from the last 8 hours
-        var eightHoursAgo = Date.now() - (8 * 60 * 60 * 1000);
-        alerts.filter(function(a){
-          if(a.resolved) return false;
-          var ts = 0;
-          if(a.receivedAt && a.receivedAt.seconds)             ts = a.receivedAt.seconds * 1000;
-          else if(a.receivedAt && typeof a.receivedAt==='string') ts = new Date(a.receivedAt).getTime();
-          return ts > eightHoursAgo;
-        }).forEach(function(a){
-          if(a.machine) _highlightMachine(a.machine, a.duration);
-        });
+        // History is for the Alerts tab display ONLY — never flashes machines
+        // Only the latestDnxAlert live listener controls machine highlights
       }
     );
   }
@@ -12556,22 +12546,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   var _dnxPendingResolveId = null;
 
   window._resolveAllStale = async function(){
-    if(!confirm('Mark all alerts older than 8 hours as resolved? This will stop the machines from flashing.')) return;
+    if(!confirm('Resolve ALL active alerts and stop all machine flashing?')) return;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
     var alerts = window._dnxAlertHistory || [];
-    var eightHoursAgo = Date.now() - (8 * 60 * 60 * 1000);
-    var stale = alerts.filter(function(a){
-      if(a.resolved) return false;
-      var ts = 0;
-      if(a.receivedAt && a.receivedAt.seconds) ts = a.receivedAt.seconds*1000;
-      else if(a.receivedAt && typeof a.receivedAt==='string') ts = new Date(a.receivedAt).getTime();
-      return ts < eightHoursAgo;
-    });
-    if(!stale.length){ alert('No stale alerts found.'); return; }
-    var promises = stale.map(function(a){
+    var unresolved = alerts.filter(function(a){ return !a.resolved; });
+    if(!unresolved.length){ alert('No active alerts to resolve.'); return; }
+    var promises = unresolved.map(function(a){
       return mods.updateDoc(mods.doc(db2,'hillDnxAlerts',a.id),{
-        resolved:true, comment:'Auto-cleared (stale — no active alert)',
+        resolved:true, comment:'Manually resolved — cleared from app',
         resolvedAt:mods.serverTimestamp(), resolvedBy:'admin'
       });
     });
@@ -12582,7 +12565,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var b=card.querySelector('.dnx-badge'); if(b) b.remove();
     });
     _dnxAlerts = {};
-    if(window.showToast) window.showToast('green','✅ Cleared '+stale.length+' stale alerts','Machines will stop flashing.');
+    if(window.showToast) window.showToast('green','✅ Cleared '+unresolved.length+' alert'+(unresolved.length>1?'s':''),'All machines stopped flashing.');
   };
 
   function _renderDnxTab(alerts){
@@ -12606,7 +12589,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
     // Active unresolved alerts
     if(active){
-      var staleBtn = stale.length ? '<button onclick="window._resolveAllStale()" style="margin-bottom:10px;width:100%;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;">🧹 CLEAR '+stale.length+' STALE OLD ALERT'+(stale.length>1?'S':'')+' (no machines running)</button>' : '';
+      var staleBtn = unresolved.length ? '<button onclick="window._resolveAllStale()" style="margin-bottom:10px;width:100%;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;">🧹 RESOLVE ALL '+unresolved.length+' ALERT'+(unresolved.length>1?'S':'')+' — CLEAR ALL FLASHING</button>' : '';
       if(!unresolved.length){
         active.innerHTML = staleBtn + '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ All alerts resolved.</div>';
       } else {
