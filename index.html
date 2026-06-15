@@ -3362,7 +3362,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
     var combinedDetail = supplyPrefix ? (supplyPrefix + (detail ? '\n' + detail : '')) : detail;
     const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, assignedTo };
-    try { await window.submitNoteToFirebase(note); }
+    var reqId = null;
+    try {
+      var result = await window.submitNoteToFirebase(note);
+      // submitNoteToFirebase may return the doc reference or ID
+      if (result && result.id) reqId = result.id;
+      else if (typeof result === 'string') reqId = result;
+    }
     catch(err) {
       if (btn) { btn.disabled=false; btn.textContent='Submit'; }
       showToast('red', 'Save failed', (err&&err.message)?err.message.slice(0,80):'Check connection.');
@@ -12490,6 +12496,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(window.showToast)window.showToast(_muted?'yellow':'green',_muted?'🔇 You are muted':'🔊 Unmuted','');
   };
 
+  // Force unmute — used by DNX alerts so they always play
+  window._sparkyForceUnmute = function(){
+    if(_muted){
+      _muted = false;
+      if(_audio) _audio.volume = 0.8;
+      var btn = document.getElementById('sparky-mute-btn');
+      if(btn){ btn.textContent='🔊 MUTE'; btn.style.opacity='1'; }
+    }
+  };
+
   window._djAnnounceNew=function(n){
     if(!n)return;
     var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'someone';
@@ -12568,6 +12584,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         _dnxLastAnnounced[key] = true;
         _dnxAlerts[d.machine] = d;
         _highlightMachine(d.machine, d.duration);
+        // Force unmute for DNX alert — always plays even if muted
+        if(window._sparkyForceUnmute) window._sparkyForceUnmute();
         _sparkySayInactive(d.machine, d.duration);
         showToast('red', '⚠️ MACHINE ALERT — ' + d.machine, d.machine + ' INACTIVE for ' + (d.duration||'30+ min'));
         if(window.badge) badge(true);
@@ -12647,14 +12665,26 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
 
   function _sparkySayInactive(machine, duration){
-    if(!window.say) return;
     var msgs = [
-      'Attention. ' + machine + ' has been inactive for ' + duration + '. Somebody needs to check on that machine.',
-      'Hey, heads up. ' + machine + ' just hit the 30 minute mark on downtime. ' + duration + ' and counting. Lets get eyes on it.',
-      machine + ' is showing inactive. Duration: ' + duration + '. Worth looking into.',
+      'Miguel. ' + machine + ' has been down for ' + duration + '. You need to find out why.',
+      'Hey Miguel, ' + machine + ' is showing inactive. ' + duration + ' and nobody has addressed it. Go check it out.',
+      'Heads up Miguel. ' + machine + ' has not been cutting for ' + duration + '. That needs your attention.',
+      'Miguel, Datanomix is flagging ' + machine + '. Down for ' + duration + '. Somebody needs to get eyes on that machine.',
+      'Alert. ' + machine + ' has been sitting idle for ' + duration + '. Miguel, go find out what is going on.',
     ];
     var msg = msgs[Math.floor(Math.random()*msgs.length)];
-    window.say(msg, function(){});
+    // If say is ready, speak immediately
+    if(window.say){
+      window.say(msg, function(){});
+    } else {
+      // Wait up to 5 seconds for say to become available
+      var attempts = 0;
+      var waitForSay = setInterval(function(){
+        attempts++;
+        if(window.say){ clearInterval(waitForSay); window.say(msg, function(){}); }
+        else if(attempts > 10) clearInterval(waitForSay);
+      }, 500);
+    }
   }
 
   var _dnxPendingResolveId = null;
