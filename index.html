@@ -519,6 +519,11 @@
   .req-cell    { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1.5px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
   .req-type-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 4px; }
   .req-wo, .req-detail { font-family: 'Barlow', sans-serif; font-size: 13px; color: #94a3b8; }
+  .photo-upload-area { border:2px dashed #1e3a5f; border-radius:10px; padding:12px; text-align:center; cursor:pointer; transition:all 0.2s; margin-top:6px; }
+  .photo-upload-area:hover { border-color:#3b82f6; background:rgba(59,130,246,0.05); }
+  .photo-upload-area.has-photo { border-color:#22c55e; border-style:solid; background:rgba(34,197,94,0.05); }
+  .photo-preview { width:100%; max-height:140px; object-fit:cover; border-radius:8px; margin-top:8px; display:none; }
+  .photo-thumbnail { width:48px; height:48px; object-fit:cover; border-radius:6px; cursor:pointer; border:2px solid #1e3a5f; }
   .req-operator { font-family: 'Barlow', sans-serif; font-size: 12px; color: #64748b; margin-top: 4px; }
   .req-time { font-family: 'Barlow', sans-serif; font-size: 11px; color: #475569; margin-top: 6px; }
   .req-dismiss { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.07); border: none; color: #64748b; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
@@ -1687,6 +1692,13 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
         </div>
       </div>
       <textarea id="noteText" rows="3" placeholder="Additional details..."></textarea>
+      <!-- PHOTO ATTACHMENT -->
+      <input type="file" id="photoFileInput" accept="image/*" capture="environment" style="display:none;" onchange="window._handlePhotoSelect(this)">
+      <div class="photo-upload-area" id="photoUploadArea" onclick="document.getElementById('photoFileInput').click()">
+        <div id="photoUploadLabel" style="color:#64748b;font-size:13px;">📷 Tap to attach a photo <span style="font-size:11px;opacity:0.6;">(optional)</span></div>
+        <img id="photoPreview" class="photo-preview" alt="Preview">
+      </div>
+      <div id="photoUploadProgress" style="display:none;font-size:11px;color:#f59e0b;margin-top:4px;text-align:center;">📤 Uploading photo...</div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
@@ -1987,6 +1999,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
           (n.wo     ? '<div class="req-wo">WO: ' + n.wo + (n.op ? '  ·  OP: ' + n.op : '') + '</div>' : '') +
           (n.assignedTo ? '<div class="req-wo" style="color:#93c5fd;">🔧 Assigned to: ' + n.assignedTo + '</div>' : '') +
           (n.detail ? '<div class="req-detail">'      + n.detail + '</div>' : '') +
+          (n.photoUrl ? '<img src="' + n.photoUrl + '" onclick="window._viewPhoto(\'' + n.photoUrl + '\')" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:6px;cursor:pointer;border:2px solid #1e3a5f;" title="Tap to view photo">' : '') +
           (n.operator ? '<div class="req-operator">👤 ' + n.operator + '</div>' : '') +
           '<div class="req-time">⏱ Today at ' + timeStr + '</div>' +
           adminBtns +
@@ -3098,6 +3111,55 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
   var _origSelectType = null;
   // ────────────────────────────────────────────────────────────────────────────
 
+  // ── PHOTO UPLOAD ─────────────────────────────────────────────
+  window._pendingPhotoFile = null;
+
+  window._handlePhotoSelect = function(input) {
+    var file = input.files[0];
+    if (!file) return;
+    window._pendingPhotoFile = file;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var preview = document.getElementById('photoPreview');
+      var area    = document.getElementById('photoUploadArea');
+      var label   = document.getElementById('photoUploadLabel');
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      area.classList.add('has-photo');
+      label.textContent = '✅ Photo attached — tap to change';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  window._uploadPhoto = async function(file, reqId) {
+    try {
+      var formData = new FormData();
+      formData.append('photo', file, file.name || 'photo.jpg');
+      formData.append('reqId', reqId);
+      var res = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/upload-photo', {
+        method: 'POST', body: formData
+      });
+      if (!res.ok) { console.warn('Photo upload failed:', await res.text()); return null; }
+      var data = await res.json();
+      return data.url || null;
+    } catch(e) { console.warn('Photo upload error:', e.message); return null; }
+  };
+
+  window._viewPhoto = function(url) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;cursor:pointer;';
+    overlay.onclick = function(){ document.body.removeChild(overlay); };
+    var img = document.createElement('img');
+    img.src = url;
+    img.style.cssText = 'max-width:92vw;max-height:88vh;border-radius:12px;box-shadow:0 0 60px rgba(0,0,0,0.8);';
+    var close = document.createElement('div');
+    close.style.cssText = 'position:absolute;top:20px;right:24px;color:white;font-size:28px;cursor:pointer;font-weight:700;';
+    close.textContent = '✕'; close.onclick = function(){ document.body.removeChild(overlay); };
+    overlay.appendChild(img); overlay.appendChild(close);
+    document.body.appendChild(overlay);
+  };
+  // ─────────────────────────────────────────────────────────────
+
   function openModal(machine, cell) {
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
@@ -3109,6 +3171,13 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     var msf = document.getElementById('machinistSupplyField'); if(msf) msf.style.display = 'none';
     window._selectedGloveSize = '';
     document.querySelectorAll('.glove-size-btn').forEach(b => { b.style.background='rgba(255,255,255,0.05)'; b.style.borderColor='#2a5a8c'; b.style.color='#94a3b8'; });
+    // Reset photo upload
+    if(document.getElementById('photoFileInput')) document.getElementById('photoFileInput').value = '';
+    var prev = document.getElementById('photoPreview'); if(prev){ prev.style.display='none'; prev.src=''; }
+    var pArea = document.getElementById('photoUploadArea'); if(pArea) pArea.classList.remove('has-photo');
+    var pLabel = document.getElementById('photoUploadLabel'); if(pLabel) pLabel.textContent='📷 Tap to attach a photo (optional)';
+    var pProg = document.getElementById('photoUploadProgress'); if(pProg) pProg.style.display='none';
+    window._pendingPhotoFile = null;
     document.querySelectorAll('.note-type-btn').forEach(b => b.classList.remove('selected'));
     // Load recall history for this machine
     recallRenderChips(machine);
@@ -3205,6 +3274,44 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     var _supplyForRecall = (selectedType === 'yellow' && document.getElementById('supplyItem')) ? document.getElementById('supplyItem').value : '';
     recallSave(currentMachine, wo, op, _supplyForRecall, operator);
     closeModal();
+
+    // Upload photo in background after modal closes
+    if (window._pendingPhotoFile && reqId) {
+      var photoFileCopy = window._pendingPhotoFile;
+      window._pendingPhotoFile = null;
+      (async function() {
+        try {
+          var url = await window._uploadPhoto(photoFileCopy, reqId);
+          if (url) {
+            var FBKEY = 'AIzaSyD8lZqvva1twE8MBD38bFmk8zw1QQ5smpI';
+            var FBBASE = 'https://firestore.googleapis.com/v1/projects/hill-manufacturing/databases/(default)/documents';
+            // Update hillRequests with photoUrl
+            await fetch(FBBASE + '/hillRequests/' + reqId + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
+              method: 'PATCH', headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ fields: { photoUrl: { stringValue: url } } })
+            }).catch(function(){});
+            // Also update any matching notes doc
+            var queryRes = await fetch(FBBASE + ':runQuery?key=' + FBKEY, {
+              method: 'POST', headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ structuredQuery: { from:[{collectionId:'notes'}], where:{ fieldFilter:{ field:{fieldPath:'hillReqId'}, op:'EQUAL', value:{stringValue:reqId} } }, limit:5 } })
+            }).then(function(r){ return r.json(); }).catch(function(){ return []; });
+            if (Array.isArray(queryRes)) {
+              queryRes.forEach(function(item) {
+                if (item.document && item.document.name) {
+                  var parts2 = item.document.name.split('/');
+                  var noteId2 = parts2[parts2.length-1];
+                  fetch(FBBASE + '/notes/' + noteId2 + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
+                    method:'PATCH', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ fields: { photoUrl: { stringValue: url } } })
+                  }).catch(function(){});
+                }
+              });
+            }
+            showToast('green','📷 Photo uploaded','Attached to request.');
+          }
+        } catch(e) { console.warn('Photo upload bg error:', e.message); }
+      })();
+    }
     showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
     if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue') {
       // Store a dedup key so multi-session installs don't double-fire
@@ -12363,13 +12470,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         _dnxAlerts[d.machine] = d;
         _highlightMachine(d.machine, d.duration);
         _sparkySayInactive(d.machine, d.duration);
-        if(window.sendPushoverAlert){
-          window.sendPushoverAlert(
-            '⚠️ DNX ALERT — ' + d.machine,
-            d.machine + ' has been INACTIVE for ' + (d.duration||'30+ min') + '.\nCheck the floor.',
-            'siren', 1
-          );
-        }
+        // NOTE: Pushover is already sent by the Cloudflare worker directly
+        // Do NOT send again here — would cause double notification
       }
       // Old alert on page load — mark as seen so it doesn't fire when it ages out
       _dnxLastAnnounced[key] = true;
