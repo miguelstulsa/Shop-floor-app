@@ -2014,7 +2014,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var inProg  = n.inProgress;
       var onHold  = n.onHold;
       var timerBtns = isAdmin
-        ? (onHold
+        ? (n.type === 'dnx'
+            ? '<div style="margin-top:6px;"><button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;width:100%;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 RESOLVE ALERT</button></div>'
+            : onHold
             ? '<div style="margin-top:6px;"><div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<div style="display:flex;gap:6px;">' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
@@ -2286,19 +2288,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       // ── DJ SHOUTOUT on START ──
       var _nd3 = window._lastActionable && window._lastActionable.find(function(n){ return n.id === noteId; });
       if (_nd3) { setTimeout(function(){ window._djAnnounceStart(_nd3); }, 800); }
-
-      // ── NOTIFY MACHINIST via Pushover ──
-      if (_nd3 && _nd3.operator) {
-        var _woStr = _nd3.wo ? ' · WO# ' + _nd3.wo : '';
-        var _opStr = _nd3.op ? ' · OP ' + _nd3.op : '';
-        var _detStr = _nd3.detail ? ' · ' + _nd3.detail.slice(0,60) : '';
-        window.sendPushoverAlert(
-          '✅ Setup Started — ' + (_nd3.machine || ''),
-          'Miguel is on your job now.' + _woStr + _opStr + _detStr + '\nYou\'ll be cutting soon.',
-          'magic',
-          0
-        );
-      }
+      // NOTE: No Pushover on START — only incoming requests and DNX alerts get Pushover
 
     } catch(e) {
       showToast('red', 'Error starting', e.message);
@@ -12799,6 +12789,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var resolveBtn = !a.resolved
         ? '<button onclick="window.openDnxResolve(\''+a.id+'\',null,\''+safeM+'\',\''+safeD+'\')" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Bebas Neue\',sans-serif;margin-top:8px;">RESOLVE</button>'
         : '';
+      var deleteBtn = '<button onclick="window._deleteDnxAlert(\''+a.id+'\')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;margin-top:8px;margin-left:6px;">🗑 DELETE</button>';
 
       card.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
@@ -12814,7 +12805,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         + (reason ? '<div style="font-size:12px;color:#4ade80;margin-top:4px;font-style:italic;">✅ ' + reason.substring(0,120) + '</div>' : '')
         + (emp    ? '<div style="font-size:11px;color:#3b82f6;margin-top:2px;">👤 ' + emp + '</div>' : '')
         + (a.wo   ? '<div style="font-size:11px;color:#f59e0b;margin-top:2px;">WO: ' + a.wo + '</div>' : '')
-        + resolveBtn;
+        + '<div style="display:flex;gap:0;">' + resolveBtn + deleteBtn + '</div>';
 
       results.appendChild(card);
     });
@@ -12838,6 +12829,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     try {
       await mods.deleteDoc(mods.doc(db2,'hillDnxAlerts',id));
       if(window.showToast) window.showToast('blue','🗑 Deleted','Alert removed');
+      // Refresh results
+      var inp = document.getElementById('dnx-search-input');
+      if(inp && inp.value) setTimeout(window._dnxSearch, 500);
     } catch(e) {
       if(window.showToast) window.showToast('red','Error',e.message);
     }
