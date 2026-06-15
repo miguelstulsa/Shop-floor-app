@@ -525,6 +525,30 @@
   .req-cell    { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1.5px; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
   .req-type-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; letter-spacing: 1.5px; color: #94a3b8; margin-bottom: 4px; }
   .req-wo, .req-detail { font-family: 'Barlow', sans-serif; font-size: 13px; color: #94a3b8; }
+  /* DNX RESOLVE MODAL v2 */
+  #dnx-resolve-modal { display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.88); align-items:center; justify-content:center; }
+  .dnx-resolve-box { background:linear-gradient(135deg,#0d1f35,#1a3555); border:2px solid #7dd3fc; border-radius:16px; padding:22px; width:94%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 0 40px rgba(125,211,252,0.2); }
+  .dnx-resolve-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#7dd3fc; margin-bottom:2px; }
+  .dnx-resolve-machine { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#f5d050; letter-spacing:2px; margin-bottom:2px; }
+  .dnx-resolve-duration { font-size:12px; color:#94a3b8; margin-bottom:12px; }
+  .dnx-resolve-label { font-size:11px; font-weight:700; letter-spacing:1.5px; color:#7dd3fc; text-transform:uppercase; margin-bottom:6px; margin-top:12px; display:block; }
+  .dnx-resolve-textarea { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:10px; resize:none; min-height:60px; outline:none; box-sizing:border-box; }
+  .dnx-resolve-textarea:focus { border-color:#7dd3fc; }
+  .dnx-resolve-input { width:100%; background:#0a1628; border:1px solid #2a5a8c; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:14px; padding:9px 12px; outline:none; box-sizing:border-box; }
+  .dnx-resolve-input:focus { border-color:#7dd3fc; }
+  .dnx-insight-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-bottom:8px; }
+  .dnx-insight-btn { padding:8px 10px; background:#0a1628; border:1px solid #1e3a5f; border-radius:8px; color:#94a3b8; font-family:'Barlow',sans-serif; font-size:13px; font-weight:600; cursor:pointer; text-align:left; transition:all 0.15s; }
+  .dnx-insight-btn:hover { border-color:#475569; color:#f0f4f8; }
+  .dnx-insight-btn.selected { background:rgba(125,211,252,0.12); border-color:#7dd3fc; color:#7dd3fc; }
+  .dnx-custom-row { display:flex; gap:8px; margin-top:6px; }
+  .dnx-custom-input { flex:1; background:#0a1628; border:1px solid #1e3a5f; border-radius:8px; color:#f0f4f8; font-family:'Barlow',sans-serif; font-size:13px; padding:8px 10px; outline:none; }
+  .dnx-custom-input:focus { border-color:#7dd3fc; }
+  .dnx-custom-add { padding:8px 14px; background:rgba(245,158,11,0.15); border:1px solid #f59e0b; border-radius:8px; color:#f59e0b; font-family:'Bebas Neue',sans-serif; font-size:14px; cursor:pointer; white-space:nowrap; }
+  .dnx-two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .dnx-resolve-btns { display:flex; gap:10px; margin-top:14px; }
+  .dnx-resolve-cancel { flex:1; padding:10px; background:rgba(255,255,255,0.05); border:1px solid #2a5a8c; border-radius:8px; color:#64748b; font-family:'Bebas Neue',sans-serif; font-size:15px; cursor:pointer; }
+  .dnx-resolve-submit { flex:2; padding:10px; background:rgba(125,211,252,0.15); border:1px solid #7dd3fc; border-radius:8px; color:#7dd3fc; font-family:'Bebas Neue',sans-serif; font-size:15px; cursor:pointer; }
+  .dnx-resolve-submit:disabled { opacity:0.35; cursor:not-allowed; }
   .photo-upload-area { border:2px dashed #1e3a5f; border-radius:10px; padding:12px; text-align:center; cursor:pointer; transition:all 0.2s; margin-top:6px; }
   .photo-upload-area:hover { border-color:#3b82f6; background:rgba(59,130,246,0.05); }
   .photo-upload-area.has-photo { border-color:#22c55e; border-style:solid; background:rgba(34,197,94,0.05); }
@@ -1446,33 +1470,65 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
 
 <!-- ═══ DATANOMIX ALERTS PAGE ═══ -->
 <div class="page" id="page-dnxalerts" style="display:none;padding:16px;max-width:700px;margin:0 auto;">
-
-  <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f87171;letter-spacing:2px;">🔷 DATANOMIX ALERTS</div>
-    <button onclick="window._printDnxAlerts()" style="background:rgba(255,255,255,0.08);border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">🖨 PRINT / PDF</button>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#7dd3fc;letter-spacing:2px;">🔷 DATANOMIX ALERTS</div>
+    <button onclick="window._printDnxAlerts()" style="background:rgba(255,255,255,0.08);border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">🖨 PDF</button>
   </div>
-  <div style="font-size:12px;color:#475569;margin-bottom:16px;">Machines inactive 30+ minutes. Click RESOLVE to stop flashing and document the issue.</div>
+  <div style="font-size:12px;color:#475569;margin-bottom:14px;">Machines inactive 30+ minutes. Resolve each alert to stop flashing and document the issue.</div>
 
-  <!-- Active unresolved alerts -->
-  <div id="dnx-active-alerts" style="margin-bottom:20px;"></div>
+  <!-- Stats -->
+  <div id="dnx-summary-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;"></div>
 
-  <!-- Alert history -->
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#94a3b8;letter-spacing:1px;margin-bottom:8px;">FULL ALERT HISTORY</div>
+  <!-- Active alerts -->
+  <div id="dnx-active-alerts" style="margin-bottom:16px;"></div>
+
+  <!-- Range filters -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;">
+    <span style="font-size:10px;color:#475569;letter-spacing:1px;text-transform:uppercase;font-weight:700;">View:</span>
+    <button id="dnx-btn-today" onclick="window._dnxSetRange('today')" style="padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;border-radius:6px;border:1px solid #f87171;background:rgba(248,113,113,0.15);color:#f87171;cursor:pointer;">Today</button>
+    <button id="dnx-btn-week"  onclick="window._dnxSetRange('week')"  style="padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;border-radius:6px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer;">This Week</button>
+    <button id="dnx-btn-all"   onclick="window._dnxSetRange('all')"   style="padding:4px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;border-radius:6px;border:1px solid #1e3a5f;background:transparent;color:#64748b;cursor:pointer;">All Time</button>
+  </div>
+
+  <!-- By machine breakdown -->
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#94a3b8;letter-spacing:1px;margin-bottom:8px;">BY MACHINE</div>
+  <div id="dnx-by-machine" style="margin-bottom:16px;"></div>
+
+  <!-- Full history -->
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#94a3b8;letter-spacing:1px;margin-bottom:8px;">FULL HISTORY</div>
   <div id="dnx-alerts-list"></div>
 </div>
 
-<!-- Resolve Modal -->
-<div id="dnx-resolve-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#0d1f35;border:1px solid #ef4444;border-radius:16px;padding:24px;max-width:420px;width:100%;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f87171;letter-spacing:2px;margin-bottom:4px;">RESOLVE ALERT</div>
-    <div id="dnx-resolve-machine" style="font-size:13px;color:#94a3b8;margin-bottom:16px;"></div>
-    <div style="font-size:12px;color:#64748b;margin-bottom:6px;">What was the issue? (required)</div>
-    <textarea id="dnx-resolve-comment" placeholder="e.g. Operator on break, tool change, part measurement, machine down..." 
-      style="width:100%;box-sizing:border-box;background:#060d1a;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;font-size:14px;padding:10px;min-height:80px;resize:vertical;font-family:inherit;margin-bottom:12px;"></textarea>
-    <div style="display:flex;gap:8px;">
-      <button onclick="window._confirmResolveDnx()" style="flex:1;background:linear-gradient(135deg,#059669,#10b981);border:none;color:#fff;border-radius:8px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">✓ RESOLVE</button>
-      <button onclick="document.getElementById('dnx-resolve-modal').style.display='none'" style="background:rgba(255,255,255,0.05);border:1px solid #334155;color:#64748b;border-radius:8px;padding:12px 16px;cursor:pointer;">Cancel</button>
+<!-- DNX RESOLVE MODAL v2 -->
+<div id="dnx-resolve-modal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;">
+  <div class="dnx-resolve-box">
+    <div class="dnx-resolve-title">🔷 Close DNX Alert</div>
+    <div class="dnx-resolve-machine" id="dnx-modal-machine">--</div>
+    <div class="dnx-resolve-duration" id="dnx-modal-duration"></div>
+    <span class="dnx-resolve-label">Select Downtime Insight <span style="color:#ef4444;">*Required</span></span>
+    <div class="dnx-insight-grid" id="dnx-insight-grid"></div>
+    <div class="dnx-custom-row">
+      <input class="dnx-custom-input" id="dnx-custom-text" placeholder="Add custom reason...">
+      <button class="dnx-custom-add" onclick="window._dnxAddCustomInsight()">+ ADD</button>
+    </div>
+    <span class="dnx-resolve-label">Downtime Reason</span>
+    <textarea class="dnx-resolve-textarea" id="dnx-resolve-reason" rows="2" placeholder="Select above or type custom reason..." oninput="window._dnxReasonInput()"></textarea>
+    <span class="dnx-resolve-label">Employee Name</span>
+    <select class="dnx-resolve-input" id="dnx-resolve-employee" style="background:#0a1628;color:#f0f4f8;"></select>
+    <div class="dnx-two-col" style="margin-top:12px;">
+      <div>
+        <span class="dnx-resolve-label" style="margin-top:0">Work Order #</span>
+        <input class="dnx-resolve-input" id="dnx-resolve-wo" placeholder="e.g. 26-0449">
+      </div>
+      <div>
+        <span class="dnx-resolve-label" style="margin-top:0">Part Number</span>
+        <input class="dnx-resolve-input" id="dnx-resolve-partnum" placeholder="e.g. 26.0585">
+      </div>
+    </div>
+    <div style="font-size:11px;color:#f87171;margin-top:10px;display:none;" id="dnx-resolve-error">Please select a downtime reason.</div>
+    <div class="dnx-resolve-btns">
+      <button class="dnx-resolve-cancel" onclick="window._dnxResolveCancel()">CANCEL</button>
+      <button class="dnx-resolve-submit" id="dnx-resolve-submit" onclick="window._dnxResolveSubmit()" disabled>✓ CLOSE ALERT</button>
     </div>
   </div>
 </div>
@@ -1984,7 +2040,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var adminBtns = isAdmin2
         ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
           (n.type === 'dnx'
-            ? '<button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;" onclick="window._resolveDnxFromFloor(\'' + n.id + '\',\'' + n.machine + '\')">✓ RESOLVE ALERT</button>'
+            ? '<button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 CLOSE ALERT</button>'
             : onHold2
             ? '<div style="width:100%;font-size:9px;color:#f59e0b;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
@@ -12589,154 +12645,300 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   var _dnxPendingResolveId = null;
-
-  window._resolveAllStale = async function(){
-    if(!confirm('Resolve ALL active alerts and stop all machine flashing?')) return;
-    var db2=window.fbDb, mods=window._fbModules;
-    if(!db2||!mods) return;
-    var alerts = window._dnxAlertHistory || [];
-    var unresolved = alerts.filter(function(a){ return !a.resolved; });
-    if(!unresolved.length){ alert('No active alerts to resolve.'); return; }
-    var promises = unresolved.map(function(a){
-      return mods.updateDoc(mods.doc(db2,'hillDnxAlerts',a.id),{
-        resolved:true, comment:'Manually resolved — cleared from app',
-        resolvedAt:mods.serverTimestamp(), resolvedBy:'admin'
-      });
+  window._dnxToggle=function(uid){var e=document.getElementById(uid);if(e)e.style.display=e.style.display==='none'?'block':'none';};
+  var _dnxCurrentRange='today';
+  window._dnxSetRange=function(range){
+    _dnxCurrentRange=range;
+    ['today','week','all'].forEach(function(r){
+      var b=document.getElementById('dnx-btn-'+r); if(!b) return;
+      if(r===range){b.style.background='rgba(125,211,252,0.15)';b.style.borderColor='#7dd3fc';b.style.color='#7dd3fc';}
+      else{b.style.background='transparent';b.style.borderColor='#1e3a5f';b.style.color='#64748b';}
     });
-    await Promise.all(promises);
-    // Clear all machine flashes immediately
-    document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
-      card.classList.remove('dnx-inactive');
-      var b=card.querySelector('.dnx-badge'); if(b) b.remove();
-    });
-    _dnxAlerts = {};
-    if(window.showToast) window.showToast('green','✅ Cleared '+unresolved.length+' alert'+(unresolved.length>1?'s':''),'All machines stopped flashing.');
+    if(window._dnxAlertHistory) _renderDnxTab(window._dnxAlertHistory);
   };
-
+  function _dnxTs(a){
+    if(a.receivedAt&&a.receivedAt.seconds) return a.receivedAt.seconds*1000;
+    if(a.receivedAt) return new Date(a.receivedAt).getTime();
+    return 0;
+  }
+  function _dnxFilterRange(alerts){
+    var now=new Date(), cutoff=0, ceiling=null;
+    if(_dnxCurrentRange==='today'){
+      var shiftStart=new Date(now.getFullYear(),now.getMonth(),now.getDate(),6,0,0,0);
+      var shiftEnd  =new Date(now.getFullYear(),now.getMonth(),now.getDate(),17,0,0,0);
+      if(now.getHours()<6){
+        shiftStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-1,6,0,0,0);
+        shiftEnd  =new Date(now.getFullYear(),now.getMonth(),now.getDate()-1,17,0,0,0);
+      }
+      cutoff  = shiftStart.getTime();
+      ceiling = shiftEnd.getTime() > now.getTime() ? now.getTime() : shiftEnd.getTime();
+    } else if(_dnxCurrentRange==='week'){
+      var weekStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-now.getDay(),6,0,0,0);
+      cutoff=weekStart.getTime();
+    }
+    return alerts.filter(function(a){
+      var ts=_dnxTs(a);
+      return ts>=cutoff && (ceiling===null||ts<=ceiling);
+    });
+  }
   function _renderDnxTab(alerts){
-    var active = document.getElementById('dnx-active-alerts');
-    var hist = document.getElementById('dnx-alerts-list');
-    if(!alerts || !alerts.length){
-      if(active) active.innerHTML = '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ No active alerts right now.</div>';
-      if(hist) hist.innerHTML = '<div style="font-size:13px;color:#475569;padding:12px 0;">No alert history yet.</div>';
+    var active=document.getElementById('dnx-active-alerts');
+    var hist=document.getElementById('dnx-alerts-list');
+    var stats=document.getElementById('dnx-summary-stats');
+    var byMach=document.getElementById('dnx-by-machine');
+    if(!alerts||!alerts.length){
+      if(active) active.innerHTML='<div style="font-size:13px;color:#4ade80;padding:12px 0;">No active alerts.</div>';
+      if(hist)   hist.innerHTML='<div style="font-size:13px;color:#475569;padding:12px 0;">No alert history yet.</div>';
+      if(stats)  stats.innerHTML='';
+      if(byMach) byMach.innerHTML='';
       return;
     }
-
-    var unresolved = alerts.filter(function(a){ return !a.resolved; });
-    var resolved   = alerts.filter(function(a){ return a.resolved; });
-    var eightHoursAgo = Date.now() - (8 * 60 * 60 * 1000);
-    var stale = unresolved.filter(function(a){
-      var ts = 0;
-      if(a.receivedAt && a.receivedAt.seconds) ts = a.receivedAt.seconds*1000;
-      else if(a.receivedAt && typeof a.receivedAt==='string') ts = new Date(a.receivedAt).getTime();
-      return ts < eightHoursAgo;
-    });
-
-    // Active unresolved alerts
+    var unresolved=alerts.filter(function(a){return !a.resolved;});
+    var filtered=_dnxFilterRange(alerts);
+    // ACTIVE
     if(active){
       var staleBtn = unresolved.length ? '<button onclick="window._resolveAllStale()" style="margin-bottom:10px;width:100%;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#f87171;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;">🧹 RESOLVE ALL '+unresolved.length+' ALERT'+(unresolved.length>1?'S':'')+' — CLEAR ALL FLASHING</button>' : '';
       if(!unresolved.length){
-        active.innerHTML = staleBtn + '<div style="font-size:13px;color:#4ade80;padding:12px 0;">✅ All alerts resolved.</div>';
+        active.innerHTML=staleBtn+'<div style="font-size:13px;color:#4ade80;padding:10px 0;">✅ All alerts resolved.</div>';
       } else {
-        active.innerHTML = '<div style="font-size:12px;color:#f87171;font-weight:700;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
-          + unresolved.map(function(a){
-            var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-            return '<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">'
-              +'<span style="font-size:22px;animation:dnxPulse 1.5s infinite;">🔴</span>'
+        active.innerHTML=staleBtn+'<div style="font-size:12px;color:#f87171;font-weight:700;letter-spacing:1px;margin-bottom:8px;">'+unresolved.length+' ACTIVE ALERT'+(unresolved.length>1?'S':'')+'</div>'
+          +unresolved.map(function(a){
+            var ts=_dnxTs(a)?new Date(_dnxTs(a)).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+            var safeM=(a.machine||'').replace(/"/g,'&quot;');
+            var safeD=(a.duration||'').replace(/"/g,'&quot;');
+            return '<div style="background:rgba(125,211,252,0.06);border:1px solid rgba(125,211,252,0.35);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;">'
+              +'<span style="font-size:22px;">🔷</span>'
               +'<div style="flex:1;">'
-              +'<div style="font-size:14px;font-weight:700;color:#f87171;">'+a.machine+'</div>'
-              +'<div style="font-size:11px;color:#64748b;">'+a.status+' — '+a.duration+'</div>'
-              +'<div style="font-size:10px;color:#334155;">'+ts+'</div>'
+              +'<div style="font-size:16px;font-weight:700;color:#7dd3fc;font-family:Bebas Neue,sans-serif;letter-spacing:1px;">'+safeM+'</div>'
+              +'<div style="font-size:11px;color:#94a3b8;">'+(a.status||'INACTIVE')+' — '+safeD+'</div>'
+              +'<div style="font-size:10px;color:#475569;">'+ts+'</div>'
               +'</div>'
-              +'<button onclick="window._openResolveDnx(this)" data-id="'+a.id+'" data-machine="'+a.machine+'" '
-              +'style="background:linear-gradient(135deg,#059669,#10b981);border:none;color:#fff;border-radius:8px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;flex-shrink:0;">RESOLVE</button>'
+              +'<button data-aid="'+a.id+'" data-amachine="'+safeM+'" data-aduration="'+safeD+'" onclick="window.openDnxResolve(this.dataset.aid,null,this.dataset.amachine,this.dataset.aduration)" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:Bebas Neue,sans-serif;">RESOLVE</button>'
               +'</div>';
           }).join('');
       }
     }
-
-    // History
+    // STATS
+    if(stats){
+      var mc={},rc={};
+      filtered.forEach(function(a){
+        if(a.machine) mc[a.machine]=(mc[a.machine]||0)+1;
+        var r=(a.comment||a.resolveReason||'').split('|')[0].trim();
+        if(r&&r.length>2) rc[r]=(rc[r]||0)+1;
+      });
+      var topM=Object.entries(mc).sort(function(a,b){return b[1]-a[1];})[0];
+      var topR=Object.entries(rc).sort(function(a,b){return b[1]-a[1];})[0];
+      var ss='background:#0d1f35;border:1px solid #1e3a5f;border-radius:10px;padding:12px;text-align:center;';
+      stats.innerHTML=''
+        +'<div style="'+ss+'"><div style="font-family:Bebas Neue,sans-serif;font-size:28px;color:#7dd3fc;">'+filtered.length+'</div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Alerts</div></div>'
+        +'<div style="'+ss+'"><div style="font-family:Bebas Neue,sans-serif;font-size:'+(topM&&topM[0].length>5?'16':'24')+'px;color:#f59e0b;">'+(topM?topM[0]:'—')+'</div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Top Machine</div></div>'
+        +'<div style="'+ss+'"><div style="font-family:Bebas Neue,sans-serif;font-size:12px;color:#a78bfa;">'+(topR?topR[0]:'—')+'</div><div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Top Reason</div></div>';
+    }
+    // BY MACHINE
+    if(byMach){
+      var groups={};
+      filtered.forEach(function(a){
+        if(!a.machine) return;
+        if(!groups[a.machine]) groups[a.machine]={alerts:[],resolved:0,unresolved:0,reasons:[]};
+        groups[a.machine].alerts.push(a);
+        if(a.resolved){groups[a.machine].resolved++;var r=(a.comment||a.resolveReason||'').split('|')[0].trim();if(r)groups[a.machine].reasons.push(r);}
+        else groups[a.machine].unresolved++;
+      });
+      var sorted=Object.entries(groups).sort(function(a,b){return b[1].alerts.length-a[1].alerts.length;});
+      if(!sorted.length){byMach.innerHTML='<div style="font-size:13px;color:#475569;padding:8px 0;">No alerts in this range.</div>';}
+      else {
+        byMach.innerHTML=sorted.map(function(entry,gi){
+          var m=entry[0],g=entry[1],total=g.alerts.length;
+          var bc=g.unresolved>0?'rgba(125,211,252,0.4)':total>=3?'#f59e0b':'#1e3a5f';
+          var dc=g.unresolved>0?'#7dd3fc':total>=3?'#f59e0b':'#22c55e';
+          var uid='dnxg'+gi;
+          var topR2=g.reasons.slice(0,3);
+          return '<div style="background:#0d1f35;border:1px solid '+bc+';border-radius:10px;margin-bottom:8px;overflow:hidden;">'
+            +'<div data-uid="'+uid+'" onclick="window._dnxToggle(this.dataset.uid);" style="display:flex;align-items:center;gap:10px;padding:12px;cursor:pointer;">'
+            +'<div style="width:10px;height:10px;border-radius:50%;background:'+dc+';flex-shrink:0;"></div>'
+            +'<div style="flex:1;">'
+            +'<span style="font-family:Bebas Neue,sans-serif;font-size:17px;color:#f0f4f8;letter-spacing:1px;">'+m+'</span>'
+            +(g.unresolved?'<span style="background:#7dd3fc;color:#000;font-size:10px;font-weight:700;padding:1px 7px;border-radius:4px;margin-left:8px;">'+g.unresolved+' ACTIVE</span>':'')
+            +'</div>'
+            +'<div style="font-family:Bebas Neue,sans-serif;font-size:20px;color:'+(total>=3?'#7dd3fc':total>=2?'#f59e0b':'#94a3b8')+';">'+total+'x</div>'
+            +'<div style="color:#475569;margin-left:6px;">▼</div>'
+            +'</div>'
+            +(topR2.length?'<div style="padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:6px;">'+topR2.map(function(r){return '<span style="background:#0a1628;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px;font-size:11px;color:#94a3b8;">'+r+'</span>';}).join('')+'</div>':'')
+            +'<div id="'+uid+'" style="display:none;border-top:1px solid #1e3a5f;padding:10px 12px;">'
+            +g.alerts.map(function(a){
+              var ts2=_dnxTs(a)?new Date(_dnxTs(a)).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+              var r2=(a.comment||a.resolveReason||'');
+              var safeM2=(a.machine||'').replace(/"/g,'&quot;');
+              var safeD2=(a.duration||'').replace(/"/g,'&quot;');
+              return '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #0a1628;">'
+                +'<span>'+(a.resolved?'✅':'🔷')+'</span>'
+                +'<div style="flex:1;">'
+                +'<div style="font-size:11px;color:#64748b;">'+ts2+' — '+safeD2+'</div>'
+                +(r2?'<div style="font-size:12px;color:#94a3b8;font-style:italic;">'+r2.substring(0,80)+'</div>':'')
+                +'</div>'
+                +(!a.resolved?'<button data-aid="'+a.id+'" data-amachine="'+safeM2+'" data-aduration="'+safeD2+'" onclick="window.openDnxResolve(this.dataset.aid,null,this.dataset.amachine,this.dataset.aduration)" style="background:rgba(125,211,252,0.1);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;white-space:nowrap;">RESOLVE</button>':'')
+                +'</div>';
+            }).join('')
+            +'</div></div>';
+        }).join('');
+      }
+    }
+    // HISTORY
     if(hist){
-      hist.innerHTML = alerts.slice(0,100).map(function(a){
-        var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-        var resolvedStr = a.resolved ? '<div style="font-size:10px;color:#4ade80;">✅ Resolved: '+( a.comment||'no comment')+'</div>' : '<span style="font-size:10px;color:#f87171;">⚠ Unresolved</span>';
-        return '<div style="padding:8px 0;border-bottom:1px solid #0d1f35;">'
-          +'<div style="display:flex;align-items:center;gap:8px;">'
-          +'<span>'+(a.resolved?'✅':'🔴')+'</span>'
+      hist.innerHTML=filtered.slice(0,150).map(function(a){
+        var ts3=_dnxTs(a)?new Date(_dnxTs(a)).toLocaleString('en-US',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+        var reason3=(a.comment||a.resolveReason||'');
+        var emp3=(a.resolvedBy||a.employee||'');
+        return '<div style="padding:8px 4px;border-bottom:1px solid #0d1f35;display:flex;align-items:flex-start;gap:8px;">'
+          +'<span>'+(a.resolved?'✅':'🔷')+'</span>'
           +'<div style="flex:1;">'
-          +'<span style="font-size:12px;font-weight:700;color:'+(a.resolved?'#94a3b8':'#f87171')+';">'+a.machine+'</span>'
+          +'<span style="font-size:13px;font-weight:700;color:'+(a.resolved?'#94a3b8':'#7dd3fc')+';">'+a.machine+'</span>'
           +' <span style="font-size:10px;color:#475569;">'+a.duration+'</span>'
+          +(emp3?'<span style="font-size:10px;color:#3b82f6;margin-left:6px;">'+emp3+'</span>':'')
+          +'<div style="font-size:10px;color:#334155;">'+ts3+'</div>'
+          +(reason3?'<div style="font-size:11px;color:#4ade80;margin-top:2px;">✅ '+reason3.substring(0,100)+'</div>':'<div style="font-size:10px;color:#7dd3fc;">⏳ Unresolved</div>')
           +'</div>'
-          +'<div style="font-size:10px;color:#334155;">'+ts+'</div>'
-          +'</div>'
-          +resolvedStr
           +'</div>';
       }).join('');
     }
   }
 
-  window._openResolveDnx = function(btn){
-    _dnxPendingResolveId = btn.getAttribute('data-id');
-    var machine = btn.getAttribute('data-machine');
-    var modal = document.getElementById('dnx-resolve-modal');
-    document.getElementById('dnx-resolve-machine').textContent = 'Machine: ' + machine;
-    document.getElementById('dnx-resolve-comment').value = '';
-    modal.style.display = 'flex';
-  };
-
-  window._confirmResolveDnx = async function(){
-    var comment = (document.getElementById('dnx-resolve-comment').value || '').trim();
-    if(!comment){ alert('Please describe the issue before resolving.'); return; }
-    if(!_dnxPendingResolveId) return;
-
+  window._deleteDnxAlert = async function(id){
+    if(!id||!confirm('Delete this alert permanently?')) return;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
-
-    // Get machine name BEFORE closing
-    var resolvedMachine = document.getElementById('dnx-resolve-machine').textContent.replace('Machine: ','').trim();
-
-    // ── Remove highlight IMMEDIATELY (before async) to avoid race with snapshot ──
-    window._clearMachineFlash(resolvedMachine);
-    document.getElementById('dnx-resolve-modal').style.display = 'none';
-    if(window.showToast) window.showToast('green','✅ Alert Resolved', comment);
-
     try {
-      await mods.updateDoc(mods.doc(db2,'hillDnxAlerts',_dnxPendingResolveId),{
-        resolved: true,
-        comment: comment,
-        resolvedAt: mods.serverTimestamp(),
-        resolvedBy: window.currentUser || 'admin'
-      });
-    } catch(e){
-      alert('Error resolving: ' + e.message);
+      await mods.deleteDoc(mods.doc(db2,'hillDnxAlerts',id));
+      if(window.showToast) window.showToast('blue','🗑 Deleted','Alert removed');
+    } catch(e) {
+      if(window.showToast) window.showToast('red','Error',e.message);
     }
+  };
+
+  // DNX RESOLVE MODAL v2
+  var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
+  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
+  window._dnxResolvePending=null;
+  window._dnxSelectedInsight='';
+  window._dnxSelectInsight=function(val){
+    window._dnxSelectedInsight=val;
+    document.querySelectorAll('.dnx-insight-btn').forEach(function(b){b.classList.toggle('selected',b.dataset.val===val);});
+    document.getElementById('dnx-resolve-reason').value=val;
+    window._dnxCheckSubmit();
+  };
+  window._dnxBuildInsightGrid=function(){
+    var grid=document.getElementById('dnx-insight-grid');
+    if(!grid) return;
+    grid.innerHTML='';
+    DNX_INSIGHTS.forEach(function(v){
+      var btn=document.createElement('button');
+      btn.className='dnx-insight-btn'; btn.dataset.val=v; btn.textContent=v;
+      btn.onclick=function(){window._dnxSelectInsight(v);};
+      grid.appendChild(btn);
+    });
+  };
+  window._dnxBuildEmployeeSelect=function(){
+    var sel=document.getElementById('dnx-resolve-employee');
+    if(!sel) return;
+    sel.innerHTML='<option value="">-- Select Employee --</option>';
+    DNX_EMPLOYEES.forEach(function(e){var o=document.createElement('option');o.value=e;o.textContent=e;sel.appendChild(o);});
+  };
+  window._dnxAddCustomInsight=function(){
+    var inp=document.getElementById('dnx-custom-text');
+    var val=(inp.value||'').trim(); if(!val)return;
+    DNX_INSIGHTS.push(val); inp.value='';
+    window._dnxBuildInsightGrid();
+    window._dnxSelectInsight(val);
+  };
+  window._dnxReasonInput=function(){window._dnxCheckSubmit();};
+  window._dnxCheckSubmit=function(){
+    var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
+    document.getElementById('dnx-resolve-submit').disabled=!(reason.length>=3);
+  };
+  window._dnxResolveCancel=function(){
+    document.getElementById('dnx-resolve-modal').style.display='none';
+    window._dnxResolvePending=null; window._dnxSelectedInsight='';
+  };
+  window.openDnxResolve=function(noteId,hillReqId,machine,duration){
+    var note=null;
+    Object.values(window.machineNotes||{}).forEach(function(arr){arr.forEach(function(n){if(n.id===noteId)note=n;});});
+    var machineName=(note&&note.machine)||machine||'--';
+    var dur=(note&&note.duration)||duration||'';
+    window._dnxResolvePending={noteId:noteId,hillReqId:hillReqId,note:note,machine:machineName,duration:dur};
+    window._dnxSelectedInsight='';
+    var modal=document.getElementById('dnx-resolve-modal');
+    if(!modal){console.error('DNX modal not found');return;}
+    document.getElementById('dnx-modal-machine').textContent=machineName;
+    document.getElementById('dnx-modal-duration').textContent=dur?'Inactive for: '+dur:'';
+    document.getElementById('dnx-resolve-reason').value='';
+    document.getElementById('dnx-resolve-wo').value='';
+    document.getElementById('dnx-resolve-partnum').value='';
+    document.getElementById('dnx-resolve-error').style.display='none';
+    document.getElementById('dnx-resolve-submit').disabled=true;
+    document.getElementById('dnx-resolve-submit').textContent='CLOSE ALERT';
+    window._dnxBuildInsightGrid();
+    window._dnxBuildEmployeeSelect();
+    modal.style.display='flex';
+  };
+  window._dnxResolveSubmit=async function(){
+    var reason=(document.getElementById('dnx-resolve-reason').value||'').trim();
+    var employee=(document.getElementById('dnx-resolve-employee').value||'').trim();
+    var wo=(document.getElementById('dnx-resolve-wo').value||'').trim();
+    var partnum=(document.getElementById('dnx-resolve-partnum').value||'').trim();
+    if(reason.length<3){document.getElementById('dnx-resolve-error').style.display='block';return;}
+    var pending=window._dnxResolvePending; if(!pending)return;
+    var machineName=pending.machine||'';
+    var btn=document.getElementById('dnx-resolve-submit');
+    btn.disabled=true; btn.textContent='SAVING...';
+    var db2=window.fbDb, mods=window._fbModules, now=new Date();
+    try{
+      var note=pending.note||{};
+      var elapsedMins=null,elapsedStr='unknown';
+      if(note.createdAt&&note.createdAt.seconds){
+        elapsedMins=Math.round((now-new Date(note.createdAt.seconds*1000))/60000);
+        elapsedStr=elapsedMins>=60?Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m':elapsedMins+'m';
+      }
+      var fullReason=reason+(wo?' | WO:'+wo:'')+(partnum?' | Part:'+partnum:'');
+      var payload={resolved:true,resolvedAt:mods.serverTimestamp(),resolvedBy:employee||'admin',resolveReason:fullReason,employee:employee,wo:wo,partNumber:partnum,downtimeInsight:reason,elapsedMins:elapsedMins,elapsedStr:elapsedStr,inProgress:false,jobStatus:'completed',completedAt:mods.serverTimestamp()};
+      // Remove the note from hillRequests
+      await mods.deleteDoc(mods.doc(db2,'notes',pending.noteId)).catch(function(){});
+      var hrId=(pending.hillReqId&&pending.hillReqId!==pending.noteId&&pending.hillReqId!=='')?pending.hillReqId:null;
+      if(hrId){await mods.updateDoc(mods.doc(db2,'hillRequests',hrId),payload).catch(function(){});}
+      else{
+        var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('machine','==',machineName),mods.where('resolved','==',false),mods.where('type','==','dnx'))).catch(function(){return null;});
+        if(snap&&!snap.empty){var ups=[];snap.forEach(function(d){ups.push(mods.updateDoc(mods.doc(db2,'hillRequests',d.id),payload));});await Promise.all(ups).catch(function(){});}
+      }
+      // Log to hillDnxLog
+      await mods.addDoc(mods.collection(db2,'hillDnxLog'),{machine:machineName,duration:note.duration||'',since:note.since||'',status:note.status||'INACTIVE',resolveReason:fullReason,downtimeInsight:reason,employee:employee,wo:wo,partNumber:partnum,resolvedBy:employee||'admin',resolvedAt:mods.serverTimestamp(),elapsedMins:elapsedMins,elapsedStr:elapsedStr,autoAlert:true}).catch(function(){});
+      // Resolve matching hillDnxAlerts
+      var dnxSnap=await mods.getDocs(mods.query(mods.collection(db2,'hillDnxAlerts'),mods.where('machine','==',machineName),mods.where('resolved','==',false))).catch(function(){return null;});
+      if(dnxSnap&&!dnxSnap.empty){var dnxUps=[];dnxSnap.forEach(function(d){dnxUps.push(mods.updateDoc(mods.doc(db2,'hillDnxAlerts',d.id),{resolved:true,comment:fullReason,resolvedAt:mods.serverTimestamp(),resolvedBy:employee||'admin'}));});await Promise.all(dnxUps).catch(function(){});}
+      // Clear machine flash
+      window._clearMachineFlash(machineName);
+      document.getElementById('dnx-resolve-modal').style.display='none';
+      window._dnxResolvePending=null; window._dnxSelectedInsight='';
+      if(window.showToast)window.showToast('blue','🔷 Alert Closed',machineName+' — '+reason);
+    }catch(e){btn.disabled=false;btn.textContent='CLOSE ALERT';if(window.showToast)window.showToast('red','Error',e.message);}
   };
 
   window._printDnxAlerts = function(){
     var alerts = window._dnxAlertHistory || [];
     var rows = alerts.map(function(a){
-      var ts = a.receivedAt ? new Date(a.receivedAt).toLocaleString() : '';
-      return '<tr style="border-bottom:1px solid #ddd;">'
-        +'<td style="padding:8px;">'+a.machine+'</td>'
-        +'<td style="padding:8px;">'+a.status+'</td>'
-        +'<td style="padding:8px;">'+a.duration+'</td>'
-        +'<td style="padding:8px;">'+ts+'</td>'
-        +'<td style="padding:8px;color:'+(a.resolved?'green':'red')+';">'+(a.resolved?'✅ '+( a.comment||''):'⚠ Unresolved')+'</td>'
-        +'</tr>';
+      var ts = _dnxTs(a) ? new Date(_dnxTs(a)).toLocaleString() : '';
+      var reason = a.comment || a.resolveReason || '';
+      var emp = a.resolvedBy || a.employee || '';
+      return '<tr><td>'+a.machine+'</td><td>'+(a.status||'INACTIVE')+'</td><td>'+a.duration+'</td><td>'+ts+'</td><td>'+(emp?emp+' — ':'')+(reason||'')+'</td><td style="color:'+(a.resolved?'green':'red')+';">'+(a.resolved?'✅ Resolved':'⏳ Open')+'</td></tr>';
     }).join('');
-
     var win = window.open('','_blank');
-    win.document.write('<html><head><title>Datanomix Alert Report — Hill Manufacturing</title>'
-      +'<style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th{background:#222;color:#fff;padding:8px;text-align:left;}tr:nth-child(even){background:#f5f5f5;}@media print{button{display:none;}}</style>'
-      +'</head><body>'
-      +'<h2>Datanomix Machine Alert Report</h2>'
-      +'<p>Hill Manufacturing | Generated: '+new Date().toLocaleString()+'</p>'
-      +'<p>Total alerts: '+alerts.length+' | Unresolved: '+alerts.filter(function(a){return !a.resolved;}).length+'</p>'
-      +'<button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#333;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 Print / Save as PDF</button>'
-      +'<table><thead><tr><th>Machine</th><th>Status</th><th>Duration</th><th>Received</th><th>Resolution</th></tr></thead><tbody>'
-      +rows+'</tbody></table></body></html>');
+    win.document.write('<!DOCTYPE html><html><head><title>Datanomix Report — Hill Manufacturing</title>'
+      +'<style>body{font-family:Arial,sans-serif;padding:24px;}h1{font-size:18px;}table{width:100%;border-collapse:collapse;font-size:12px;}th{background:#1a2744;color:#fff;padding:7px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #e5e7eb;}tr:nth-child(even){background:#f9fafb;}@media print{button{display:none!important;}}</style></head><body>'
+      +'<button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 Print / Save PDF</button>'
+      +'<h1>Hill Manufacturing — Datanomix Alert Report</h1>'
+      +'<p>Generated: '+new Date().toLocaleString()+' | Total: '+alerts.length+' | Unresolved: '+alerts.filter(function(a){return !a.resolved;}).length+'</p>'
+      +'<table><thead><tr><th>Machine</th><th>Status</th><th>Duration</th><th>Received</th><th>Resolution</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></body></html>');
     win.document.close();
   };
+
 
   var _dnxTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_dnxTimer);_startDnxListener();}},1500);
 
