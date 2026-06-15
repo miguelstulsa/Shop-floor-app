@@ -80,6 +80,11 @@
   .machine-name { font-family: 'Bebas Neue', sans-serif; font-size: clamp(11px, 1.4vw, 16px); letter-spacing: 1.5px; color: #f5d050; text-shadow: 0 0 10px rgba(245,208,80,0.4); text-shadow: 0 0 10px rgba(245,208,80,0.5), 0 1px 3px rgba(0,0,0,0.7); line-height: 1; white-space: nowrap; overflow: visible; text-overflow: unset; display: block; transform-origin: left center; }
   .machine-right { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 14px; }
   .machine-led { display: none; }
+  .machine-led.led-blue   { display:block; width:10px; height:10px; border-radius:50%; background:#3b82f6; box-shadow:0 0 8px 3px rgba(59,130,246,.9);  animation:blink-blue   1.6s step-end infinite; }
+  .machine-led.led-red    { display:block; width:10px; height:10px; border-radius:50%; background:#ef4444; box-shadow:0 0 8px 3px rgba(239,68,68,.9);   animation:blink-red    0.7s step-end infinite; }
+  .machine-led.led-yellow { display:block; width:10px; height:10px; border-radius:50%; background:#eab308; box-shadow:0 0 8px 3px rgba(234,179,8,.9);   animation:blink-yellow 1.2s step-end infinite; }
+  .machine-led.led-green  { display:block; width:10px; height:10px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px 3px rgba(34,197,94,.9);   animation:blink-green  2.0s step-end infinite; }
+  .machine-led.led-dnx    { display:block; width:10px; height:10px; border-radius:50%; background:#7dd3fc; box-shadow:0 0 8px 3px rgba(125,211,252,.9); animation:blink-blue   1.4s step-end infinite; }
 
   @keyframes led-pulse-green  { 0%,100%{box-shadow:0 0 6px rgba(34,197,94,.7),inset 0 1px 2px rgba(255,255,255,.4)} 50%{box-shadow:0 0 14px rgba(34,197,94,1),0 0 22px rgba(34,197,94,.4),inset 0 1px 2px rgba(255,255,255,.4)} }
   @keyframes led-pulse-red    { 0%,100%{box-shadow:0 0 6px rgba(239,68,68,.8),inset 0 1px 2px rgba(255,255,255,.4);opacity:1} 50%{box-shadow:0 0 16px rgba(239,68,68,1),0 0 24px rgba(239,68,68,.5),inset 0 1px 2px rgba(255,255,255,.4);opacity:.7} }
@@ -94,6 +99,7 @@
   .note-dot.red    { background: #ef4444; box-shadow: 0 0 10px 3px rgba(239,68,68,.9);   animation: blink-red    0.7s step-end infinite; }
   .note-dot.yellow { background: #eab308; box-shadow: 0 0 10px 3px rgba(234,179,8,.9);   animation: blink-yellow 1.2s step-end infinite; }
   .note-dot.green  { background: #22c55e; box-shadow: 0 0 10px 3px rgba(34,197,94,.9);   animation: blink-green  2.0s step-end infinite; }
+  .note-dot.dnx    { background: #7dd3fc; box-shadow: 0 0 10px 3px rgba(125,211,252,.9); animation: blink-blue   1.4s step-end infinite; }
   @keyframes blink        { 0%,100%{opacity:1} 50%{opacity:.2} }
   @keyframes blink-red    { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
   @keyframes blink-yellow { 0%,49%{opacity:1} 50%,100%{opacity:.1} }
@@ -1211,7 +1217,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
-  <div class="nav-tab admin-only" onclick="switchTab('dnxalerts')" id="tab-dnxalerts" style="display:none">⚠️ Alerts</div>
+  <div class="nav-tab admin-only" onclick="switchTab('dnxalerts')" id="tab-dnxalerts" style="display:none">🔷 DNX</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
@@ -1443,7 +1449,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
 
   <!-- Header -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f87171;letter-spacing:2px;">⚠️ DATANOMIX ALERTS</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f87171;letter-spacing:2px;">🔷 DATANOMIX ALERTS</div>
     <button onclick="window._printDnxAlerts()" style="background:rgba(255,255,255,0.08);border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">🖨 PRINT / PDF</button>
   </div>
   <div style="font-size:12px;color:#475569;margin-bottom:16px;">Machines inactive 30+ minutes. Click RESOLVE to stop flashing and document the issue.</div>
@@ -1824,7 +1830,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     }
   }, 5000);
   const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
+  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢', dnx: '🔷' };
 
   // MACHINE NOTES
   const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
@@ -1839,7 +1845,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
     document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
     document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green'); });
-    const priority = { red:4, yellow:3, blue:2, green:1 };
+    const priority = { red:4, yellow:3, blue:2, green:1, dnx:2 };
     const machinePriority = {};
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
@@ -1858,7 +1864,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       const notesEl = document.getElementById('notes-' + mid);
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
-    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.inProgress);
+    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.type === 'dnx' || n.inProgress);
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
@@ -1885,7 +1891,7 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
     document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
     document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green'); });
-    const priority = { red:4, yellow:3, blue:2, green:1 };
+    const priority = { red:4, yellow:3, blue:2, green:1, dnx:2 };
     const machinePriority = {};
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
@@ -1977,7 +1983,9 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
       var onHold2  = n.onHold;
       var adminBtns = isAdmin2
         ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
-          (onHold2
+          (n.type === 'dnx'
+            ? '<button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;" onclick="window._resolveDnxFromFloor(\'' + n.id + '\',\'' + n.machine + '\')">✓ RESOLVE ALERT</button>'
+            : onHold2
             ? '<div style="width:100%;font-size:9px;color:#f59e0b;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>'
@@ -3033,7 +3041,29 @@ Every result shows: date, time, operator, type, WO#, details, elapsed time, stat
   let currentMachine = '', currentCell = '', selectedType = null;
   window.machineNotes = {}; window.currentMachine = '';
   const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢' };
+  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢', dnx: '🔷' };
+
+  window._resolveDnxFromFloor = async function(reqId, machineName) {
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return;
+    // Clear machine flash immediately
+    window._clearMachineFlash(machineName);
+    // Mark hillRequests doc as resolved
+    try {
+      await mods.updateDoc(mods.doc(db2,'hillRequests',reqId),{
+        resolved:true, resolvedAt:mods.serverTimestamp(), resolvedBy:window.currentUser||'admin'
+      });
+      // Also resolve matching hillDnxAlerts record if any
+      var hist = window._dnxAlertHistory || [];
+      var matching = hist.filter(function(a){ return !a.resolved && a.machine===machineName; });
+      await Promise.all(matching.map(function(a){
+        return mods.updateDoc(mods.doc(db2,'hillDnxAlerts',a.id),{
+          resolved:true, comment:'Resolved from floor', resolvedAt:mods.serverTimestamp(), resolvedBy:window.currentUser||'admin'
+        });
+      }));
+      if(window.showToast) window.showToast('green','✅ DNX Alert Resolved',machineName+' cleared.');
+    } catch(e){ console.warn('DNX floor resolve error:',e.message); }
+  };
 
   // ── QUICK RECALL SYSTEM ─────────────────────────────────────────────────────
   // Saves per-machine history of WO#, OP#, last supply item, last operator.
@@ -12470,12 +12500,25 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         _dnxAlerts[d.machine] = d;
         _highlightMachine(d.machine, d.duration);
         _sparkySayInactive(d.machine, d.duration);
-        // Show visible in-app banner
         showToast('red', '⚠️ MACHINE ALERT — ' + d.machine, d.machine + ' INACTIVE for ' + (d.duration||'30+ min'));
-        // Flash the Alerts tab badge
         if(window.badge) badge(true);
+
+        // Write to hillRequests as type 'dnx' so it shows as a baby blue dot
+        // and appears in the sidebar — resolvable from the floor
+        if(window._fbModules && window.fbDb){
+          var mods2 = window._fbModules, db3 = window.fbDb;
+          mods2.addDoc(mods2.collection(db3,'hillRequests'),{
+            type: 'dnx',
+            machine: d.machine,
+            cell: d.cell || '',
+            detail: d.machine + ' INACTIVE for ' + (d.duration||'30+ min'),
+            wo: '', op: '', operator: 'Datanomix',
+            createdAt: mods2.serverTimestamp(),
+            resolved: false,
+            dnxAlertKey: key
+          }).catch(function(e){ console.warn('DNX hillRequests write failed:',e.message); });
+        }
       }
-      // Always mark as seen
       _dnxLastAnnounced[key] = true;
     });
 
