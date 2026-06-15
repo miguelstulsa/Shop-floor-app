@@ -12322,10 +12322,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   window._clearMachineFlash = function(machineName) {
     if(!machineName) return;
     delete _dnxAlerts[machineName];
-    // By notes- id
     var notesEl = document.getElementById('notes-' + machineName);
     if(notesEl){ var mc=notesEl.closest('.machine'); if(mc){ mc.classList.remove('dnx-inactive'); var b=mc.querySelector('.dnx-badge'); if(b) b.remove(); } }
-    // By name text sweep
     document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
       var nameEl=card.querySelector('.machine-name');
       if(nameEl && nameEl.textContent.trim()===machineName){ card.classList.remove('dnx-inactive'); var b2=card.querySelector('.dnx-badge'); if(b2) b2.remove(); }
@@ -12336,7 +12334,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return;
 
-    // Clear any lingering highlights from previous session on startup
+    // Clear stale highlights from previous session
     document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
       card.classList.remove('dnx-inactive');
       var b=card.querySelector('.dnx-badge'); if(b) b.remove();
@@ -12344,22 +12342,21 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _dnxAlerts = {};
     _dnxLastAnnounced = {};
 
-    // Listen to latest alert — fires on any write to hillSettings/latestDnxAlert
+    // Listen to latest alert — fires on every new DNX write from worker
     mods.onSnapshot(mods.doc(db2,'hillSettings','latestDnxAlert'), function(snap){
       if(!snap||!snap.exists||!snap.exists()) return;
       var d = snap.data();
       if(!d.machine) return;
 
       var key = d.machine + '_' + d.since;
-      // receivedAt may be a Firestore Timestamp {seconds:...} OR a plain ISO string
+
+      // Parse receivedAt — worker sends ISO string, Firestore SDK sends Timestamp object
       var receivedMs = 0;
-      if(d.receivedAt && d.receivedAt.seconds) {
-        receivedMs = d.receivedAt.seconds * 1000;          // Firestore Timestamp
-      } else if(d.receivedAt && typeof d.receivedAt === 'string') {
-        receivedMs = new Date(d.receivedAt).getTime();     // ISO string from worker
-      }
-      var ageSeconds = (Date.now() - receivedMs) / 1000;
-      var isFresh = ageSeconds < 300;
+      if(d.receivedAt && d.receivedAt.seconds)        receivedMs = d.receivedAt.seconds * 1000;
+      else if(d.receivedAt && typeof d.receivedAt === 'string') receivedMs = new Date(d.receivedAt).getTime();
+
+      var ageSeconds = receivedMs > 0 ? (Date.now() - receivedMs) / 1000 : 999999;
+      var isFresh = ageSeconds < 300; // 5 minute window
 
       if(!_dnxLastAnnounced[key] && isFresh){
         _dnxLastAnnounced[key] = true;
@@ -12374,10 +12371,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
           );
         }
       }
-      // stale alerts on page load: no flash, no announce
+      // Old alert on page load — mark as seen so it doesn't fire when it ages out
+      _dnxLastAnnounced[key] = true;
     });
 
-    // Listen to alert history — for tab display only, never touches machine highlights
+    // Listen to alert history — renders Alerts tab AND syncs highlights
     mods.onSnapshot(
       mods.query(mods.collection(db2,'hillDnxAlerts'), mods.orderBy('receivedAt','desc')),
       function(snap){
@@ -12386,30 +12384,37 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         snap.forEach(function(d){ var a=d.data(); a.id=d.id; alerts.push(a); });
         window._dnxAlertHistory = alerts;
         _renderDnxTab(alerts);
-        // NOTE: do NOT touch machine highlights here — that's handled by
-        // latestDnxAlert (flash on) and _clearMachineFlash (flash off)
+
+        // Clear all highlights, then re-apply only unresolved
+        document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
+          card.classList.remove('dnx-inactive');
+          var b=card.querySelector('.dnx-badge'); if(b) b.remove();
+        });
+        alerts.filter(function(a){ return !a.resolved; }).forEach(function(a){
+          if(a.machine) _highlightMachine(a.machine, a.duration);
+        });
       }
     );
   }
 
   function _highlightMachine(machineName, duration){
-    // Match .machine divs — find by .machine-name text content
-    // Also try notes- id pattern as a reliable fallback
+    if(!machineName) return;
+    // Primary: find by notes- id and walk up to .machine parent
     var notesEl = document.getElementById('notes-' + machineName);
     if(notesEl){
-      var machineDiv = notesEl.closest('.machine');
-      if(machineDiv) _applyDnxHighlight(machineDiv, machineName, duration);
+      var mc = notesEl.closest('.machine');
+      if(mc) _applyDnxHighlight(mc, duration);
     }
-    // Also sweep all .machine divs in case id pattern differs
+    // Fallback: sweep all .machine divs by machine-name text
     document.querySelectorAll('.machine').forEach(function(card){
       var nameEl = card.querySelector('.machine-name');
       if(nameEl && nameEl.textContent.trim() === machineName){
-        _applyDnxHighlight(card, machineName, duration);
+        _applyDnxHighlight(card, duration);
       }
     });
   }
 
-  function _applyDnxHighlight(card, machineName, duration){
+  function _applyDnxHighlight(card, duration){
     card.classList.add('dnx-inactive');
     card.style.position = 'relative';
     var existing = card.querySelector('.dnx-badge');
@@ -12425,6 +12430,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       _highlightMachine(entry[0], entry[1].duration || '30m+');
     });
   }
+
 
   function _sparkySayInactive(machine, duration){
     if(!window.say) return;
