@@ -12470,29 +12470,31 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         _dnxAlerts[d.machine] = d;
         _highlightMachine(d.machine, d.duration);
         _sparkySayInactive(d.machine, d.duration);
-        // NOTE: Pushover sent directly by Cloudflare worker — not duplicated here
+        // Show visible in-app banner
+        showToast('red', '⚠️ MACHINE ALERT — ' + d.machine, d.machine + ' INACTIVE for ' + (d.duration||'30+ min'));
+        // Flash the Alerts tab badge
+        if(window.badge) badge(true);
       }
-      // Always mark as seen — prevents re-announce if alert ages out and comes back
+      // Always mark as seen
       _dnxLastAnnounced[key] = true;
     });
 
-    // Listen to alert history — renders Alerts tab AND syncs highlights
+    // Listen to alert history — NO orderBy to avoid index errors; sort in JS
     mods.onSnapshot(
-      mods.query(mods.collection(db2,'hillDnxAlerts'), mods.orderBy('receivedAt','desc')),
+      mods.collection(db2,'hillDnxAlerts'),
       function(snap){
         if(!snap) return;
         var alerts = [];
         snap.forEach(function(d){ var a=d.data(); a.id=d.id; alerts.push(a); });
+        // Sort newest first in JS
+        alerts.sort(function(a,b){
+          var ta = a.receivedAt && a.receivedAt.seconds ? a.receivedAt.seconds*1000 : a.receivedAt ? new Date(a.receivedAt).getTime() : 0;
+          var tb = b.receivedAt && b.receivedAt.seconds ? b.receivedAt.seconds*1000 : b.receivedAt ? new Date(b.receivedAt).getTime() : 0;
+          return tb - ta;
+        });
         window._dnxAlertHistory = alerts;
         _renderDnxTab(alerts);
-
-        // Clear all highlights, then re-apply only unresolved
-        document.querySelectorAll('.machine.dnx-inactive').forEach(function(card){
-          card.classList.remove('dnx-inactive');
-          var b=card.querySelector('.dnx-badge'); if(b) b.remove();
-        });
-        // History is for the Alerts tab display ONLY — never flashes machines
-        // Only the latestDnxAlert live listener controls machine highlights
+        // History is display only — no machine highlights from here
       }
     );
   }
