@@ -1991,6 +1991,19 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
   };
 
+  function _fmtAlertTimestamp(createdAt) {
+    if (!createdAt || !createdAt.seconds) return 'just now';
+    var d = new Date(createdAt.seconds * 1000);
+    var now = new Date();
+    var timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    var isToday = d.toDateString() === now.toDateString();
+    var yest = new Date(now); yest.setDate(now.getDate() - 1);
+    var isYesterday = d.toDateString() === yest.toDateString();
+    if (isToday) return 'Today at ' + timeStr;
+    if (isYesterday) return 'Yesterday at ' + timeStr;
+    return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' at ' + timeStr;
+  }
+
   window.updateNotifFeed = function updateNotifFeed(actionable) {
     const list = document.getElementById('notifList');
     const reqBadge = document.getElementById('reqBadge');
@@ -2009,7 +2022,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     actionable.forEach(n => {
       const item = document.createElement('div');
       item.className = 'notif-item ' + n.type;
-      const timeStr = n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'just now';
+      const timeStr = _fmtAlertTimestamp(n.createdAt);
       var isAdmin = window._isAdmin || window.currentUser === 'hilladmin';
       var inProg  = n.inProgress;
       var onHold  = n.onHold;
@@ -2039,7 +2052,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         '<div class="notif-type">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
         '<div class="notif-machine">' + n.cell + ' — ' + n.machine + '</div>' +
         '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + n.wo + (n.detail ? ' · ' + n.detail : '') + '</div>' +
-        '<div class="notif-time">Today at ' + timeStr + '</div>' +
+        '<div class="notif-time">' + timeStr + '</div>' +
         timerBtns +
         '<button class="notif-dismiss" data-id="' + n.id + '">✕</button>';
       list.appendChild(item);
@@ -2058,7 +2071,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     filtered.forEach(n => {
       const item = document.createElement('div');
       item.className = 'req-card ' + n.type;
-      const timeStr = n.createdAt ? new Date(n.createdAt.seconds * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : 'just now';
+      const timeStr = _fmtAlertTimestamp(n.createdAt);
       var isAdmin2 = window._isAdmin || window.currentUser === 'hilladmin';
       var inProg2  = n.inProgress;
       var onHold2  = n.onHold;
@@ -2090,7 +2103,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           (n.detail ? '<div class="req-detail">'      + n.detail + '</div>' : '') +
           (n.photoUrl ? '<img src="' + n.photoUrl + '" onclick="window._viewPhoto(\'' + n.photoUrl + '\')" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:6px;cursor:pointer;border:2px solid #1e3a5f;" title="Tap to view photo">' : '') +
           (n.operator ? '<div class="req-operator">👤 ' + n.operator + '</div>' : '') +
-          '<div class="req-time">⏱ Today at ' + timeStr + '</div>' +
+          '<div class="req-time">⏱ ' + timeStr + '</div>' +
           adminBtns +
         '</div>' +
         '<button class="req-dismiss" data-id="' + n.id + '">✕</button>';
@@ -13347,7 +13360,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     html += '</div>';
 
     html += '<div style="font-size:10px;color:#475569;letter-spacing:1px;margin-bottom:6px;">REQUEST TRAIL</div>';
-    reqs.slice(0,150).forEach(function(r){
+    reqs.forEach(function(r){
       var dateStr = r.createdAt && r.createdAt.seconds
         ? new Date(r.createdAt.seconds*1000).toLocaleString('en-US',{month:'numeric',day:'numeric',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
       var color = typeColor[r.type]||'#94a3b8';
@@ -13370,10 +13383,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       if(r.elapsedStr) html += '<div style="font-size:10px;color:#f5c842;margin-top:1px;">⏱ '+r.elapsedStr+'</div>';
       html += '</div>';
     });
-    if(reqs.length > 150) html += '<div style="font-size:11px;color:#475569;text-align:center;padding:8px;">Showing 150 of '+reqs.length+' — use PDF for full export</div>';
     html += '</div>';
 
-    div.setAttribute('data-receipt', JSON.stringify({title:title, reqs:reqs.slice(0,500)}));
+    div.setAttribute('data-receipt', JSON.stringify({title:title, reqs:reqs}));
     div.innerHTML = html;
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;
@@ -13542,34 +13554,37 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── TYPE RECEIPT BUILDER ──────────────────────────────────
-  async function _buildTypeReceipt(type, originalMsg){
+  async function _buildTypeReceipt(type, originalMsg, limitN){
+    limitN = limitN || 200;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return {type:type,requests:[]};
     var requests=[];
     try {
-      var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('type','==',type),mods.limit(200)));
+      var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('type','==',type),mods.limit(limitN)));
       if(snap&&!snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
     } catch(e){ console.warn('Type receipt:',e.message); }
-    return {type:type,requests:requests,query:originalMsg};
+    return {type:type,requests:requests,query:originalMsg,limitN:limitN,hasMore:requests.length>=limitN};
   }
 
   // ── MACHINE RECEIPT BUILDER ────────────────────────────────
-  async function _buildMachineReceipt(machine){
+  async function _buildMachineReceipt(machine, limitN){
+    limitN = limitN || 200;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return {machine:machine,requests:[]};
     var requests=[];
     try {
-      var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('machine','==',machine),mods.limit(200)));
+      var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('machine','==',machine),mods.limit(limitN)));
       if(snap&&!snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
     } catch(e){ console.warn('Machine receipt:',e.message); }
-    return {machine:machine,requests:requests};
+    return {machine:machine,requests:requests,limitN:limitN,hasMore:requests.length>=limitN};
   }
 
   // ── UNIFIED FULL RECEIPT DISPLAY ──────────────────────────
-  function addFullReceipt(data, searchType){
+  function addFullReceipt(data, searchType, existingDiv){
     var msgs=document.getElementById('ai-messages');
     if(!msgs) return;
-    var div=document.createElement('div'); div.className='ai-msg ai-msg-assistant';
+    var div = existingDiv || document.createElement('div');
+    if(!existingDiv) div.className='ai-msg ai-msg-assistant';
     var reqs=data.requests||[];
     var typeLabel={red:'🔴 Inspection',yellow:'🟡 Machinist Req',blue:'🔵 Pending WO',green:'🟢 Running WO',orange:'🟠 Floor Support',dnx:'🔷 Datanomix'};
     var typeColor={red:'#f87171',yellow:'#fbbf24',blue:'#60a5fa',green:'#4ade80',orange:'#fb923c',dnx:'#7dd3fc'};
@@ -13583,7 +13598,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
     if(!reqs.length){
       div.innerHTML='<div class="ai-bubble">No records found for <strong>'+title+'</strong>.</div>';
-      msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; return;
+      if(!existingDiv){ msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight; }
+      return;
     }
 
     var completed=reqs.filter(function(r){return r.resolved;}).length;
@@ -13623,9 +13639,31 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       html+='</div>';
     });
     html+='</div>';
-    div.setAttribute('data-receipt',JSON.stringify({title:title,reqs:reqs.slice(0,200)}));
-    div.innerHTML=html; msgs.appendChild(div); msgs.scrollTop=msgs.scrollHeight;
+    if(data.hasMore){
+      var loadParam = encodeURIComponent(data.type || data.machine || data.name || '');
+      html+='<button class="ai-load-more-btn" data-kind="'+searchType+'" data-param="'+loadParam+'" data-limit="'+(data.limitN||200)+'" onclick="window._loadMoreReceipt(this)" style="width:100%;margin-top:6px;background:rgba(125,211,252,0.1);border:1px solid #1e4a7c;color:#7dd3fc;border-radius:8px;padding:8px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;">⬇ LOAD MORE ('+reqs.length+' loaded)</button>';
+    }
+    div.setAttribute('data-receipt',JSON.stringify({title:title,reqs:reqs}));
+    div.innerHTML=html;
+    if(!existingDiv){ msgs.appendChild(div); }
+    msgs.scrollTop=msgs.scrollHeight;
   }
+
+  window._loadMoreReceipt = async function(btn){
+    var kind = btn.getAttribute('data-kind');
+    var param = decodeURIComponent(btn.getAttribute('data-param'));
+    var curLimit = parseInt(btn.getAttribute('data-limit'),10) || 200;
+    var step = kind === 'MACHINIST' ? 100 : 200;
+    var newLimit = curLimit + step;
+    var msgDiv = btn.closest('.ai-msg');
+    btn.disabled = true; btn.textContent = 'Loading…';
+    var data;
+    if(kind==='TYPE'){ data = await _buildTypeReceipt(param, '', newLimit); }
+    else if(kind==='MACHINE'){ data = await _buildMachineReceipt(param, newLimit); }
+    else if(kind==='MACHINIST'){ data = await _buildMachinistReceipt(param, newLimit); data.name = param; }
+    else { return; }
+    addFullReceipt(data, kind, msgDiv);
+  };
 
   window._printFullReceipt = function(btn){
     var container=btn.closest('[data-receipt]');
@@ -13762,21 +13800,24 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }
 
   // ── MACHINIST RECEIPT BUILDER ──────────────────────────────
-  async function _buildMachinistReceipt(name){
+  async function _buildMachinistReceipt(name, limitN){
+    limitN = limitN || 100;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return {name:name,requests:[]};
     var requests=[], firstName=name.split(' ')[0];
+    var hasMore=false;
     try {
       var snaps=await Promise.all([
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',name),mods.limit(100))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName),mods.limit(100))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName.toLowerCase()),mods.limit(100))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName.toUpperCase()),mods.limit(100))),
-        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('assignedTo','==',name),mods.limit(100))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',name),mods.limit(limitN))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName),mods.limit(limitN))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName.toLowerCase()),mods.limit(limitN))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('operator','==',firstName.toUpperCase()),mods.limit(limitN))),
+        mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('assignedTo','==',name),mods.limit(limitN))),
       ]);
       var seen={};
       snaps.forEach(function(snap){
         if(!snap||snap.empty) return;
+        if(snap.size>=limitN) hasMore=true;
         snap.forEach(function(d){ if(seen[d.id]) return; seen[d.id]=true; var r=d.data(); r.id=d.id; requests.push(r); });
       });
       requests.sort(function(a,b){
@@ -13785,7 +13826,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         return bt-at;
       });
     } catch(e){ console.warn('Machinist lookup:',e.message); }
-    return {name:name,requests:requests};
+    return {name:name,requests:requests,limitN:limitN,hasMore:hasMore};
   }
 
 })();
