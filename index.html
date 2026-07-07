@@ -2027,7 +2027,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var inProg  = n.inProgress;
       var onHold  = n.onHold;
       var timerBtns = isAdmin
-        ? (n.type === 'dnx'
+        ? (n.autoCompleted
+            ? '<div style="margin-top:6px;font-size:11px;font-weight:700;color:#4ade80;">✅ Completed' + (n.setupBy ? ' by ' + n.setupBy.split(' ')[0] : '') + (n.setupTime ? ' — ' + n.setupTime : '') + '</div>'
+            : n.type === 'dnx'
             ? '<div style="margin-top:6px;"><button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;width:100%;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 RESOLVE ALERT</button></div>'
             : onHold
             ? '<div style="margin-top:6px;"><div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
@@ -2049,7 +2051,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       item.className = 'notif-item ' + n.type + (inProg ? ' req-in-progress' : '');
       item.innerHTML =
         '<div class="notif-blink-dot"></div>' +
-        '<div class="notif-type">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
+        '<div class="notif-type">' + (n.autoCompleted ? '✅ Completed' : typeIcons[n.type] + ' ' + typeLabels[n.type]) + '</div>' +
         '<div class="notif-machine">' + n.cell + ' — ' + n.machine + '</div>' +
         '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + n.wo + (n.detail ? ' · ' + n.detail : '') + '</div>' +
         '<div class="notif-time">' + timeStr + '</div>' +
@@ -2077,7 +2079,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var onHold2  = n.onHold;
       var adminBtns = isAdmin2
         ? '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">' +
-          (n.type === 'dnx'
+          (n.autoCompleted
+            ? '<div style="width:100%;font-size:11px;font-weight:700;color:#4ade80;">✅ Completed' + (n.setupBy ? ' by ' + n.setupBy.split(' ')[0] : '') + (n.setupTime ? ' — ' + n.setupTime : '') + '</div>'
+            : n.type === 'dnx'
             ? '<button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 CLOSE ALERT</button>'
             : onHold2
             ? '<div style="width:100%;font-size:9px;color:#f59e0b;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
@@ -2097,7 +2101,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         '<div class="req-body">' +
           '<div class="req-machine">' + n.machine + '</div>' +
           '<div class="req-cell">' + n.cell + '</div>' +
-          '<div class="req-type-label">' + typeIcons[n.type] + ' ' + typeLabels[n.type] + '</div>' +
+          '<div class="req-type-label">' + (n.autoCompleted ? '✅ Completed' : typeIcons[n.type] + ' ' + typeLabels[n.type]) + '</div>' +
           (n.wo     ? '<div class="req-wo">WO: ' + n.wo + (n.op ? '  ·  OP: ' + n.op : '') + '</div>' : '') +
           (n.assignedTo ? '<div class="req-wo" style="color:#93c5fd;">🔧 Assigned to: ' + n.assignedTo + '</div>' : '') +
           (n.detail ? '<div class="req-detail">'      + n.detail + '</div>' : '') +
@@ -2401,8 +2405,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var isToolingRequest = noteForTypeCheck.type === 'blue' || noteForTypeCheck.type === 'yellow';
 
     var resolvePayload = {
-      resolved: isToolingRequest ? false : true,  // Keep tooling requests visible
-      resolvedAt: isToolingRequest ? null : mods.serverTimestamp(),
+      resolved: true,
+      resolvedAt: mods.serverTimestamp(),
       resolvedBy: window.currentUser || 'admin',
       inProgress: false,
       elapsedMins: elapsedMins,
@@ -2410,9 +2414,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       setupBy:    window.currentUser || 'admin',
       setupTime:  elapsedStr,
       setupDoneAt: mods.serverTimestamp(),
-      jobStatus: isToolingRequest ? 'running' : 'completed',
-      type: isToolingRequest ? 'green' : noteForTypeCheck.type,  // Flip to green Running WO
-      completedAt: isToolingRequest ? null : mods.serverTimestamp()
+      jobStatus: 'completed',
+      type: isToolingRequest ? 'green' : noteForTypeCheck.type,  // Flip to green (Completed) for tooling requests
+      completedAt: mods.serverTimestamp()
     };
     try {
       var hrId = (hillReqId && hillReqId !== noteId && hillReqId !== '') ? hillReqId : null;
@@ -2457,8 +2461,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       }
     } catch(e) { console.warn('finishRequest updateHR:', e.message); }
 
-    // Post green Running WO alert for blue (Pending WO) and yellow (Machinist Req) requests
-    // Get the original request data so we can copy machine/cell/wo to the green note
+    // Post a "Completed" card for blue (Pending WO) and yellow (Machinist Req) requests
+    // Get the original request data so we can copy machine/cell/wo to the completed note
     try {
       var origData = null;
       // Try hillRequests first
@@ -2470,8 +2474,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (!origData && window._lastFinishedNote) origData = window._lastFinishedNote;
 
       // Safety check: origData must match THIS note (same machine at minimum)
-      // to prevent stale data from a previous request triggering a green post
-      // Only post green if this was definitely a Pending WO (blue)
+      // to prevent stale data from a previous request triggering a post
+      // Only post if this was definitely a Pending WO (blue)
       // Use _lastFinishedNote.type as the authoritative source since we just read it
       var confirmedType = window._lastFinishedNote ? window._lastFinishedNote.type : (origData ? origData.type : null);
       if (confirmedType === 'blue') {
@@ -2485,6 +2489,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           operator:   origData.operator   || '',
           assignedTo: origData.assignedTo || '',
           autoPosted: true,
+          autoCompleted: true,
           setupBy:    window.currentUser  || 'admin',
           setupTime:  elapsedStr,
           setupDoneAt: new Date().toISOString(),
@@ -2493,7 +2498,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         // Add to notes (shows on shop floor) and hillRequests (shows on dashboard)
         var greenReqRef = await mods.addDoc(mods.collection(db2, 'hillRequests'), {
           ...greenNote, createdAt: mods.serverTimestamp(),
-          resolved: false, jobStatus: 'running'
+          resolved: true, resolvedAt: mods.serverTimestamp(), resolvedBy: window.currentUser || 'admin',
+          jobStatus: 'completed', completedAt: mods.serverTimestamp()
         });
         await mods.addDoc(mods.collection(db2, 'notes'), {
           ...greenNote, createdAt: mods.serverTimestamp(), hillReqId: greenReqRef.id
@@ -2596,7 +2602,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       colorEl.style.background = 'var(--' + n.type + ')';
       const textEl = document.createElement('div');
       textEl.className = 'existing-note-text';
-      textEl.innerHTML = '<strong>' + typeLabels[n.type] + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — ' + n.wo : '') + (n.detail ? ' · ' + n.detail : '') + (n.assignedTo ? ' <span style="background:rgba(59,130,246,0.2);color:#93c5fd;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;">→ ' + n.assignedTo + '</span>' : '');
+      textEl.innerHTML = '<strong>' + (n.autoCompleted ? '✅ Completed' : typeLabels[n.type]) + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — ' + n.wo : '') + (n.detail ? ' · ' + n.detail : '') + (n.assignedTo ? ' <span style="background:rgba(59,130,246,0.2);color:#93c5fd;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;">→ ' + n.assignedTo + '</span>' : '');
       const actionsEl = document.createElement('div');
       actionsEl.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
       if (n.type === 'blue') {
@@ -2605,6 +2611,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         btn.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;padding:4px 8px;border-radius:12px;border:none;background:#22c55e;color:#0f2338;cursor:pointer;";
         btn.onclick = function() { window.changeNoteType(n.id, 'green'); };
         actionsEl.appendChild(btn);
+      } else if (n.type === 'green' && n.autoCompleted) {
+        // Already completed automatically on FINISH — nothing left to do, just show status
+        const span = document.createElement('span');
+        span.textContent = '✅ Setup done' + (n.setupTime ? ' — ' + n.setupTime : '');
+        span.style.cssText = "font-family:'Bebas Neue',sans-serif;font-size:11px;color:#4ade80;letter-spacing:1px;";
+        actionsEl.appendChild(span);
       } else if (n.type === 'green') {
         // COMPLETE JOB button — marks running WO as complete and removes from floor
         const btn = document.createElement('button');
