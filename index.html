@@ -1466,6 +1466,7 @@
 • Employee — type "Jimmy" → full history of their requests
 • Request type — use the quick buttons above, or type "machinist", "inspection", "pending", etc.
 • Machine — type "3000-A" or "VF-3" → all requests on that machine
+• Item/Supply — type "gloves", "endmill", "drills" → every request that mentions it
 • Date — type "today", "this week"
 • Status — type "open" or "completed"
 
@@ -13528,6 +13529,21 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       _chatHistory.push({role:'assistant',content:'Showing all requests for '+foundMachinist}); return;
     }
 
+    // Keyword / item search — supply items, tooling, or any word mentioned in a request's details
+    // Only tries this for short, non-conversational input so real chat questions still reach Sparky below.
+    var trimmedMsg = msg.trim();
+    if(!/[?]/.test(trimmedMsg) && trimmedMsg.split(/\s+/).length<=5 && !/^(hi|hey|hello|thanks|thank you|yes|no|ok|okay|sup|yo)$/i.test(trimmedMsg)){
+      _chatThinking=true; var typingElK=addTyping();
+      var kwReceipt=await _buildKeywordReceipt(trimmedMsg);
+      typingElK.remove(); _chatThinking=false;
+      if(kwReceipt.requests.length>0){
+        addFullReceipt(kwReceipt,'KEYWORD');
+        _chatHistory.push({role:'assistant',content:'Showing requests mentioning "'+trimmedMsg+'"'});
+        return;
+      }
+      // No matches — fall through to general Claude chat below
+    }
+
     // General fallback → Claude via worker
     _chatThinking=true; var typingElG=addTyping();
     try {
@@ -13605,6 +13621,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
               : searchType==='MACHINE'  ? '📍 '+data.machine+' — All Requests'
               : searchType==='MACHINIST'? '👤 '+data.name
               : searchType==='PART'     ? '🔩 Part: '+data.part
+              : searchType==='KEYWORD'  ? '🔍 "'+data.keyword+'" — All Mentions'
               : data.wo                 ? 'WO '+data.wo
               : (data.name||'Search Results');
 
@@ -13652,7 +13669,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     });
     html+='</div>';
     if(data.hasMore){
-      var loadParam = encodeURIComponent(data.type || data.machine || data.name || '');
+      var loadParam = encodeURIComponent(data.type || data.machine || data.name || data.keyword || '');
       html+='<button class="ai-load-more-btn" data-kind="'+searchType+'" data-param="'+loadParam+'" data-limit="'+(data.limitN||200)+'" onclick="window._loadMoreReceipt(this)" style="width:100%;margin-top:6px;background:rgba(125,211,252,0.1);border:1px solid #1e4a7c;color:#7dd3fc;border-radius:8px;padding:8px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:1px;">⬇ LOAD MORE ('+reqs.length+' loaded)</button>';
     }
     div.setAttribute('data-receipt',JSON.stringify({title:title,reqs:reqs}));
@@ -13665,7 +13682,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var kind = btn.getAttribute('data-kind');
     var param = decodeURIComponent(btn.getAttribute('data-param'));
     var curLimit = parseInt(btn.getAttribute('data-limit'),10) || 200;
-    var step = kind === 'MACHINIST' ? 100 : 200;
+    var step = kind === 'MACHINIST' ? 100 : kind === 'KEYWORD' ? 100 : 200;
     var newLimit = curLimit + step;
     var msgDiv = btn.closest('.ai-msg');
     btn.disabled = true; btn.textContent = 'Loading…';
@@ -13673,6 +13690,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(kind==='TYPE'){ data = await _buildTypeReceipt(param, '', newLimit); }
     else if(kind==='MACHINE'){ data = await _buildMachineReceipt(param, newLimit); }
     else if(kind==='MACHINIST'){ data = await _buildMachinistReceipt(param, newLimit); data.name = param; }
+    else if(kind==='KEYWORD'){ data = await _buildKeywordReceipt(param, newLimit); }
     else { return; }
     addFullReceipt(data, kind, msgDiv);
   };
@@ -13751,6 +13769,34 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }catch(e){console.warn('Part lookup:',e.message);}
     requests.sort(function(a,b){var at=a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;var bt=b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;return bt-at;});
     return {part:partNum,wo:'Part: '+partNum,requests:requests,timeLogs:[]};
+  }
+
+  // ── KEYWORD / ITEM RECEIPT BUILDER ─────────────────────────
+  // Searches request details for any mention of a word/phrase — e.g. "gloves",
+  // "endmill", "drills" — so supply items and tooling requests can be found
+  // even though they aren't a WO#, machine, or employee name.
+  async function _buildKeywordReceipt(keyword, limitN){
+    limitN = limitN || 100;
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {keyword:keyword,requests:[]};
+    var kw = keyword.toLowerCase();
+    var matches=[];
+    try {
+      var snap = await mods.getDocs(mods.collection(db2,'hillRequests'));
+      if(snap && !snap.empty){
+        snap.forEach(function(d){
+          var r=d.data();
+          var haystack = ((r.detail||'')+' '+(r.wo||'')+' '+(r.op||'')).toLowerCase();
+          if(haystack.indexOf(kw)>=0){ r.id=d.id; matches.push(r); }
+        });
+      }
+      matches.sort(function(a,b){
+        var at=a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
+        var bt=b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;
+        return bt-at;
+      });
+    } catch(e){ console.warn('Keyword search:',e.message); }
+    return {keyword:keyword, requests:matches.slice(0,limitN), limitN:limitN, hasMore: matches.length>limitN};
   }
 
   // ── REQUESTS TO ME RECEIPT ────────────────────────────────
