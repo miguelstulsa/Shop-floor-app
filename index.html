@@ -3681,7 +3681,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     box.innerHTML = matches.map(function(t, i){
       return '<div class="tool-search-result" data-idx="'+i+'" onclick="window._selectTool(this)" data-name="'+t[0].replace(/"/g,'&quot;')+'" data-needsdim="'+t[1]+'" '
         + 'style="padding:9px 14px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);">'
-        + t[0] + (t[1] ? ' <span style="font-size:10px;color:#fbbf24;">— needs dimension</span>' : '')
+        + t[0]
         + '</div>';
     }).join('');
     box.style.display = 'block';
@@ -3708,13 +3708,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         + '<span style="font-size:13px;color:#fca5a5;font-weight:600;">📏 ' + t.name + '</span>'
         + '<button type="button" onclick="window._removeToolFromList(' + i + ')" style="background:none;border:none;color:#f87171;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>'
         + '</div>'
-        + (t.needsDim
-            ? '<div style="margin-top:6px;">'
-              + '<div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Set To (Target Dimension)</div>'
-              + '<input type="text" value="' + (t.dimVal||'').replace(/"/g,'&quot;') + '" placeholder="e.g. 2.505&quot;" oninput="window._updateToolDim(' + i + ',this.value)" '
-              + 'style="width:100%;background:#1a1000;border:1px solid #92400e;border-radius:8px;color:#fcd34d;padding:8px 12px;font-size:13px;font-family:\'Barlow\',sans-serif;">'
-              + '</div>'
-            : '')
+        + '<div style="margin-top:6px;">'
+          + '<div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Set To (Target Dimension)</div>'
+          + '<input type="text" value="' + (t.dimVal||'').replace(/"/g,'&quot;') + '" placeholder="e.g. 2.505&quot;" oninput="window._updateToolDim(' + i + ',this.value)" '
+          + 'style="width:100%;background:#1a1000;border:1px solid #92400e;border-radius:8px;color:#fcd34d;padding:8px 12px;font-size:13px;font-family:\'Barlow\',sans-serif;">'
+          + '</div>'
         + '</div>';
     }).join('');
   };
@@ -3813,7 +3811,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // Fold every checked-out measuring tool into the detail text for Inspection requests
     if (selectedType === 'red' && window._selectedTools && window._selectedTools.length) {
       var toolLines = window._selectedTools.map(function(t){
-        return '📏 ' + t.name + (t.needsDim && t.dimVal ? ' — Set to ' + t.dimVal : '');
+        return '📏 ' + t.name + (t.dimVal ? ' — Set to ' + t.dimVal : '');
       });
       combinedDetail = toolLines.join('\n') + (combinedDetail ? '\n' + combinedDetail : '');
     }
