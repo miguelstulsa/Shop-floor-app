@@ -2084,7 +2084,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const item = document.createElement('div');
       item.className = 'notif-item ' + n.type;
       const timeStr = _fmtAlertTimestamp(n.createdAt);
-      var isAdmin = window._isAdmin || window.currentUser === 'hilladmin';
+      var isAdmin = window._isAdmin || window.currentUser === 'hilladmin' || (window._isManager && n.type === 'red');
       var inProg  = n.inProgress;
       var onHold  = n.onHold;
       var timerBtns = isAdmin
@@ -2135,7 +2135,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const item = document.createElement('div');
       item.className = 'req-card ' + n.type;
       const timeStr = _fmtAlertTimestamp(n.createdAt);
-      var isAdmin2 = window._isAdmin || window.currentUser === 'hilladmin';
+      var isAdmin2 = window._isAdmin || window.currentUser === 'hilladmin' || (window._isManager && n.type === 'red');
       var inProg2  = n.inProgress;
       var onHold2  = n.onHold;
       var adminBtns = isAdmin2
@@ -2273,7 +2273,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   // ── REQUEST TIMER — START / FINISH ──────────────────────────
   window.startRequest = async function(noteId, hillReqId) {
-    if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    if (!window._isAdmin && window.currentUser !== 'hilladmin' && !window._isManager) return;
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
     if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
@@ -2403,7 +2403,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
 
   window.finishRequest = async function(noteId, hillReqId) {
-    if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    if (!window._isAdmin && window.currentUser !== 'hilladmin' && !window._isManager) return;
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
     if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
@@ -2576,7 +2576,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   };
   // ── HOLD REQUEST (PENDING) ─────────────────────────────────
   window.holdRequest = function(noteId, hillReqId) {
-    if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    if (!window._isAdmin && window.currentUser !== 'hilladmin' && !window._isManager) return;
     var modal = document.getElementById('holdReasonModal');
     if (!modal) return;
     document.getElementById('holdReasonText').value = '';
@@ -4401,6 +4401,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         switchBtn.href = qmiUrl;
       }
     } else if (user.role === 'manager') {
+      window._isManager = true;
       listenToUsers();
       // Production Log always visible to manager
       var dashTab = document.getElementById('tab-dashboard');
