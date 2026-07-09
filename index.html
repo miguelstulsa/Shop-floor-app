@@ -3705,7 +3705,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     list.innerHTML = window._selectedTools.map(function(t, i){
       return '<div style="background:rgba(248,113,113,0.1);border:1px solid #f87171;border-radius:8px;padding:8px 10px;">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;">'
-        + '<span style="font-size:13px;color:#fca5a5;font-weight:600;">📏 ' + t.name + '</span>'
+        + '<span style="font-size:13px;color:#fca5a5;font-weight:600;">' + (i+1) + '. 📏 ' + t.name + '</span>'
         + '<button type="button" onclick="window._removeToolFromList(' + i + ')" style="background:none;border:none;color:#f87171;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>'
         + '</div>'
         + '<div style="margin-top:6px;">'
@@ -3779,14 +3779,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // For machinist requests: WO not required if a supply item is selected
     var supplyItem = (selectedType === 'yellow' && document.getElementById('supplyItem')) ? document.getElementById('supplyItem').value : '';
     var hasSupply = supplyItem && supplyItem !== 'other' && supplyItem !== '';
-    // For inspection requests: WO not required if a quick reason is selected
-    var hasReason = selectedType === 'red' && !!window._selectedReason;
+    // For inspection requests: WO not required if a quick reason is selected OR a tool has been added
+    var hasReason = selectedType === 'red' && (!!window._selectedReason || (window._selectedTools && window._selectedTools.length > 0));
     const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
     if (selectedType === 'yellow' && !hasSupply) {
       if (!wo) { showToast('red', 'WO# required', 'Enter a work order number or select a supply item.'); return; }
       if (!op) { showToast('red', 'OP# required', 'Enter an operation number for this machinist request.'); return; }
     }
-    if (!wo && !hasSupply && !hasReason) { showToast('red', 'Enter a WO# or select a quick reason / supply item', 'At least one is required.'); return; }
+    if (!wo && !hasSupply && !hasReason) { showToast('red', 'Enter a WO#, quick reason, or add a tool', 'At least one is required.'); return; }
     if (!wo && selectedType !== 'yellow' && !hasReason) { showToast('red', 'Enter a WO# or description', 'This field is required.'); return; }
     if (!window.submitNoteToFirebase) { showToast('red', 'Still connecting...', 'Wait a moment then try again.'); return; }
     const btn = document.querySelector('#modalOverlay .btn-submit');
@@ -3810,8 +3810,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
     // Fold every checked-out measuring tool into the detail text for Inspection requests
     if (selectedType === 'red' && window._selectedTools && window._selectedTools.length) {
-      var toolLines = window._selectedTools.map(function(t){
-        return '📏 ' + t.name + (t.dimVal ? ' — Set to ' + t.dimVal : '');
+      var toolLines = window._selectedTools.map(function(t, i){
+        return (i+1) + '. 📏 ' + t.name + (t.dimVal ? ' — Set to ' + t.dimVal : '');
       });
       combinedDetail = toolLines.join('\n') + (combinedDetail ? '\n' + combinedDetail : '');
     }
