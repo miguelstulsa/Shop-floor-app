@@ -1115,6 +1115,23 @@
         <div style="font-size:11px;color:#64748b;line-height:1.6;">Every 🔴 <strong style="color:#f0f4f8;">Inspection Request</strong> fires a <strong style="color:#f87171;">siren alert</strong> to this key — directly to your Quality Manager's phone.</div>
       </div>
 
+      <!-- Second Inspector key -->
+      <div style="margin-bottom:14px;padding:12px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.25);border-radius:10px;">
+        <label style="font-size:11px;color:#f87171;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">🔴 Second Inspector Key (Inspection Alerts Only)</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input id="quality-pushover-key-2" type="password"
+            placeholder="Second Inspector's Pushover User Key..."
+            style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
+            oninput="localStorage.setItem('hillQualityPushoverKey2',this.value.trim())"
+          />
+          <button onclick="testQualityPushover2()"
+            style="background:#ef4444;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
+            TEST
+          </button>
+        </div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">Same 🔴 <strong style="color:#f0f4f8;">Inspection Request</strong> siren alert also goes to this key — a second inspector's phone, in addition to the Quality Manager above.</div>
+      </div>
+
       <div style="margin-bottom:10px;">
         <label style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Group Key (notifies ALL managers)</label>
         <div style="display:flex;gap:8px;">
@@ -1698,9 +1715,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <option value="Hank Anglin">Hank Anglin</option>
         <option value="Jacob Nail">Jacob Nail</option>
         <option value="Jared Stuart">Jared Stuart</option>
+        <option value="Jason Cox">Jason Cox</option>
         <option value="Jimmy Pollard">Jimmy Pollard</option>
+        <option value="John McGuire">John McGuire</option>
         <option value="Justin Gray">Justin Gray</option>
         <option value="Keith Groden">Keith Groden</option>
+        <option value="Ker Vang">Ker Vang</option>
+        <option value="Mario Cacoperdo">Mario Cacoperdo</option>
         <option value="Matthew Carrico">Matthew Carrico</option>
         <option value="Miguel Sanchez">Miguel Sanchez</option>
         <option value="Mike Payne">Mike Payne</option>
@@ -1739,9 +1760,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           <option>Hank Anglin</option>
           <option>Jacob Nail</option>
           <option>Jared Stuart</option>
+          <option>Jason Cox</option>
           <option>Jimmy Pollard</option>
+          <option>John McGuire</option>
           <option>Justin Gray</option>
           <option>Keith Groden</option>
+          <option>Ker Vang</option>
+          <option>Mario Cacoperdo</option>
           <option>Matthew Carrico</option>
           <option>Miguel Sanchez</option>
           <option>Mike Payne</option>
@@ -2990,6 +3015,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var qInp = document.getElementById('quality-pushover-key');
     if (qInp) qInp.value = _savedQualityKey;
   }
+  // Load saved second inspector key (no hardcoded default — off until an admin sets one)
+  var _savedQualityKey2 = localStorage.getItem('hillQualityPushoverKey2') || '';
+  if (_savedQualityKey2) {
+    var qInp2 = document.getElementById('quality-pushover-key-2');
+    if (qInp2) qInp2.value = _savedQualityKey2;
+  }
 
   function pushoverKeyChanged(val) {
     savedGroupKey = val.trim();
@@ -3042,19 +3073,23 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   // ── QUALITY MANAGER PUSHOVER — fires on every red/inspection request ──
   var QUALITY_MANAGER_KEY = 'uaaqjftkq7qibdc3o9bk6b4h7ksdez'; // QC Manager
+  var SECOND_INSPECTOR_KEY = 'gkqzkjytvm5fkju2whwxfqch5cxscc'; // 2nd Inspector
   function qualityPushover(title, message) {
     var qualityKey = localStorage.getItem('hillQualityPushoverKey') || QUALITY_MANAGER_KEY;
-    if (!qualityKey) return;
-    var fd = new FormData();
-    fd.append('token',    PUSHOVER_TOKEN);
-    fd.append('user',     qualityKey);
-    fd.append('title',    title   || '🔴 INSPECTION REQUEST');
-    fd.append('message',  message || '');
-    fd.append('sound',    'siren');
-    fd.append('priority', '1'); // high priority — bypasses quiet hours
-    fetch('https://api.pushover.net/1/messages.json', {
-      method: 'POST', mode: 'no-cors', body: fd
-    }).catch(function(e){ console.warn('Quality Pushover:', e.message); });
+    var qualityKey2 = localStorage.getItem('hillQualityPushoverKey2') || SECOND_INSPECTOR_KEY;
+    [qualityKey, qualityKey2].forEach(function(key){
+      if (!key) return;
+      var fd = new FormData();
+      fd.append('token',    PUSHOVER_TOKEN);
+      fd.append('user',     key);
+      fd.append('title',    title   || '🔴 INSPECTION REQUEST');
+      fd.append('message',  message || '');
+      fd.append('sound',    'siren');
+      fd.append('priority', '1'); // high priority — bypasses quiet hours
+      fetch('https://api.pushover.net/1/messages.json', {
+        method: 'POST', mode: 'no-cors', body: fd
+      }).catch(function(e){ console.warn('Quality Pushover:', e.message); });
+    });
   }
 
   function testQualityPushover() {
@@ -3064,6 +3099,25 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     localStorage.setItem('hillQualityPushoverKey', key);
     qualityPushover('🔴 TEST — Inspection Alert', 'Quality Manager alerts are working! You will receive this on every Inspection Request.');
     showToast('green', 'Test sent!', 'Check the Quality Manager\'s Pushover app.');
+  }
+
+  function testQualityPushover2() {
+    var key = (document.getElementById('quality-pushover-key-2') || {}).value || '';
+    key = key.trim();
+    if (!key) { showToast('yellow', 'Enter a key first', 'Paste the Second Inspector\'s Pushover User Key above.'); return; }
+    localStorage.setItem('hillQualityPushoverKey2', key);
+    // Send a direct test to just this key, without also re-pinging the Quality Manager key
+    var fd = new FormData();
+    fd.append('token',    PUSHOVER_TOKEN);
+    fd.append('user',     key);
+    fd.append('title',    '🔴 TEST — Inspection Alert');
+    fd.append('message',  'Second Inspector alerts are working! You will receive this on every Inspection Request.');
+    fd.append('sound',    'siren');
+    fd.append('priority', '1');
+    fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST', mode: 'no-cors', body: fd
+    }).catch(function(e){ console.warn('Second Inspector Pushover test:', e.message); });
+    showToast('green', 'Test sent!', 'Check the Second Inspector\'s Pushover app.');
   }
   function safePushover(title, message, sound, priority) {
     var userKey = localStorage.getItem('hillPushoverGroupKey') || savedGroupKey || PUSHOVER_DEFAULT_USER;
@@ -13206,7 +13260,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // DNX RESOLVE MODAL v2
   var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
-  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
+  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
   window._dnxResolvePending=null;
   window._dnxSelectedInsight='';
   window._dnxSelectInsight=function(val){
@@ -13824,7 +13878,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Machinist name search
-    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jimmy Pollard','Justin Gray','Keith Groden','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
+    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
     var foundMachinist=null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase())>=0) foundMachinist=name;
