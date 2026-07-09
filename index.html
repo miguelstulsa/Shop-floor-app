@@ -1721,6 +1721,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <option value="Justin Gray">Justin Gray</option>
         <option value="Keith Groden">Keith Groden</option>
         <option value="Ker Vang">Ker Vang</option>
+        <option value="Mallory Sepúlveda">Mallory Sepúlveda</option>
         <option value="Mario Cacoperdo">Mario Cacoperdo</option>
         <option value="Matthew Carrico">Matthew Carrico</option>
         <option value="Miguel Sanchez">Miguel Sanchez</option>
@@ -1766,6 +1767,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           <option>Justin Gray</option>
           <option>Keith Groden</option>
           <option>Ker Vang</option>
+          <option>Mallory Sepúlveda</option>
           <option>Mario Cacoperdo</option>
           <option>Matthew Carrico</option>
           <option>Miguel Sanchez</option>
@@ -1811,6 +1813,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           <button type="button" class="inspection-reason-btn" data-reason="Calibration Check" onclick="window._selectReason(this)" style="flex:1;min-width:47%;background:rgba(255,255,255,0.05);border:1px solid #7f1d1d;border-radius:8px;color:#fca5a5;padding:9px 6px;font-size:13px;font-family:'Barlow',sans-serif;cursor:pointer;">Calibration Check</button>
           <button type="button" class="inspection-reason-btn" data-reason="Random Floor Check" onclick="window._selectReason(this)" style="flex:1;min-width:47%;background:rgba(255,255,255,0.05);border:1px solid #7f1d1d;border-radius:8px;color:#fca5a5;padding:9px 6px;font-size:13px;font-family:'Barlow',sans-serif;cursor:pointer;">Random Floor Check</button>
           <button type="button" class="inspection-reason-btn" data-reason="Need IPC Check" onclick="window._selectReason(this)" style="flex:1;min-width:47%;background:rgba(255,255,255,0.05);border:1px solid #7f1d1d;border-radius:8px;color:#fca5a5;padding:9px 6px;font-size:13px;font-family:'Barlow',sans-serif;cursor:pointer;">Need IPC Check</button>
+          <button type="button" class="inspection-reason-btn" data-reason="NCR Check" onclick="window._selectReason(this)" style="flex:1;min-width:47%;background:rgba(255,255,255,0.05);border:1px solid #7f1d1d;border-radius:8px;color:#fca5a5;padding:9px 6px;font-size:13px;font-family:'Barlow',sans-serif;cursor:pointer;">NCR Check</button>
         </div>
       </div>
       <!-- MEASURING EQUIPMENT SEARCH — shown only for red (Inspection) type -->
@@ -13365,7 +13368,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // DNX RESOLVE MODAL v2
   var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
-  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
+  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mallory Sepúlveda','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
   window._dnxResolvePending=null;
   window._dnxSelectedInsight='';
   window._dnxSelectInsight=function(val){
@@ -13983,7 +13986,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Machinist name search
-    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
+    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mallory Sepúlveda','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
     var foundMachinist=null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase())>=0) foundMachinist=name;
