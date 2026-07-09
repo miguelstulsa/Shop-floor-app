@@ -1733,6 +1733,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <option value="Steven Stout">Steven Stout</option>
         <option value="Tony Lang">Tony Lang</option>
         <option value="Tyler Stockham">Tyler Stockham</option>
+        <option value="Will Garcia">Will Garcia</option>
       </select>
       <!-- RECALL CHIPS — WO & OP -->
       <div id="woRecallWrap" style="display:none;margin-bottom:2px;">
@@ -1779,6 +1780,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           <option>Steven Stout</option>
           <option>Tony Lang</option>
           <option>Tyler Stockham</option>
+          <option>Will Garcia</option>
         </select>
       </div>
       <!-- MACHINIST SUPPLY REQUEST — shown only for yellow type -->
@@ -13369,7 +13371,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // DNX RESOLVE MODAL v2
   var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
-  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mallory Sepúlveda','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
+  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mallory Sepúlveda','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham','Will Garcia'];
   window._dnxResolvePending=null;
   window._dnxSelectedInsight='';
   window._dnxSelectInsight=function(val){
@@ -13987,7 +13989,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Machinist name search
-    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mallory Sepúlveda','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham'];
+    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chuck Whitfield','Corey Bartmier','Daniel McGarvey','Dingo Mikles','Hank Anglin','Jacob Nail','Jared Stuart','Jason Cox','Jimmy Pollard','John McGuire','Justin Gray','Keith Groden','Ker Vang','Mallory Sepúlveda','Mario Cacoperdo','Matthew Carrico','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Steven Stout','Tony Lang','Tyler Stockham','Will Garcia'];
     var foundMachinist=null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase())>=0) foundMachinist=name;
