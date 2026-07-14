@@ -2285,7 +2285,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       await mods.updateDoc(mods.doc(db2, 'notes', noteId), {
         inProgress: true,
         startedAt: startTime,
-        startedBy: window.currentUser || 'admin'
+        startedBy: window.currentUser || 'admin',
+        onHold: false,
+        holdReason: ''
       });
       // Find and update the matching hillRequests record
       var resolvedHrId = (hillReqId && hillReqId !== noteId && hillReqId !== '') ? hillReqId : null;
@@ -2360,7 +2362,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       // Also update the in-memory note so re-renders show FINISH
       if (window._lastActionable) {
         window._lastActionable.forEach(function(n) {
-          if (n.id === noteId) { n.inProgress = true; n.startedAt = {seconds: Math.floor(Date.now()/1000)}; }
+          if (n.id === noteId) { n.inProgress = true; n.startedAt = {seconds: Math.floor(Date.now()/1000)}; n.onHold = false; n.holdReason = ''; }
         });
       }
       showToast('green', '\u23f1 Timer Started', 'Tap FINISH & CLOSE when done');
