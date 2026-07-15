@@ -2039,7 +2039,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'orange')) {
           // Only browser notification from listener — Pushover fires from submit button only
           sendBrowserNotif(n);
-          showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], n.cell + ' — ' + n.machine + ': ' + n.wo);
+          showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], (n.cell ? n.cell + ' — ' : '') + n.machine + ': ' + n.wo);
           // DJ announces new requests to the floor
           setTimeout(function(){ window._djAnnounceNew(n); }, 1500);
         }
@@ -2081,8 +2081,16 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   };
 
   function _fmtAlertTimestamp(createdAt) {
-    if (!createdAt || !createdAt.seconds) return 'just now';
-    var d = new Date(createdAt.seconds * 1000);
+    if (!createdAt) return 'just now';
+    var d;
+    if (createdAt.seconds) {
+      d = new Date(createdAt.seconds * 1000); // Firestore Timestamp object
+    } else if (typeof createdAt === 'string') {
+      d = new Date(createdAt); // Datanomix alerts store a plain ISO date string
+      if (isNaN(d.getTime())) return 'just now';
+    } else {
+      return 'just now';
+    }
     var now = new Date();
     var timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     var isToday = d.toDateString() === now.toDateString();
@@ -2141,7 +2149,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       item.innerHTML =
         '<div class="notif-blink-dot"></div>' +
         '<div class="notif-type">' + (n.autoCompleted ? '✅ Completed' : typeIcons[n.type] + ' ' + typeLabels[n.type]) + '</div>' +
-        '<div class="notif-machine">' + n.cell + ' — ' + n.machine + '</div>' +
+        '<div class="notif-machine">' + (n.cell ? n.cell + ' — ' : '') + n.machine + '</div>' +
         '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + n.wo + (n.detail ? ' · ' + n.detail : '') + '</div>' +
         '<div class="notif-time">' + timeStr + '</div>' +
         timerBtns +
@@ -2189,7 +2197,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         '<div class="req-dot-col"><span class="req-blink-dot ' + n.type + '"></span></div>' +
         '<div class="req-body">' +
           '<div class="req-machine">' + n.machine + '</div>' +
-          '<div class="req-cell">' + n.cell + '</div>' +
+          '<div class="req-cell">' + (n.cell || '') + '</div>' +
           '<div class="req-type-label">' + (n.autoCompleted ? '✅ Completed' : typeIcons[n.type] + ' ' + typeLabels[n.type]) + '</div>' +
           (n.wo     ? '<div class="req-wo">WO: ' + n.wo + (n.op ? '  ·  OP: ' + n.op : '') + '</div>' : '') +
           (n.assignedTo ? '<div class="req-wo" style="color:#93c5fd;">🔧 Assigned to: ' + n.assignedTo + '</div>' : '') +
@@ -2207,7 +2215,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   function sendBrowserNotif(n) {
     if (Notification.permission === 'granted') {
-      new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: n.cell + ' — ' + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + n.wo, tag: n.id, requireInteraction: true });
+      new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: (n.cell ? n.cell + ' — ' : '') + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + n.wo, tag: n.id, requireInteraction: true });
     }
   }
 
