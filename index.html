@@ -2080,6 +2080,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
   };
 
+  function _escJs(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
   function _fmtAlertTimestamp(createdAt) {
     if (!createdAt) return 'just now';
     var d;
@@ -2127,7 +2129,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         ? (n.autoCompleted
             ? '<div style="margin-top:6px;font-size:11px;font-weight:700;color:#4ade80;">✅ Completed' + (n.setupBy ? ' by ' + n.setupBy.split(' ')[0] : '') + (n.setupTime ? ' — ' + n.setupTime : '') + '</div>'
             : n.type === 'dnx'
-            ? '<div style="margin-top:6px;"><button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;width:100%;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 RESOLVE ALERT</button></div>'
+            ? '<div style="margin-top:6px;"><button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;width:100%;" onclick="window.openDnxResolve(\'' + _escJs(n.id) + '\',\'' + _escJs(n.hillReqId||n.id) + '\',\'' + _escJs(n.machine||'') + '\',\'' + _escJs(n.duration||'') + '\')">🔷 RESOLVE ALERT</button></div>'
             : onHold
             ? '<div style="margin-top:6px;"><div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<div style="display:flex;gap:6px;">' +
@@ -2179,7 +2181,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           (n.autoCompleted
             ? '<div style="width:100%;font-size:11px;font-weight:700;color:#4ade80;">✅ Completed' + (n.setupBy ? ' by ' + n.setupBy.split(' ')[0] : '') + (n.setupTime ? ' — ' + n.setupTime : '') + '</div>'
             : n.type === 'dnx'
-            ? '<button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\',\'' + (n.machine||'') + '\',\'' + (n.duration||'') + '\')">🔷 CLOSE ALERT</button>'
+            ? '<button class="req-timer-btn" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;" onclick="window.openDnxResolve(\'' + _escJs(n.id) + '\',\'' + _escJs(n.hillReqId||n.id) + '\',\'' + _escJs(n.machine||'') + '\',\'' + _escJs(n.duration||'') + '\')">🔷 CLOSE ALERT</button>'
             : onHold2
             ? '<div style="width:100%;font-size:9px;color:#f59e0b;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
