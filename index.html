@@ -13530,10 +13530,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var card = document.createElement('div');
       card.className = 'dnx-result-card ' + (a.resolved ? 'resolved' : 'unresolved');
 
+      var safeId = (a.id||'').replace(/'/g,"\\'");
       var resolveBtn = !a.resolved
-        ? '<button onclick="window.openDnxResolve(\''+a.id+'\',null,\''+safeM+'\',\''+safeD+'\')" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Bebas Neue\',sans-serif;margin-top:8px;">RESOLVE</button>'
+        ? '<button onclick="window.openDnxResolve(\''+safeId+'\',null,\''+safeM+'\',\''+safeD+'\')" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Bebas Neue\',sans-serif;margin-top:8px;">RESOLVE</button>'
         : '';
-      var deleteBtn = '<button onclick="window._deleteDnxAlert(\''+a.id+'\')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;margin-top:8px;margin-left:6px;">🗑 DELETE</button>';
+      var deleteBtn = '<button onclick="window._deleteDnxAlert(\''+safeId+'\')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;margin-top:8px;margin-left:6px;">🗑 DELETE</button>';
 
       card.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
