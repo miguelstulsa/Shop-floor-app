@@ -1088,7 +1088,7 @@
           <input id="admin-pushover-key" type="password"
             placeholder="Your personal Pushover User Key..."
             style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(245,197,0,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
-            oninput="localStorage.setItem('hillAdminPushoverKey',this.value.trim())"
+            oninput="localStorage.setItem('hillAdminPushoverKey',this.value.trim()); window._syncSecretToCloud('personalPushoverKey',this.value.trim())"
           />
           <button onclick="testAdminPushover()"
             style="background:#f5c500;border:none;color:#001833;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
@@ -1105,7 +1105,7 @@
           <input id="quality-pushover-key" type="password"
             placeholder="Quality Manager's Pushover User Key..."
             style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
-            oninput="localStorage.setItem('hillQualityPushoverKey',this.value.trim())"
+            oninput="localStorage.setItem('hillQualityPushoverKey',this.value.trim()); window._syncSecretToCloud('qualityPushoverKey',this.value.trim())"
           />
           <button onclick="testQualityPushover()"
             style="background:#ef4444;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
@@ -1122,7 +1122,7 @@
           <input id="quality-pushover-key-2" type="password"
             placeholder="Second Inspector's Pushover User Key..."
             style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
-            oninput="localStorage.setItem('hillQualityPushoverKey2',this.value.trim())"
+            oninput="localStorage.setItem('hillQualityPushoverKey2',this.value.trim()); window._syncSecretToCloud('qualityPushoverKey2',this.value.trim())"
           />
           <button onclick="testQualityPushover2()"
             style="background:#ef4444;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
@@ -1266,6 +1266,7 @@
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('dnxalerts')" id="tab-dnxalerts" style="display:none">🔷 DNX</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
+  <div class="nav-tab admin-only" onclick="switchTab('email')" id="tab-email" style="display:none">📧 Email</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Floor Analytics</div>
@@ -1571,6 +1572,31 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <button class="dnx-resolve-cancel" onclick="window._dnxResolveCancel()">CANCEL</button>
       <button class="dnx-resolve-submit" id="dnx-resolve-submit" onclick="window._dnxResolveSubmit()" disabled>✓ CLOSE ALERT</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ EMAIL PAGE ═══ -->
+<div class="page" id="page-email" style="display:none;flex-direction:column;height:calc(100vh - 120px);max-width:700px;margin:0 auto;padding:0;">
+  <div style="padding:10px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:2px;">📧 EMAIL — miguelstulsa@mrsanchez.app</div>
+    <div style="font-size:11px;color:#475569;">Objectives &amp; general mail — Datanomix alerts stay in the DNX tab</div>
+  </div>
+  <div id="email-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;">
+    <div style="text-align:center;color:#475569;font-size:13px;padding:40px 20px;">Loading inbox...</div>
+  </div>
+</div>
+
+<!-- Email viewer modal -->
+<div id="emailViewModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#0d1f35;border:1px solid #f5c842;border-radius:14px;max-width:600px;width:100%;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="padding:16px;border-bottom:1px solid #1e3a5f;display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <div id="emailViewSubject" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f5c842;letter-spacing:1px;"></div>
+        <div id="emailViewMeta" style="font-size:12px;color:#94a3b8;margin-top:4px;"></div>
+      </div>
+      <button onclick="document.getElementById('emailViewModal').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div id="emailViewBody" style="padding:16px;overflow-y:auto;color:#e2e8f0;font-size:14px;line-height:1.7;white-space:pre-wrap;"></div>
   </div>
 </div>
 
@@ -2101,7 +2127,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>' +
               '</div></div>'
             : inProg
-            ? '<div class="req-timer-badge" data-started-at="' + (n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : '') + '" style="font-size:11px;font-weight:700;">⏱ ' + (n.startedAt && n.startedAt.seconds ? _fmtElapsed(Math.floor(Date.now()/1000) - n.startedAt.seconds) : 'IN PROGRESS') + '</div>' +
+            ? '<div class="req-timer-badge" data-started-at="' + (n.startedAt && n.startedAt.seconds ? (n.startedAt.seconds - (n.accumulatedElapsedMins||0)*60) : '') + '" style="font-size:11px;font-weight:700;">⏱ ' + (n.startedAt && n.startedAt.seconds ? _fmtElapsed(Math.floor(Date.now()/1000) - (n.startedAt.seconds - (n.accumulatedElapsedMins||0)*60)) : 'IN PROGRESS') + '</div>' +
               '<div style="display:flex;gap:6px;margin-top:6px;">' +
               '<button class="req-timer-btn req-pending-btn" onclick="window.holdRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">⏸ PENDING</button>' +
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>' +
@@ -2151,7 +2177,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>'
             : inProg2
-            ? '<div style="width:100%;font-size:11px;font-weight:700;color:#f5c500;" data-started-at="' + (n.startedAt && n.startedAt.seconds ? n.startedAt.seconds : '') + '">⏱ ' + (n.startedAt && n.startedAt.seconds ? _fmtElapsed(Math.floor(Date.now()/1000) - n.startedAt.seconds) : 'IN PROGRESS') + '</div>' +
+            ? '<div style="width:100%;font-size:11px;font-weight:700;color:#f5c500;" data-started-at="' + (n.startedAt && n.startedAt.seconds ? (n.startedAt.seconds - (n.accumulatedElapsedMins||0)*60) : '') + '">⏱ ' + (n.startedAt && n.startedAt.seconds ? _fmtElapsed(Math.floor(Date.now()/1000) - (n.startedAt.seconds - (n.accumulatedElapsedMins||0)*60)) : 'IN PROGRESS') + '</div>' +
               '<button class="req-timer-btn req-pending-btn" onclick="window.holdRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">⏸ PENDING</button>' +
               '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>'
             : '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>'
@@ -2357,7 +2383,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       // Show live banner on shop floor for everyone
       if (window._addActiveJob) {
         var nd2 = window._lastActionable && window._lastActionable.find(function(n){ return n.id === noteId; });
-        window._addActiveJob(noteId, nd2 ? nd2.machine : '', nd2 ? nd2.wo : '', nd2 ? nd2.detail : '', nd2 ? nd2.operator : '', Math.floor(Date.now()/1000), nd2 ? nd2.op : '');
+        var priorMins = nd2 ? (nd2.accumulatedElapsedMins||0) : 0;
+        window._addActiveJob(noteId, nd2 ? nd2.machine : '', nd2 ? nd2.wo : '', nd2 ? nd2.detail : '', nd2 ? nd2.operator : '', Math.floor(Date.now()/1000) - (priorMins*60), nd2 ? nd2.op : '');
       }
       // Also update the in-memory note so re-renders show FINISH
       if (window._lastActionable) {
@@ -2421,7 +2448,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         var nData = noteSnap.data();
         if (nData.startedAt && nData.startedAt.seconds) {
           var startTs = new Date(nData.startedAt.seconds * 1000);
-          elapsedMins = Math.round((now - startTs) / 60000);
+          var currentSegmentMins = Math.round((now - startTs) / 60000);
+          var priorAccumulatedMins = nData.accumulatedElapsedMins || 0;
+          elapsedMins = priorAccumulatedMins + currentSegmentMins;
           elapsedStr  = elapsedMins >= 60
             ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m'
             : elapsedMins+'m';
@@ -2602,13 +2631,16 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // Build a hold log entry with timestamp + elapsed time so far
     var now = new Date();
     var elapsedSoFar = null;
+    var newAccumulatedMins = 0;
     try {
       var noteSnap2 = await mods.getDoc(mods.doc(db2, 'notes', noteId));
       if (noteSnap2 && noteSnap2.exists()) {
         var nd2 = noteSnap2.data();
+        newAccumulatedMins = nd2.accumulatedElapsedMins || 0;
         if (nd2.startedAt && nd2.startedAt.seconds) {
           var mins = Math.round((now - new Date(nd2.startedAt.seconds*1000)) / 60000);
           elapsedSoFar = mins >= 60 ? Math.floor(mins/60)+'h '+(mins%60)+'m' : mins+'m';
+          newAccumulatedMins += mins; // carry this segment's time into the running total
         }
       }
     } catch(e2) {}
@@ -2625,7 +2657,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       await mods.updateDoc(mods.doc(db2, 'notes', noteId), {
         onHold: true,
         holdReason: reason || '',
-        inProgress: false
+        inProgress: false,
+        accumulatedElapsedMins: newAccumulatedMins
       });
       if (hillReqId && hillReqId !== noteId && hillReqId !== '') {
         // Append to holdLog array in hillRequests
@@ -2633,6 +2666,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           onHold: true,
           holdReason: reason || '',
           inProgress: false,
+          accumulatedElapsedMins: newAccumulatedMins,
           holdLog: mods.arrayUnion(holdEntry)
         }).catch(function(){});
       }
@@ -3045,6 +3079,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   function pushoverKeyChanged(val) {
     savedGroupKey = val.trim();
     localStorage.setItem('hillPushoverGroupKey', savedGroupKey);
+    if (window._syncSecretToCloud) window._syncSecretToCloud('groupPushoverKey', savedGroupKey);
     var status = document.getElementById('pushover-key-status');
     if (status) status.textContent = savedGroupKey ? '✓ Key saved — hit TEST to verify' : '';
   }
@@ -3092,6 +3127,75 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
 
   // ── QUALITY MANAGER PUSHOVER — fires on every red/inspection request ──
+  // ── SHARED APP SECRETS SYNC ─────────────────────────────────
+  // Problem this solves: every Pushover/ElevenLabs key above was only ever
+  // saved to THIS browser's localStorage — typing a key in on one device
+  // never reached any other device. This syncs them through one shared
+  // Firestore doc (hillSettings/appSecrets) instead, so any device that
+  // saves a key updates it everywhere. Nothing that already works today
+  // changes: every existing localStorage.getItem(...) call in this file
+  // keeps working exactly as before — this just keeps that local cache
+  // synced from the shared cloud copy automatically.
+  var APP_SECRET_FIELDS = {
+    personalPushoverKey: 'hillAdminPushoverKey',
+    qualityPushoverKey:  'hillQualityPushoverKey',
+    qualityPushoverKey2: 'hillQualityPushoverKey2',
+    groupPushoverKey:    'hillPushoverGroupKey',
+    elevenLabsKey:       'jimKey'
+  };
+
+  function _refreshSecretInputsFromLocalStorage(){
+    var pairs = [
+      ['admin-pushover-key','hillAdminPushoverKey'],
+      ['quality-pushover-key','hillQualityPushoverKey'],
+      ['quality-pushover-key-2','hillQualityPushoverKey2'],
+      ['pushover-group-key','hillPushoverGroupKey'],
+      ['eleven-key-input','jimKey']
+    ];
+    pairs.forEach(function(p){
+      var el = document.getElementById(p[0]);
+      var val = localStorage.getItem(p[1]);
+      if (el && val && !el.value) el.value = val;
+    });
+    var jk = localStorage.getItem('jimKey');
+    if (jk && typeof EL_KEY !== 'undefined') EL_KEY = jk;
+    var gk = localStorage.getItem('hillPushoverGroupKey');
+    if (gk && typeof savedGroupKey !== 'undefined') savedGroupKey = gk;
+  }
+
+  async function _loadSharedAppSecrets(retries){
+    retries = retries || 0;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if (!db2 || !mods) {
+      if (retries < 15) setTimeout(function(){ _loadSharedAppSecrets(retries+1); }, 1000);
+      return;
+    }
+    try {
+      var snap = await mods.getDoc(mods.doc(db2, 'hillSettings', 'appSecrets'));
+      if (snap && snap.exists()) {
+        var data = snap.data() || {};
+        Object.keys(APP_SECRET_FIELDS).forEach(function(cloudField){
+          var lsKey = APP_SECRET_FIELDS[cloudField];
+          if (data[cloudField]) localStorage.setItem(lsKey, data[cloudField]);
+        });
+        _refreshSecretInputsFromLocalStorage();
+      }
+    } catch(e) { console.warn('Load shared app secrets:', e.message); }
+  }
+
+  var _secretSaveTimers = {};
+  window._syncSecretToCloud = function(cloudField, value){
+    clearTimeout(_secretSaveTimers[cloudField]);
+    _secretSaveTimers[cloudField] = setTimeout(function(){
+      var db2 = window.fbDb, mods = window._fbModules;
+      if (!db2 || !mods) return;
+      var payload = {}; payload[cloudField] = value;
+      mods.setDoc(mods.doc(db2, 'hillSettings', 'appSecrets'), payload, {merge:true}).catch(function(e){ console.warn('Save shared app secret:', e.message); });
+    }, 800);
+  };
+
+  setTimeout(function(){ _loadSharedAppSecrets(); }, 1500);
+
   var QUALITY_MANAGER_KEY = 'uaaqjftkq7qibdc3o9bk6b4h7ksdez'; // QC Manager
   var SECOND_INSPECTOR_KEY = 'gkqzkjytvm5fkju2whwxfqch5cxscc'; // "inspectors" Pushover Delivery Group — add/remove members at pushover.net/groups, no code changes ever needed
   function qualityPushover(title, message) {
@@ -3169,7 +3273,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce','email'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -3188,6 +3292,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var annEl = document.getElementById('page-announce'); if(annEl) annEl.style.display = tab === 'announce' ? 'block' : 'none';
     var dnxEl = document.getElementById('page-dnxalerts'); if(dnxEl) dnxEl.style.display = tab === 'dnxalerts' ? 'flex' : 'none';
     var aiEl = document.getElementById('page-aichat'); if(aiEl) aiEl.style.display = tab === 'aichat' ? 'flex' : 'none';
+    var emailEl = document.getElementById('page-email'); if(emailEl) emailEl.style.display = tab === 'email' ? 'flex' : 'none';
+    if (tab === 'email' && window._loadEmailInbox) window._loadEmailInbox();
     if(tab === 'announce') window._loadAnnounceHistory && window._loadAnnounceHistory();
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
@@ -4384,6 +4490,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
       var aiTab = document.getElementById('tab-aichat');
       if (aiTab) aiTab.style.display = 'flex';
+      var emailTab = document.getElementById('tab-email');
+      if (emailTab) emailTab.style.display = 'flex';
       var dnxTab = document.getElementById('tab-dnxalerts');
       if (dnxTab) dnxTab.style.display = 'flex';
       setTimeout(function(){
@@ -4393,6 +4501,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         if(b) b.style.display = 'flex';
         var c = document.getElementById('tab-dnxalerts');
         if(c) c.style.display = 'flex';
+        var d = document.getElementById('tab-email');
+        if(d) d.style.display = 'flex';
       }, 500);
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
@@ -5037,6 +5147,96 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (btn) btn.classList.add('active');
     renderDNXGrid();
   }
+
+  // ── EMAIL INBOX (hillEmails — general mail like boss's objectives) ──
+  window._emailListenerActive = false;
+  window._loadEmailInbox = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    var list = document.getElementById('email-list');
+    if (!db2 || !mods) {
+      if (list) list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:40px 20px;">Connecting...</div>';
+      setTimeout(window._loadEmailInbox, 800);
+      return;
+    }
+    if (window._emailListenerActive) return; // already listening, no need to re-subscribe
+    window._emailListenerActive = true;
+    try {
+      var q = mods.query(mods.collection(db2, 'hillEmails'), mods.orderBy('receivedAt', 'desc'));
+      mods.onSnapshot(q, function(snap){
+        var emails = [];
+        snap.forEach(function(d){ var e = d.data(); e.id = d.id; emails.push(e); });
+        window._renderEmailInbox(emails);
+      }, function(err){
+        console.warn('Email inbox listener:', err.message);
+        if (list) list.innerHTML = '<div style="text-align:center;color:#f87171;font-size:13px;padding:40px 20px;">Could not load inbox: ' + err.message + '</div>';
+      });
+    } catch(e) { console.warn('Email inbox setup:', e.message); }
+  };
+
+  function _fmtEmailDate(receivedAt){
+    if (!receivedAt) return '';
+    var d = new Date(receivedAt);
+    if (isNaN(d.getTime())) return '';
+    var now = new Date();
+    var timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    var isToday = d.toDateString() === now.toDateString();
+    if (isToday) return 'Today at ' + timeStr;
+    return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' at ' + timeStr;
+  }
+
+  window._renderEmailInbox = function(emails){
+    var list = document.getElementById('email-list');
+    if (!list) return;
+    if (!emails.length){
+      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:40px 20px;">📭 Inbox is empty — nothing here yet.</div>';
+      return;
+    }
+    window._emailCache = {};
+    list.innerHTML = emails.map(function(e){
+      window._emailCache[e.id] = e;
+      var preview = (e.body || '').slice(0, 120);
+      return '<div style="background:' + (e.read ? 'rgba(255,255,255,0.03)' : 'rgba(245,200,66,0.06)') + ';border:1px solid ' + (e.read ? '#1e3a5f' : 'rgba(245,200,66,0.3)') + ';border-radius:10px;padding:12px 14px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
+        + '<div style="min-width:0;flex:1;">'
+        + (e.read ? '' : '<span style="display:inline-block;width:7px;height:7px;background:#f5c842;border-radius:50%;margin-right:6px;"></span>')
+        + '<span style="font-weight:700;color:#f0f4f8;font-size:14px;">' + (e.subject || '(no subject)') + '</span>'
+        + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">' + (e.from || 'unknown sender') + '</div>'
+        + '</div>'
+        + '<div style="font-size:11px;color:#64748b;white-space:nowrap;flex-shrink:0;">' + _fmtEmailDate(e.receivedAt) + '</div>'
+        + '</div>'
+        + '<div style="font-size:13px;color:#cbd5e1;margin-top:8px;">' + preview + (e.body && e.body.length > 120 ? '…' : '') + '</div>'
+        + '<div style="display:flex;gap:8px;margin-top:10px;">'
+        + '<button onclick="window._viewEmail(\'' + e.id + '\')" style="background:rgba(245,200,66,0.12);border:1px solid #f5c842;color:#f5c842;border-radius:6px;padding:6px 14px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;cursor:pointer;">VIEW</button>'
+        + '<button onclick="window._deleteEmail(\'' + e.id + '\')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:6px 14px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;cursor:pointer;">🗑 ERASE</button>'
+        + '</div>'
+        + '</div>';
+    }).join('');
+  };
+
+  window._viewEmail = function(id){
+    var e = (window._emailCache || {})[id];
+    if (!e) return;
+    document.getElementById('emailViewSubject').textContent = e.subject || '(no subject)';
+    document.getElementById('emailViewMeta').textContent = (e.from || 'unknown sender') + ' — ' + _fmtEmailDate(e.receivedAt);
+    document.getElementById('emailViewBody').textContent = e.body || '(no content)';
+    document.getElementById('emailViewModal').style.display = 'flex';
+    // Mark as read
+    if (!e.read) {
+      var db2 = window.fbDb, mods = window._fbModules;
+      if (db2 && mods) {
+        mods.updateDoc(mods.doc(db2, 'hillEmails', id), { read: true }).catch(function(){});
+      }
+    }
+  };
+
+  window._deleteEmail = function(id){
+    if (!confirm('Erase this email? This cannot be undone.')) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if (!db2 || !mods) return;
+    mods.deleteDoc(mods.doc(db2, 'hillEmails', id)).catch(function(e){
+      showToast('red', 'Could not erase', e.message);
+    });
+  };
 
   function initDNXDisplay() {
     if(window.renderDNXCards) window.renderDNXCards();
@@ -13032,7 +13232,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var m=mn(machine),isAdmin=!!(window._isAdmin||window.currentUser==='hilladmin'),name=author?author.split(' ')[0]:'someone';
     say(pick(isAdmin?['Message from Miguel to '+m+': '+text,m+', Miguel says: '+text]:[name+' at '+m+' says: '+text,'Update from '+m+'. '+name+': '+text]),function(){});
   };
-  window._jimSetKey=function(k,v){EL_KEY=k||EL_KEY;EL_VOICE=v||EL_VOICE;localStorage.setItem('jimKey',EL_KEY);localStorage.setItem('jimVoice',EL_VOICE);};
+  window._jimSetKey=function(k,v){EL_KEY=k||EL_KEY;EL_VOICE=v||EL_VOICE;localStorage.setItem('jimKey',EL_KEY);localStorage.setItem('jimVoice',EL_VOICE);if(window._syncSecretToCloud)window._syncSecretToCloud('elevenLabsKey',EL_KEY);};
   var _sk=localStorage.getItem('jimKey');
   if(_sk)EL_KEY=_sk;
   // Voice locked to George — localStorage override disabled
