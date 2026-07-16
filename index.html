@@ -2204,7 +2204,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       startedAt: null, startedBy: null, inProgress: false, elapsedMins: null, elapsedStr: null
     });
     // Save to notes with hillReqId for linking START/FINISH
-    await addDoc(collection(db, "notes"), { ...note, createdAt: serverTimestamp(), hillReqId: reqRef.id });
+    const noteRef = await addDoc(collection(db, "notes"), { ...note, createdAt: serverTimestamp(), hillReqId: reqRef.id });
     // Inspection requests also go to permanent archive — this collection is NEVER cleared
     if (note.type === 'red') {
       await addDoc(collection(db, "hillInspections"), {
@@ -2214,7 +2214,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         appVersion: 'v35'
       });
     }
-    return { id: reqRef.id };
+    return { id: reqRef.id, noteId: noteRef.id };
   };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
 
@@ -3981,12 +3981,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       combinedDetail = toolLines.join('\n') + (combinedDetail ? '\n' + combinedDetail : '');
     }
     const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, assignedTo };
-    var reqId = null;
+    var reqId = null, noteId = null;
     try {
       var result = await window.submitNoteToFirebase(note);
-      // submitNoteToFirebase may return the doc reference or ID
       if (result && result.id) reqId = result.id;
-      else if (typeof result === 'string') reqId = result;
+      if (result && result.noteId) noteId = result.noteId;
     }
     catch(err) {
       if (btn) { btn.disabled=false; btn.textContent='Submit'; }
@@ -4006,34 +4005,31 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       (async function() {
         try {
           var url = await window._uploadPhoto(photoFileCopy, reqId);
-          if (url) {
-            var FBKEY = 'AIzaSyD8lZqvva1twE8MBD38bFmk8zw1QQ5smpI';
-            var FBBASE = 'https://firestore.googleapis.com/v1/projects/hill-manufacturing/databases/(default)/documents';
-            // Update hillRequests with photoUrl
-            await fetch(FBBASE + '/hillRequests/' + reqId + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
-              method: 'PATCH', headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({ fields: { photoUrl: { stringValue: url } } })
-            }).catch(function(){});
-            // Also update any matching notes doc
-            var queryRes = await fetch(FBBASE + ':runQuery?key=' + FBKEY, {
-              method: 'POST', headers: {'Content-Type':'application/json'},
-              body: JSON.stringify({ structuredQuery: { from:[{collectionId:'notes'}], where:{ fieldFilter:{ field:{fieldPath:'hillReqId'}, op:'EQUAL', value:{stringValue:reqId} } }, limit:5 } })
-            }).then(function(r){ return r.json(); }).catch(function(){ return []; });
-            if (Array.isArray(queryRes)) {
-              queryRes.forEach(function(item) {
-                if (item.document && item.document.name) {
-                  var parts2 = item.document.name.split('/');
-                  var noteId2 = parts2[parts2.length-1];
-                  fetch(FBBASE + '/notes/' + noteId2 + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
-                    method:'PATCH', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ fields: { photoUrl: { stringValue: url } } })
-                  }).catch(function(){});
-                }
-              });
-            }
-            showToast('green','📷 Photo uploaded','Attached to request.');
+          if (!url) { showToast('red', 'Photo too large', 'Could not attach — try a smaller photo.'); return; }
+          var FBKEY = 'AIzaSyD8lZqvva1twE8MBD38bFmk8zw1QQ5smpI';
+          var FBBASE = 'https://firestore.googleapis.com/v1/projects/hill-manufacturing/databases/(default)/documents';
+          var patchBody = JSON.stringify({ fields: { photoUrl: { stringValue: url } } });
+          var patchCalls = [
+            fetch(FBBASE + '/hillRequests/' + reqId + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
+              method: 'PATCH', headers: {'Content-Type':'application/json'}, body: patchBody
+            })
+          ];
+          if (noteId) {
+            // Patch the exact note doc directly — no need to search for it
+            patchCalls.push(fetch(FBBASE + '/notes/' + noteId + '?key=' + FBKEY + '&updateMask.fieldPaths=photoUrl', {
+              method: 'PATCH', headers: {'Content-Type':'application/json'}, body: patchBody
+            }));
           }
-        } catch(e) { console.warn('Photo upload bg error:', e.message); }
+          var results = await Promise.all(patchCalls.map(function(p){ return p.catch(function(e){ return {ok:false, _err:e}; }); }));
+          var allOk = results.every(function(r){ return r && r.ok; });
+          if (allOk) {
+            showToast('green','📷 Photo uploaded','Attached to request.');
+          } else {
+            var failedBodies = await Promise.all(results.map(function(r){ return (r && r.text) ? r.text().catch(function(){return '';}) : ''; }));
+            console.warn('Photo attach failed:', failedBodies);
+            showToast('red', 'Photo save failed', 'Request saved, but photo could not attach.');
+          }
+        } catch(e) { console.warn('Photo upload bg error:', e.message); showToast('red', 'Photo save failed', e.message ? e.message.slice(0,80) : ''); }
       })();
     }
     showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
