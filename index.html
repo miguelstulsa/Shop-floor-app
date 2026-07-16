@@ -1266,7 +1266,6 @@
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('dnxalerts')" id="tab-dnxalerts" style="display:none">🔷 DNX</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
-  <div class="nav-tab admin-only" onclick="switchTab('email')" id="tab-email" style="display:none">📧 Email</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('dashboard')" id="tab-dashboard" style="display:none;">📋 Production Log</div>
   <div class="nav-tab" onclick="switchTab('datanomix')" id="tab-datanomix" style="display:none;">⚡ Floor Analytics</div>
@@ -1572,32 +1571,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <button class="dnx-resolve-cancel" onclick="window._dnxResolveCancel()">CANCEL</button>
       <button class="dnx-resolve-submit" id="dnx-resolve-submit" onclick="window._dnxResolveSubmit()" disabled>✓ CLOSE ALERT</button>
     </div>
-  </div>
-</div>
-
-<!-- ═══ EMAIL PAGE ═══ -->
-<div class="page" id="page-email" style="display:none;flex-direction:column;height:calc(100vh - 120px);max-width:700px;margin:0 auto;padding:0;">
-  <div style="padding:10px 16px;border-bottom:1px solid #1e3a5f;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:2px;">📧 EMAIL — miguelstulsa@mrsanchez.app</div>
-    <div style="font-size:11px;color:#475569;">Objectives &amp; general mail — Datanomix alerts stay in the DNX tab</div>
-  </div>
-  <div id="email-list" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;">
-    <div style="text-align:center;color:#475569;font-size:13px;padding:40px 20px;">Loading inbox...</div>
-  </div>
-</div>
-
-<!-- Email viewer modal -->
-<div id="emailViewModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#0d1f35;border:1px solid #f5c842;border-radius:14px;max-width:600px;width:100%;max-height:80vh;display:flex;flex-direction:column;">
-    <div style="padding:16px;border-bottom:1px solid #1e3a5f;display:flex;justify-content:space-between;align-items:flex-start;">
-      <div>
-        <div id="emailViewSubject" style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:#f5c842;letter-spacing:1px;"></div>
-        <div id="emailViewMeta" style="font-size:12px;color:#94a3b8;margin-top:4px;"></div>
-      </div>
-      <button onclick="document.getElementById('emailViewModal').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;">✕</button>
-    </div>
-    <div id="emailViewBody" style="padding:16px;overflow-y:auto;color:#e2e8f0;font-size:14px;line-height:1.7;white-space:pre-wrap;"></div>
-    <div id="emailViewImages" style="padding:0 16px 16px;display:flex;flex-wrap:wrap;gap:10px;"></div>
   </div>
 </div>
 
@@ -3285,7 +3258,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
 
   function switchTab(tab) {
-    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce','email'].forEach(t => {
+    ['shop','requests','board','video','mgmt','dashboard','datanomix','shoptv','proshop','planner','inspections','announce'].forEach(t => {
       const el = document.getElementById('tab-' + t);
       if (el) el.classList.toggle('active', tab === t);
     });
@@ -3304,8 +3277,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var annEl = document.getElementById('page-announce'); if(annEl) annEl.style.display = tab === 'announce' ? 'block' : 'none';
     var dnxEl = document.getElementById('page-dnxalerts'); if(dnxEl) dnxEl.style.display = tab === 'dnxalerts' ? 'flex' : 'none';
     var aiEl = document.getElementById('page-aichat'); if(aiEl) aiEl.style.display = tab === 'aichat' ? 'flex' : 'none';
-    var emailEl = document.getElementById('page-email'); if(emailEl) emailEl.style.display = tab === 'email' ? 'flex' : 'none';
-    if (tab === 'email' && window._loadEmailInbox) window._loadEmailInbox();
     if(tab === 'announce') window._loadAnnounceHistory && window._loadAnnounceHistory();
     document.getElementById('page-video').style.display    = tab === 'video'    ? 'block' : 'none';
     var psEl = document.getElementById('page-proshop'); if (psEl) psEl.style.display = tab === 'proshop' ? 'flex' : 'none';
@@ -3467,18 +3438,43 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     reader.readAsDataURL(file);
   };
 
+  // Resizes + compresses a photo client-side and returns a data URI small enough
+  // to safely fit in a Firestore document (max ~900KB of base64 text).
+  window._fileToDataUri = function(file, maxDim, quality) {
+    maxDim = maxDim || 1280;
+    quality = quality || 0.7;
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var img = new Image();
+        img.onload = function() {
+          var w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          var canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          var dataUri = canvas.toDataURL('image/jpeg', quality);
+          // If still too big even after resizing, back off quality once more
+          if (dataUri.length > 900000 && quality > 0.4) {
+            dataUri = canvas.toDataURL('image/jpeg', 0.4);
+          }
+          resolve(dataUri.length > 950000 ? null : dataUri);
+        };
+        img.onerror = function(){ reject(new Error('Could not load image')); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function(){ reject(new Error('Could not read file')); };
+      reader.readAsDataURL(file);
+    });
+  };
+
   window._uploadPhoto = async function(file, reqId) {
     try {
-      var formData = new FormData();
-      formData.append('photo', file, file.name || 'photo.jpg');
-      formData.append('reqId', reqId);
-      var res = await fetch('https://hill-dnx-alerts.miguelstulsa.workers.dev/upload-photo', {
-        method: 'POST', body: formData
-      });
-      if (!res.ok) { console.warn('Photo upload failed:', await res.text()); return null; }
-      var data = await res.json();
-      return data.url || null;
-    } catch(e) { console.warn('Photo upload error:', e.message); return null; }
+      return await window._fileToDataUri(file);
+    } catch(e) { console.warn('Photo processing error:', e.message); return null; }
   };
 
   window._viewPhoto = function(url) {
@@ -4502,8 +4498,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
       var aiTab = document.getElementById('tab-aichat');
       if (aiTab) aiTab.style.display = 'flex';
-      var emailTab = document.getElementById('tab-email');
-      if (emailTab) emailTab.style.display = 'flex';
       var dnxTab = document.getElementById('tab-dnxalerts');
       if (dnxTab) dnxTab.style.display = 'flex';
       setTimeout(function(){
@@ -4513,8 +4507,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         if(b) b.style.display = 'flex';
         var c = document.getElementById('tab-dnxalerts');
         if(c) c.style.display = 'flex';
-        var d = document.getElementById('tab-email');
-        if(d) d.style.display = 'flex';
       }, 500);
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
@@ -5159,111 +5151,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (btn) btn.classList.add('active');
     renderDNXGrid();
   }
-
-  // ── EMAIL INBOX (hillEmails — general mail like boss's objectives) ──
-  window._emailListenerActive = false;
-  window._loadEmailInbox = function(){
-    var db2 = window.fbDb, mods = window._fbModules;
-    var list = document.getElementById('email-list');
-    if (!db2 || !mods) {
-      if (list) list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:40px 20px;">Connecting...</div>';
-      setTimeout(window._loadEmailInbox, 800);
-      return;
-    }
-    if (window._emailListenerActive) return; // already listening, no need to re-subscribe
-    window._emailListenerActive = true;
-    try {
-      var q = mods.query(mods.collection(db2, 'hillEmails'), mods.orderBy('receivedAt', 'desc'));
-      mods.onSnapshot(q, function(snap){
-        var emails = [];
-        snap.forEach(function(d){ var e = d.data(); e.id = d.id; emails.push(e); });
-        window._renderEmailInbox(emails);
-      }, function(err){
-        console.warn('Email inbox listener:', err.message);
-        if (list) list.innerHTML = '<div style="text-align:center;color:#f87171;font-size:13px;padding:40px 20px;">Could not load inbox: ' + err.message + '</div>';
-      });
-    } catch(e) { console.warn('Email inbox setup:', e.message); }
-  };
-
-  function _fmtEmailDate(receivedAt){
-    if (!receivedAt) return '';
-    var d = new Date(receivedAt);
-    if (isNaN(d.getTime())) return '';
-    var now = new Date();
-    var timeStr = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    var isToday = d.toDateString() === now.toDateString();
-    if (isToday) return 'Today at ' + timeStr;
-    return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' at ' + timeStr;
-  }
-
-  window._renderEmailInbox = function(emails){
-    var list = document.getElementById('email-list');
-    if (!list) return;
-    if (!emails.length){
-      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:40px 20px;">📭 Inbox is empty — nothing here yet.</div>';
-      return;
-    }
-    window._emailCache = {};
-    list.innerHTML = emails.map(function(e){
-      window._emailCache[e.id] = e;
-      var preview = (e.body || '').slice(0, 120);
-      var imgStrip = (e.images && e.images.length)
-        ? '<div style="display:flex;gap:6px;margin-top:8px;">' + e.images.slice(0,4).map(function(url){
-            return '<img src="' + url + '" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid #1e3a5f;">';
-          }).join('') + (e.images.length > 4 ? '<div style="width:56px;height:56px;border-radius:6px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:12px;">+' + (e.images.length-4) + '</div>' : '') + '</div>'
-        : '';
-      return '<div style="background:' + (e.read ? 'rgba(255,255,255,0.03)' : 'rgba(245,200,66,0.06)') + ';border:1px solid ' + (e.read ? '#1e3a5f' : 'rgba(245,200,66,0.3)') + ';border-radius:10px;padding:12px 14px;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
-        + '<div style="min-width:0;flex:1;">'
-        + (e.read ? '' : '<span style="display:inline-block;width:7px;height:7px;background:#f5c842;border-radius:50%;margin-right:6px;"></span>')
-        + '<span style="font-weight:700;color:#f0f4f8;font-size:14px;">' + (e.subject || '(no subject)') + '</span>'
-        + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">' + (e.from || 'unknown sender') + '</div>'
-        + '</div>'
-        + '<div style="font-size:11px;color:#64748b;white-space:nowrap;flex-shrink:0;">' + _fmtEmailDate(e.receivedAt) + '</div>'
-        + '</div>'
-        + '<div style="font-size:13px;color:#cbd5e1;margin-top:8px;">' + preview + (e.body && e.body.length > 120 ? '…' : '') + '</div>'
-        + imgStrip
-        + '<div style="display:flex;gap:8px;margin-top:10px;">'
-        + '<button onclick="window._viewEmail(\'' + e.id + '\')" style="background:rgba(245,200,66,0.12);border:1px solid #f5c842;color:#f5c842;border-radius:6px;padding:6px 14px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;cursor:pointer;">VIEW</button>'
-        + '<button onclick="window._deleteEmail(\'' + e.id + '\')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:6px 14px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;cursor:pointer;">🗑 ERASE</button>'
-        + '</div>'
-        + '</div>';
-    }).join('');
-  };
-
-  window._viewEmail = function(id){
-    var e = (window._emailCache || {})[id];
-    if (!e) return;
-    document.getElementById('emailViewSubject').textContent = e.subject || '(no subject)';
-    document.getElementById('emailViewMeta').textContent = (e.from || 'unknown sender') + ' — ' + _fmtEmailDate(e.receivedAt);
-    var hasImages = e.images && e.images.length;
-    document.getElementById('emailViewBody').textContent = e.body || (hasImages ? '' : '(no content)');
-    var imgContainer = document.getElementById('emailViewImages');
-    if (hasImages) {
-      imgContainer.innerHTML = e.images.map(function(url){
-        return '<img src="' + url + '" style="max-width:100%;max-height:400px;border-radius:8px;border:1px solid #1e3a5f;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
-      }).join('');
-    } else {
-      imgContainer.innerHTML = '';
-    }
-    document.getElementById('emailViewModal').style.display = 'flex';
-    // Mark as read
-    if (!e.read) {
-      var db2 = window.fbDb, mods = window._fbModules;
-      if (db2 && mods) {
-        mods.updateDoc(mods.doc(db2, 'hillEmails', id), { read: true }).catch(function(){});
-      }
-    }
-  };
-
-  window._deleteEmail = function(id){
-    if (!confirm('Erase this email? This cannot be undone.')) return;
-    var db2 = window.fbDb, mods = window._fbModules;
-    if (!db2 || !mods) return;
-    mods.deleteDoc(mods.doc(db2, 'hillEmails', id)).catch(function(e){
-      showToast('red', 'Could not erase', e.message);
-    });
-  };
 
   function initDNXDisplay() {
     if(window.renderDNXCards) window.renderDNXCards();
