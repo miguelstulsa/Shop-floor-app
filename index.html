@@ -1597,6 +1597,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <button onclick="document.getElementById('emailViewModal').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;">✕</button>
     </div>
     <div id="emailViewBody" style="padding:16px;overflow-y:auto;color:#e2e8f0;font-size:14px;line-height:1.7;white-space:pre-wrap;"></div>
+    <div id="emailViewImages" style="padding:0 16px 16px;display:flex;flex-wrap:wrap;gap:10px;"></div>
   </div>
 </div>
 
@@ -5206,6 +5207,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     list.innerHTML = emails.map(function(e){
       window._emailCache[e.id] = e;
       var preview = (e.body || '').slice(0, 120);
+      var imgStrip = (e.images && e.images.length)
+        ? '<div style="display:flex;gap:6px;margin-top:8px;">' + e.images.slice(0,4).map(function(url){
+            return '<img src="' + url + '" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid #1e3a5f;">';
+          }).join('') + (e.images.length > 4 ? '<div style="width:56px;height:56px;border-radius:6px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:12px;">+' + (e.images.length-4) + '</div>' : '') + '</div>'
+        : '';
       return '<div style="background:' + (e.read ? 'rgba(255,255,255,0.03)' : 'rgba(245,200,66,0.06)') + ';border:1px solid ' + (e.read ? '#1e3a5f' : 'rgba(245,200,66,0.3)') + ';border-radius:10px;padding:12px 14px;">'
         + '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">'
         + '<div style="min-width:0;flex:1;">'
@@ -5216,6 +5222,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         + '<div style="font-size:11px;color:#64748b;white-space:nowrap;flex-shrink:0;">' + _fmtEmailDate(e.receivedAt) + '</div>'
         + '</div>'
         + '<div style="font-size:13px;color:#cbd5e1;margin-top:8px;">' + preview + (e.body && e.body.length > 120 ? '…' : '') + '</div>'
+        + imgStrip
         + '<div style="display:flex;gap:8px;margin-top:10px;">'
         + '<button onclick="window._viewEmail(\'' + e.id + '\')" style="background:rgba(245,200,66,0.12);border:1px solid #f5c842;color:#f5c842;border-radius:6px;padding:6px 14px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;cursor:pointer;">VIEW</button>'
         + '<button onclick="window._deleteEmail(\'' + e.id + '\')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:6px 14px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;cursor:pointer;">🗑 ERASE</button>'
@@ -5229,7 +5236,16 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (!e) return;
     document.getElementById('emailViewSubject').textContent = e.subject || '(no subject)';
     document.getElementById('emailViewMeta').textContent = (e.from || 'unknown sender') + ' — ' + _fmtEmailDate(e.receivedAt);
-    document.getElementById('emailViewBody').textContent = e.body || '(no content)';
+    var hasImages = e.images && e.images.length;
+    document.getElementById('emailViewBody').textContent = e.body || (hasImages ? '' : '(no content)');
+    var imgContainer = document.getElementById('emailViewImages');
+    if (hasImages) {
+      imgContainer.innerHTML = e.images.map(function(url){
+        return '<img src="' + url + '" style="max-width:100%;max-height:400px;border-radius:8px;border:1px solid #1e3a5f;cursor:pointer;" onclick="window.open(this.src,\'_blank\')">';
+      }).join('');
+    } else {
+      imgContainer.innerHTML = '';
+    }
     document.getElementById('emailViewModal').style.display = 'flex';
     // Mark as read
     if (!e.read) {
