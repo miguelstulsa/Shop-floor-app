@@ -2128,6 +2128,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         '<div class="notif-type">' + (n.autoCompleted ? '✅ Completed' : typeIcons[n.type] + ' ' + typeLabels[n.type]) + '</div>' +
         '<div class="notif-machine">' + (n.cell ? n.cell + ' — ' : '') + n.machine + '</div>' +
         '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + n.wo + (n.detail ? ' · ' + n.detail : '') + '</div>' +
+        (n.photoUrl ? '<img src="' + n.photoUrl + '" onclick="window._viewPhoto(\'' + n.photoUrl + '\')" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:6px;cursor:pointer;border:2px solid #1e3a5f;" title="Tap to view photo">' : '') +
         '<div class="notif-time">' + timeStr + '</div>' +
         timerBtns +
         '<button class="notif-dismiss" data-id="' + n.id + '">✕</button>';
@@ -2213,6 +2214,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         appVersion: 'v35'
       });
     }
+    return { id: reqRef.id };
   };
   window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
 
@@ -4174,18 +4176,20 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   function updateCharCount() { document.getElementById('charCount').textContent = document.getElementById('postBody').value.length; }
 
   let pendingImageData = null;
-  function handleImageUpload(input) {
+  async function handleImageUpload(input) {
     const file = input.files[0];
     if (!file) return;
-    if (file.size > 3 * 1024 * 1024) { showToast('red', 'Image too large', 'Please use an image under 3 MB.'); input.value = ''; return; }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      pendingImageData = e.target.result;
+    try {
+      const dataUri = await window._fileToDataUri(file);
+      if (!dataUri) { showToast('red', 'Image too large', 'Please try a smaller photo.'); input.value = ''; return; }
+      pendingImageData = dataUri;
       showImagePreview(pendingImageData);
       document.getElementById('attachLabel').classList.add('has-file');
       document.getElementById('gifUrl').value = '';
-    };
-    reader.readAsDataURL(file);
+    } catch(e) {
+      showToast('red', 'Could not process image', e.message || '');
+      input.value = '';
+    }
   }
   function handleGifUrl(url) {
     if (!url.trim()) { clearImage(); return; }
@@ -4211,7 +4215,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (!body && !pendingImageData) { showToast('yellow', 'Write something or attach an image!', ''); return; }
     const post = { author, body, category: selectedCat, pinned: false };
     if (pendingImageData) post.imageData = pendingImageData;
-    if (window.submitPostToFirebase) await window.submitPostToFirebase(post);
+    try {
+      if (window.submitPostToFirebase) await window.submitPostToFirebase(post);
+    } catch(e) {
+      showToast('red', 'Could not post', (e && e.message) ? e.message.slice(0,80) : 'Check connection and try again.');
+      return;
+    }
     clearImage(); closePostModal();
     showToast('green', '📌 Posted!', 'Your message is on the board.');
     switchTab('board');
