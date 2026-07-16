@@ -4088,7 +4088,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var hasQualityKey = !!((localStorage.getItem('hillQualityPushoverKey') || QUALITY_MANAGER_KEY || '').trim());
       qualityPushover(
         '🔴 INSPECTION — ' + machine,
-        (cell ? cell + ' · ' : '') + machine + '\nWO: ' + wo + (operator ? '\nOperator: ' + operator : '') + (detail ? '\n' + detail : '')
+        (cell ? cell + ' · ' : '') + machine + '\nWO: ' + wo + (op ? '  OP: ' + op : '') + (operator ? '\nOperator: ' + operator : '') + (detail ? '\n' + detail : '')
       );
       // Also alert admin personally
       adminPushover(titles.red, msgBody, 'siren', 1);
@@ -10564,18 +10564,18 @@ window.slSendMorning = function() {
     if (window._orangePatched) return;
     window._orangePatched = true;
     var orig = window.sendPushover;
-    window.sendPushover = function(type, cell, machine, wo, detail, operator) {
+    window.sendPushover = function(type, cell, machine, wo, detail, operator, op) {
       if (type === 'orange') {
         var parts = [cell + ' - ' + machine];
         if (operator) parts.push(operator);
-        if (wo) parts.push('WO: ' + wo);
+        if (wo) parts.push('WO: ' + wo + (op ? '  OP: ' + op : ''));
         if (detail) parts.push(detail);
         var msg = parts.join('\n');
         if (window.floorSupportPushover) window.floorSupportPushover('🟠 FLOOR SUPPORT - ' + machine, msg);
         if (window.adminPushover) window.adminPushover('🟠 FLOOR SUPPORT - ' + machine, msg, 'magic', 0);
         if (window.safePushover) window.safePushover('🟠 FLOOR SUPPORT - ' + machine, msg, 'magic', 0);
       } else {
-        orig(type, cell, machine, wo, detail, operator);
+        orig(type, cell, machine, wo, detail, operator, op);
       }
     };
   }
