@@ -2127,7 +2127,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         '<div class="notif-blink-dot"></div>' +
         '<div class="notif-type">' + (n.autoCompleted ? '✅ Completed' : typeIcons[n.type] + ' ' + typeLabels[n.type]) + '</div>' +
         '<div class="notif-machine">' + (n.cell ? n.cell + ' — ' : '') + n.machine + '</div>' +
-        '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + n.wo + (n.detail ? ' · ' + n.detail : '') + '</div>' +
+        '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + 'WO: ' + n.wo + (n.op ? '  OP: ' + n.op : '') + (n.detail ? ' · ' + n.detail : '') + '</div>' +
         (n.photoUrl ? '<img src="' + n.photoUrl + '" onclick="window._viewPhoto(\'' + n.photoUrl + '\')" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:6px;cursor:pointer;border:2px solid #1e3a5f;" title="Tap to view photo">' : '') +
         '<div class="notif-time">' + timeStr + '</div>' +
         timerBtns +
@@ -2193,7 +2193,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   function sendBrowserNotif(n) {
     if (Notification.permission === 'granted') {
-      new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: (n.cell ? n.cell + ' — ' : '') + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + n.wo, tag: n.id, requireInteraction: true });
+      new Notification(typeIcons[n.type] + ' ' + typeLabels[n.type], { body: (n.cell ? n.cell + ' — ' : '') + n.machine + '\n' + (n.operator ? n.operator + ' · ' : '') + 'WO: ' + n.wo + (n.op ? '  OP: ' + n.op : ''), tag: n.id, requireInteraction: true });
     }
   }
 
@@ -2688,7 +2688,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       colorEl.style.background = 'var(--' + n.type + ')';
       const textEl = document.createElement('div');
       textEl.className = 'existing-note-text';
-      textEl.innerHTML = '<strong>' + (n.autoCompleted ? '✅ Completed' : typeLabels[n.type]) + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — ' + n.wo : '') + (n.detail ? ' · ' + n.detail : '') + (n.assignedTo ? ' <span style="background:rgba(59,130,246,0.2);color:#93c5fd;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;">→ ' + n.assignedTo + '</span>' : '');
+      textEl.innerHTML = '<strong>' + (n.autoCompleted ? '✅ Completed' : typeLabels[n.type]) + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — WO ' + n.wo : '') + (n.op ? ' OP ' + n.op : '') + (n.detail ? ' · ' + n.detail : '') + (n.assignedTo ? ' <span style="background:rgba(59,130,246,0.2);color:#93c5fd;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;">→ ' + n.assignedTo + '</span>' : '');
       const actionsEl = document.createElement('div');
       actionsEl.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
       if (n.type === 'blue') {
@@ -7496,7 +7496,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         '<div class="dash-req-machine">'+escHtml(r.machine||'')+'<span class="dash-req-cell"> · '+escHtml(r.cell||'')+'</span></div>',
 
         // WO number — prominent
-        '<div class="dash-req-wo" style="font-size:15px;margin-top:4px;">WO# '+escHtml(r.wo||'—')+(r.wo?'  <a class="ps-link" href="https://hill.adionsystems.com/procnc/workorders/'+encodeURIComponent(r.wo)+'" target="_blank">🔗 ProShop</a>':'')+'</div>',
+        '<div class="dash-req-wo" style="font-size:15px;margin-top:4px;">WO# '+escHtml(r.wo||'—')+(r.op?'  ·  OP# '+escHtml(r.op):'')+(r.wo?'  <a class="ps-link" href="https://hill.adionsystems.com/procnc/workorders/'+encodeURIComponent(r.wo)+'" target="_blank">🔗 ProShop</a>':'')+'</div>',
 
         // Request type label
         r.type ? '<div style="font-size:11px;color:#64748b;margin-top:3px;letter-spacing:1px;">'+
@@ -9655,7 +9655,7 @@ window.plannerSetView = function(view) {
       return '<div class="insp-row'+(r.resolved?' resolved':'')+'">'
         +'<div class="insp-row-top">'
           +'<div class="insp-machine">'+escHtml(r.machine||'—')+'</div>'
-          +'<div class="insp-wo">WO: '+escHtml(r.wo||'—')+'</div>'
+          +'<div class="insp-wo">WO: '+escHtml(r.wo||'—')+(r.op?'  OP: '+escHtml(r.op):'')+'</div>'
           +'<span class="insp-badge '+(r.resolved?'resolved':'open')+'">'+(r.resolved?'✅ RESOLVED':'🔴 OPEN')+'</span>'
           +'<div class="insp-time">'+tStr+'</div>'
         +'</div>'
