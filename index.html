@@ -972,6 +972,14 @@
       <h3>👑 Admin Panel</h3>
       <button class="admin-close" onclick="closeAdminPanel()">✕</button>
     </div>
+    <div class="admin-section" style="border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:12px;background:rgba(239,68,68,0.04);">
+      <div class="admin-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>🔄 Recover Deleted Requests</span>
+        <button onclick="window._loadRecovery()" style="background:rgba(239,68,68,0.15);border:1px solid #f87171;color:#f87171;border-radius:6px;padding:4px 12px;font-size:11px;cursor:pointer;">REFRESH</button>
+      </div>
+      <div style="font-size:11px;color:#64748b;margin-bottom:10px;">Anything dismissed or cleared in the last 10 minutes — one tap to bring it back.</div>
+      <div id="recoveryList"><div class="admin-empty">Tap REFRESH to check for recently deleted requests</div></div>
+    </div>
     <div class="admin-section">
       <div class="admin-section-title">⏳ Pending Requests</div>
       <div id="adminPending"><div class="admin-empty">No pending requests</div></div>
@@ -2243,7 +2251,85 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
     return { id: reqRef.id, noteId: noteRef.id };
   };
-  window.removeNoteById = async function(id) { await deleteDoc(doc(db, "notes", id)); };
+  // Saves a full copy of a document to hillDeletedRequests before deleting it,
+  // so it can be recovered later (see the Recovery panel in Admin).
+  window._auditDelete = async function(collectionName, id) {
+    try {
+      var snap = await getDoc(doc(db, collectionName, id));
+      if (snap.exists()) {
+        await addDoc(collection(db, "hillDeletedRequests"), {
+          originalCollection: collectionName,
+          originalId: id,
+          data: snap.data(),
+          deletedAt: serverTimestamp(),
+          deletedBy: window.currentUser || 'unknown'
+        });
+      }
+    } catch(e) { console.warn('Audit log before delete failed:', e.message); }
+  };
+  window.removeNoteById = async function(id) {
+    await window._auditDelete('notes', id);
+    await deleteDoc(doc(db, "notes", id));
+  };
+
+  // ── RECOVERY PANEL — shows anything deleted in the last 10 minutes ──
+  window._loadRecovery = async function(){
+    var list = document.getElementById('recoveryList');
+    if (!list) return;
+    list.innerHTML = '<div class="admin-empty">Loading...</div>';
+    try {
+      var cutoff = new Date(Date.now() - 10 * 60 * 1000);
+      var snap = await getDocs(query(collection(db, 'hillDeletedRequests'), orderBy('deletedAt', 'desc'), limit(50)));
+      var items = [];
+      snap.forEach(function(d){
+        var v = d.data();
+        var delTime = v.deletedAt && v.deletedAt.seconds ? new Date(v.deletedAt.seconds * 1000) : null;
+        if (delTime && delTime >= cutoff) { v.id = d.id; items.push(v); }
+      });
+      if (!items.length) {
+        list.innerHTML = '<div class="admin-empty">Nothing deleted in the last 10 minutes.</div>';
+        return;
+      }
+      window._recoveryCache = {};
+      var rows = items.map(function(v){
+        window._recoveryCache[v.id] = v;
+        var d = v.data || {};
+        var label = (d.machine || '?') + (d.wo ? ' — WO ' + d.wo : '') + (d.detail ? ' · ' + d.detail : '');
+        var timeStr = v.deletedAt && v.deletedAt.seconds ? new Date(v.deletedAt.seconds*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">'
+          + '<div style="min-width:0;flex:1;font-size:12px;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + label + '<div style="font-size:10px;color:#64748b;">Deleted ' + timeStr + '</div></div>'
+          + '<button onclick="window._restoreDeleted(\'' + v.id + '\')" style="background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer;flex-shrink:0;">RESTORE</button>'
+          + '</div>';
+      }).join('');
+      list.innerHTML = '<button onclick="window._restoreAllDeleted()" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:8px;">↺ RESTORE ALL (' + items.length + ')</button>' + rows;
+    } catch(e) {
+      list.innerHTML = '<div class="admin-empty" style="color:#f87171;">Could not load: ' + e.message + '</div>';
+    }
+  };
+
+  window._restoreDeleted = async function(recoveryId){
+    var v = (window._recoveryCache || {})[recoveryId];
+    if (!v) return;
+    try {
+      // Restore to the exact same document ID it had before, so any cross-references stay intact
+      await setDoc(doc(db, v.originalCollection, v.originalId), v.data);
+      await deleteDoc(doc(db, 'hillDeletedRequests', recoveryId));
+      showToast('green', '✅ Restored', (v.data && v.data.machine) || '');
+      window._loadRecovery();
+    } catch(e) {
+      showToast('red', 'Could not restore', e.message ? e.message.slice(0,80) : '');
+    }
+  };
+
+  window._restoreAllDeleted = async function(){
+    var cache = window._recoveryCache || {};
+    var ids = Object.keys(cache);
+    if (!ids.length) return;
+    if (!confirm('Restore all ' + ids.length + ' deleted requests?')) return;
+    for (var i = 0; i < ids.length; i++) {
+      await window._restoreDeleted(ids[i]);
+    }
+  };
 
   // ── MACHINIST COMPLETE JOB ──────────────────────────────────
   window.completeJob = async function(noteId, hillReqId) {
@@ -4074,7 +4160,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var _dedupKey = 'hillPushSent_' + Date.now();
       localStorage.setItem(_dedupKey, '1');
       setTimeout(function(){ localStorage.removeItem(_dedupKey); }, 10000);
-      sendPushover(selectedType, currentCell, currentMachine, wo, detail, operator, op);
+      sendPushover(selectedType, currentCell, currentMachine, wo, combinedDetail, operator, op);
     }
     // Admin personal alert — only for orange (Floor Support) since sendPushover
     // already handles blue/yellow via safePushover. Prevents double notifications.
@@ -7665,6 +7751,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         var data = d.data();
         // NEVER delete inspection requests (type === 'red')
         if (data.type === 'red') return;
+        mods.addDoc(mods.collection(db2, 'hillDeletedRequests'), {
+          originalCollection: 'hillRequests',
+          originalId: d.id,
+          data: data,
+          deletedAt: mods.serverTimestamp(),
+          deletedBy: window.currentUser || 'unknown'
+        }).catch(function(){});
         mods.deleteDoc(mods.doc(db2,'hillRequests',d.id));
         deleteCount++;
       });
