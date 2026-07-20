@@ -1410,7 +1410,7 @@
       <span class="sidebar-live-dot"></span>
       <span style="flex:1;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;">LIVE REQUEST FEED</span>
       <span id="sidebarCount" class="sidebar-count-badge" style="display:none">0</span>
-      <button onclick="toggleSidebar()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:3px 10px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;margin-left:8px;flex-shrink:0;">✕ CLOSE</button>
+      <button onclick="event.stopPropagation();toggleSidebar()" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:6px;padding:3px 10px;font-size:11px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;cursor:pointer;margin-left:8px;flex-shrink:0;">✕ CLOSE</button>
     </div>
     <div id="notifBanner" class="notif-banner" onclick="enableNotifications()" style="display:none;">
       <p>📱 Enable phone notifications</p>
@@ -1840,6 +1840,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
             <button type="button" class="glove-size-btn" onclick="selectGloveSize('XL')" style="flex:1;padding:8px 4px;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:7px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;transition:all 0.15s;">XL</button>
           </div>
         </div>
+        <button type="button" onclick="window._addSupplyItem()" style="width:100%;margin-top:8px;background:#22c55e;border:none;color:#0f2338;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">＋ ADD TO REQUEST</button>
+        <!-- Running checklist of added supply items — only these get submitted with the request -->
+        <div id="supplyChecklist" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
       </div>
       <!-- INSPECTION QUICK REASONS — shown only for red (Inspection) type -->
       <div id="inspectionReasonField" style="display:none;margin-bottom:10px;">
@@ -3627,6 +3630,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var msf = document.getElementById('machinistSupplyField'); if(msf) msf.style.display = 'none';
     window._selectedGloveSize = '';
     document.querySelectorAll('.glove-size-btn').forEach(b => { b.style.background='rgba(255,255,255,0.05)'; b.style.borderColor='#2a5a8c'; b.style.color='#94a3b8'; });
+    if (window._clearSupplyChecklist) window._clearSupplyChecklist();
     // Reset measuring equipment search
     var itf = document.getElementById('inspectionToolField'); if(itf) itf.style.display = 'none';
     if(window._clearSelectedTool) window._clearSelectedTool();
@@ -3894,6 +3898,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var si = document.getElementById('supplyItem'); if(si) si.value = '';
       var gsf = document.getElementById('gloveSizeField'); if(gsf) gsf.style.display = 'none';
       window._selectedGloveSize = '';
+      if (window._clearSupplyChecklist) window._clearSupplyChecklist();
     }
     // Show measuring equipment search and quick reasons only for Inspection (red)
     var toolField = document.getElementById('inspectionToolField');
@@ -3919,6 +3924,51 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       });
     }
   }
+
+  // ── MACHINIST REQ SUPPLY CHECKLIST — add multiple items to one request ──
+  window._selectedSupplyItems = []; // [{item, gloveSize}, ...] — only these get submitted
+
+  window._addSupplyItem = function(){
+    var select = document.getElementById('supplyItem');
+    var val = select.value;
+    if (!val) { showToast('yellow', 'Pick an item first', 'Select something from the list above.'); return; }
+    if (val === 'other') {
+      showToast('yellow', 'Use Additional Details', 'Type what you need in the details box below.');
+      select.value = ''; handleSupplyChange();
+      return;
+    }
+    if (val === 'Nitrile Gloves' && !window._selectedGloveSize) {
+      showToast('yellow', 'Pick a glove size', 'Select S, M, L, or XL first.'); return;
+    }
+    window._selectedSupplyItems.push({ item: val, gloveSize: val === 'Nitrile Gloves' ? window._selectedGloveSize : '' });
+    // Reset the picker so it's ready for the next item
+    select.value = '';
+    handleSupplyChange();
+    window._renderSupplyChecklist();
+  };
+
+  window._removeSupplyItem = function(idx){
+    window._selectedSupplyItems.splice(idx, 1);
+    window._renderSupplyChecklist();
+  };
+
+  window._renderSupplyChecklist = function(){
+    var list = document.getElementById('supplyChecklist');
+    if (!list) return;
+    if (!window._selectedSupplyItems.length) { list.innerHTML = ''; return; }
+    list.innerHTML = window._selectedSupplyItems.map(function(s, i){
+      var label = s.item + (s.gloveSize ? ' — Size ' + s.gloveSize : '');
+      return '<div style="background:rgba(251,191,36,0.1);border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;">'
+        + '<span style="font-size:13px;color:#fcd34d;font-weight:600;">' + (i+1) + '. ⚙️ ' + label + '</span>'
+        + '<button type="button" onclick="window._removeSupplyItem(' + i + ')" style="background:none;border:none;color:#fbbf24;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>'
+        + '</div>';
+    }).join('');
+  };
+
+  window._clearSupplyChecklist = function(){
+    window._selectedSupplyItems = [];
+    var list = document.getElementById('supplyChecklist'); if (list) list.innerHTML = '';
+  };
 
   // ── MEASURING EQUIPMENT SEARCH (Inspection requests) ──────
   window._selectedTools = []; // [{name, needsDim, dimVal}, ...] — only these get submitted
@@ -4063,9 +4113,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     const wo = document.getElementById('woInput').value.trim();
     const detail = document.getElementById('noteText').value.trim();
     const operator = document.getElementById('operatorName').value.trim();
-    // For machinist requests: WO not required if a supply item is selected
-    var supplyItem = (selectedType === 'yellow' && document.getElementById('supplyItem')) ? document.getElementById('supplyItem').value : '';
-    var hasSupply = supplyItem && supplyItem !== 'other' && supplyItem !== '';
+    // Safety net: if an item is picked in the dropdown but never tapped +ADD, don't lose it
+    if (selectedType === 'yellow' && document.getElementById('supplyItem') && document.getElementById('supplyItem').value && document.getElementById('supplyItem').value !== 'other') {
+      window._addSupplyItem();
+    }
+    // For machinist requests: WO not required if at least one supply item was added
+    var hasSupply = selectedType === 'yellow' && window._selectedSupplyItems && window._selectedSupplyItems.length > 0;
     // For inspection requests: WO not required if a quick reason is selected OR a tool has been added
     var hasReason = selectedType === 'red' && (!!window._selectedReason || (window._selectedTools && window._selectedTools.length > 0));
     const op = (document.getElementById('opInput') ? document.getElementById('opInput').value.trim() : '');
@@ -4080,15 +4133,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
     const assignedTo = (document.getElementById('assignedTo') && selectedType === 'blue')
       ? (document.getElementById('assignedTo').value || '') : '';
-    // Build supply prefix for machinist requests
+    // Build supply prefix for machinist requests from every item added to the checklist
     var supplyPrefix = '';
-    if (selectedType === 'yellow') {
-      if (supplyItem && supplyItem !== 'other') {
-        supplyPrefix = supplyItem;
-        if (supplyItem === 'Nitrile Gloves' && window._selectedGloveSize) {
-          supplyPrefix += ' — Size ' + window._selectedGloveSize;
-        }
-      }
+    if (selectedType === 'yellow' && window._selectedSupplyItems && window._selectedSupplyItems.length) {
+      var supplyLines = window._selectedSupplyItems.map(function(s, i){
+        return (i+1) + '. ⚙️ ' + s.item + (s.gloveSize ? ' — Size ' + s.gloveSize : '');
+      });
+      supplyPrefix = supplyLines.join('\n');
     }
     var combinedDetail = supplyPrefix ? (supplyPrefix + (detail ? '\n' + detail : '')) : detail;
     // Fold the quick reason into the detail text for Inspection requests
@@ -4255,13 +4306,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // If sidebar is already open and visible — close it
     if (sidebar.classList.contains('open')) {
       sidebar.classList.remove('open');
-      sidebar.style.display = 'none';
+      sidebar.style.setProperty('display', 'none', 'important');
       return;
     }
 
     // Otherwise open it
     switchTab('shop');
-    sidebar.style.display = '';
+    sidebar.style.setProperty('display', 'flex', 'important');
     sidebar.classList.add('open');
     setTimeout(function() {
       sidebar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -4838,10 +4889,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(!sb) return;
     if(sb.classList.contains('open')){
       sb.classList.remove('open');
+      sb.style.setProperty('display', 'none', 'important');
     } else {
       sb.classList.add('open');
+      sb.style.setProperty('display', 'flex', 'important');
       // Force reflow on iPhone
-      sb.style.display = 'flex';
       void sb.offsetHeight;
     }
   }
