@@ -1662,8 +1662,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       </div>
       <span class="vhb-badge">Live</span>
     </div>
-    <div id="gamesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;padding:20px;">
+    <div id="gamesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;padding:20px 20px 0 20px;">
       <div style="grid-column:1/-1;text-align:center;color:#475569;font-size:13px;padding:40px 20px;">Loading games...</div>
+    </div>
+    <div id="emulatorCardWrap" style="display:none;padding:0 20px 20px 20px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;">
+      <div class="game-card" onclick="window._openEmulatorSetup()">
+        <div class="game-card-emoji">🕹️</div>
+        <div class="game-card-title">Retro Emulator</div>
+        <div class="game-card-play">▶ PLAY</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1677,8 +1684,46 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   <iframe id="gamePlayerFrame" style="flex:1;width:100%;border:none;background:#000;"></iframe>
 </div>
 
+<!-- Retro Emulator setup + player (own file, own device — no ROM ever stored) -->
+<div id="emulatorSetupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:3100;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#0d1f35;border:1px solid #f5c842;border-radius:14px;max-width:460px;width:100%;max-height:85vh;overflow-y:auto;padding:20px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#f5c842;letter-spacing:1px;">🕹️ Retro Emulator</div>
+      <button onclick="document.getElementById('emulatorSetupOverlay').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;">Your own legally-owned ROMs, saved only on this device — never uploaded or shared anywhere.</div>
+
+    <div id="emuRomLibrary" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:16px;"></div>
+
+    <div id="emuAddRomSection" style="border-top:1px solid #1e3a5f;padding-top:14px;">
+      <div style="font-size:11px;color:#f5c842;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">+ Add A Rom</div>
+      <select id="emuSystemSelect" style="width:100%;background:#1a1000;border:1px solid #92400e;border-radius:8px;color:#fcd34d;padding:10px 14px;font-size:14px;margin-bottom:10px;font-family:'Barlow',sans-serif;">
+        <option value="nes">Nintendo (NES)</option>
+        <option value="snes">Super Nintendo (SNES)</option>
+        <option value="gb">Game Boy / Color</option>
+        <option value="gba">Game Boy Advance</option>
+        <option value="segaMD">Sega Genesis / Mega Drive</option>
+        <option value="n64">Nintendo 64</option>
+        <option value="psx">PlayStation</option>
+      </select>
+      <input type="file" id="emuRomInput" style="width:100%;color:#cbd5e1;font-size:13px;margin-bottom:12px;">
+      <button id="emuStartBtn" onclick="window._addAndStartEmulator()" disabled style="width:100%;background:#22c55e;border:none;color:#0f2338;border-radius:8px;padding:12px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;cursor:pointer;opacity:0.5;">＋ ADD &amp; PLAY</button>
+    </div>
+  </div>
+</div>
+
+<div id="emulatorPlayerOverlay" style="display:none;position:fixed;inset:0;background:#000;z-index:3200;flex-direction:column;">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#0d1f35;border-bottom:1px solid #1e3a5f;flex-shrink:0;">
+
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:#f5c842;letter-spacing:1px;">🕹️ Retro Emulator</div>
+    <button onclick="window._closeEmulator()" style="background:rgba(239,68,68,0.15);border:1px solid #f87171;color:#f87171;border-radius:8px;padding:6px 16px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">✕ EXIT</button>
+  </div>
+  <div id="emulatorContainer" style="flex:1;width:100%;background:#000;"></div>
+</div>
+
 <!-- DATANOMIX PAGE -->
 <div id="page-datanomix" style="display:none;flex-direction:column;height:calc(100vh - 88px);background:#00071a;overflow-y:auto;">
+
 
   <!-- Sticky header -->
   <div style="background:#060f1c;border-bottom:1px solid #1e3a5f;padding:9px 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:20;">
@@ -4680,6 +4725,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (aiTab) aiTab.style.display = 'flex';
       var dnxTab = document.getElementById('tab-dnxalerts');
       if (dnxTab) dnxTab.style.display = 'flex';
+      var emuWrap = document.getElementById('emulatorCardWrap');
+      if (emuWrap) emuWrap.style.display = 'grid';
       setTimeout(function(){
         var a = document.getElementById('tab-announce');
         if(a) a.style.display = 'flex';
@@ -4687,6 +4734,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         if(b) b.style.display = 'flex';
         var c = document.getElementById('tab-dnxalerts');
         if(c) c.style.display = 'flex';
+        var e = document.getElementById('emulatorCardWrap');
+        if(e) e.style.display = 'grid';
       }, 500);
       var switchBtn = document.getElementById('shopSwitchBtn');
       if (switchBtn) { switchBtn.classList.add('visible'); switchBtn.href = localStorage.getItem('qmiShopUrl') || 'https://miguelstulsa.github.io/qmi-shopfloor'; }
@@ -5382,6 +5431,159 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   window._closeGame = function(){
     document.getElementById('gamePlayerOverlay').style.display = 'none';
     document.getElementById('gamePlayerFrame').srcdoc = ''; // stop the game/audio
+  };
+
+  // ── RETRO EMULATOR — personal ROM library, saved only on this device ──
+  // Uses IndexedDB (not localStorage) since ROMs can be larger than localStorage allows.
+  // Nothing here is ever uploaded, shared, or synced to Firebase — device-local only.
+  function _emuDbOpen(){
+    return new Promise(function(resolve, reject){
+      var req = indexedDB.open('emuRomsDB', 1);
+      req.onupgradeneeded = function(e){
+        var idb = e.target.result;
+        if (!idb.objectStoreNames.contains('roms')) {
+          idb.createObjectStore('roms', { keyPath: 'id', autoIncrement: true });
+        }
+      };
+      req.onsuccess = function(e){ resolve(e.target.result); };
+      req.onerror = function(e){ reject(e.target.error); };
+    });
+  }
+  function _emuSaveRom(name, system, arrayBuffer){
+    return _emuDbOpen().then(function(idb){
+      return new Promise(function(resolve, reject){
+        var tx = idb.transaction('roms', 'readwrite');
+        var req = tx.objectStore('roms').add({ name: name, system: system, data: arrayBuffer, addedAt: Date.now() });
+        req.onsuccess = function(){ resolve(req.result); };
+        req.onerror = function(e){ reject(e.target.error); };
+      });
+    });
+  }
+  function _emuGetAllRoms(){
+    return _emuDbOpen().then(function(idb){
+      return new Promise(function(resolve, reject){
+        var tx = idb.transaction('roms', 'readonly');
+        var req = tx.objectStore('roms').getAll();
+        req.onsuccess = function(){ resolve(req.result || []); };
+        req.onerror = function(e){ reject(e.target.error); };
+      });
+    });
+  }
+  function _emuDeleteRom(id){
+    return _emuDbOpen().then(function(idb){
+      return new Promise(function(resolve, reject){
+        var tx = idb.transaction('roms', 'readwrite');
+        var req = tx.objectStore('roms').delete(id);
+        req.onsuccess = function(){ resolve(); };
+        req.onerror = function(e){ reject(e.target.error); };
+      });
+    });
+  }
+
+  var _emuSystemLabels = { nes:'NES', snes:'SNES', gb:'Game Boy', gba:'GBA', segaMD:'Genesis', n64:'N64', psx:'PSX' };
+
+  window._openEmulatorSetup = function(){
+    document.getElementById('emulatorSetupOverlay').style.display = 'flex';
+    window._renderEmuLibrary();
+  };
+
+  window._renderEmuLibrary = function(){
+    var lib = document.getElementById('emuRomLibrary');
+    if (!lib) return;
+    lib.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#475569;font-size:12px;padding:10px;">Loading your ROMs...</div>';
+    _emuGetAllRoms().then(function(roms){
+      if (!roms.length) {
+        lib.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#475569;font-size:12px;padding:10px;">No ROMs added yet — add one below.</div>';
+        return;
+      }
+      window._emuRomCache = {};
+      lib.innerHTML = roms.map(function(r){
+        window._emuRomCache[r.id] = r;
+        return '<div style="position:relative;background:rgba(245,200,66,0.06);border:1px solid rgba(245,200,66,0.3);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;" onclick="window._playEmuRom(' + r.id + ')">'
+          + '<button onclick="event.stopPropagation();window._removeEmuRom(' + r.id + ')" style="position:absolute;top:4px;right:4px;background:rgba(239,68,68,0.15);border:1px solid #f87171;color:#f87171;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;line-height:1;">✕</button>'
+          + '<div style="font-size:28px;margin-bottom:6px;">🕹️</div>'
+          + '<div style="font-size:11px;color:#fcd34d;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (r.name || 'ROM') + '</div>'
+          + '<div style="font-size:10px;color:#64748b;margin-top:2px;">' + (_emuSystemLabels[r.system] || r.system) + '</div>'
+          + '</div>';
+      }).join('');
+    }).catch(function(e){
+      lib.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#f87171;font-size:12px;padding:10px;">Could not load library: ' + e.message + '</div>';
+    });
+  };
+
+  window._removeEmuRom = function(id){
+    if (!confirm('Remove this ROM from your library on this device?')) return;
+    _emuDeleteRom(id).then(function(){ window._renderEmuLibrary(); });
+  };
+
+  window._playEmuRom = function(id){
+    var r = (window._emuRomCache || {})[id];
+    if (!r) return;
+    _emuLaunch(r.system, new Blob([r.data]));
+  };
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var romInput = document.getElementById('emuRomInput');
+    if (romInput) {
+      romInput.addEventListener('change', function(){
+        var btn = document.getElementById('emuStartBtn');
+        var hasFile = romInput.files && romInput.files.length > 0;
+        btn.disabled = !hasFile;
+        btn.style.opacity = hasFile ? '1' : '0.5';
+      });
+    }
+  });
+
+  window._addAndStartEmulator = function(){
+    var fileInput = document.getElementById('emuRomInput');
+    var file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    var system = document.getElementById('emuSystemSelect').value;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      _emuSaveRom(file.name, system, e.target.result).then(function(){
+        fileInput.value = '';
+        var btn = document.getElementById('emuStartBtn');
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; }
+        _emuLaunch(system, new Blob([e.target.result]));
+      }).catch(function(err){
+        showToast('red', 'Could not save ROM', err.message ? err.message.slice(0,80) : '');
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  window._emuObjectUrl = null;
+
+  function _emuLaunch(system, blob){
+    if (window._emuObjectUrl) { URL.revokeObjectURL(window._emuObjectUrl); window._emuObjectUrl = null; }
+    var container = document.getElementById('emulatorContainer');
+    container.innerHTML = '';
+
+    var objectUrl = URL.createObjectURL(blob);
+    window._emuObjectUrl = objectUrl;
+
+    document.getElementById('emulatorSetupOverlay').style.display = 'none';
+    document.getElementById('emulatorPlayerOverlay').style.display = 'flex';
+
+    // EmulatorJS config — must be set before loading its script
+    window.EJS_player = '#emulatorContainer';
+    window.EJS_core = system;
+    window.EJS_gameUrl = objectUrl;
+    window.EJS_pathtodata = 'https://cdn.jsdelivr.net/npm/emulatorjs@latest/data/';
+    window.EJS_startOnLoaded = true;
+
+    var script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/emulatorjs@latest/data/loader.js';
+    script.id = 'emuLoaderScript';
+    container.appendChild(script);
+  }
+
+  window._closeEmulator = function(){
+    document.getElementById('emulatorPlayerOverlay').style.display = 'none';
+    var container = document.getElementById('emulatorContainer');
+    container.innerHTML = ''; // stops the emulator
+    if (window._emuObjectUrl) { URL.revokeObjectURL(window._emuObjectUrl); window._emuObjectUrl = null; }
   };
 
   function initDNXDisplay() {
