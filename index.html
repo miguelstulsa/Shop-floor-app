@@ -2092,8 +2092,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
   };
 
-  function _escJs(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
-  function _escAttr(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  window._escJs = function(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+  window._escAttr = function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  var _escJs = window._escJs, _escAttr = window._escAttr;
 
   function _fmtAlertTimestamp(createdAt) {
     if (!createdAt) return 'just now';
@@ -13668,9 +13669,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       card.className = 'dnx-result-card ' + (a.resolved ? 'resolved' : 'unresolved');
 
       var resolveBtn = !a.resolved
-        ? '<button data-note-id="' + _escAttr(a.id||'') + '" data-machine="' + _escAttr(a.machine||'') + '" data-duration="' + _escAttr(a.duration||'') + '" onclick="window.openDnxResolve(this.dataset.noteId,null,this.dataset.machine,this.dataset.duration)" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Bebas Neue\',sans-serif;margin-top:8px;">RESOLVE</button>'
+        ? '<button data-note-id="' + window._escAttr(a.id||'') + '" data-machine="' + window._escAttr(a.machine||'') + '" data-duration="' + window._escAttr(a.duration||'') + '" onclick="window.openDnxResolve(this.dataset.noteId,null,this.dataset.machine,this.dataset.duration)" style="background:rgba(125,211,252,0.15);border:1px solid #7dd3fc;color:#7dd3fc;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:\'Bebas Neue\',sans-serif;margin-top:8px;">RESOLVE</button>'
         : '';
-      var deleteBtn = '<button data-note-id="' + _escAttr(a.id||'') + '" onclick="window._deleteDnxAlert(this.dataset.noteId)" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;margin-top:8px;margin-left:6px;">🗑 DELETE</button>';
+      var deleteBtn = '<button data-note-id="' + window._escAttr(a.id||'') + '" onclick="window._deleteDnxAlert(this.dataset.noteId)" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer;margin-top:8px;margin-left:6px;">🗑 DELETE</button>';
 
       card.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
