@@ -866,7 +866,7 @@
   .perf-bar { height: 3px !important; flex-shrink: 0 !important; }
   .note-dot { width: 8px !important; height: 8px !important; }
   .machine-led { width: 8px !important; height: 8px !important; }
-  .sidebar { overflow: hidden; display: flex !important; flex-direction: column !important; height: 100% !important; border-radius: 16px 16px 0 0; }  .notif-list { overflow-y: auto !important; flex: 1 !important; }
+  .sidebar { overflow: hidden; display: flex; flex-direction: column; height: 100%; border-radius: 16px 16px 0 0; }  .notif-list { overflow-y: auto !important; flex: 1 !important; }
   .notif-list { overflow-y: auto !important; flex: 1 !important; padding: 8px !important; min-height: 0 !important; -webkit-overflow-scrolling: touch !important; }
 
   @media (max-height: 700px) { .motto-banner { display: none !important; } .floor-title { display: none !important; } }
@@ -4494,8 +4494,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var sidebar = document.getElementById('sidebar');
     if(sidebar){
       sidebar.style.transform = '';
-      sidebar.style.display = 'none';
-      sidebar.classList.remove('active','open','visible','expanded');
+      sidebar.classList.remove('open');
     }
     var modal = document.getElementById('live-strip-modal');
     if(modal) modal.style.display = 'none';
@@ -4511,7 +4510,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // If sidebar is already open and visible — close it
     if (sidebar.classList.contains('open')) {
       sidebar.classList.remove('open');
-      sidebar.style.setProperty('display', 'none', 'important');
       void sidebar.offsetHeight; // force iOS to actually repaint
       return;
     }
@@ -4519,7 +4517,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // Otherwise open it
     switchTab('shop');
     sidebar.classList.add('open');
-    sidebar.style.setProperty('display', 'flex', 'important');
     void sidebar.offsetHeight; // force iOS to actually repaint
   }
 
@@ -5095,15 +5092,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   function toggleSidebar() {
     var sb = document.getElementById('sidebar');
     if(!sb) return;
-    if(sb.classList.contains('open')){
-      sb.classList.remove('open');
-      sb.style.setProperty('display', 'none', 'important');
-      void sb.offsetHeight; // force iOS to actually repaint
-    } else {
-      sb.classList.add('open');
-      sb.style.setProperty('display', 'flex', 'important');
-      void sb.offsetHeight; // force iOS to actually repaint
-    }
+    sb.classList.toggle('open');
+    void sb.offsetHeight; // force iOS to actually repaint
   }
   function updateSidebarBadge(count) {
     const badge = document.getElementById('sidebarCount');
