@@ -4506,23 +4506,21 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     function scrollToSidebar() {
     var sidebar = document.getElementById('sidebar');
-    var shopPage = document.getElementById('page-shop');
     if (!sidebar) return;
 
     // If sidebar is already open and visible — close it
     if (sidebar.classList.contains('open')) {
       sidebar.classList.remove('open');
       sidebar.style.setProperty('display', 'none', 'important');
+      void sidebar.offsetHeight; // force iOS to actually repaint
       return;
     }
 
     // Otherwise open it
     switchTab('shop');
-    sidebar.style.setProperty('display', 'flex', 'important');
     sidebar.classList.add('open');
-    setTimeout(function() {
-      sidebar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
+    sidebar.style.setProperty('display', 'flex', 'important');
+    void sidebar.offsetHeight; // force iOS to actually repaint
   }
 
   // ── BULLETIN BOARD ──
@@ -5100,11 +5098,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(sb.classList.contains('open')){
       sb.classList.remove('open');
       sb.style.setProperty('display', 'none', 'important');
+      void sb.offsetHeight; // force iOS to actually repaint
     } else {
       sb.classList.add('open');
       sb.style.setProperty('display', 'flex', 'important');
-      // Force reflow on iPhone
-      void sb.offsetHeight;
+      void sb.offsetHeight; // force iOS to actually repaint
     }
   }
   function updateSidebarBadge(count) {
