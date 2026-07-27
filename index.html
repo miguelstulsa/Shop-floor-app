@@ -3369,6 +3369,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   function qualityPushover(title, message) {
     var qualityKey = localStorage.getItem('hillQualityPushoverKey') || QUALITY_MANAGER_KEY;
     var qualityKey2 = localStorage.getItem('hillQualityPushoverKey2') || SECOND_INSPECTOR_KEY;
+    console.log('[Pushover] qualityPushover firing. Keys (first 6 chars):', (qualityKey||'').slice(0,6), (qualityKey2||'').slice(0,6));
     [qualityKey, qualityKey2].forEach(function(key){
       if (!key) return;
       var fd = new FormData();
@@ -3380,7 +3381,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       fd.append('priority', '1'); // high priority — bypasses quiet hours
       fetch('https://api.pushover.net/1/messages.json', {
         method: 'POST', mode: 'no-cors', body: fd
-      }).catch(function(e){ console.warn('Quality Pushover:', e.message); });
+      }).then(function(){ console.log('[Pushover] qualityPushover fetch resolved for key ending:', key.slice(-4)); })
+        .catch(function(e){ console.warn('[Pushover] qualityPushover fetch FAILED:', e.message); });
     });
   }
 
@@ -3413,6 +3415,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
   function safePushover(title, message, sound, priority) {
     var userKey = localStorage.getItem('hillPushoverGroupKey') || savedGroupKey || PUSHOVER_DEFAULT_USER;
+    console.log('[Pushover] safePushover firing. Key used (first 6 chars):', (userKey||'').slice(0,6), 'Title:', title);
     var fd = new FormData();
     fd.append('token',    PUSHOVER_TOKEN);
     fd.append('user',     userKey);
@@ -3424,7 +3427,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       method: 'POST',
       mode:   'no-cors',
       body:   fd
-    }).catch(function(e){ console.warn('Pushover:', e.message); });
+    }).then(function(){ console.log('[Pushover] safePushover fetch resolved (no-cors, cannot see real status).'); })
+      .catch(function(e){ console.warn('[Pushover] safePushover fetch FAILED:', e.message); });
   }
 
   // ── TAB SWITCHING ──
@@ -4406,7 +4410,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var _dedupKey = 'hillPushSent_' + Date.now();
       localStorage.setItem(_dedupKey, '1');
       setTimeout(function(){ localStorage.removeItem(_dedupKey); }, 10000);
-      sendPushover(selectedType, currentCell, currentMachine, wo, combinedDetail, operator, op);
+      console.log('[Pushover] About to call sendPushover for type:', selectedType);
+      try {
+        sendPushover(selectedType, currentCell, currentMachine, wo, combinedDetail, operator, op);
+        console.log('[Pushover] sendPushover call completed without throwing.');
+      } catch(pushErr) {
+        console.error('[Pushover] sendPushover THREW an error:', pushErr);
+      }
     }
     // Admin personal alert — only for orange (Floor Support) since sendPushover
     // already handles blue/yellow via safePushover. Prevents double notifications.
@@ -4442,6 +4452,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   // Shop floor request notifications
   function sendPushover(type, cell, machine, wo, detail, operator, op) {
+    console.log('[Pushover] Base sendPushover called with type:', type);
     const titles = { red: '🔴 INSPECTION REQUEST', yellow: '🟡 MACHINIST REQUEST', blue: '🔵 PENDING WO' };
     const sounds  = { red: 'siren', yellow: 'bugle', blue: 'pushover' };
     const parts = [cell + ' — ' + machine];
@@ -11149,6 +11160,7 @@ window.slSendMorning = function() {
     window._orangePatched = true;
     var orig = window.sendPushover;
     window.sendPushover = function(type, cell, machine, wo, detail, operator, op) {
+      console.log('[Pushover] Wrapper sendPushover called with type:', type);
       if (type === 'orange') {
         var parts = [cell + ' - ' + machine];
         if (operator) parts.push(operator);
