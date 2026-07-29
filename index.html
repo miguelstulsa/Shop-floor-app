@@ -5714,23 +5714,38 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('emulatorSetupOverlay').style.display = 'none';
     document.getElementById('emulatorPlayerOverlay').style.display = 'flex';
 
-    // EmulatorJS config — must be set before loading its script
-    window.EJS_player = '#emulatorContainer';
-    window.EJS_core = system;
-    window.EJS_gameUrl = objectUrl;
-    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-    window.EJS_startOnLoaded = true;
-
-    var script = document.createElement('script');
-    script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
-    script.id = 'emuLoaderScript';
-    container.appendChild(script);
+    // The emulator runs inside its own iframe (not just a plain div).
+    // This matters because EmulatorJS's audio/game loop lives in the
+    // browser's JS context it was loaded into — clearing a div's innerHTML
+    // does NOT stop it. Removing an iframe, however, fully destroys
+    // everything running inside it, guaranteed by the browser.
+    var iframe = document.createElement('iframe');
+    iframe.id = 'emulatorIframe';
+    iframe.style.cssText = 'width:100%;height:100%;border:none;background:#000;display:block;';
+    iframe.setAttribute('allow', 'autoplay; fullscreen; gamepad');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups');
+    iframe.srcdoc =
+      '<!DOCTYPE html><html><head><style>html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden;}#gm{width:100%;height:100%;}</style></head>' +
+      '<body><div id="gm"></div>' + '<scr' + 'ipt>' +
+      'window.EJS_player = "#gm";' +
+      'window.EJS_core = ' + JSON.stringify(system) + ';' +
+      'window.EJS_gameUrl = ' + JSON.stringify(objectUrl) + ';' +
+      'window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";' +
+      'window.EJS_startOnLoaded = true;' +
+      // Explicitly guarantee save/load state controls are turned on
+      // in the built-in menu bar, so there is always a visible save point.
+      'window.EJS_Buttons = { playPause:true, restart:true, mute:true, settings:true, fullscreen:true, saveState:true, loadState:true, screenRecord:false, gamepad:true, cheat:false, volume:true, saveSavFiles:true, loadSavFiles:true, quickSave:true, quickLoad:true, screenshot:false, cacheManager:false };' +
+      'var s = document.createElement("script"); s.src = "https://cdn.emulatorjs.org/stable/data/loader.js"; document.body.appendChild(s);' +
+      '</scr' + 'ipt></body></html>';
+    container.appendChild(iframe);
   }
 
   window._closeEmulator = function(){
     document.getElementById('emulatorPlayerOverlay').style.display = 'none';
     var container = document.getElementById('emulatorContainer');
-    container.innerHTML = ''; // stops the emulator
+    // Removing the iframe entirely tears down its browsing context —
+    // this is what actually stops the audio, unlike clearing a plain div.
+    container.innerHTML = '';
     if (window._emuObjectUrl) { URL.revokeObjectURL(window._emuObjectUrl); window._emuObjectUrl = null; }
   };
 
