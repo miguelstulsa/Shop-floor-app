@@ -5743,8 +5743,16 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   window._closeEmulator = function(){
     document.getElementById('emulatorPlayerOverlay').style.display = 'none';
     var container = document.getElementById('emulatorContainer');
-    // Removing the iframe entirely tears down its browsing context —
-    // this is what actually stops the audio, unlike clearing a plain div.
+    var iframe = document.getElementById('emulatorIframe');
+    if (iframe) {
+      try {
+        // Force the iframe to abandon its current document (and any audio
+        // it's playing) immediately. On some mobile browsers, simply
+        // removing the iframe from the DOM doesn't stop its audio fast
+        // enough — navigating it to a blank page first does.
+        iframe.src = 'about:blank';
+      } catch(e) {}
+    }
     container.innerHTML = '';
     if (window._emuObjectUrl) { URL.revokeObjectURL(window._emuObjectUrl); window._emuObjectUrl = null; }
   };
@@ -13923,8 +13931,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(window._dnxAlertHistory) _renderDnxTab(window._dnxAlertHistory);
   };
   function _dnxTs(a){
-    if(a.receivedAt&&a.receivedAt.seconds) return a.receivedAt.seconds*1000;
-    if(a.receivedAt) return new Date(a.receivedAt).getTime();
+    // Check every field name a timestamp could realistically be stored
+    // under — relying on only "receivedAt" meant any alert record that
+    // used a different field silently returned 0 (= no date), which is
+    // exactly why Today/This Week always came back empty while All Time
+    // (which doesn't need a date) kept working fine.
+    var ts = a.receivedAt || a.createdAt || a.timestamp || a.ts || a.date || a.sentAt || a.time;
+    if(ts && typeof ts === 'object' && ts.seconds) return ts.seconds*1000;
+    if(ts){ var parsed = new Date(ts).getTime(); if(!isNaN(parsed)) return parsed; }
     return 0;
   }
   function _dnxFilterRange(alerts){
