@@ -14453,19 +14453,42 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     window._sendAIChat();
   };
 
+  // ── ARCHIVED REQUESTS — records moved here by "Clear Request History"
+  // are preserved, but nothing previously read them back for search.
+  // This pulls them so cleared history stays findable by the AI Assistant.
+  async function _getArchivedRequests(){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return [];
+    try {
+      var snap = await mods.getDocs(mods.collection(db2,'hillDeletedRequests'));
+      var out = [];
+      snap.forEach(function(d){
+        var wrap = d.data();
+        if(wrap && wrap.originalCollection === 'hillRequests' && wrap.data){
+          out.push(Object.assign({id: wrap.originalId || d.id}, wrap.data));
+        }
+      });
+      return out;
+    } catch(e){ console.warn('Archived requests fetch failed:', e.message); return []; }
+  }
+
   // ── BUILD ALL REQUESTS RECEIPT ────────────────────────────
   async function _buildAllReceipt(filter) {
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return {requests:[]};
     try {
       var snap = await mods.getDocs(mods.collection(db2,'hillRequests'));
+      var archived = await _getArchivedRequests();
       var now = new Date();
       var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       var weekStart  = new Date(todayStart); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
 
+      var allDocs = [];
+      snap.forEach(function(d){ allDocs.push(Object.assign({id:d.id}, d.data())); });
+      allDocs = allDocs.concat(archived);
+
       var reqs = [];
-      snap.forEach(function(d){
-        var r = Object.assign({id:d.id}, d.data());
+      allDocs.forEach(function(r){
         var ts = r.createdAt && r.createdAt.seconds ? new Date(r.createdAt.seconds*1000) : null;
 
         if (filter === 'open'      && r.resolved) return;
@@ -14750,7 +14773,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         _chatHistory.push({role:'assistant',content:'Showing requests mentioning "'+trimmedMsg+'"'});
         return;
       }
-      // No matches — fall through to general Claude chat below
+      // No matches in active or cleared-history requests — say so plainly.
+      // Falling through to the general chatbot here isn't useful: it has
+      // no access to the request database, so it can't actually search
+      // for anything — it can only guess, which is worse than saying
+      // clearly that nothing was found.
+      addMessage('assistant', 'No requests found mentioning "'+trimmedMsg+'" (searched active requests and cleared history).');
+      _chatHistory.push({role:'assistant',content:'No requests found mentioning "'+trimmedMsg+'"'});
+      return;
     }
 
     // General fallback → Claude via worker
@@ -14992,13 +15022,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var matches=[];
     try {
       var snap = await mods.getDocs(mods.collection(db2,'hillRequests'));
+      var archived = await _getArchivedRequests();
+      var allDocs = [];
       if(snap && !snap.empty){
-        snap.forEach(function(d){
-          var r=d.data();
-          var haystack = ((r.detail||'')+' '+(r.wo||'')+' '+(r.op||'')).toLowerCase();
-          if(haystack.indexOf(kw)>=0){ r.id=d.id; matches.push(r); }
-        });
+        snap.forEach(function(d){ allDocs.push(Object.assign({id:d.id}, d.data())); });
       }
+      allDocs = allDocs.concat(archived);
+      allDocs.forEach(function(r){
+        var haystack = ((r.detail||'')+' '+(r.wo||'')+' '+(r.op||'')).toLowerCase();
+        if(haystack.indexOf(kw)>=0){ matches.push(r); }
+      });
       matches.sort(function(a,b){
         var at=a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
         var bt=b.createdAt&&b.createdAt.seconds?b.createdAt.seconds:0;
