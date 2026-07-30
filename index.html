@@ -15046,6 +15046,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var tokenize = function(s){ return stripPunct(s).split(/\s+/).filter(Boolean); };
     var qTokens = tokenize(keyword);
     var wordMatches = function(qWord, hayWord){
+      // Short words (under 3 letters — "a", "to", "op", "wo", etc.) are far
+      // too common to safely substring-match: almost any longer search word
+      // happens to *contain* one of these as a fragment ("spade" contains
+      // "a"), which is exactly what was causing nearly every record to
+      // match. Below that length, require an exact match instead.
+      if(qWord.length < 3 || hayWord.length < 3){
+        return qWord === hayWord;
+      }
       if(hayWord.indexOf(qWord) >= 0 || qWord.indexOf(hayWord) >= 0) return true;
       if(qWord.length >= 4 && hayWord.length >= 4){
         var maxDist = qWord.length >= 7 ? 2 : 1;
