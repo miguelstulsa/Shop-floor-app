@@ -15014,11 +15014,45 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // Searches request details for any mention of a word/phrase — e.g. "gloves",
   // "endmill", "drills" — so supply items and tooling requests can be found
   // even though they aren't a WO#, machine, or employee name.
+  // Small edit-distance check so a typo like "drillo" still matches "drill".
+  // Only used on longer words — short words get no typo tolerance, since a
+  // 1-letter difference on something like "bit" vs "bat" changes the meaning
+  // rather than just being a misspelling.
+  function _levenshtein(a, b){
+    if(a === b) return 0;
+    var al=a.length, bl=b.length;
+    if(al===0) return bl; if(bl===0) return al;
+    var prev = []; for(var j=0;j<=bl;j++) prev[j]=j;
+    for(var i=1;i<=al;i++){
+      var cur=[i];
+      for(var j2=1;j2<=bl;j2++){
+        cur[j2] = a[i-1]===b[j2-1] ? prev[j2-1] : 1+Math.min(prev[j2-1],prev[j2],cur[j2-1]);
+      }
+      prev=cur;
+    }
+    return prev[bl];
+  }
+
   async function _buildKeywordReceipt(keyword, limitN){
     limitN = limitN || 100;
     var db2=window.fbDb, mods=window._fbModules;
     if(!db2||!mods) return {keyword:keyword,requests:[]};
-    var kw = keyword.toLowerCase();
+    // Break the search into individual words and match each one separately
+    // against the words in the request text — this handles the term being
+    // typed with different spacing/order ("ball nose" vs "ballnose"), and
+    // tolerates small typos ("drillo" still finds "drill") — rather than
+    // requiring one exact contiguous phrase match.
+    var stripPunct = function(s){ return (s||'').toLowerCase().replace(/[^a-z0-9\s]/g,' '); };
+    var tokenize = function(s){ return stripPunct(s).split(/\s+/).filter(Boolean); };
+    var qTokens = tokenize(keyword);
+    var wordMatches = function(qWord, hayWord){
+      if(hayWord.indexOf(qWord) >= 0 || qWord.indexOf(hayWord) >= 0) return true;
+      if(qWord.length >= 4 && hayWord.length >= 4){
+        var maxDist = qWord.length >= 7 ? 2 : 1;
+        return _levenshtein(qWord, hayWord) <= maxDist;
+      }
+      return false;
+    };
     var matches=[];
     try {
       var snap = await mods.getDocs(mods.collection(db2,'hillRequests'));
@@ -15029,8 +15063,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       }
       allDocs = allDocs.concat(archived);
       allDocs.forEach(function(r){
-        var haystack = ((r.detail||'')+' '+(r.wo||'')+' '+(r.op||'')).toLowerCase();
-        if(haystack.indexOf(kw)>=0){ matches.push(r); }
+        var hayTokens = tokenize((r.detail||'')+' '+(r.wo||'')+' '+(r.op||'')+' '+(r.machine||'')+' '+(r.operator||''));
+        if(!qTokens.length) return;
+        var allTokensFound = qTokens.every(function(qt){
+          return hayTokens.some(function(ht){ return wordMatches(qt, ht); });
+        });
+        if(allTokensFound){ matches.push(r); }
       });
       matches.sort(function(a,b){
         var at=a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
