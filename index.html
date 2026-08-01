@@ -1884,6 +1884,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
             <button type="button" class="glove-size-btn" onclick="selectGloveSize('XL')" style="flex:1;padding:8px 4px;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:7px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:2px;cursor:pointer;transition:all 0.15s;">XL</button>
           </div>
         </div>
+        <!-- Quantity — shown once a real item (not blank/"other") is selected -->
+        <div id="qtyField" style="display:none;margin-top:10px;">
+          <div style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;font-weight:600;">Quantity</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button type="button" onclick="window._bumpQty(-1)" style="width:40px;height:40px;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:20px;cursor:pointer;">−</button>
+            <div id="qtyDisplay" style="flex:1;text-align:center;background:#0f2338;border:1px solid #2a5a8c;border-radius:7px;padding:9px 0;font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:1px;color:#fcd34d;">1</div>
+            <button type="button" onclick="window._bumpQty(1)" style="width:40px;height:40px;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:20px;cursor:pointer;">＋</button>
+          </div>
+        </div>
         <button type="button" onclick="window._addSupplyItem()" style="width:100%;margin-top:8px;background:#22c55e;border:none;color:#0f2338;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">＋ ADD TO REQUEST</button>
         <!-- Running checklist of added supply items — only these get submitted with the request -->
         <div id="supplyChecklist" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
@@ -3819,6 +3828,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // Reset supply dropdown
     var si = document.getElementById('supplyItem'); if(si) si.value = '';
     var gsf = document.getElementById('gloveSizeField'); if(gsf) gsf.style.display = 'none';
+    var qf = document.getElementById('qtyField'); if(qf) qf.style.display = 'none';
+    window._selectedQty = 1;
     var msf = document.getElementById('machinistSupplyField'); if(msf) msf.style.display = 'none';
     window._selectedGloveSize = '';
     document.querySelectorAll('.glove-size-btn').forEach(b => { b.style.background='rgba(255,255,255,0.05)'; b.style.borderColor='#2a5a8c'; b.style.color='#94a3b8'; });
@@ -4096,6 +4107,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(type !== 'yellow') {
       var si = document.getElementById('supplyItem'); if(si) si.value = '';
       var gsf = document.getElementById('gloveSizeField'); if(gsf) gsf.style.display = 'none';
+      var qf = document.getElementById('qtyField'); if(qf) qf.style.display = 'none';
+      window._selectedQty = 1;
       window._selectedGloveSize = '';
       if (window._clearSupplyChecklist) window._clearSupplyChecklist();
     }
@@ -4122,7 +4135,17 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         b.style.color = '#94a3b8';
       });
     }
+    var qf = document.getElementById('qtyField');
+    var showQty = !!val && val !== 'other';
+    if (qf) qf.style.display = showQty ? 'block' : 'none';
+    window._selectedQty = 1;
+    var qd = document.getElementById('qtyDisplay'); if (qd) qd.textContent = '1';
   }
+
+  window._bumpQty = function(delta){
+    window._selectedQty = Math.max(1, (window._selectedQty || 1) + delta);
+    var qd = document.getElementById('qtyDisplay'); if (qd) qd.textContent = window._selectedQty;
+  };
 
   // ── MACHINIST REQ SUPPLY CHECKLIST — add multiple items to one request ──
   window._selectedSupplyItems = []; // [{item, gloveSize}, ...] — only these get submitted
@@ -4139,7 +4162,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (val === 'Nitrile Gloves' && !window._selectedGloveSize) {
       showToast('yellow', 'Pick a glove size', 'Select S, M, L, or XL first.'); return;
     }
-    window._selectedSupplyItems.push({ item: val, gloveSize: val === 'Nitrile Gloves' ? window._selectedGloveSize : '' });
+    window._selectedSupplyItems.push({
+      item: val,
+      gloveSize: val === 'Nitrile Gloves' ? window._selectedGloveSize : '',
+      qty: window._selectedQty || 1
+    });
     // Reset the picker so it's ready for the next item
     select.value = '';
     handleSupplyChange();
@@ -4156,7 +4183,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (!list) return;
     if (!window._selectedSupplyItems.length) { list.innerHTML = ''; return; }
     list.innerHTML = window._selectedSupplyItems.map(function(s, i){
-      var label = s.item + (s.gloveSize ? ' — Size ' + s.gloveSize : '');
+      var qtyPrefix = (s.qty && s.qty > 1) ? (s.qty + '× ') : '';
+      var label = qtyPrefix + s.item + (s.gloveSize ? ' — Size ' + s.gloveSize : '');
       return '<div style="background:rgba(251,191,36,0.1);border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;">'
         + '<span style="font-size:13px;color:#fcd34d;font-weight:600;">' + (i+1) + '. ⚙️ ' + label + '</span>'
         + '<button type="button" onclick="window._removeSupplyItem(' + i + ')" style="background:none;border:none;color:#fbbf24;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>'
@@ -4336,7 +4364,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var supplyPrefix = '';
     if (selectedType === 'yellow' && window._selectedSupplyItems && window._selectedSupplyItems.length) {
       var supplyLines = window._selectedSupplyItems.map(function(s, i){
-        return (i+1) + '. ⚙️ ' + s.item + (s.gloveSize ? ' — Size ' + s.gloveSize : '');
+        var qtyPrefix = (s.qty && s.qty > 1) ? (s.qty + '× ') : '';
+        return (i+1) + '. ⚙️ ' + qtyPrefix + s.item + (s.gloveSize ? ' — Size ' + s.gloveSize : '');
       });
       supplyPrefix = supplyLines.join('\n');
     }
@@ -13750,7 +13779,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   function _cleanItemForSpeech(detail){
     if(!detail) return '';
     var items = detail.split('\n').map(function(line){
-      return line.replace(/^\s*\d+\.\s*/, '').replace(/[⚙️📏🔍]/g, '').trim();
+      return line.replace(/^\s*\d+\.\s*/, '')
+                 .replace(/[⚙️📏🔍]/g, '')
+                 .trim()
+                 .replace(/^(\d+)×\s*/, 'Qty $1, ') // "3× Item" -> "Qty 3, Item" so TTS doesn't say "three times item"
+                 .trim();
     }).filter(Boolean);
     if(!items.length) return '';
     if(items.length === 1) return items[0];
