@@ -13740,13 +13740,39 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   window._djAnnounceNew=function(n){
     if(!n)return;
     var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'someone';
-    var wo=n.wo?'work order '+n.wo:'',detail=n.detail||'';
+    var wo=n.wo?'work order '+n.wo:'',detail=_cleanItemForSpeech(n.detail)||(n.detail||'');
     var lines={blue:['Setup request. '+name+' on '+machine+(wo?', '+wo:'')+' is ready. Tooling, you are up.'],yellow:[name+' at '+machine+' needs '+(detail||'something')+'. Someone go help.'],orange:['Floor support at '+machine+'. '+name+' is waiting.'],red:['Quality — '+name+' on '+machine+' has parts ready. Do not let that sit.']};
     say(pick(lines[n.type]||lines.yellow),function(){});
   };
+  // Strips the "1. ⚙️ " list-numbering/emoji formatting used for on-screen
+  // display so Sparky speaks a clean item name instead of reading markup
+  // aloud (e.g. "one dot gear emoji Nitrile Gloves").
+  function _cleanItemForSpeech(detail){
+    if(!detail) return '';
+    var items = detail.split('\n').map(function(line){
+      return line.replace(/^\s*\d+\.\s*/, '').replace(/[⚙️📏🔍]/g, '').trim();
+    }).filter(Boolean);
+    if(!items.length) return '';
+    if(items.length === 1) return items[0];
+    if(items.length === 2) return items[0] + ' and ' + items[1];
+    return items.slice(0,-1).join(', ') + ', and ' + items[items.length-1];
+  }
+
   window._djAnnounceStart=function(n){
     if(!n)return;
     var machine=mn(n.machine),name=n.operator?n.operator.split(' ')[0]:'the operator';
+    // Machinist Requests (supply items, tools, fixtures) need their own wording —
+    // "you will be cutting soon" makes no sense for a pair of gloves or a sanding
+    // disc. Announce the actual item and an ETA instead.
+    if(n.type === 'yellow'){
+      var item = _cleanItemForSpeech(n.detail) || 'what you asked for';
+      say(pick([
+        name+', I\'ve got your '+item+' — I\'ll have that out to you shortly.',
+        'Heads up '+name+' — '+item+' is on the way to '+machine+'. Be there shortly.',
+        'Got it, '+name+'. '+item+' for '+machine+' — on its way now.'
+      ]),function(){});
+      return;
+    }
     say(pick([
       'Timer started on '+machine+'. '+name+', Miguel is on his way. '+( n.wo?'Work order '+n.wo+'.':'')+' Stand by.',
       'Setup is underway on '+machine+'. '+name+', Miguel just clocked in'+(n.wo?' on work order '+n.wo:'')+'. You will be cutting soon.',
