@@ -3698,7 +3698,20 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
       var chunks = [];
-      var recorder = new MediaRecorder(stream);
+      // Pick the best format this browser actually supports for recording.
+      // iOS Safari cannot record audio/webm at all — if we don't check first
+      // and instead just assume webm everywhere, Safari silently records in
+      // whatever it does support (typically MP4/AAC) while we mislabel the
+      // resulting file as webm, which is exactly why playback shows "Error".
+      var preferredTypes = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/aac', 'audio/ogg'];
+      var chosenType = '';
+      for (var pt = 0; pt < preferredTypes.length; pt++) {
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(preferredTypes[pt])) {
+          chosenType = preferredTypes[pt];
+          break;
+        }
+      }
+      var recorder = chosenType ? new MediaRecorder(stream, { mimeType: chosenType }) : new MediaRecorder(stream);
       window._voiceRecorder = recorder;
       window._voiceRecordSeconds = 0;
 
@@ -3717,19 +3730,49 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       recorder.onstop = function(){
         clearInterval(window._voiceRecordTimer);
         stream.getTracks().forEach(function(t){ t.stop(); });
-        var blob = new Blob(chunks, { type: 'audio/webm' });
-        var reader = new FileReader();
-        reader.onload = function(e){
-          window._pendingVoiceNoteDataUri = e.target.result;
+
+        var rawBlob = new Blob(chunks);
+        var sniffReader = new FileReader();
+        sniffReader.onload = function(sniffEvent){
+          // Determine the REAL format by reading the file's magic bytes —
+          // don't trust recorder.mimeType alone. Some Safari/iOS versions
+          // report mimeType unreliably (empty or wrong).
+          var bytes = new Uint8Array(sniffEvent.target.result.slice(0, 12));
+          var sniffedType = null;
+          if (bytes[0]===0x1A && bytes[1]===0x45 && bytes[2]===0xDF && bytes[3]===0xA3) {
+            sniffedType = 'audio/webm'; // EBML/Matroska header
+          } else if (bytes[4]===0x66 && bytes[5]===0x74 && bytes[6]===0x79 && bytes[7]===0x70) {
+            sniffedType = 'audio/mp4'; // 'ftyp' box
+          } else if (bytes[0]===0x4F && bytes[1]===0x67 && bytes[2]===0x67 && bytes[3]===0x53) {
+            sniffedType = 'audio/ogg'; // 'OggS'
+          }
+          var actualType = sniffedType || recorder.mimeType || chosenType || 'audio/webm';
+          var blob = new Blob(chunks, { type: actualType });
+
+          // Immediate local preview uses an Object URL, not a base64 data URI.
+          // iOS Safari has a known bug where large data: URIs assigned
+          // directly to a media element's src fail to decode — this is
+          // very likely the actual "Error" being seen, independent of the
+          // format-labeling fix. Object URLs don't have that problem.
+          if (window._voiceObjectUrl) URL.revokeObjectURL(window._voiceObjectUrl);
+          window._voiceObjectUrl = URL.createObjectURL(blob);
           var audioEl = document.getElementById('voiceNotePreview');
-          audioEl.src = e.target.result;
+          audioEl.src = window._voiceObjectUrl;
           audioEl.style.display = 'block';
           document.getElementById('voiceNoteRemoveBtn').style.display = 'inline-block';
           label.textContent = '🎙️ Voice note recorded';
           label.style.color = '#4ade80';
           document.getElementById('voiceNoteArea').classList.add('has-photo');
+
+          // Separately, still convert to base64 for what actually gets saved
+          // to Firestore (object URLs only work in the current tab/session,
+          // so persisted requests need the real base64 data URI instead).
+          window._voiceNoteProcessing = true;
+          var reader = new FileReader();
+          reader.onload = function(e){ window._pendingVoiceNoteDataUri = e.target.result; window._voiceNoteProcessing = false; };
+          reader.readAsDataURL(blob);
         };
-        reader.readAsDataURL(blob);
+        sniffReader.readAsArrayBuffer(rawBlob);
       };
       recorder.start();
     }).catch(function(err){
@@ -3739,6 +3782,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   window._clearVoiceRecording = function(){
     window._pendingVoiceNoteDataUri = null;
+    if (window._voiceObjectUrl) { URL.revokeObjectURL(window._voiceObjectUrl); window._voiceObjectUrl = null; }
     var audioEl = document.getElementById('voiceNotePreview');
     if (audioEl) { audioEl.src = ''; audioEl.style.display = 'none'; }
     var removeBtn = document.getElementById('voiceNoteRemoveBtn');
@@ -4382,6 +4426,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       combinedDetail = toolLines.join('\n') + (combinedDetail ? '\n' + combinedDetail : '');
     }
     const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, assignedTo };
+    // If the voice note is still being converted in the background, give it
+    // a moment rather than submitting without it (conversion is normally
+    // near-instant, this just closes off an unlikely race).
+    if (window._voiceNoteProcessing) {
+      for (var waitTries = 0; waitTries < 20 && window._voiceNoteProcessing; waitTries++) {
+        await new Promise(function(r){ setTimeout(r, 100); });
+      }
+    }
     if (window._pendingVoiceNoteDataUri) note.voiceNoteUrl = window._pendingVoiceNoteDataUri;
     var reqId = null, noteId = null;
     try {
