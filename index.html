@@ -7602,34 +7602,40 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(btn){btn.classList.add('active');btn.style.borderColor='#f59e0b';btn.style.color='#f59e0b';}
     renderDashboard();
   }
+  var _dashUnsub = null;
   function loadDashboard() {
     if(!window._db||!window._fbModules){setTimeout(loadDashboard,800);return;}
     var mods=window._fbModules,db2=window._db;
-    Promise.all([
-      mods.getDocs(mods.collection(db2,'hillRequests')),
-      (typeof _getArchivedRequests === 'function' ? _getArchivedRequests() : Promise.resolve([]))
-    ]).then(function(results){
-      var snap = results[0], archived = results[1];
-      dashRequests=[];
-      var liveIds = {};
-      snap.forEach(function(d){var r=d.data();r.id=d.id;liveIds[d.id]=true;dashRequests.push(r);});
-      // Include cleared/archived history too — otherwise anything removed via
-      // "Clear Request History" silently vanishes from every report here:
-      // the WO trail, the machinist request counts, all of it. The whole
-      // point of archiving instead of hard-deleting is that this data is
-      // still real and still needs to count.
-      // BUT: only add an archived record if it isn't already live — if a
-      // "Clear History" delete ever partially failed, a request can end up
-      // sitting in BOTH collections at once, and without this check it would
-      // get counted twice everywhere (exactly what inflated today's numbers).
-      archived.forEach(function(r){ if(!liveIds[r.id]) dashRequests.push(r); });
-      dashRequests.sort(function(a,b){
-        var ta=a.createdAt?(a.createdAt.seconds||0):0;
-        var tb=b.createdAt?(b.createdAt.seconds||0):0;
-        return tb-ta;
+    // Previously this was a one-time getDocs() fetch — meaning Production Log
+    // only reflected whatever existed at the moment you switched to this tab,
+    // and silently went stale after that. Everything else in this app (shop
+    // floor, chat, schedule) uses a live listener; this now does too, so a
+    // request created by anyone shows up here immediately, no refresh needed.
+    if (_dashUnsub) { _dashUnsub(); _dashUnsub = null; }
+    _dashUnsub = mods.onSnapshot(mods.collection(db2,'hillRequests'), function(snap){
+      var archivedPromise = (typeof _getArchivedRequests === 'function' ? _getArchivedRequests() : Promise.resolve([]));
+      archivedPromise.then(function(archived){
+        dashRequests=[];
+        var liveIds = {};
+        snap.forEach(function(d){var r=d.data();r.id=d.id;liveIds[d.id]=true;dashRequests.push(r);});
+        // Include cleared/archived history too — otherwise anything removed via
+        // "Clear Request History" silently vanishes from every report here:
+        // the WO trail, the machinist request counts, all of it. The whole
+        // point of archiving instead of hard-deleting is that this data is
+        // still real and still needs to count.
+        // BUT: only add an archived record if it isn't already live — if a
+        // "Clear History" delete ever partially failed, a request can end up
+        // sitting in BOTH collections at once, and without this check it would
+        // get counted twice everywhere (exactly what inflated today's numbers).
+        archived.forEach(function(r){ if(!liveIds[r.id]) dashRequests.push(r); });
+        dashRequests.sort(function(a,b){
+          var ta=a.createdAt?(a.createdAt.seconds||0):0;
+          var tb=b.createdAt?(b.createdAt.seconds||0):0;
+          return tb-ta;
+        });
+        renderDashboard();
       });
-      renderDashboard();
-    }).catch(function(e){console.warn('loadDashboard:',e.message);});
+    }, function(e){ console.warn('loadDashboard onSnapshot:', e.message); });
   }
   function getDashStart() {
     var now = new Date();
@@ -8892,7 +8898,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 <div id="page-dashboard" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
   <div style="padding:16px;">
 
-    <button onclick="window._showMyDay()" style="width:100%;margin-bottom:12px;background:linear-gradient(135deg,#0f2a1a,#123420);border:1px solid rgba(74,222,128,0.4);border-radius:10px;padding:12px;color:#4ade80;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">📅 MY DAY — SEE TODAY'S SUMMARY</button>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button onclick="window._showMyDay()" style="flex:1;background:linear-gradient(135deg,#0f2a1a,#123420);border:1px solid rgba(74,222,128,0.4);border-radius:10px;padding:12px;color:#4ade80;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">📅 MY DAY — SEE TODAY'S SUMMARY</button>
+      <button onclick="loadDashboard()" title="Force refresh" style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:10px;padding:12px 16px;color:#60a5fa;font-family:'Bebas Neue',sans-serif;font-size:14px;cursor:pointer;">🔄</button>
+    </div>
 
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
       <button class="dash-period-btn" onclick="setDashPeriod('today',this)">TODAY</button>
