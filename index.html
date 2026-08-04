@@ -2808,7 +2808,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         var nd2 = noteSnap2.data();
         newAccumulatedMins = nd2.accumulatedElapsedMins || 0;
         if (nd2.startedAt && nd2.startedAt.seconds) {
-          var mins = Math.round((now - new Date(nd2.startedAt.seconds*1000)) / 60000);
+          var mins = Math.max(0, Math.round((now - new Date(nd2.startedAt.seconds*1000)) / 60000));
           elapsedSoFar = mins >= 60 ? Math.floor(mins/60)+'h '+(mins%60)+'m' : mins+'m';
           newAccumulatedMins += mins; // carry this segment's time into the running total
         }
@@ -7582,6 +7582,20 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(btn) btn.classList.add('active');
     renderDashboard();
   }
+
+  // Lets a summary card ("161 Machinist Req") jump straight to the filtered
+  // list backing that exact number, instead of the number just sitting there
+  // unverifiable. Matches each card to the filter that produces the same count.
+  window._drillDashCard = function(filterKey){
+    dashFilter = filterKey;
+    document.querySelectorAll('.dash-filter-btn:not(.dash-machine-btn)').forEach(function(b){
+      var onclickAttr = b.getAttribute('onclick') || '';
+      b.classList.toggle('active', onclickAttr.indexOf("setDashFilter('"+filterKey+"'") !== -1);
+    });
+    renderDashboard();
+    var list = document.getElementById('dash-req-list');
+    if(list) setTimeout(function(){ list.scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
+  };
   function setDashMachineFilter(m,btn) {
     dashMachineFilter=m;
     document.querySelectorAll('.dash-machine-btn').forEach(function(b){b.classList.remove('active');b.style.borderColor='';b.style.color='';});
@@ -7597,13 +7611,18 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     ]).then(function(results){
       var snap = results[0], archived = results[1];
       dashRequests=[];
-      snap.forEach(function(d){var r=d.data();r.id=d.id;dashRequests.push(r);});
+      var liveIds = {};
+      snap.forEach(function(d){var r=d.data();r.id=d.id;liveIds[d.id]=true;dashRequests.push(r);});
       // Include cleared/archived history too — otherwise anything removed via
       // "Clear Request History" silently vanishes from every report here:
       // the WO trail, the machinist request counts, all of it. The whole
       // point of archiving instead of hard-deleting is that this data is
       // still real and still needs to count.
-      dashRequests = dashRequests.concat(archived);
+      // BUT: only add an archived record if it isn't already live — if a
+      // "Clear History" delete ever partially failed, a request can end up
+      // sitting in BOTH collections at once, and without this check it would
+      // get counted twice everywhere (exactly what inflated today's numbers).
+      archived.forEach(function(r){ if(!liveIds[r.id]) dashRequests.push(r); });
       dashRequests.sort(function(a,b){
         var ta=a.createdAt?(a.createdAt.seconds||0):0;
         var tb=b.createdAt?(b.createdAt.seconds||0):0;
@@ -8131,11 +8150,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // Filter for log
     var filtered = periodAll.filter(function(r) {
       var s = getJobStatus(r);
-      if (dashFilter==='pending'     && s!=='pending')   return false;
-      if (dashFilter==='running'     && s!=='running')   return false;
-      if (dashFilter==='completed'   && s!=='completed') return false;
-      if (dashFilter==='issues'      && (s!=='issue' || r.type==='red')) return false;
-      if (dashFilter==='inspections' && r.type!=='red')  return false;
+      if (dashFilter==='pending'       && s!=='pending')   return false;
+      if (dashFilter==='running'       && s!=='running')   return false;
+      if (dashFilter==='completed'     && s!=='completed') return false;
+      if (dashFilter==='issues'        && (s!=='issue' || r.type==='red')) return false;
+      if (dashFilter==='machinist-all' && !(r.type==='yellow'||r.type==='dnx')) return false;
+      if (dashFilter==='inspections'   && r.type!=='red')  return false;
       if (dashMachineFilter!=='all' && r.machine!==dashMachineFilter) return false;
       return true;
     });
@@ -8151,9 +8171,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var status = getJobStatus(r);
       var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
       var timeStr = ts ? ts.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric',year:'numeric'})+' · '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '—';
-      var completedTs = r.completedAt ? new Date(r.completedAt.seconds*1000) : null;
+      var completedTs = (r.resolvedAt||r.completedAt) ? new Date((r.resolvedAt||r.completedAt).seconds*1000) : null;
       var completedStr = completedTs ? completedTs.toLocaleDateString([],{month:'short',day:'numeric'})+' '+completedTs.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : null;
-      var duration = (r.completedAt && r.createdAt) ? (function(){ var h=Math.round((r.completedAt.seconds-r.createdAt.seconds)/3600*10)/10; return h>0?h+'h':'<1h'; })() : null;
+      var duration = ((r.resolvedAt||r.completedAt) && r.createdAt) ? (function(){ var h=Math.round(((r.resolvedAt||r.completedAt).seconds-r.createdAt.seconds)/3600*10)/10; return h>0?h+'h':'<1h'; })() : null;
       var issueCount = issueByMachine[r.machine]||0;
       var isAdmin = window._isAdmin || window.currentUser==='hilladmin';
 
@@ -8776,11 +8796,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
-      <div class="dash-summary-card blue"><div class="dash-summary-label">🔵 Pending WO</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Setup needed</div></div>
-      <div class="dash-summary-card" style="border-color:rgba(251,191,36,0.4);background:linear-gradient(145deg,#1a1000,#2a1a00);"><div class="dash-summary-label" style="color:#fbbf24;">🟡 Machinist Req</div><div class="dash-summary-num" style="color:#fbbf24;" id="dash-count-machinist">0</div><div class="dash-summary-sub">Needs attention</div></div>
-      <div class="dash-summary-card" style="border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;">✅ Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished</div></div>
-      <div class="dash-summary-card" style="border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All types</div></div>
-      <div class="dash-summary-card" style="grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted</div></div>
+      <div class="dash-summary-card blue" onclick="window._drillDashCard('pending')" style="cursor:pointer;"><div class="dash-summary-label">🔵 Pending WO</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Setup needed — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('machinist-all')" style="cursor:pointer;border-color:rgba(251,191,36,0.4);background:linear-gradient(145deg,#1a1000,#2a1a00);"><div class="dash-summary-label" style="color:#fbbf24;">🟡 Machinist Req</div><div class="dash-summary-num" style="color:#fbbf24;" id="dash-count-machinist">0</div><div class="dash-summary-sub">Needs attention — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('completed')" style="cursor:pointer;border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;">✅ Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('all')" style="cursor:pointer;border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All types — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('inspections')" style="cursor:pointer;grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted — tap to view</div></div>
     </div>
 
     <div id="dash-impact-block" style="margin-bottom:16px;"></div>
@@ -8815,7 +8835,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <button class="dash-filter-btn f-blue" onclick="setDashFilter('pending',this)">🔵 PENDING</button>
       <button class="dash-filter-btn f-green" onclick="setDashFilter('running',this)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;margin-right:4px;"></span> RUNNING</button>
       <button class="dash-filter-btn f-green" onclick="setDashFilter('completed',this)">✅ COMPLETED</button>
-      <button class="dash-filter-btn f-yellow" onclick="setDashFilter('issues',this)">🟡 MACHINIST REQ</button>
+      <button class="dash-filter-btn f-yellow" onclick="setDashFilter('issues',this)">🟡 MACHINIST REQ (OPEN)</button>
+      <button class="dash-filter-btn f-yellow" onclick="setDashFilter('machinist-all',this)">🟡 ALL MACHINIST REQ</button>
       <button class="dash-filter-btn f-red" onclick="setDashFilter('inspections',this)">🔴 INSPECTIONS</button>
     </div>
 
@@ -12730,6 +12751,12 @@ function buildSpotlightCard(m) {
 // ── LIVE REQUEST TIMER ────────────────────────────────────────
 // Updates all [data-started-at] elements every second with elapsed time
 function _fmtElapsed(secs) {
+  // A request's startedAt is written with Firestore's serverTimestamp(),
+  // which only resolves to a real value once the write round-trips through
+  // the server. In the brief window right after hitting START, the client's
+  // local clock can read slightly behind that resolved server time — which
+  // without this clamp shows up as something like "-22s" instead of "0s".
+  secs = Math.max(0, secs);
   if (secs < 60)  return secs + 's';
   if (secs < 3600) return Math.floor(secs/60) + 'm ' + (secs%60) + 's';
   return Math.floor(secs/3600) + 'h ' + Math.floor((secs%3600)/60) + 'm';
@@ -12740,7 +12767,7 @@ setInterval(function() {
   document.querySelectorAll('[data-started-at]').forEach(function(el) {
     var started = parseInt(el.getAttribute('data-started-at'), 10);
     if (!started) return;
-    var elapsed = now - started;
+    var elapsed = Math.max(0, now - started);
     el.textContent = '⏱ ' + _fmtElapsed(elapsed);
     // Color escalation: green → yellow → orange → red
     if      (elapsed < 600)  el.style.color = '#22c55e';  // under 10m — green
@@ -12807,7 +12834,7 @@ function updateLiveStrip() {
     var timerStr = '';
     var timerColor = color;
     if (n.inProgress && n.startedAt && n.startedAt.seconds) {
-      var elapsed = nowSecs - n.startedAt.seconds;
+      var elapsed = Math.max(0, nowSecs - n.startedAt.seconds);
       timerStr = ' · ' + _fmtElapsed(elapsed);
       if      (elapsed < 600)  timerColor = '#22c55e';
       else if (elapsed < 1800) timerColor = '#f5c500';
@@ -12904,7 +12931,7 @@ function _fmtBannerTime(secs) {
 }
 
 function _buildJobCard(job, now, large) {
-  var elapsed    = job.startedAt ? now - job.startedAt : 0;
+  var elapsed    = job.startedAt ? Math.max(0, now - job.startedAt) : 0;
   var timeColor  = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
   var nameSz     = large ? '20px' : '13px';
   var timeSz     = large ? '28px' : '16px';
@@ -12999,7 +13026,7 @@ function _renderModalContent() {
   var typeColors = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
 
   jobs.forEach(function(job) {
-    var elapsed   = job.startedAt ? now - job.startedAt : 0;
+    var elapsed   = job.startedAt ? Math.max(0, now - job.startedAt) : 0;
     var timeColor = elapsed < 600 ? '#22c55e' : elapsed < 1800 ? '#f5c500' : elapsed < 3600 ? '#fb923c' : '#f87171';
     var isOnHold  = job.onHold;
     var borderCol = isOnHold ? 'rgba(245,158,11,0.5)' : 'rgba(245,197,0,0.3)';
