@@ -7591,9 +7591,19 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   function loadDashboard() {
     if(!window._db||!window._fbModules){setTimeout(loadDashboard,800);return;}
     var mods=window._fbModules,db2=window._db;
-    mods.getDocs(mods.collection(db2,'hillRequests')).then(function(snap){
+    Promise.all([
+      mods.getDocs(mods.collection(db2,'hillRequests')),
+      (typeof _getArchivedRequests === 'function' ? _getArchivedRequests() : Promise.resolve([]))
+    ]).then(function(results){
+      var snap = results[0], archived = results[1];
       dashRequests=[];
       snap.forEach(function(d){var r=d.data();r.id=d.id;dashRequests.push(r);});
+      // Include cleared/archived history too — otherwise anything removed via
+      // "Clear Request History" silently vanishes from every report here:
+      // the WO trail, the machinist request counts, all of it. The whole
+      // point of archiving instead of hard-deleting is that this data is
+      // still real and still needs to count.
+      dashRequests = dashRequests.concat(archived);
       dashRequests.sort(function(a,b){
         var ta=a.createdAt?(a.createdAt.seconds||0):0;
         var tb=b.createdAt?(b.createdAt.seconds||0):0;
@@ -7965,7 +7975,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
 
     var start = getDashStart();
-    var start = getDashStart();
     var end   = getDashEnd();
     var periodAll = dashRequests.filter(function(r) {
       var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : new Date(0);
@@ -7997,6 +8006,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if ((el=document.getElementById('dash-count-issues')))      el.textContent = issues || 0;
     if ((el=document.getElementById('dash-count-inspections'))) el.textContent = inspections;
 
+    renderImpactPanel();
+
     // Machine filters
     var machineCounts = {};
     periodAll.forEach(function(r) { if(r.machine) machineCounts[r.machine]=(machineCounts[r.machine]||0)+1; });
@@ -8025,10 +8036,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         .forEach(function(r){ var m=r.machine||'Unknown'; completedByMachine[m]=(completedByMachine[m]||0)+1; });
       var topProducers = Object.entries(completedByMachine).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
       var repeatOffenders = Object.entries(issueByMachine).filter(function(e){return e[1]>=3;}).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
-      var completedWithTime = periodAll.filter(function(r){ return r.completedAt && r.createdAt; });
+      var completedWithTime = periodAll.filter(function(r){ return (r.resolvedAt||r.completedAt) && r.createdAt; });
       var avgHours = 0;
       if (completedWithTime.length > 0) {
-        var totalSec = completedWithTime.reduce(function(sum,r){ return sum+(r.completedAt.seconds-r.createdAt.seconds); },0);
+        var totalSec = completedWithTime.reduce(function(sum,r){ var doneAt=(r.resolvedAt||r.completedAt); return sum+(doneAt.seconds-r.createdAt.seconds); },0);
         avgHours = Math.round(totalSec/completedWithTime.length/3600*10)/10;
       }
       var h = '<div class="dash-weekly-card">';
@@ -8047,7 +8058,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           var completedReqs = periodAll.filter(function(r){
             return r.machine===machineName && getJobStatus(r)==='completed';
           }).sort(function(a,b){
-            return (b.completedAt?b.completedAt.seconds:0)-(a.completedAt?a.completedAt.seconds:0);
+            return ((b.resolvedAt||b.completedAt)?(b.resolvedAt||b.completedAt).seconds:0)-((a.resolvedAt||a.completedAt)?(a.resolvedAt||a.completedAt).seconds:0);
           });
           h += '<div style="margin-bottom:8px;background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.2);border-radius:8px;overflow:hidden;">';
           h += '<div style="display:flex;justify-content:space-between;padding:7px 10px;background:rgba(34,197,94,0.08);">';
@@ -8055,7 +8066,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           h += '<span style="font-size:11px;color:#4ade80;font-weight:700;">'+e[1]+' completed</span>';
           h += '</div>';
           completedReqs.slice(0,3).forEach(function(r) {
-            var ts = r.completedAt ? new Date(r.completedAt.seconds*1000) : null;
+            var ts = (r.resolvedAt||r.completedAt) ? new Date((r.resolvedAt||r.completedAt).seconds*1000) : null;
             var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
             var desc = r.detail || r.note || r.wo || '';
             h += '<div style="padding:5px 10px;border-bottom:1px solid rgba(34,197,94,0.1);display:flex;gap:8px;align-items:center;">';
@@ -8277,6 +8288,97 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       showToast('green', deleteCount + ' records cleared', inspectionCount > 0 ? inspectionCount + ' inspection records kept permanently' : 'History cleared');
     });
   }
+  // ── YOUR IMPACT — cumulative, all-time picture of workload handled and
+  // responsiveness, meant to be something you can actually show leadership.
+  // Deliberately NOT tied to the period filter above (Today/This Week/etc.)
+  // since impact is a cumulative story, not a single-week snapshot.
+  window._impactStat = window._impactStat || null; // { percent, note, updatedAt }
+
+  function loadImpactStat(){
+    var mods=window._fbModules, db2=window._db;
+    if(!mods||!db2) { setTimeout(loadImpactStat, 800); return; }
+    mods.getDoc(mods.doc(db2,'hillSettings','impactStats')).then(function(snap){
+      if(snap.exists()) window._impactStat = snap.data();
+      renderImpactPanel();
+    }).catch(function(){ renderImpactPanel(); });
+  }
+
+  window._saveImpactStat = function(){
+    var percentEl = document.getElementById('impact-percent-input');
+    var noteEl = document.getElementById('impact-note-input');
+    var percent = (percentEl.value||'').trim();
+    var note = (noteEl.value||'').trim();
+    if(!percent){ showToast('red','Enter a number','e.g. 12 for 12%'); return; }
+    var mods=window._fbModules, db2=window._db;
+    var payload = { percent: percent, note: note, updatedAt: mods.serverTimestamp(), updatedBy: window.currentUser||'admin' };
+    mods.setDoc(mods.doc(db2,'hillSettings','impactStats'), payload, {merge:true}).then(function(){
+      window._impactStat = payload;
+      renderImpactPanel();
+      showToast('green','Saved','Impact stat updated');
+    }).catch(function(e){ showToast('red','Save failed', e.message); });
+  };
+
+  function fmtDuration(hoursDecimal){
+    if(!hoursDecimal || hoursDecimal <= 0) return '—';
+    if(hoursDecimal < 1) return Math.round(hoursDecimal*60)+' min';
+    return hoursDecimal+'h';
+  }
+
+  function renderImpactPanel(){
+    var block = document.getElementById('dash-impact-block');
+    if(!block) return;
+    var all = dashRequests || [];
+    var resolvedAll = all.filter(function(r){ return r.resolved || getJobStatus(r)==='completed'; });
+    var totalResolved = resolvedAll.length;
+    var totalRequests = all.length;
+    var withTime = all.filter(function(r){ return (r.resolvedAt||r.completedAt) && r.createdAt; });
+    var avgHoursAll = 0;
+    if(withTime.length>0){
+      var totalSec = withTime.reduce(function(sum,r){ var d=(r.resolvedAt||r.completedAt); return sum+(d.seconds-r.createdAt.seconds); },0);
+      avgHoursAll = Math.round(totalSec/withTime.length/3600*100)/100;
+    }
+    var machinistResolved = resolvedAll.filter(function(r){ return r.type==='yellow'||r.type==='dnx'; }).length;
+
+    var stat = window._impactStat;
+    var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
+
+    var h = '<div style="background:linear-gradient(145deg,#0a1f14,#0d2818);border:1px solid rgba(34,197,94,0.35);border-radius:12px;padding:16px 18px;">';
+    h += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:2px;color:#4ade80;margin-bottom:12px;">⭐ YOUR IMPACT — ALL TIME</div>';
+
+    h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:'+(stat||isAdmin?'14px':'0')+';">';
+    h += '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;color:#fff;">'+totalResolved+'</div><div style="font-size:10.5px;color:#86efac;letter-spacing:0.5px;">Requests resolved</div></div>';
+    h += '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;color:#fbbf24;">'+machinistResolved+'</div><div style="font-size:10.5px;color:#86efac;letter-spacing:0.5px;">Machinist requests fulfilled</div></div>';
+    h += '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;color:#60a5fa;">'+fmtDuration(avgHoursAll)+'</div><div style="font-size:10.5px;color:#86efac;letter-spacing:0.5px;">Avg response time</div></div>';
+    h += '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;color:#94a3b8;">'+totalRequests+'</div><div style="font-size:10.5px;color:#86efac;letter-spacing:0.5px;">Total logged, all time</div></div>';
+    h += '</div>';
+
+    if (stat && stat.percent) {
+      h += '<div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">';
+      h += '<div style="font-size:12.5px;color:#e2e8f0;"><strong style="color:#4ade80;">Datanomix-reported utilization increase: +'+stat.percent+'%</strong>'+(stat.note?' — '+stat.note:'')+'</div>';
+      if(isAdmin) h += '<button onclick="window._editImpactStat()" style="background:none;border:1px solid rgba(148,163,184,0.4);color:#94a3b8;border-radius:6px;padding:3px 10px;font-size:10.5px;cursor:pointer;">EDIT</button>';
+      h += '</div>';
+    } else if (isAdmin) {
+      h += '<button onclick="window._editImpactStat()" style="width:100%;background:rgba(34,197,94,0.08);border:1px dashed rgba(34,197,94,0.35);color:#4ade80;border-radius:8px;padding:8px;font-size:11.5px;cursor:pointer;">+ ADD EXTERNAL VALIDATION (e.g. Datanomix utilization %)</button>';
+    }
+
+    h += '<div id="impact-edit-row" style="display:none;margin-top:10px;gap:8px;flex-wrap:wrap;align-items:center;">'
+       + '<input id="impact-percent-input" type="number" placeholder="12" style="width:70px;background:#0d1f35;border:1px solid #1e3a5c;border-radius:6px;padding:6px 8px;color:#f0f4f8;font-size:12px;" value="'+(stat&&stat.percent?stat.percent:'')+'">'
+       + '<span style="color:#86efac;font-size:12px;">%</span>'
+       + '<input id="impact-note-input" type="text" placeholder="e.g. since coming in early to run machines before shift" style="flex:1;min-width:180px;background:#0d1f35;border:1px solid #1e3a5c;border-radius:6px;padding:6px 8px;color:#f0f4f8;font-size:12px;" value="'+(stat&&stat.note?stat.note.replace(/"/g,'&quot;'):'')+'">'
+       + '<button onclick="window._saveImpactStat()" style="background:#22c55e;border:none;color:#04250f;border-radius:6px;padding:6px 14px;font-size:11.5px;font-weight:700;cursor:pointer;">SAVE</button>'
+       + '</div>';
+
+    h += '</div>';
+    block.innerHTML = h;
+  }
+
+  window._editImpactStat = function(){
+    var row = document.getElementById('impact-edit-row');
+    if(row) row.style.display = 'flex';
+  };
+
+  loadImpactStat();
+
   function renderDashCharts(data) {
     var block = document.getElementById('dash-chart-block');
     if (!block) return;
@@ -8663,8 +8765,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   <div style="padding:16px;">
 
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="dash-period-btn active" onclick="setDashPeriod('today',this)">TODAY</button>
-      <button class="dash-period-btn" onclick="setDashPeriod('week',this)">THIS WEEK</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('today',this)">TODAY</button>
+      <button class="dash-period-btn active" onclick="setDashPeriod('week',this)">THIS WEEK</button>
       <button class="dash-period-btn" onclick="setDashPeriod('lastweek',this)">LAST WEEK</button>
       <button class="dash-period-btn" onclick="setDashPeriod('month',this)">THIS MONTH</button>
       <button class="dash-period-btn" onclick="setDashPeriod('lastmonth',this)">LAST MONTH</button>
@@ -8680,6 +8782,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <div class="dash-summary-card" style="border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All types</div></div>
       <div class="dash-summary-card" style="grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted</div></div>
     </div>
+
+    <div id="dash-impact-block" style="margin-bottom:16px;"></div>
 
     <div id="dash-summary-block"></div>
     <div id="dash-chart-block" style="margin-bottom:14px;"></div>
