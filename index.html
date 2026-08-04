@@ -8001,7 +8001,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
 
     // Status counts
-    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0, dnxAlerts=0;
+    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0, dnxAlerts=0, floorSupport=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
       // Count ALL blue requests (pending WO) regardless of resolved status
@@ -8013,6 +8013,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       // something a machinist actually asked for — they get their own count
       // instead of being folded into Machinist Requests.
       if (r.type === 'dnx')    { dnxAlerts++; }
+      // Floor Support is its own real request type (own button, own push
+      // notifications) — it was previously not counted anywhere at all in
+      // this dashboard, which undercounted total real workload handled.
+      if (r.type === 'orange') { floorSupport++; }
       // Completed = any request resolved
       if (r.resolved) completed++;
 
@@ -8024,6 +8028,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if ((el=document.getElementById('dash-count-pending')))     el.textContent = pending;
     if ((el=document.getElementById('dash-count-machinist')))   el.textContent = machinistReqs;
     if ((el=document.getElementById('dash-count-dnx')))         el.textContent = dnxAlerts;
+    if ((el=document.getElementById('dash-count-floorsupport'))) el.textContent = floorSupport;
     if ((el=document.getElementById('dash-count-running')))     el.textContent = running;
     if ((el=document.getElementById('dash-count-completed')))   el.textContent = completed;
     if ((el=document.getElementById('dash-count-issues')))      el.textContent = issues || 0;
@@ -8158,9 +8163,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (dashFilter==='pending'       && s!=='pending')   return false;
       if (dashFilter==='running'       && s!=='running')   return false;
       if (dashFilter==='completed'     && s!=='completed') return false;
-      if (dashFilter==='issues'        && (s!=='issue' || r.type==='red' || r.type==='dnx')) return false;
+      if (dashFilter==='issues'        && (s!=='issue' || r.type==='red' || r.type==='dnx' || r.type==='orange')) return false;
       if (dashFilter==='machinist-all' && r.type!=='yellow') return false;
       if (dashFilter==='dnx-alerts'    && r.type!=='dnx')    return false;
+      if (dashFilter==='floor-support' && r.type!=='orange') return false;
       if (dashFilter==='inspections'   && r.type!=='red')  return false;
       if (dashMachineFilter!=='all' && r.machine!==dashMachineFilter) return false;
       return true;
@@ -8170,7 +8176,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (!list) return;
     if (filtered.length === 0) { list.innerHTML='<div class="dash-empty">No records found for this filter.</div>'; return; }
 
-    var typeLabels = { red:'🔴 INSPECTION', yellow:'🟡 MACHINIST REQ', blue:'🔵 PENDING WO', green:'🟢 RUNNING WO', dnx:'🔷 DNX ALERT' };
+    var typeLabels = { red:'🔴 INSPECTION', yellow:'🟡 MACHINIST REQ', blue:'🔵 PENDING WO', green:'🟢 RUNNING WO', dnx:'🔷 DNX ALERT', orange:'🟠 FLOOR SUPPORT' };
     list.innerHTML = '';
 
     filtered.forEach(function(r) {
@@ -8365,11 +8371,24 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
     var machinistResolved = resolvedAll.filter(function(r){ return r.type==='yellow'; }).length;
 
+    // Earliest record on file — answers "since when has this actually been
+    // tracking data" directly, instead of leaving all-time totals unverifiable.
+    var withDates = all.filter(function(r){ return r.createdAt && r.createdAt.seconds; });
+    var earliestAll = withDates.length ? withDates.reduce(function(min,r){ return r.createdAt.seconds < min.createdAt.seconds ? r : min; }) : null;
+    var yellowWithDates = withDates.filter(function(r){ return r.type==='yellow'; });
+    var earliestYellow = yellowWithDates.length ? yellowWithDates.reduce(function(min,r){ return r.createdAt.seconds < min.createdAt.seconds ? r : min; }) : null;
+    function fmtDate(secs){ return new Date(secs*1000).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}); }
+
     var stat = window._impactStat;
     var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
 
     var h = '<div style="background:linear-gradient(145deg,#0a1f14,#0d2818);border:1px solid rgba(34,197,94,0.35);border-radius:12px;padding:16px 18px;">';
-    h += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:2px;color:#4ade80;margin-bottom:12px;">⭐ YOUR IMPACT — ALL TIME</div>';
+    h += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:2px;color:#4ade80;margin-bottom:4px;">⭐ YOUR IMPACT — ALL TIME</div>';
+    if (earliestAll) {
+      h += '<div style="font-size:11px;color:#5c7d68;margin-bottom:12px;">Tracking since <strong style="color:#86efac;">'+fmtDate(earliestAll.createdAt.seconds)+'</strong>'
+         + (earliestYellow ? ' &nbsp;•&nbsp; Earliest Machinist Request on file: <strong style="color:#86efac;">'+fmtDate(earliestYellow.createdAt.seconds)+'</strong>' : '')
+         + '</div>';
+    }
 
     h += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:'+(stat||isAdmin?'14px':'0')+';">';
     h += '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:30px;color:#fff;">'+totalResolved+'</div><div style="font-size:10.5px;color:#86efac;letter-spacing:0.5px;">Requests resolved</div></div>';
@@ -8450,7 +8469,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     })() : '—';
 
     // Type breakdown
-    var typeCounts = { blue:0, yellow:0, green:0, red:0, dnx:0 };
+    var typeCounts = { blue:0, yellow:0, green:0, red:0, dnx:0, orange:0 };
     todayReqs.forEach(function(r){ if(typeCounts[r.type]!==undefined) typeCounts[r.type]++; });
 
     var h = '<div style="background:linear-gradient(145deg,#0d1f35,#132840);border:1px solid #1e3a5c;border-radius:12px;padding:16px 18px;">';
@@ -8470,6 +8489,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(typeCounts.green)  h += '<span style="color:#4ade80;">🟢 '+typeCounts.green+' Running WO</span>';
     if(typeCounts.red)    h += '<span style="color:#f87171;">🔴 '+typeCounts.red+' Inspection</span>';
     if(typeCounts.dnx)    h += '<span style="color:#60a5fa;">🔷 '+typeCounts.dnx+' DNX Alert</span>';
+    if(typeCounts.orange) h += '<span style="color:#fb923c;">🟠 '+typeCounts.orange+' Floor Support</span>';
     h += '</div>';
 
     h += '</div>';
@@ -8888,7 +8908,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <div class="dash-summary-card" onclick="window._drillDashCard('completed')" style="cursor:pointer;border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;">✅ Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished — tap to view</div></div>
       <div class="dash-summary-card" onclick="window._drillDashCard('all')" style="cursor:pointer;border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All types — tap to view</div></div>
       <div class="dash-summary-card" onclick="window._drillDashCard('dnx-alerts')" style="cursor:pointer;border-color:rgba(96,165,250,0.4);background:linear-gradient(145deg,#0a1830,#0f2244);"><div class="dash-summary-label" style="color:#60a5fa;">🔷 DNX Alerts</div><div class="dash-summary-num" style="color:#60a5fa;" id="dash-count-dnx">0</div><div class="dash-summary-sub">Machine inactivity — tap to view</div></div>
-      <div class="dash-summary-card" onclick="window._drillDashCard('inspections')" style="cursor:pointer;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('floor-support')" style="cursor:pointer;border-color:rgba(251,146,60,0.4);background:linear-gradient(145deg,#1f1206,#2a1a08);"><div class="dash-summary-label" style="color:#fb923c;">🟠 Floor Support</div><div class="dash-summary-num" style="color:#fb923c;" id="dash-count-floorsupport">0</div><div class="dash-summary-sub">On-floor help calls — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('inspections')" style="cursor:pointer;grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted — tap to view</div></div>
     </div>
 
     <div id="dash-impact-block" style="margin-bottom:16px;"></div>
