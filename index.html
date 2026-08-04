@@ -7667,7 +7667,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   window._woSearch   = '';   // current search string
 
   function buildWOMap(periodAll) {
-    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
+    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO',dnx:'DNX Alert'};
     var woMap = {};
     // Also pull ALL hillRequests (all time) for the search feature
     var allReqs = window._allDashRequests || periodAll;
@@ -7719,7 +7719,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       return;
     }
 
-    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
+    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO',dnx:'DNX Alert'};
     var typeColors = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#4ade80'};
     var typeBgs    = {red:'rgba(239,68,68,0.12)',yellow:'rgba(234,179,8,0.12)',orange:'rgba(249,115,22,0.12)',blue:'rgba(59,130,246,0.12)',green:'rgba(34,197,94,0.12)'};
 
@@ -7859,7 +7859,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     if (toPrint.length === 0) { showToast('red','Nothing to print','Select at least one WO or search for a job'); return; }
 
-    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO'};
+    var typeLabels = {red:'Inspection',yellow:'Machinist Req',orange:'Floor Support',blue:'Pending WO',green:'Running WO',dnx:'DNX Alert'};
     var typeColors = {red:'#dc2626',yellow:'#d97706',orange:'#ea580c',blue:'#2563eb',green:'#16a34a'};
 
     function fmtM(m) {
@@ -8001,7 +8001,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
 
     // Status counts
-    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0;
+    var pending=0, running=0, completed=0, inspections=0, machinistReqs=0, dnxAlerts=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
       // Count ALL blue requests (pending WO) regardless of resolved status
@@ -8009,7 +8009,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (r.type === 'yellow') { machinistReqs++; }
       if (r.type === 'green')  { running++; }
       if (r.type === 'red')    { inspections++; }
-      if (r.type === 'dnx')    { machinistReqs++; } // DNX counts with machinist reqs
+      // DNX auto-alerts are a machine-inactivity notice from Datanomix, not
+      // something a machinist actually asked for — they get their own count
+      // instead of being folded into Machinist Requests.
+      if (r.type === 'dnx')    { dnxAlerts++; }
       // Completed = any request resolved
       if (r.resolved) completed++;
 
@@ -8020,6 +8023,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var el;
     if ((el=document.getElementById('dash-count-pending')))     el.textContent = pending;
     if ((el=document.getElementById('dash-count-machinist')))   el.textContent = machinistReqs;
+    if ((el=document.getElementById('dash-count-dnx')))         el.textContent = dnxAlerts;
     if ((el=document.getElementById('dash-count-running')))     el.textContent = running;
     if ((el=document.getElementById('dash-count-completed')))   el.textContent = completed;
     if ((el=document.getElementById('dash-count-issues')))      el.textContent = issues || 0;
@@ -8146,6 +8150,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     // Charts
     renderDashCharts(periodAll);
+    renderDaySummary();
 
     // Filter for log
     var filtered = periodAll.filter(function(r) {
@@ -8153,8 +8158,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (dashFilter==='pending'       && s!=='pending')   return false;
       if (dashFilter==='running'       && s!=='running')   return false;
       if (dashFilter==='completed'     && s!=='completed') return false;
-      if (dashFilter==='issues'        && (s!=='issue' || r.type==='red')) return false;
-      if (dashFilter==='machinist-all' && !(r.type==='yellow'||r.type==='dnx')) return false;
+      if (dashFilter==='issues'        && (s!=='issue' || r.type==='red' || r.type==='dnx')) return false;
+      if (dashFilter==='machinist-all' && r.type!=='yellow') return false;
+      if (dashFilter==='dnx-alerts'    && r.type!=='dnx')    return false;
       if (dashFilter==='inspections'   && r.type!=='red')  return false;
       if (dashMachineFilter!=='all' && r.machine!==dashMachineFilter) return false;
       return true;
@@ -8164,7 +8170,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (!list) return;
     if (filtered.length === 0) { list.innerHTML='<div class="dash-empty">No records found for this filter.</div>'; return; }
 
-    var typeLabels = { red:'🔴 INSPECTION', yellow:'🟡 MACHINIST REQ', blue:'🔵 PENDING WO', green:'🟢 RUNNING WO' };
+    var typeLabels = { red:'🔴 INSPECTION', yellow:'🟡 MACHINIST REQ', blue:'🔵 PENDING WO', green:'🟢 RUNNING WO', dnx:'🔷 DNX ALERT' };
     list.innerHTML = '';
 
     filtered.forEach(function(r) {
@@ -8357,7 +8363,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var totalSec = withTime.reduce(function(sum,r){ var d=(r.resolvedAt||r.completedAt); return sum+(d.seconds-r.createdAt.seconds); },0);
       avgHoursAll = Math.round(totalSec/withTime.length/3600*100)/100;
     }
-    var machinistResolved = resolvedAll.filter(function(r){ return r.type==='yellow'||r.type==='dnx'; }).length;
+    var machinistResolved = resolvedAll.filter(function(r){ return r.type==='yellow'; }).length;
 
     var stat = window._impactStat;
     var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
@@ -8398,6 +8404,83 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   };
 
   loadImpactStat();
+
+  // ── MY DAY — a plain-English read on today's workload, not just raw bars.
+  // Only renders when "Today" is actually the selected period; otherwise the
+  // block stays empty so it doesn't compete with whatever period is shown.
+  function renderDaySummary(){
+    var block = document.getElementById('dash-day-summary-block');
+    if (!block) return;
+    if (dashPeriod !== 'today') { block.innerHTML = ''; return; }
+
+    var todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    var todayEnd = new Date();
+    var todayReqs = (dashRequests||[]).filter(function(r){
+      var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
+      return ts && ts >= todayStart && ts < todayEnd;
+    });
+
+    if (todayReqs.length === 0) {
+      block.innerHTML = '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:10px;padding:20px;text-align:center;color:#334155;font-size:13px;">Nothing logged yet today.</div>';
+      return;
+    }
+
+    var resolved = todayReqs.filter(function(r){ return r.resolved || getJobStatus(r)==='completed'; });
+    var open = todayReqs.length - resolved.length;
+    var pct = Math.round(resolved.length/todayReqs.length*100);
+
+    var withTime = todayReqs.filter(function(r){ return (r.resolvedAt||r.completedAt) && r.createdAt; });
+    var avgMin = 0;
+    if (withTime.length>0){
+      var totalSec = withTime.reduce(function(s,r){ var d=(r.resolvedAt||r.completedAt); return s+(d.seconds-r.createdAt.seconds); },0);
+      avgMin = Math.round(totalSec/withTime.length/60);
+    }
+
+    // Busiest hour
+    var byHour = {};
+    todayReqs.forEach(function(r){
+      var h = new Date(r.createdAt.seconds*1000).getHours();
+      byHour[h] = (byHour[h]||0)+1;
+    });
+    var busiestHour = Object.entries(byHour).sort(function(a,b){return b[1]-a[1];})[0];
+    var busiestStr = busiestHour ? (function(){
+      var h = parseInt(busiestHour[0],10);
+      var label = h===0?'12 AM':h<12?h+' AM':h===12?'12 PM':(h-12)+' PM';
+      return label+' ('+busiestHour[1]+' requests)';
+    })() : '—';
+
+    // Type breakdown
+    var typeCounts = { blue:0, yellow:0, green:0, red:0, dnx:0 };
+    todayReqs.forEach(function(r){ if(typeCounts[r.type]!==undefined) typeCounts[r.type]++; });
+
+    var h = '<div style="background:linear-gradient(145deg,#0d1f35,#132840);border:1px solid #1e3a5c;border-radius:12px;padding:16px 18px;">';
+    h += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:2px;color:#f5c500;margin-bottom:12px;">📅 TODAY AT A GLANCE</div>';
+
+    h += '<div style="font-size:14px;color:#e2e8f0;line-height:1.7;margin-bottom:14px;">'
+       + 'You\'ve handled <strong style="color:#fff;">'+todayReqs.length+'</strong> request'+(todayReqs.length===1?'':'s')+' today — '
+       + '<strong style="color:#4ade80;">'+resolved.length+' resolved</strong> ('+pct+'%), '
+       + '<strong style="color:'+(open>0?'#fbbf24':'#4ade80')+';">'+open+' still open</strong>.'
+       + (avgMin>0 ? ' Average response time: <strong style="color:#60a5fa;">'+(avgMin<60?avgMin+' min':Math.round(avgMin/60*10)/10+'h')+'</strong>.' : '')
+       + ' Busiest hour so far: <strong style="color:#f5c500;">'+busiestStr+'</strong>.'
+       + '</div>';
+
+    h += '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;">';
+    if(typeCounts.blue)   h += '<span style="color:#60a5fa;">🔵 '+typeCounts.blue+' Pending WO</span>';
+    if(typeCounts.yellow) h += '<span style="color:#fbbf24;">🟡 '+typeCounts.yellow+' Machinist Req</span>';
+    if(typeCounts.green)  h += '<span style="color:#4ade80;">🟢 '+typeCounts.green+' Running WO</span>';
+    if(typeCounts.red)    h += '<span style="color:#f87171;">🔴 '+typeCounts.red+' Inspection</span>';
+    if(typeCounts.dnx)    h += '<span style="color:#60a5fa;">🔷 '+typeCounts.dnx+' DNX Alert</span>';
+    h += '</div>';
+
+    h += '</div>';
+    block.innerHTML = h;
+  }
+
+  window._showMyDay = function(){
+    setDashPeriod('today', document.querySelector('.dash-period-btn[onclick*="\'today\'"]'));
+    var block = document.getElementById('dash-day-summary-block');
+    if(block) setTimeout(function(){ block.scrollIntoView({behavior:'smooth', block:'start'}); }, 80);
+  };
 
   function renderDashCharts(data) {
     var block = document.getElementById('dash-chart-block');
@@ -8784,6 +8867,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 <div id="page-dashboard" style="display:none;overflow-y:auto;height:calc(100vh - 88px);background:#00071a;">
   <div style="padding:16px;">
 
+    <button onclick="window._showMyDay()" style="width:100%;margin-bottom:12px;background:linear-gradient(135deg,#0f2a1a,#123420);border:1px solid rgba(74,222,128,0.4);border-radius:10px;padding:12px;color:#4ade80;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">📅 MY DAY — SEE TODAY'S SUMMARY</button>
+
     <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
       <button class="dash-period-btn" onclick="setDashPeriod('today',this)">TODAY</button>
       <button class="dash-period-btn active" onclick="setDashPeriod('week',this)">THIS WEEK</button>
@@ -8795,12 +8880,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <button class="dash-period-btn" onclick="setDashPeriod('all',this)">ALL TIME</button>
     </div>
 
+    <div id="dash-day-summary-block" style="margin-bottom:14px;"></div>
+
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
       <div class="dash-summary-card blue" onclick="window._drillDashCard('pending')" style="cursor:pointer;"><div class="dash-summary-label">🔵 Pending WO</div><div class="dash-summary-num" id="dash-count-pending">0</div><div class="dash-summary-sub">Setup needed — tap to view</div></div>
       <div class="dash-summary-card" onclick="window._drillDashCard('machinist-all')" style="cursor:pointer;border-color:rgba(251,191,36,0.4);background:linear-gradient(145deg,#1a1000,#2a1a00);"><div class="dash-summary-label" style="color:#fbbf24;">🟡 Machinist Req</div><div class="dash-summary-num" style="color:#fbbf24;" id="dash-count-machinist">0</div><div class="dash-summary-sub">Needs attention — tap to view</div></div>
       <div class="dash-summary-card" onclick="window._drillDashCard('completed')" style="cursor:pointer;border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;">✅ Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished — tap to view</div></div>
       <div class="dash-summary-card" onclick="window._drillDashCard('all')" style="cursor:pointer;border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All types — tap to view</div></div>
-      <div class="dash-summary-card" onclick="window._drillDashCard('inspections')" style="cursor:pointer;grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('dnx-alerts')" style="cursor:pointer;border-color:rgba(96,165,250,0.4);background:linear-gradient(145deg,#0a1830,#0f2244);"><div class="dash-summary-label" style="color:#60a5fa;">🔷 DNX Alerts</div><div class="dash-summary-num" style="color:#60a5fa;" id="dash-count-dnx">0</div><div class="dash-summary-sub">Machine inactivity — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('inspections')" style="cursor:pointer;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted — tap to view</div></div>
     </div>
 
     <div id="dash-impact-block" style="margin-bottom:16px;"></div>
