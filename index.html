@@ -1271,7 +1271,6 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
-  <div class="nav-tab admin-only" onclick="switchTab('dnxalerts')" id="tab-dnxalerts" style="display:none">🔷 DNX</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
   <div class="nav-tab" onclick="switchTab('games'); if(window._loadGames) window._loadGames();" id="tab-games">🎮 Games</div>
@@ -7666,24 +7665,27 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // Req button, and those are just as real. A blue/green request only stays
   // classified as Pending/Running WO if it has no actual description — pure
   // job-lifecycle tracking with nothing being asked for.
-  // Single shared source of truth — used everywhere this distinction matters
-  // so it can't drift out of sync between the summary cards, drill-downs,
-  // Impact panel, and My Day, the way DNX/Floor Support briefly did.
-  function _hasRealDetail(r) {
+  // Single shared source of truth — attached to window (not just a plain
+  // function) because this file has multiple separate <script> blocks, and a
+  // plain function here isn't reachable from code in a different block. This
+  // is exactly why the AI Assistant's machinist count drifted out of sync
+  // with Production Log's — it couldn't see this function at all.
+  window._hasRealDetail = function(r) {
     return !!(r.detail && String(r.detail).trim().length > 0);
-  }
-  function _isMachinistReq(r) {
+  };
+  window._isMachinistReq = function(r) {
     if (r.type === 'yellow') return true;
-    if ((r.type === 'blue' || r.type === 'green') && _hasRealDetail(r)) return true;
+    if ((r.type === 'blue' || r.type === 'green') && window._hasRealDetail(r)) return true;
     return false;
-  }
+  };
   // Pending/Running WO, for counting purposes, means the job-status side only
   // — a blue/green record that either has no real ask, or does have one but
   // is being counted as a Machinist Request instead (not double-counted).
-  function _isPureWOStatus(r) {
+  window._isPureWOStatus = function(r) {
     if (r.type !== 'blue' && r.type !== 'green') return false;
-    return !_hasRealDetail(r);
-  }
+    return !window._hasRealDetail(r);
+  };
+  var _hasRealDetail = window._hasRealDetail, _isMachinistReq = window._isMachinistReq, _isPureWOStatus = window._isPureWOStatus;
 
   // ── WO TRACKER ───────────────────────────────────────────────
   window._woData     = [];   // all WOs built from current period
@@ -8943,9 +8945,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <div class="dash-summary-card" onclick="window._drillDashCard('machinist-all')" style="cursor:pointer;border-color:rgba(251,191,36,0.4);background:linear-gradient(145deg,#1a1000,#2a1a00);"><div class="dash-summary-label" style="color:#fbbf24;">🟡 Machinist Req</div><div class="dash-summary-num" style="color:#fbbf24;" id="dash-count-machinist">0</div><div class="dash-summary-sub">Needs attention — tap to view</div></div>
       <div class="dash-summary-card" onclick="window._drillDashCard('completed')" style="cursor:pointer;border-color:rgba(255,255,255,0.3);background:linear-gradient(145deg,#0d1f35,#1a2f4a);"><div class="dash-summary-label" style="color:#94a3b8;">✅ Completed</div><div class="dash-summary-num" style="color:#ffffff;" id="dash-count-completed">0</div><div class="dash-summary-sub">Jobs finished — tap to view</div></div>
       <div class="dash-summary-card" onclick="window._drillDashCard('all')" style="cursor:pointer;border-color:rgba(148,163,184,0.3);background:linear-gradient(145deg,#0d1f35,#162840);"><div class="dash-summary-label" style="color:#94a3b8;">📋 Total Requests</div><div class="dash-summary-num" style="color:#94a3b8;" id="dash-count-issues">0</div><div class="dash-summary-sub">All types — tap to view</div></div>
-      <div class="dash-summary-card" onclick="window._drillDashCard('dnx-alerts')" style="cursor:pointer;border-color:rgba(96,165,250,0.4);background:linear-gradient(145deg,#0a1830,#0f2244);"><div class="dash-summary-label" style="color:#60a5fa;">🔷 DNX Alerts</div><div class="dash-summary-num" style="color:#60a5fa;" id="dash-count-dnx">0</div><div class="dash-summary-sub">Machine inactivity — tap to view</div></div>
       <div class="dash-summary-card" onclick="window._drillDashCard('floor-support')" style="cursor:pointer;border-color:rgba(251,146,60,0.4);background:linear-gradient(145deg,#1f1206,#2a1a08);"><div class="dash-summary-label" style="color:#fb923c;">🟠 Floor Support</div><div class="dash-summary-num" style="color:#fb923c;" id="dash-count-floorsupport">0</div><div class="dash-summary-sub">On-floor help calls — tap to view</div></div>
-      <div class="dash-summary-card" onclick="window._drillDashCard('inspections')" style="cursor:pointer;grid-column:1/-1;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted — tap to view</div></div>
+      <div class="dash-summary-card" onclick="window._drillDashCard('inspections')" style="cursor:pointer;border-color:rgba(239,68,68,0.4);background:linear-gradient(145deg,#1a0808,#2a1010);"><div class="dash-summary-label" style="color:#f87171;">🔴 Inspection Requests</div><div class="dash-summary-num" style="color:#f87171;" id="dash-count-inspections">0</div><div class="dash-summary-sub">Quality checks — never deleted — tap to view</div></div>
     </div>
 
     <div id="dash-impact-block" style="margin-bottom:16px;"></div>
@@ -11725,7 +11726,7 @@ function renderJobList() {
     var pc=prog>=100?'#22c55e':prog>=60?'#f5c500':'#ef4444';
     var bc=isDone?'#22c55e':reqs.length>3?'#f97316':'#1e3a5c';
     var ic=reqs.filter(function(r){return r.type==='red';}).length;
-    var mc=reqs.filter(function(r){return r.type==='yellow';}).length;
+    var mc=reqs.filter(window._isMachinistReq||function(r){return r.type==='yellow';}).length;
     var fc=reqs.filter(function(r){return r.type==='orange';}).length;
     return '<div data-jid="'+job.id+'" onclick="window._openJob(this)" class="job-card" style="background:linear-gradient(145deg,#0a1525,#0d1f35);border:1px solid '+bc+';border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;">'
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'
@@ -13599,7 +13600,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var rec={machine:mn(n.machine),name:n.operator?n.operator.split(' ')[0]:'the operator',wo:n.wo||'',op:n.op||'',detail:n.detail||'',e:e,et:e>10?fmtT(e):'',hr:n.holdReason||''};
       if(n.onHold)r.hold.push(rec);
       else if(n.inProgress||(n.startedAt&&n.startedAt.seconds))r.run.push(rec);
-      else if(n.type==='blue')r.pend.push(rec);
+      else if(n.type==='blue'){ if(window._hasRealDetail && window._hasRealDetail(n)) r.mach.push(rec); else r.pend.push(rec); }
       else if(n.type==='yellow')r.mach.push(rec);
       else if(n.type==='red')r.insp.push(rec);
       else if(n.type==='orange')r.supp.push(rec);
@@ -13887,8 +13888,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     out.push(pick(['Floor update.','Here is what is happening.','Checking in on the shop.','Your floor report.','This is Sparky.']));
     var tot=f.run.length+f.pend.length+f.mach.length+f.insp.length+f.supp.length+f.hold.length;
     var allNotes=window._lastActionable||[];
-    var pendingCount=allNotes.filter(function(n){return !n.resolved&&n.type==='blue';}).length;
-    var machCount=allNotes.filter(function(n){return !n.resolved&&n.type==='yellow';}).length;
+    var pendingCount=allNotes.filter(function(n){return !n.resolved&&n.type==='blue'&&(!window._isPureWOStatus||window._isPureWOStatus(n));}).length;
+    var machCount=allNotes.filter(function(n){return !n.resolved&&(window._isMachinistReq?window._isMachinistReq(n):n.type==='yellow');}).length;
     var totalOpen=allNotes.filter(function(n){return !n.resolved;}).length;
     if(tot===0&&totalOpen===0){out.push(pick(['Floor is clear. Nothing active.','No open requests right now.','Clean board. Enjoy it.']));}
     else if(tot===0&&totalOpen>0){out.push('There '+( totalOpen===1?'is':'are')+' '+totalOpen+' open request'+(totalOpen!==1?'s':'')+' on the floor right now.');}
@@ -14125,7 +14126,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     // Machinist Requests (supply items, tools, fixtures) need their own wording —
     // "you will be cutting soon" makes no sense for a pair of gloves or a sanding
     // disc. Announce the actual item and an ETA instead.
-    if(n.type === 'yellow'){
+    if(window._isMachinistReq ? window._isMachinistReq(n) : n.type === 'yellow'){
       var item = _cleanItemForSpeech(n.detail) || 'what you asked for';
       say(pick([
         name+', I\'ve got your '+item+' — I\'ll have that out to you shortly.',
@@ -14614,7 +14615,13 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   };
 
 
-  var _dnxTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_dnxTimer);_startDnxListener();}},1500);
+  // Datanomix alerting disabled — was auto-starting here and reacting to
+  // every incoming DNX write (Sparky voice interruptions, toast popups,
+  // machine highlighting, and creating a new hillRequests record per
+  // alert). The _startDnxListener() function itself is left intact and
+  // unused below in case this ever needs to be turned back on — just
+  // uncomment the line below to re-enable.
+  // var _dnxTimer=setInterval(function(){if(window.fbDb&&window._fbModules){clearInterval(_dnxTimer);_startDnxListener();}},1500);
 
   // ── MIGUEL'S TIME LOG ─────────────────────────────────────
   function _listenTimeLog(){
@@ -14882,10 +14889,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         if (filter === 'completed' && !r.resolved) return;
         if (filter === 'today'     && (!ts || ts < todayStart)) return;
         if (filter === 'week'      && (!ts || ts < weekStart)) return;
-        if (filter === 'pending'   && r.type !== 'blue') return;
-        if (filter === 'machinist' && r.type !== 'yellow') return;
+        if (filter === 'pending'   && !(r.type === 'blue' && window._isPureWOStatus(r))) return;
+        if (filter === 'machinist' && !window._isMachinistReq(r)) return;
         if (filter === 'inspection'&& r.type !== 'red') return;
-        if (filter === 'running'   && r.type !== 'green') return;
+        if (filter === 'running'   && !(r.type === 'green' && window._isPureWOStatus(r))) return;
         if (filter === 'datanomix' && r.type !== 'dnx') return;
 
         reqs.push(r);
@@ -15500,8 +15507,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       var op=r.operator||'Unknown';
       if(!byOperator[op]) byOperator[op]={total:0,blue:0,yellow:0,mins:0};
       byOperator[op].total++;
-      if(r.type==='blue'){byOperator[op].blue++;byType.blue++;}
-      if(r.type==='yellow'){byOperator[op].yellow++;byType.yellow++;}
+      var isMach = window._isMachinistReq ? window._isMachinistReq(r) : r.type==='yellow';
+      if(isMach){byOperator[op].yellow++;byType.yellow++;}
+      else if(r.type==='blue'){byOperator[op].blue++;byType.blue++;}
       byOperator[op].mins+=r.elapsedMins||0; totalMins+=r.elapsedMins||0;
     });
     var sortedOps=Object.entries(byOperator).sort(function(a,b){return b[1].total-a[1].total;});
