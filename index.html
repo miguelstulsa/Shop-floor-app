@@ -8091,7 +8091,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         .forEach(function(r){ var m=r.machine||'Unknown'; completedByMachine[m]=(completedByMachine[m]||0)+1; });
       var topProducers = Object.entries(completedByMachine).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
       var repeatOffenders = Object.entries(issueByMachine).filter(function(e){return e[1]>=3;}).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
-      var completedWithTime = periodAll.filter(function(r){ return (r.resolvedAt||r.completedAt) && r.createdAt; });
+      var completedWithTime = periodAll.filter(function(r){
+        var d = r.resolvedAt || r.completedAt;
+        return d && r.createdAt && (d.seconds - r.createdAt.seconds) > 0;
+      });
       var avgHours = 0;
       if (completedWithTime.length > 0) {
         var totalSec = completedWithTime.reduce(function(sum,r){ var doneAt=(r.resolvedAt||r.completedAt); return sum+(doneAt.seconds-r.createdAt.seconds); },0);
@@ -8390,7 +8393,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var resolvedAll = all.filter(function(r){ return r.resolved || getJobStatus(r)==='completed'; });
     var totalResolved = resolvedAll.length;
     var totalRequests = all.length;
-    var withTime = all.filter(function(r){ return (r.resolvedAt||r.completedAt) && r.createdAt; });
+    // Excludes records where resolvedAt is somehow before createdAt (bad/
+    // corrupted timestamps, clock skew, manual edits) — a handful of these
+    // was dragging the whole all-time average down to zero or negative,
+    // which is why this was showing a dash despite 6000+ resolved requests.
+    var withTime = all.filter(function(r){
+      var d = r.resolvedAt || r.completedAt;
+      return d && r.createdAt && (d.seconds - r.createdAt.seconds) > 0;
+    });
     var avgHoursAll = 0;
     if(withTime.length>0){
       var totalSec = withTime.reduce(function(sum,r){ var d=(r.resolvedAt||r.completedAt); return sum+(d.seconds-r.createdAt.seconds); },0);
@@ -8480,7 +8490,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var open = todayReqs.length - resolved.length;
     var pct = Math.round(resolved.length/todayReqs.length*100);
 
-    var withTime = todayReqs.filter(function(r){ return (r.resolvedAt||r.completedAt) && r.createdAt; });
+    var withTime = todayReqs.filter(function(r){
+      var d = r.resolvedAt || r.completedAt;
+      return d && r.createdAt && (d.seconds - r.createdAt.seconds) > 0;
+    });
     var avgMin = 0;
     if (withTime.length>0){
       var totalSec = withTime.reduce(function(s,r){ var d=(r.resolvedAt||r.completedAt); return s+(d.seconds-r.createdAt.seconds); },0);
@@ -15030,6 +15043,40 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     msgs.scrollTop = msgs.scrollHeight;
   }
 
+  // ── DATE RECEIPT BUILDER ────────────────────────────────────
+  // Matches MM/DD/YYYY, M/D/YY, MM-DD-YYYY, etc. — pulls every request
+  // (active + archived) created on that specific calendar day.
+  window._buildDateReceipt = async function(dateStr){
+    var db2=window.fbDb, mods=window._fbModules;
+    if(!db2||!mods) return {requests:[],error:'Not connected'};
+    var m = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if(!m) return {requests:[],dateInvalid:true};
+    var monthNum = parseInt(m[1],10), dayNum = parseInt(m[2],10);
+    if(monthNum < 1 || monthNum > 12 || dayNum < 1 || dayNum > 31) return {requests:[],dateInvalid:true};
+    var month = monthNum-1, day = dayNum, year = parseInt(m[3],10);
+    if(year < 100) year += 2000;
+    var dayStart = new Date(year, month, day, 0,0,0,0);
+    var dayEnd = new Date(year, month, day+1, 0,0,0,0);
+    if(isNaN(dayStart.getTime())) return {requests:[],dateInvalid:true};
+
+    var requests=[];
+    try {
+      var snap = await mods.getDocs(mods.collection(db2,'hillRequests'));
+      var archived = (typeof _getArchivedRequests === 'function') ? await _getArchivedRequests() : [];
+      var seen={};
+      snap.forEach(function(d){ if(seen[d.id])return; seen[d.id]=true; var r=d.data(); r.id=d.id; requests.push(r); });
+      archived.forEach(function(r){ if(seen[r.id])return; seen[r.id]=true; requests.push(r); });
+    } catch(e){ console.warn('Date lookup:',e.message); }
+
+    var startSec = Math.floor(dayStart.getTime()/1000), endSec = Math.floor(dayEnd.getTime()/1000);
+    requests = requests.filter(function(r){
+      return r.createdAt && r.createdAt.seconds >= startSec && r.createdAt.seconds < endSec;
+    });
+    requests.sort(function(a,b){ return (a.createdAt.seconds)-(b.createdAt.seconds); });
+    var dateLabel = dayStart.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    return {requests:requests, wo:dateLabel, dateLabel:dateLabel, timeLogs:[]};
+  }
+
   window._sendAIChat = async function(){
     var input = document.getElementById('ai-input');
     var msg = (input.value || '').trim();
@@ -15041,6 +15088,27 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     _chatHistory.push({role:'user', content: msg});
 
     var msgLower = msg.toLowerCase();
+
+    // Date lookup — MM/DD/YYYY, M/D/YY, MM-DD-YYYY etc.
+    var dateMatch = msg.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if(dateMatch){
+      _chatThinking = true;
+      var typingElD = addTyping();
+      var dateReceipt = await _buildDateReceipt(msg.trim());
+      typingElD.remove(); _chatThinking = false;
+      if(dateReceipt.dateInvalid){
+        addMessage('assistant', 'That doesn\'t look like a valid date — try MM/DD/YYYY, like 6/5/2026.');
+        return;
+      }
+      if(dateReceipt.requests.length === 0){
+        addMessage('assistant', 'No requests found on ' + dateReceipt.dateLabel + '.');
+        _chatHistory.push({role:'assistant', content:'No requests found on '+dateReceipt.dateLabel});
+        return;
+      }
+      addFullReceipt(dateReceipt, 'DATE');
+      _chatHistory.push({role:'assistant', content:'Showing requests from '+dateReceipt.dateLabel});
+      return;
+    }
 
     // WO lookup
     var woMatch = msg.match(/(2\d-\d{4}|\d{2}-\d{4}|WO[\s\-#]?\d+)/i);
@@ -15255,6 +15323,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
               : searchType==='MACHINIST'? '👤 '+data.name
               : searchType==='PART'     ? '🔩 Part: '+data.part
               : searchType==='KEYWORD'  ? '🔍 "'+data.keyword+'" — All Mentions'
+              : searchType==='DATE'     ? '📅 '+data.dateLabel
               : data.wo                 ? 'WO '+data.wo
               : (data.name||'Search Results');
 
