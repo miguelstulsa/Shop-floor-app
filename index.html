@@ -7676,6 +7676,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   window._isMachinistReq = function(r) {
     if (r.type === 'yellow') return true;
     if ((r.type === 'blue' || r.type === 'green') && window._hasRealDetail(r)) return true;
+    // Every genuine auto-generated Datanomix inactivity alert has a detail
+    // that's EXACTLY "{machine} INACTIVE for {duration}" — that's the only
+    // code path that ever writes that text. A dnx-tagged record with real
+    // content that does NOT match that pattern is not an automated alert —
+    // it's an actual ask (a machinist typed a real need) that happened to
+    // get logged through the DNX flow instead of the Machinist Req button.
+    // Inspection (red) is deliberately never touched here.
+    if (r.type === 'dnx' && window._hasRealDetail(r) && !/INACTIVE\s+for/i.test(r.detail)) return true;
     return false;
   };
   // Pending/Running WO, for counting purposes, means the job-status side only
@@ -8039,7 +8047,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       // DNX auto-alerts are a machine-inactivity notice from Datanomix, not
       // something a machinist actually asked for — they get their own count
       // instead of being folded into Machinist Requests.
-      if (r.type === 'dnx')    { dnxAlerts++; }
+      if (r.type === 'dnx' && !_isMachinistReq(r)) { dnxAlerts++; }
       // Floor Support is its own real request type (own button, own push
       // notifications) — it was previously not counted anywhere at all in
       // this dashboard, which undercounted total real workload handled.
@@ -8195,7 +8203,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (dashFilter==='completed'     && s!=='completed') return false;
       if (dashFilter==='issues'        && !(_isMachinistReq(r) && s!=='completed')) return false;
       if (dashFilter==='machinist-all' && !_isMachinistReq(r)) return false;
-      if (dashFilter==='dnx-alerts'    && r.type!=='dnx')    return false;
+      if (dashFilter==='dnx-alerts'    && !(r.type==='dnx' && !_isMachinistReq(r))) return false;
       if (dashFilter==='floor-support' && r.type!=='orange') return false;
       if (dashFilter==='inspections'   && r.type!=='red')  return false;
       if (dashMachineFilter!=='all' && r.machine!==dashMachineFilter) return false;
