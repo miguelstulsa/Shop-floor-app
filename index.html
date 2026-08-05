@@ -7657,6 +7657,34 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     return 'issue';
   }
 
+  // ── MACHINIST REQUEST CLASSIFICATION ───────────────────────────
+  // A request counts as a Machinist Request if it actually asks for
+  // something — regardless of whether it's tagged yellow (Machinist Req),
+  // blue (Pending WO), or green (Running WO). Pending/Running WO is a job
+  // status, not a content type: plenty of real "need tools/fixture" asks get
+  // logged against a work order rather than through the standalone Machinist
+  // Req button, and those are just as real. A blue/green request only stays
+  // classified as Pending/Running WO if it has no actual description — pure
+  // job-lifecycle tracking with nothing being asked for.
+  // Single shared source of truth — used everywhere this distinction matters
+  // so it can't drift out of sync between the summary cards, drill-downs,
+  // Impact panel, and My Day, the way DNX/Floor Support briefly did.
+  function _hasRealDetail(r) {
+    return !!(r.detail && String(r.detail).trim().length > 0);
+  }
+  function _isMachinistReq(r) {
+    if (r.type === 'yellow') return true;
+    if ((r.type === 'blue' || r.type === 'green') && _hasRealDetail(r)) return true;
+    return false;
+  }
+  // Pending/Running WO, for counting purposes, means the job-status side only
+  // — a blue/green record that either has no real ask, or does have one but
+  // is being counted as a Machinist Request instead (not double-counted).
+  function _isPureWOStatus(r) {
+    if (r.type !== 'blue' && r.type !== 'green') return false;
+    return !_hasRealDetail(r);
+  }
+
   // ── WO TRACKER ───────────────────────────────────────────────
   window._woData     = [];   // all WOs built from current period
   window._woSelected = {};   // checked WOs keyed by wo number
@@ -8000,10 +8028,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var pending=0, running=0, completed=0, inspections=0, machinistReqs=0, dnxAlerts=0, floorSupport=0;
     var issueByMachine = {};
     periodAll.forEach(function(r) {
-      // Count ALL blue requests (pending WO) regardless of resolved status
-      if (r.type === 'blue')   { pending++; }
-      if (r.type === 'yellow') { machinistReqs++; }
-      if (r.type === 'green')  { running++; }
+      // Count ALL blue requests (pending WO) regardless of resolved status —
+      // but only the ones that are pure job-status, not an actual ask.
+      if (r.type === 'blue' && _isPureWOStatus(r))   { pending++; }
+      if (r.type === 'green' && _isPureWOStatus(r))  { running++; }
+      if (_isMachinistReq(r))  { machinistReqs++; }
       if (r.type === 'red')    { inspections++; }
       // DNX auto-alerts are a machine-inactivity notice from Datanomix, not
       // something a machinist actually asked for — they get their own count
@@ -8123,7 +8152,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           machineReqs.slice(0,5).forEach(function(r) {
             var ts = r.createdAt ? new Date(r.createdAt.seconds*1000) : null;
             var tsStr = ts ? ts.toLocaleDateString([],{month:'short',day:'numeric'})+' '+ts.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
-            var typeLabel = typeLabels[r.type] || r.type;
+            var typeLabel = _isMachinistReq(r) ? '🟡 MACHINIST REQ' : (typeLabels[r.type] || r.type);
             var typeColor = {red:'#f87171',yellow:'#fbbf24',orange:'#fb923c',blue:'#60a5fa',green:'#22c55e'}[r.type]||'#94a3b8';
             var desc = r.detail || r.note || r.wo || '';
             var floorType = r.floorSupportType ? ' · '+r.floorSupportType : '';
@@ -8156,11 +8185,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // Filter for log
     var filtered = periodAll.filter(function(r) {
       var s = getJobStatus(r);
-      if (dashFilter==='pending'       && s!=='pending')   return false;
-      if (dashFilter==='running'       && s!=='running')   return false;
+      if (dashFilter==='pending'       && !(s==='pending' && _isPureWOStatus(r))) return false;
+      if (dashFilter==='running'       && !(s==='running' && _isPureWOStatus(r))) return false;
       if (dashFilter==='completed'     && s!=='completed') return false;
-      if (dashFilter==='issues'        && (s!=='issue' || r.type==='red' || r.type==='dnx' || r.type==='orange')) return false;
-      if (dashFilter==='machinist-all' && r.type!=='yellow') return false;
+      if (dashFilter==='issues'        && !(_isMachinistReq(r) && s!=='completed')) return false;
+      if (dashFilter==='machinist-all' && !_isMachinistReq(r)) return false;
       if (dashFilter==='dnx-alerts'    && r.type!=='dnx')    return false;
       if (dashFilter==='floor-support' && r.type!=='orange') return false;
       if (dashFilter==='inspections'   && r.type!=='red')  return false;
@@ -8220,7 +8249,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
         // Request type label
         r.type ? '<div style="font-size:11px;color:#64748b;margin-top:3px;letter-spacing:1px;">'+
-          (typeLabels[r.type]||r.type).replace(/[🔴🟡🔵🟢]/g,'').trim()+'</div>' : '',
+          (_isMachinistReq(r) ? 'MACHINIST REQ' : (typeLabels[r.type]||r.type)).replace(/[🔴🟡🔵🟢]/g,'').trim()+'</div>' : '',
 
         // Details / notes — the actual request wording
         r.detail ? '<div style="margin-top:6px;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:6px;border-left:3px solid rgba(245,158,11,0.4);">'+
@@ -8365,17 +8394,17 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var totalSec = withTime.reduce(function(sum,r){ var d=(r.resolvedAt||r.completedAt); return sum+(d.seconds-r.createdAt.seconds); },0);
       avgHoursAll = Math.round(totalSec/withTime.length/3600*100)/100;
     }
-    var machinistResolved = resolvedAll.filter(function(r){ return r.type==='yellow'; }).length;
+    var machinistResolved = resolvedAll.filter(_isMachinistReq).length;
     // Every single Machinist Request ever created, regardless of whether it's
     // been started or finished yet — the thing actually being asked for here,
     // since "fulfilled" only counts ones that are done.
-    var machinistCreated = all.filter(function(r){ return r.type==='yellow'; }).length;
+    var machinistCreated = all.filter(_isMachinistReq).length;
 
     // Earliest record on file — answers "since when has this actually been
     // tracking data" directly, instead of leaving all-time totals unverifiable.
     var withDates = all.filter(function(r){ return r.createdAt && r.createdAt.seconds; });
     var earliestAll = withDates.length ? withDates.reduce(function(min,r){ return r.createdAt.seconds < min.createdAt.seconds ? r : min; }) : null;
-    var yellowWithDates = withDates.filter(function(r){ return r.type==='yellow'; });
+    var yellowWithDates = withDates.filter(_isMachinistReq);
     var earliestYellow = yellowWithDates.length ? yellowWithDates.reduce(function(min,r){ return r.createdAt.seconds < min.createdAt.seconds ? r : min; }) : null;
     function fmtDate(secs){ return new Date(secs*1000).toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'}); }
 
@@ -8470,8 +8499,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     })() : '—';
 
     // Type breakdown
-    var typeCounts = { blue:0, yellow:0, green:0, red:0, dnx:0, orange:0 };
-    todayReqs.forEach(function(r){ if(typeCounts[r.type]!==undefined) typeCounts[r.type]++; });
+    var typeCounts = { blue:0, yellow:0, green:0, red:0, dnx:0, orange:0, machinistTotal:0 };
+    todayReqs.forEach(function(r){
+      if (_isMachinistReq(r)) { typeCounts.machinistTotal++; return; }
+      if(typeCounts[r.type]!==undefined) typeCounts[r.type]++;
+    });
 
     var h = '<div style="background:linear-gradient(145deg,#0d1f35,#132840);border:1px solid #1e3a5c;border-radius:12px;padding:16px 18px;">';
     h += '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:2px;color:#f5c500;margin-bottom:12px;">📅 TODAY AT A GLANCE</div>';
@@ -8485,8 +8517,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
        + '</div>';
 
     h += '<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;">';
+    if(typeCounts.machinistTotal) h += '<span style="color:#fbbf24;">🟡 '+typeCounts.machinistTotal+' Machinist Req</span>';
     if(typeCounts.blue)   h += '<span style="color:#60a5fa;">🔵 '+typeCounts.blue+' Pending WO</span>';
-    if(typeCounts.yellow) h += '<span style="color:#fbbf24;">🟡 '+typeCounts.yellow+' Machinist Req</span>';
     if(typeCounts.green)  h += '<span style="color:#4ade80;">🟢 '+typeCounts.green+' Running WO</span>';
     if(typeCounts.red)    h += '<span style="color:#f87171;">🔴 '+typeCounts.red+' Inspection</span>';
     if(typeCounts.dnx)    h += '<span style="color:#60a5fa;">🔷 '+typeCounts.dnx+' DNX Alert</span>';
