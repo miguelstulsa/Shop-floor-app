@@ -858,6 +858,14 @@
   .cell-fab .cell-title { white-space: nowrap !important; margin-bottom: 0 !important; padding-bottom: 0 !important; border-bottom: none !important; padding-right: 8px !important; border-right: 1px solid rgba(125,211,252,0.25) !important; margin-right: 4px !important; color: #fcd34d !important; flex: 0 0 auto !important; }
   .cell-fab .cell-title::before { background: #d97706 !important; box-shadow: 0 0 8px #d97706 !important; }
   .cell-fab .machines { flex-direction: row !important; flex: 1 !important; gap: 4px !important; min-height: 0 !important; }
+  .cell-dmg { border-color: rgba(168,85,247,0.5) !important; }
+  .cell-dmg .cell-title { color: #d8b4fe !important; }
+  .cell-dmg .cell-title::before { background: #a855f7 !important; box-shadow: 0 0 8px #a855f7 !important; }
+  .dmg-tracker-btn { position: relative; background: linear-gradient(160deg, #1e1240, #2d1a5c); border: 1px solid rgba(168,85,247,0.5); border-radius: 8px; padding: 10px 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; }
+  .dmg-tracker-btn .dmg-icon { font-size: 18px; }
+  .dmg-tracker-btn .dmg-label { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 1px; color: #d8b4fe; }
+  .dmg-tracker-badge { position: absolute; top: -6px; right: -6px; background: #f59e0b; color: #1a1000; border-radius: 999px; min-width: 18px; height: 18px; font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center; padding: 0 4px; }
+  .dmg-tracker-badge.overdue { background: #ef4444; color: #fff; }
   .cell-fab .machine { flex: 1 !important; margin-bottom: 0 !important; min-height: 36px !important; max-height: 44px !important; }
   .cell-fab .machine-notes { display: none !important; }
   .cell-fab .machine-body { flex: 1 !important; }
@@ -1247,7 +1255,6 @@
       <div class="user-greeting" id="userGreeting">
         <span class="greeting-name">👋 <strong id="greetingName"></strong></span>
         <button class="admin-btn" id="adminBtn" onclick="openAdminPanel()">👑 Admin</button>
-        <a class="shop-switch-btn" id="shopSwitchBtn" href="#" target="_blank" title="Switch to QMI Shop Floor">🏭 QMI</a>
         <button class="logout-btn" onclick="doLogout()">Logout</button>
       </div>
     </div>
@@ -1269,6 +1276,7 @@
   <button class="nav-scroll-btn left" onclick="scrollTabs(-120)" aria-label="Scroll tabs left">&#8249;</button>
   <nav class="nav-tabs" id="navTabsEl">
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
+  <div class="nav-tab" onclick="window._openDmgTracker()" id="tab-qmidgp">📦 QMI/DGP <span class="tab-badge" id="qmidgpBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
@@ -1767,6 +1775,53 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     <pre id="dnx-raw-text" style="font-size:10px;color:#4ade80;overflow-x:auto;white-space:pre-wrap;max-height:500px;overflow-y:auto;margin:0;"></pre>
   </div>
 
+</div>
+
+<!-- DMG OUTSIDE TOOLING TRACKER MODAL -->
+<div class="modal-overlay" id="dmgTrackerOverlay" onclick="if(event.target===this) window._closeDmgTracker()" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">📦 QMI/DGP — Outside Tooling</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Tools &amp; jobs sent between the two shops</div>
+
+    <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:11px;color:#d8b4fe;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Log Items Sent Out</div>
+      <div style="position:relative;">
+        <input type="text" id="dmgItemDesc" placeholder="Search tooling — ProShop &amp; Zengers, or type a description..." autocomplete="off"
+          oninput="window._filterDmgTooling(this.value)" onfocus="window._filterDmgTooling(this.value)"
+          onblur="setTimeout(function(){ var b=document.getElementById('dmgToolingSearchResults'); if(b) b.style.display='none'; }, 200)"
+          style="width:100%;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;color:#f0f4f8;padding:10px 12px;font-size:14px;margin-bottom:8px;font-family:'Barlow',sans-serif;">
+        <div id="dmgToolingSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:60;background:#1a1035;border:1px solid #6b21a8;border-top:none;border-radius:0 0 8px 8px;max-height:240px;overflow-y:auto;margin-top:-8px;"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;font-weight:600;">Qty</div>
+        <button type="button" onclick="window._bumpDmgQty(-1)" style="width:34px;height:34px;background:rgba(255,255,255,0.05);border:1px solid #6b21a8;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;">−</button>
+        <div id="dmgQtyDisplay" style="min-width:44px;text-align:center;background:#1a1035;border:1px solid #6b21a8;border-radius:7px;padding:7px 0;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#e9d5ff;">1</div>
+        <button type="button" onclick="window._bumpDmgQty(1)" style="width:34px;height:34px;background:rgba(255,255,255,0.05);border:1px solid #6b21a8;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;">＋</button>
+      </div>
+      <button type="button" onclick="window._addDmgItemToList()" style="width:100%;margin-bottom:10px;background:rgba(168,85,247,0.15);border:1px solid #a855f7;color:#d8b4fe;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">＋ ADD ITEM TO THIS SHIPMENT</button>
+      <!-- Staged items — several can be added before logging, same pattern as Supply Item / Tooling -->
+      <div id="dmgStagedList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div style="flex:1;">
+          <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Sent</div>
+          <input type="date" id="dmgSentDate" style="width:100%;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;color:#f0f4f8;padding:8px 10px;font-size:13px;font-family:'Barlow',sans-serif;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Due Back</div>
+          <input type="date" id="dmgDueDate" style="width:100%;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;color:#f0f4f8;padding:8px 10px;font-size:13px;font-family:'Barlow',sans-serif;">
+        </div>
+      </div>
+      <input type="text" id="dmgNotes" placeholder="Notes (optional, applies to all items in this shipment)" style="width:100%;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;margin-bottom:10px;font-family:'Barlow',sans-serif;">
+      <button type="button" onclick="window._logDmgItem()" style="width:100%;background:#a855f7;border:none;color:#1a1035;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;" id="dmgLogBtn">＋ LOG ITEM</button>
+    </div>
+
+    <div style="font-size:11px;color:#d8b4fe;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Currently Out</div>
+    <div id="dmgOutList" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:10px;">
+      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing currently out.</div>
+    </div>
+
+    <button type="button" onclick="window._closeDmgTracker()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
+  </div>
 </div>
 
 <!-- MACHINE NOTE MODAL -->
@@ -3931,6 +3986,264 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (window._voiceRecorder && window._voiceRecorder.state === 'recording') window._voiceRecorder.stop();
   }
   function handleOverlayClick(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+  // ── DMG OUTSIDE TOOLING TRACKER ──────────────────────────────
+  // Tracks tools/jobs sent to the owner's other shop — separate from the
+  // regular machine request flow since it needs sent/due dates, not just
+  // a description. Persists to its own Firestore collection with a live
+  // listener so the "currently out" list and badge count stay current
+  // for anyone viewing the shop floor, same as everything else here.
+  window._dmgItems = [];
+
+  function _dmgFmtDate(dateStr){
+    if(!dateStr) return '';
+    var d = new Date(dateStr + 'T00:00:00');
+    if(isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'});
+  }
+  function _dmgIsOverdue(dueDateStr){
+    if(!dueDateStr) return false;
+    var due = new Date(dueDateStr + 'T00:00:00');
+    var today = new Date(); today.setHours(0,0,0,0);
+    return due.getTime() < today.getTime();
+  }
+
+  window._startDmgListener = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods){ setTimeout(window._startDmgListener, 800); return; }
+    mods.onSnapshot(mods.collection(db2, 'hillOutsideTooling'), function(snap){
+      var items = [];
+      snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
+      window._dmgItems = items;
+      window._renderDmgTracker();
+    }, function(e){ console.warn('DMG tracker listener:', e.message); });
+  };
+
+  window._renderDmgTracker = function(){
+    var outItems = window._dmgItems.filter(function(it){ return !it.returned; });
+    outItems.sort(function(a,b){ return (a.dueDate||'9999').localeCompare(b.dueDate||'9999'); });
+
+    // Badge on the nav tab
+    var badge = document.getElementById('qmidgpBadge');
+    if(badge){
+      if(outItems.length > 0){
+        badge.textContent = outItems.length;
+        badge.style.display = 'flex';
+        var anyOverdue = outItems.some(function(it){ return _dmgIsOverdue(it.dueDate); });
+        badge.classList.toggle('overdue', anyOverdue);
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // List inside the modal
+    var list = document.getElementById('dmgOutList');
+    if(!list) return;
+    if(!outItems.length){
+      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing currently out.</div>';
+      return;
+    }
+    list.innerHTML = outItems.map(function(it){
+      var overdue = _dmgIsOverdue(it.dueDate);
+      return '<div style="background:'+(overdue?'rgba(239,68,68,0.1)':'rgba(168,85,247,0.08)')+';border:1px solid '+(overdue?'#ef4444':'rgba(168,85,247,0.35)')+';border-radius:8px;padding:10px 12px;">'
+        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;">' + ((it.qty && it.qty > 1) ? (it.qty + '× ') : '') + (it.desc||'(no description)') + '</div>'
+        + '<div style="font-size:11px;color:'+(overdue?'#fca5a5':'#94a3b8')+';">'
+          + 'Sent ' + _dmgFmtDate(it.sentDate) + ' · Due back ' + _dmgFmtDate(it.dueDate) + (overdue ? ' — OVERDUE' : '')
+        + '</div>'
+        + (it.notes ? '<div style="font-size:11px;color:#94a3b8;margin-top:3px;">' + it.notes + '</div>' : '')
+        + '<button type="button" onclick="window._markDmgReturned(\'' + it.id + '\')" style="margin-top:8px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ MARK RETURNED</button>'
+        + '</div>';
+    }).join('');
+  };
+
+  window._openDmgTracker = function(){
+    var today = new Date().toISOString().slice(0,10);
+    document.getElementById('dmgItemDesc').value = '';
+    document.getElementById('dmgSentDate').value = today;
+    document.getElementById('dmgDueDate').value = '';
+    document.getElementById('dmgNotes').value = '';
+    window._dmgStagedItems = [];
+    window._dmgQty = 1;
+    var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = '1';
+    window._renderDmgStagedList();
+    window._renderDmgTracker();
+    document.getElementById('dmgTrackerOverlay').style.display = 'flex';
+  };
+
+  window._closeDmgTracker = function(){
+    document.getElementById('dmgTrackerOverlay').style.display = 'none';
+  };
+
+  // ── STAGED ITEMS — several tools/jobs can go out in one shipment,
+  // just like Supply Item / Tooling requests build up a checklist before
+  // submitting. Each staged description becomes its own tracked record
+  // (so each can be individually marked returned later), but they all
+  // share the same sent date, due date, and notes.
+  window._dmgStagedItems = window._dmgStagedItems || []; // [{desc, qty}, ...]
+  window._dmgQty = window._dmgQty || 1;
+
+  window._bumpDmgQty = function(delta){
+    window._dmgQty = Math.max(1, (window._dmgQty || 1) + delta);
+    var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = window._dmgQty;
+  };
+
+  window._addDmgItemToList = function(){
+    var input = document.getElementById('dmgItemDesc');
+    var desc = input.value.trim();
+    if(!desc){ if(window.showToast) showToast('red','Enter a description first',''); return; }
+    window._dmgStagedItems.push({ desc: desc, qty: window._dmgQty || 1 });
+    input.value = '';
+    window._dmgQty = 1;
+    var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = '1';
+    var box = document.getElementById('dmgToolingSearchResults');
+    if(box){ box.style.display='none'; box.innerHTML=''; }
+    window._renderDmgStagedList();
+    input.focus();
+  };
+
+  window._removeDmgStagedItem = function(idx){
+    window._dmgStagedItems.splice(idx, 1);
+    window._renderDmgStagedList();
+  };
+
+  window._renderDmgStagedList = function(){
+    var list = document.getElementById('dmgStagedList');
+    var btn = document.getElementById('dmgLogBtn');
+    if(!list) return;
+    var n = window._dmgStagedItems.length;
+    list.innerHTML = window._dmgStagedItems.map(function(item, i){
+      var qtyPrefix = (item.qty && item.qty > 1) ? (item.qty + '× ') : '';
+      return '<div style="background:rgba(168,85,247,0.12);border:1px solid #a855f7;border-radius:7px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+        + '<span style="font-size:12.5px;color:#e9d5ff;">' + (i+1) + '. ' + qtyPrefix + item.desc + '</span>'
+        + '<button type="button" onclick="window._removeDmgStagedItem(' + i + ')" style="background:none;border:none;color:#d8b4fe;font-size:15px;cursor:pointer;padding:0 4px;">✕</button>'
+        + '</div>';
+    }).join('');
+    if(btn) btn.textContent = n > 1 ? '＋ LOG ' + n + ' ITEMS' : '＋ LOG ITEM';
+  };
+
+  window._logDmgItem = function(){
+    // If something's still sitting in the description field (typed but never
+    // explicitly added), fold it in as the last item rather than silently
+    // dropping it — this keeps the single-item case just as quick as before.
+    var leftover = document.getElementById('dmgItemDesc').value.trim();
+    if(leftover) window._dmgStagedItems.push({ desc: leftover, qty: window._dmgQty || 1 });
+
+    var items = window._dmgStagedItems.slice();
+    var sentDate = document.getElementById('dmgSentDate').value;
+    var dueDate = document.getElementById('dmgDueDate').value;
+    var notes = document.getElementById('dmgNotes').value.trim();
+
+    if(!items.length){ if(window.showToast) showToast('red','Add at least one item','What tool/job is being sent?'); return; }
+    if(!sentDate){ if(window.showToast) showToast('red','Missing sent date',''); return; }
+
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+
+    Promise.all(items.map(function(item){
+      return mods.addDoc(mods.collection(db2, 'hillOutsideTooling'), {
+        desc: item.desc, qty: item.qty || 1, sentDate: sentDate, dueDate: dueDate, notes: notes,
+        returned: false, loggedBy: window.currentUser || 'unknown',
+        createdAt: mods.serverTimestamp()
+      });
+    })).then(function(){
+      document.getElementById('dmgItemDesc').value = '';
+      document.getElementById('dmgDueDate').value = '';
+      document.getElementById('dmgNotes').value = '';
+      window._dmgStagedItems = [];
+      window._dmgQty = 1;
+      var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = '1';
+      window._renderDmgStagedList();
+      if(window.showToast) showToast('green', items.length > 1 ? items.length+' items logged' : 'Logged', items.map(function(it){ return it.desc; }).join(', '));
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Failed to log', e.message);
+    });
+  };
+
+  window._markDmgReturned = function(id){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', id), {
+      returned: true, returnedAt: mods.serverTimestamp(), returnedBy: window.currentUser || 'unknown'
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
+  };
+
+  // Same search box/matching logic used for Machinist Req's tooling search,
+  // reused here so "what's being sent" is filled from the real ProShop/
+  // Zengers catalog instead of free-typed text. The underlying data
+  // (TOOLING_INVENTORY, ZENGERS_INVENTORY) and matching functions
+  // (_toolingTokenize, _toolingWordMatch, _toolingMatchesQuery) are defined
+  // elsewhere and reused as-is — this just wires a second, independent
+  // search UI to them so it can't collide with the Machinist Req one.
+  window._filterDmgTooling = function(query){
+    var box = document.getElementById('dmgToolingSearchResults');
+    if(!box) return;
+    var q = (query||'').trim().toLowerCase();
+    if(!q){ box.style.display='none'; box.innerHTML=''; return; }
+    var qWords = _toolingTokenize(q);
+    if(!qWords.length){ box.style.display='none'; box.innerHTML=''; return; }
+
+    var proshopMatches = TOOLING_INVENTORY.filter(function(t){
+      return _toolingMatchesQuery(_toolingSearchText(t), qWords);
+    }).slice(0, 15).map(function(t){ return { source:'proshop', t:t }; });
+
+    var zengersMatches = ZENGERS_INVENTORY.filter(function(z){
+      return _toolingMatchesQuery(_zengersSearchText(z), qWords);
+    }).slice(0, 15).map(function(z){ return { source:'zengers', z:z }; });
+
+    var matches = proshopMatches.concat(zengersMatches).slice(0, 30);
+
+    if(!matches.length){
+      box.style.display = 'none'; // let them keep typing a free-text description instead
+      return;
+    }
+    box.innerHTML = matches.map(function(m, i){
+      if(m.source === 'proshop'){
+        var t = m.t;
+        var label = _toolingDisplayLabel(t);
+        var groupName = TOOLING_GROUPS[t[1]];
+        var groupTag = groupName ? (t[1]+' - '+groupName) : t[1];
+        return '<div data-idx="'+i+'" onmousedown="window._selectDmgTooling('+i+')" '
+          + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+          + '<span>' + label + (groupTag ? ' <span style="color:#64748b;font-size:11px;">('+groupTag+')</span>' : '') + '</span>'
+          + '<span style="background:#92400e;color:#fcd34d;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">'+t[0]+'</span>'
+          + '</div>';
+      } else {
+        var z = m.z;
+        return '<div data-idx="'+i+'" onmousedown="window._selectDmgTooling('+i+')" '
+          + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+          + '<span>' + z[2] + ' <span style="color:#7dd3fc;font-size:11px;">(Bin ' + z[3] + ')</span></span>'
+          + '<span style="background:#0c4a6e;color:#7dd3fc;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">'+z[0]+'</span>'
+          + '</div>';
+      }
+    }).join('');
+    box.setAttribute('data-matches', JSON.stringify(matches));
+    box.style.display = 'block';
+  };
+
+  // Picking a result fills the description field with the real Tool #/
+  // Zengers code + description, then moves straight to the due date —
+  // same "search converts to the real catalog entry" idea as Machinist Req.
+  window._selectDmgTooling = function(idx){
+    var box = document.getElementById('dmgToolingSearchResults');
+    var matches = JSON.parse(box.getAttribute('data-matches')||'[]');
+    var m = matches[idx];
+    if(!m) return;
+    var text;
+    if(m.source === 'proshop'){
+      var t = m.t;
+      text = '🔧 Tool #' + t[0] + ' — ' + _toolingDisplayLabel(t);
+    } else {
+      var z = m.z;
+      text = '🔷 Zengers ' + z[0] + ' — ' + z[2] + ' (Bin ' + z[3] + ')';
+    }
+    document.getElementById('dmgItemDesc').value = text;
+    box.style.display = 'none';
+    box.innerHTML = '';
+    document.getElementById('dmgItemDesc').focus();
+  };
+
+  window._startDmgListener();
+
   // Measuring equipment for Inspection requests — [name, needsDimension]
   // needsDimension = true means this is a range-based tool (Tri-Mic, Rod/Groove Mic, Bore Gage)
   // that must be mastered/set to a specific target dimension before use.
