@@ -2063,6 +2063,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <!-- Staging area — tool picked but not yet added to the request, quantity set here -->
         <div id="toolingStaging" style="display:none;margin-top:8px;background:rgba(251,191,36,0.08);border:1px solid #92400e;border-radius:8px;padding:10px;">
           <div id="toolingStagingName" style="font-size:13px;color:#fcd34d;font-weight:600;margin-bottom:8px;"></div>
+          <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;font-weight:600;">Reason</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <button type="button" onclick="window._setToolingReason(this,'New')" class="tooling-reason-btn" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #92400e;border-radius:7px;padding:8px 4px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:13px;cursor:pointer;">NEW</button>
+            <button type="button" onclick="window._setToolingReason(this,'Replace')" class="tooling-reason-btn" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #92400e;border-radius:7px;padding:8px 4px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:13px;cursor:pointer;">REPLACE</button>
+            <button type="button" onclick="window._setToolingReason(this,'Sharpen')" class="tooling-reason-btn" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #92400e;border-radius:7px;padding:8px 4px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:13px;cursor:pointer;">SHARPEN</button>
+          </div>
           <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;font-weight:600;">Quantity</div>
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
             <button type="button" onclick="window._bumpToolingQty(-1)" style="width:40px;height:40px;background:rgba(255,255,255,0.05);border:1px solid #92400e;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:20px;cursor:pointer;">−</button>
@@ -5151,9 +5157,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // ── TOOLING INVENTORY SEARCH (Machinist Requests) ──────────
   // Every match is picked directly — no staging/dimension step needed like
   // measuring equipment, since a tool is just "I need this," not "set this to."
-  window._selectedTooling = []; // [{toolNum, group, cutDia, sizeName, thread, qty}, ...]
+  window._selectedTooling = []; // [{toolNum, group, cutDia, sizeName, thread, qty, reason}, ...]
   window._pendingTooling = null; // {toolNum, group, cutDia, sizeName, thread} — staged, not yet confirmed
   window._selectedToolingQty = 1;
+  window._selectedToolingReason = '';
 
   // Fuzzy word match — same approach already proven in the AI Assistant
   // search: short words (under 3 letters) require an exact match to avoid
@@ -5258,6 +5265,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       document.getElementById('toolingStagingName').textContent = '🔷 Zengers ' + z[0] + ' — ' + z[2] + ' (Bin ' + z[3] + ')';
     }
     window._selectedToolingQty = 1;
+    window._selectedToolingReason = '';
+    document.querySelectorAll('.tooling-reason-btn').forEach(function(b){
+      b.style.background = 'rgba(255,255,255,0.05)'; b.style.borderColor = '#92400e'; b.style.color = '#94a3b8';
+    });
     document.getElementById('toolingSearchInput').value = '';
     box.style.display = 'none';
     box.innerHTML = '';
@@ -5265,17 +5276,29 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('toolingStaging').style.display = 'block';
   };
 
+  window._setToolingReason = function(btn, reason){
+    window._selectedToolingReason = reason;
+    document.querySelectorAll('.tooling-reason-btn').forEach(function(b){
+      var isThis = b === btn;
+      b.style.background = isThis ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)';
+      b.style.borderColor = isThis ? '#22c55e' : '#92400e';
+      b.style.color = isThis ? '#4ade80' : '#94a3b8';
+    });
+  };
+
   window._bumpToolingQty = function(delta){
     window._selectedToolingQty = Math.max(1, (window._selectedToolingQty || 1) + delta);
     var qd = document.getElementById('toolingQtyDisplay'); if(qd) qd.textContent = window._selectedToolingQty;
   };
 
-  // Locks the staged tool + quantity into the request's checklist
+  // Locks the staged tool + quantity + reason into the request's checklist
   window._confirmAddTooling = function(){
     if(!window._pendingTooling) return;
+    if(!window._selectedToolingReason){ if(window.showToast) showToast('yellow','Pick a reason','Select New, Replace, or Sharpen first.'); return; }
     var t = window._pendingTooling;
-    window._selectedTooling.push(Object.assign({}, t, { qty: window._selectedToolingQty || 1 }));
+    window._selectedTooling.push(Object.assign({}, t, { qty: window._selectedToolingQty || 1, reason: window._selectedToolingReason }));
     window._pendingTooling = null;
+    window._selectedToolingReason = '';
     document.getElementById('toolingStaging').style.display = 'none';
     window._renderToolingChecklist();
     document.getElementById('toolingSearchInput').focus(); // ready to search for the next one
@@ -5284,6 +5307,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // Discards the staged tool without adding it
   window._cancelStagingTooling = function(){
     window._pendingTooling = null;
+    window._selectedToolingReason = '';
     document.getElementById('toolingStaging').style.display = 'none';
   };
 
@@ -5293,9 +5317,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(!window._selectedTooling.length){ list.innerHTML = ''; return; }
     list.innerHTML = window._selectedTooling.map(function(t, i){
       var qtyPrefix = (t.qty && t.qty > 1) ? (t.qty + '× ') : '';
+      var reasonTag = t.reason ? ' <span style="color:#4ade80;font-size:11px;">[' + t.reason + ']</span>' : '';
       if(t.source === 'zengers'){
         return '<div style="background:rgba(14,116,144,0.12);border:1px solid #0c4a6e;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">'
-          + '<span style="font-size:13px;color:#7dd3fc;font-weight:600;">' + (i+1) + '. 🔷 ' + qtyPrefix + t.desc + ' <span style="color:#38bdf8;font-size:11px;">(Bin ' + t.bins + ')</span></span>'
+          + '<span style="font-size:13px;color:#7dd3fc;font-weight:600;">' + (i+1) + '. 🔷 ' + qtyPrefix + t.desc + ' <span style="color:#38bdf8;font-size:11px;">(Bin ' + t.bins + ')</span>' + reasonTag + '</span>'
           + '<span style="background:#0c4a6e;color:#7dd3fc;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;white-space:nowrap;">'+t.toolNum+'</span>'
           + '<button type="button" onclick="window._removeToolingFromList(' + i + ')" style="background:none;border:none;color:#7dd3fc;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>'
           + '</div>';
@@ -5306,7 +5331,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if(t.thread) bits.push(t.thread);
       var label = bits.length ? bits.join(' — ') : '(no size on file)';
       return '<div style="background:rgba(251,191,36,0.1);border:1px solid #92400e;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">'
-        + '<span style="font-size:13px;color:#fcd34d;font-weight:600;">' + (i+1) + '. 🔧 ' + qtyPrefix + label + '</span>'
+        + '<span style="font-size:13px;color:#fcd34d;font-weight:600;">' + (i+1) + '. 🔧 ' + qtyPrefix + label + reasonTag + '</span>'
         + '<span style="background:#92400e;color:#fcd34d;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;white-space:nowrap;">'+t.toolNum+'</span>'
         + '<button type="button" onclick="window._removeToolingFromList(' + i + ')" style="background:none;border:none;color:#fbbf24;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>'
         + '</div>';
@@ -5322,9 +5347,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     window._selectedTooling = [];
     window._pendingTooling = null;
     window._selectedToolingQty = 1;
+    window._selectedToolingReason = '';
     var input = document.getElementById('toolingSearchInput'); if(input) input.value = '';
     var results = document.getElementById('toolingSearchResults'); if(results){ results.style.display='none'; results.innerHTML=''; }
     var staging = document.getElementById('toolingStaging'); if(staging) staging.style.display = 'none';
+    document.querySelectorAll('.tooling-reason-btn').forEach(function(b){
+      b.style.background = 'rgba(255,255,255,0.05)'; b.style.borderColor = '#92400e'; b.style.color = '#94a3b8';
+    });
     var list = document.getElementById('toolingChecklist'); if(list) list.innerHTML = '';
   };
 
@@ -5423,15 +5452,16 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (selectedType === 'yellow' && window._selectedTooling && window._selectedTooling.length) {
       var toolingLines = window._selectedTooling.map(function(t, i){
         var qtyPrefix = (t.qty && t.qty > 1) ? (t.qty + '× ') : '';
+        var reasonTag = t.reason ? ' [' + t.reason + ']' : '';
         if(t.source === 'zengers'){
-          return (i+1) + '. 🔷 ' + qtyPrefix + 'Zengers ' + t.toolNum + ' — ' + t.desc + ' (Bin ' + t.bins + ')';
+          return (i+1) + '. 🔷 ' + qtyPrefix + 'Zengers ' + t.toolNum + ' — ' + t.desc + ' (Bin ' + t.bins + ')' + reasonTag;
         }
         var bits = [];
         if(t.cutDia) bits.push(t.cutDia+'"');
         if(t.sizeName) bits.push(t.sizeName);
         if(t.thread) bits.push(t.thread);
         var label = bits.length ? bits.join(' — ') : '(no size on file)';
-        return (i+1) + '. 🔧 ' + qtyPrefix + 'Tool #' + t.toolNum + ' — ' + label;
+        return (i+1) + '. 🔧 ' + qtyPrefix + 'Tool #' + t.toolNum + ' — ' + label + reasonTag;
       });
       combinedDetail = toolingLines.join('\n') + (combinedDetail ? '\n' + combinedDetail : '');
     }
