@@ -1277,6 +1277,7 @@
   <nav class="nav-tabs" id="navTabsEl">
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="window._openDmgTracker()" id="tab-qmidgp">📦 QMI/DGP <span class="tab-badge" id="qmidgpBadge" style="display:none">0</span></div>
+  <div class="nav-tab" onclick="window._openToolListBrowser()" id="tab-toollist">📋 Tool List</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
@@ -1824,6 +1825,108 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   </div>
 </div>
 
+<!-- TOOL LIST MODAL — digital version of the paper "TOOL LIST" setup tag.
+     Filled out per WO/OP after checking ProShop's program/sequence detail
+     for tool lengths (OOH — Out Of Holder) and diameters, replacing the
+     handwritten tag that used to travel with the tool tray. Saved for the
+     record, attached to that work order. -->
+<div class="modal-overlay" id="toolListOverlay" onclick="if(event.target===this) window._closeToolListForm()" style="display:none;">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title" id="tlModalTitle">📋 Tool List</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Digital tool setup sheet — matched by Part # so it carries over automatically the next time this part runs, no matter what the new WO# is.</div>
+
+    <input type="hidden" id="tlEditId" value="">
+
+    <!-- PART # — the primary key. WO# always changes on a re-run; the part
+         number doesn't, so this is what actually connects tool lists across
+         different work orders for the same part. -->
+    <div style="margin-bottom:8px;">
+      <div style="font-size:10px;color:#4ade80;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:700;">Part # (required — this is the match key)</div>
+      <input type="text" id="tlPart" placeholder="e.g. 12345-A" style="width:100%;background:#0d1f35;border:1px solid #166534;border-radius:7px;color:#f0f4f8;padding:10px;font-size:15px;font-family:'Barlow',sans-serif;">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div>
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Work Order (this run)</div>
+        <input type="text" id="tlWO" placeholder="26-0500" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
+      </div>
+      <div>
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Operation #</div>
+        <input type="text" id="tlOP" placeholder="60" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div>
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Machine Name</div>
+        <input type="text" id="tlMachine" placeholder="VF-3" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
+      </div>
+      <div>
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Due Date</div>
+        <input type="date" id="tlDueDate" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
+      </div>
+    </div>
+
+    <div style="border-top:1px solid #1e3a5c;margin-bottom:12px;"></div>
+
+    <div style="font-size:11px;color:#7dd3fc;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Add a Tool</div>
+    <div style="position:relative;">
+      <input type="text" id="tlToolDesc" placeholder="Search tooling — ProShop &amp; Zengers, or type a description..." autocomplete="off"
+        oninput="window._filterToolListTooling(this.value)" onfocus="window._filterToolListTooling(this.value)"
+        onblur="setTimeout(function(){ var b=document.getElementById('tlToolingSearchResults'); if(b) b.style.display='none'; }, 200)"
+        style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;margin-bottom:8px;font-family:'Barlow',sans-serif;">
+      <div id="tlToolingSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:60;background:#0d1f35;border:1px solid #1e3a5c;border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;margin-top:-8px;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div>
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">OOH (Out of Holder)</div>
+        <input type="text" id="tlToolOOH" placeholder="e.g. 2.750&quot;" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
+      </div>
+      <div>
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Diameter / Notes</div>
+        <input type="text" id="tlToolDia" placeholder="e.g. .500&quot;" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
+      </div>
+    </div>
+
+    <!-- Extension — fully optional, only some tools need one -->
+    <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Extension (optional)</div>
+    <div style="display:flex;gap:6px;margin-bottom:6px;">
+      <button type="button" onclick="window._setTlExtSize(this,'1/2&quot;')" class="tl-ext-btn" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #1e3a5c;border-radius:6px;padding:7px 4px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:13px;cursor:pointer;">1/2"</button>
+      <button type="button" onclick="window._setTlExtSize(this,'3/4&quot;')" class="tl-ext-btn" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #1e3a5c;border-radius:6px;padding:7px 4px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:13px;cursor:pointer;">3/4"</button>
+      <button type="button" onclick="window._setTlExtSize(this,'1&quot;')" class="tl-ext-btn" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #1e3a5c;border-radius:6px;padding:7px 4px;color:#94a3b8;font-family:'Bebas Neue',sans-serif;font-size:13px;cursor:pointer;">1"</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <input type="text" id="tlToolExt" placeholder="Extension size (or tap above)" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
+      <input type="text" id="tlToolExtLen" placeholder="Extension length" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
+    </div>
+    <button type="button" id="tlAddBtn" onclick="window._addToolListRow()" style="width:100%;background:#22c55e;border:none;color:#0f2338;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;margin-bottom:14px;">＋ ADD TOOL TO LIST</button>
+
+    <div id="tlStagedList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;"></div>
+
+    <div style="display:flex;gap:8px;">
+      <button type="button" id="tlSaveBtn" onclick="window._saveToolList()" style="flex:1;background:#f59e0b;border:none;color:#0f2338;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;cursor:pointer;">SAVE TOOL LIST</button>
+      <button type="button" onclick="window._closeToolListForm()" style="background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:11px 16px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL LIST BROWSER — the tab opens here now: a searchable, editable
+     record of every saved tool list, keyed by Part #. -->
+<div class="modal-overlay" id="toolListBrowserOverlay" onclick="if(event.target===this) window._closeToolListBrowser()" style="display:none;">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title">📋 Tool Lists</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Search by Part # to find, edit, or reuse a saved tool list</div>
+
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <input type="text" id="tlBrowserSearch" placeholder="Search by Part #..." oninput="window._renderToolListBrowser()" style="flex:1;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:10px;font-size:14px;font-family:'Barlow',sans-serif;">
+    </div>
+    <button type="button" onclick="window._closeToolListBrowser();window._openToolListForm();" style="width:100%;background:#22c55e;border:none;color:#0f2338;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;margin-bottom:14px;">＋ NEW TOOL LIST</button>
+
+    <div id="tlBrowserList" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;"></div>
+
+    <button type="button" onclick="window._closeToolListBrowser()" style="width:100%;margin-top:14px;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
+  </div>
+</div>
+
 <!-- MACHINE NOTE MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
   <div class="modal">
@@ -1875,6 +1978,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <div id="opRecallWrap" style="display:none;margin-top:-4px;margin-bottom:6px;">
         <div class="recall-label" style="margin-top:4px;">⚡ Recent OP#</div>
         <div class="recall-row" id="opRecallRow"></div>
+      </div>
+      <!-- PART # — the stable identifier across WO#s. A part gets re-run
+           under a new WO# every time, but the part number never changes,
+           so this is what tool lists actually get matched/reused on. -->
+      <div style="margin-bottom:8px;">
+        <input type="text" id="partInput" placeholder="Part # (e.g. 12345-A) — used to match tool lists" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:8px;color:#f0f4f8;padding:10px 12px;font-size:14px;font-family:'Barlow',sans-serif;" />
       </div>
       <div id="assignField" style="display:none;margin-bottom:8px;">
         <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Assign Machinist to Run</div>
@@ -2307,7 +2416,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         '<div class="notif-blink-dot"></div>' +
         '<div class="notif-type">' + (n.autoCompleted ? '✅ Completed' : typeIcons[n.type] + ' ' + typeLabels[n.type]) + '</div>' +
         '<div class="notif-machine">' + (n.cell ? n.cell + ' — ' : '') + n.machine + '</div>' +
-        '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + 'WO: ' + n.wo + (n.op ? '  OP: ' + n.op : '') + (n.detail ? ' · ' + n.detail : '') + '</div>' +
+        '<div class="notif-detail">' + (n.operator ? '<strong>' + n.operator + '</strong> · ' : '') + 'WO: ' + n.wo + (n.op ? '  OP: ' + n.op : '') + (n.part ? '  Part: ' + n.part : '') + (n.detail ? ' · ' + n.detail : '') + '</div>' +
+        window._toolListCardIndicator(n) +
         (n.photoUrl ? '<img src="' + n.photoUrl + '" onclick="window._viewPhoto(\'' + n.photoUrl + '\')" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:6px;cursor:pointer;border:2px solid #1e3a5f;" title="Tap to view photo">' : '') +
         (n.voiceNoteUrl ? '<audio src="' + n.voiceNoteUrl + '" controls style="width:100%;margin-top:6px;height:32px;"></audio>' : '') +
         '<div class="notif-time">' + timeStr + '</div>' +
@@ -2358,9 +2468,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           '<div class="req-machine">' + n.machine + '</div>' +
           '<div class="req-cell">' + (n.cell || '') + '</div>' +
           '<div class="req-type-label">' + (n.autoCompleted ? '✅ Completed' : typeIcons[n.type] + ' ' + typeLabels[n.type]) + '</div>' +
-          (n.wo     ? '<div class="req-wo">WO: ' + n.wo + (n.op ? '  ·  OP: ' + n.op : '') + '</div>' : '') +
+          (n.wo     ? '<div class="req-wo">WO: ' + n.wo + (n.op ? '  ·  OP: ' + n.op : '') + (n.part ? '  ·  Part: ' + n.part : '') + '</div>' : '') +
           (n.assignedTo ? '<div class="req-wo" style="color:#93c5fd;">🔧 Assigned to: ' + n.assignedTo + '</div>' : '') +
           (n.detail ? '<div class="req-detail">'      + n.detail + '</div>' : '') +
+          window._toolListCardIndicator(n) +
           (n.photoUrl ? '<img src="' + n.photoUrl + '" onclick="window._viewPhoto(\'' + n.photoUrl + '\')" style="width:100%;max-height:120px;object-fit:cover;border-radius:8px;margin-top:6px;cursor:pointer;border:2px solid #1e3a5f;" title="Tap to view photo">' : '') +
           (n.voiceNoteUrl ? '<audio src="' + n.voiceNoteUrl + '" controls style="width:100%;margin-top:6px;height:32px;"></audio>' : '') +
           (n.operator ? '<div class="req-operator">👤 ' + n.operator + '</div>' : '') +
@@ -3945,7 +4056,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
-    document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = '';
+    document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = ''; if(document.getElementById('partInput')) document.getElementById('partInput').value = '';
     // Reset supply dropdown
     var si = document.getElementById('supplyItem'); if(si) si.value = '';
     var gsf = document.getElementById('gloveSizeField'); if(gsf) gsf.style.display = 'none';
@@ -4242,7 +4353,351 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('dmgItemDesc').focus();
   };
 
+  // ── TOOL LIST — digital replacement for the paper "TOOL LIST" setup tag ──
+  window._tlStagedTools = []; // [{desc, ooh, dia}, ...]
+
+  window._openToolListForm = function(prefill){
+    var ov = document.getElementById('toolListOverlay');
+    if(ov) ov.style.display = 'flex';
+    document.getElementById('tlModalTitle').textContent = '📋 Tool List';
+    document.getElementById('tlEditId').value = '';
+    window._tlStagedTools = [];
+    if(prefill){
+      if(prefill.part) document.getElementById('tlPart').value = prefill.part;
+      if(prefill.wo) document.getElementById('tlWO').value = prefill.wo;
+      if(prefill.op) document.getElementById('tlOP').value = prefill.op;
+      if(prefill.machine) document.getElementById('tlMachine').value = prefill.machine;
+    }
+    window._renderToolListStaged();
+  };
+
+  // Loads an existing tool list (by cache key) into the form for editing —
+  // saving will update the existing record instead of creating a new one.
+  window._editToolList = function(key){
+    var tl = window._toolListCache[key];
+    if(!tl) return;
+    window._openToolListForm();
+    document.getElementById('tlModalTitle').textContent = '📋 Edit Tool List';
+    document.getElementById('tlEditId').value = tl.id || '';
+    document.getElementById('tlPart').value = tl.part || '';
+    document.getElementById('tlWO').value = tl.wo || '';
+    document.getElementById('tlOP').value = tl.op || '';
+    document.getElementById('tlMachine').value = tl.machine || '';
+    document.getElementById('tlDueDate').value = tl.dueDate || '';
+    window._tlStagedTools = (tl.tools || []).slice();
+    window._renderToolListStaged();
+  };
+
+  window._closeToolListForm = function(){
+    var ov = document.getElementById('toolListOverlay');
+    if(ov) ov.style.display = 'none';
+    ['tlPart','tlWO','tlOP','tlMachine','tlDueDate','tlToolDesc','tlToolOOH','tlToolDia','tlToolExt','tlToolExtLen','tlEditId'].forEach(function(id){
+      var el = document.getElementById(id); if(el) el.value = '';
+    });
+    document.querySelectorAll('.tl-ext-btn').forEach(function(b){
+      b.style.background = 'rgba(255,255,255,0.05)'; b.style.borderColor = '#1e3a5c'; b.style.color = '#94a3b8';
+    });
+    window._tlStagedTools = [];
+    window._renderToolListStaged();
+  };
+
+  // Same combined ProShop + Zengers search used everywhere else in the app.
+  window._filterToolListTooling = function(query){
+    var box = document.getElementById('tlToolingSearchResults');
+    if(!box) return;
+    var q = (query||'').trim().toLowerCase();
+    if(!q){ box.style.display='none'; box.innerHTML=''; return; }
+    var qWords = _toolingTokenize(q);
+    if(!qWords.length){ box.style.display='none'; box.innerHTML=''; return; }
+
+    var proshopMatches = TOOLING_INVENTORY.filter(function(t){
+      return _toolingMatchesQuery(_toolingSearchText(t), qWords);
+    }).slice(0, 15).map(function(t){ return { source:'proshop', t:t }; });
+
+    var zengersMatches = ZENGERS_INVENTORY.filter(function(z){
+      return _toolingMatchesQuery(_zengersSearchText(z), qWords);
+    }).slice(0, 15).map(function(z){ return { source:'zengers', z:z }; });
+
+    var matches = proshopMatches.concat(zengersMatches).slice(0, 30);
+    if(!matches.length){ box.style.display = 'none'; return; }
+
+    box.innerHTML = matches.map(function(m, i){
+      if(m.source === 'proshop'){
+        var t = m.t;
+        var label = _toolingDisplayLabel(t);
+        var groupName = TOOLING_GROUPS[t[1]];
+        var groupTag = groupName ? (t[1]+' - '+groupName) : t[1];
+        return '<div data-idx="'+i+'" onmousedown="window._selectToolListTooling('+i+')" '
+          + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+          + '<span>' + label + (groupTag ? ' <span style="color:#64748b;font-size:11px;">('+groupTag+')</span>' : '') + '</span>'
+          + '<span style="background:#92400e;color:#fcd34d;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">'+t[0]+'</span>'
+          + '</div>';
+      } else {
+        var z = m.z;
+        return '<div data-idx="'+i+'" onmousedown="window._selectToolListTooling('+i+')" '
+          + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+          + '<span>' + z[2] + ' <span style="color:#7dd3fc;font-size:11px;">(Bin ' + z[3] + ')</span></span>'
+          + '<span style="background:#0c4a6e;color:#7dd3fc;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">'+z[0]+'</span>'
+          + '</div>';
+      }
+    }).join('');
+    box.setAttribute('data-matches', JSON.stringify(matches));
+    box.style.display = 'block';
+  };
+
+  window._selectToolListTooling = function(idx){
+    var box = document.getElementById('tlToolingSearchResults');
+    var matches = JSON.parse(box.getAttribute('data-matches')||'[]');
+    var m = matches[idx];
+    if(!m) return;
+    var text, dia = '';
+    if(m.source === 'proshop'){
+      var t = m.t;
+      text = '🔧 Tool #' + t[0] + ' — ' + (TOOLING_GROUPS[t[1]] || t[1]);
+      dia = t[2] ? t[2]+'"' : '';
+    } else {
+      var z = m.z;
+      text = '🔷 Zengers ' + z[0] + ' — ' + z[2] + ' (Bin ' + z[3] + ')';
+    }
+    document.getElementById('tlToolDesc').value = text;
+    if(dia) document.getElementById('tlToolDia').value = dia; // pre-fill diameter from ProShop's Cut Dia when known
+    box.style.display = 'none';
+    box.innerHTML = '';
+    document.getElementById('tlToolOOH').focus();
+  };
+
+  window._setTlExtSize = function(btn, size){
+    document.getElementById('tlToolExt').value = size;
+    document.querySelectorAll('.tl-ext-btn').forEach(function(b){
+      var isThis = b === btn;
+      b.style.background = isThis ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)';
+      b.style.borderColor = isThis ? '#22c55e' : '#1e3a5c';
+      b.style.color = isThis ? '#4ade80' : '#94a3b8';
+    });
+  };
+
+  window._addToolListRow = function(){
+    var descEl = document.getElementById('tlToolDesc');
+    var desc = (descEl.value||'').trim();
+    if(!desc){ if(window.showToast) showToast('yellow','Enter a tool first','Search or type a tool description.'); return; }
+    window._tlStagedTools.push({
+      desc: desc,
+      ooh: (document.getElementById('tlToolOOH').value||'').trim(),
+      dia: (document.getElementById('tlToolDia').value||'').trim(),
+      ext: (document.getElementById('tlToolExt').value||'').trim(),
+      extLen: (document.getElementById('tlToolExtLen').value||'').trim()
+    });
+    descEl.value = '';
+    document.getElementById('tlToolOOH').value = '';
+    document.getElementById('tlToolDia').value = '';
+    document.getElementById('tlToolExt').value = '';
+    document.getElementById('tlToolExtLen').value = '';
+    document.querySelectorAll('.tl-ext-btn').forEach(function(b){
+      b.style.background = 'rgba(255,255,255,0.05)'; b.style.borderColor = '#1e3a5c'; b.style.color = '#94a3b8';
+    });
+    window._renderToolListStaged();
+    descEl.focus();
+  };
+
+  window._removeToolListRow = function(idx){
+    window._tlStagedTools.splice(idx, 1);
+    window._renderToolListStaged();
+  };
+
+  window._renderToolListStaged = function(){
+    var list = document.getElementById('tlStagedList');
+    var addBtn = document.getElementById('tlAddBtn');
+    if(!list) return;
+    if(!window._tlStagedTools.length){ list.innerHTML = ''; if(addBtn) addBtn.textContent = '＋ ADD TOOL TO LIST'; return; }
+    if(addBtn) addBtn.textContent = '＋ ADD TOOL TO LIST (' + window._tlStagedTools.length + ' added so far)';
+    list.innerHTML = window._tlStagedTools.map(function(t, i){
+      var bits = [];
+      if(t.ooh) bits.push('OOH ' + t.ooh);
+      if(t.dia) bits.push(t.dia);
+      if(t.ext) bits.push('Ext ' + t.ext + (t.extLen ? ' × ' + t.extLen : ''));
+      var sub = bits.length ? bits.join(' — ') : '';
+      return '<div style="background:rgba(125,211,252,0.08);border:1px solid #1e3a5c;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+        + '<div><div style="font-size:13px;color:#e2e8f0;font-weight:600;">' + (i+1) + '. ' + t.desc + '</div>'
+        + (sub ? '<div style="font-size:11px;color:#7dd3fc;margin-top:2px;">' + sub + '</div>' : '') + '</div>'
+        + '<button type="button" onclick="window._removeToolListRow(' + i + ')" style="background:none;border:none;color:#7dd3fc;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>'
+        + '</div>';
+    }).join('');
+  };
+
+  window._saveToolList = function(){
+    // If there's a tool still sitting in the fields but never explicitly
+    // added, fold it in rather than silently losing it — same safety net
+    // used for Machinist Req detail text.
+    var leftoverDesc = (document.getElementById('tlToolDesc').value||'').trim();
+    if(leftoverDesc){
+      window._tlStagedTools.push({
+        desc: leftoverDesc,
+        ooh: (document.getElementById('tlToolOOH').value||'').trim(),
+        dia: (document.getElementById('tlToolDia').value||'').trim(),
+        ext: (document.getElementById('tlToolExt').value||'').trim(),
+        extLen: (document.getElementById('tlToolExtLen').value||'').trim()
+      });
+    }
+    // Part # is the required field now — it's the stable key tool lists get
+    // matched on, since WO#s change every time a part gets re-run.
+    var part = (document.getElementById('tlPart').value||'').trim();
+    if(!part){ if(window.showToast) showToast('yellow','Part # required','Enter the part number before saving — this is what future runs of this part get matched on.'); return; }
+    if(!window._tlStagedTools.length){ if(window.showToast) showToast('yellow','No tools added','Add at least one tool to the list.'); return; }
+
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var editId = (document.getElementById('tlEditId').value||'').trim();
+    var payload = {
+      part: part,
+      wo: (document.getElementById('tlWO').value||'').trim(),
+      op: (document.getElementById('tlOP').value||'').trim(),
+      machine: (document.getElementById('tlMachine').value||'').trim(),
+      dueDate: (document.getElementById('tlDueDate').value||'').trim(),
+      tools: window._tlStagedTools.slice(),
+      createdBy: window.currentUser || 'unknown',
+      createdAt: mods.serverTimestamp()
+    };
+    var savePromise = editId
+      ? mods.updateDoc(mods.doc(db2, 'hillToolLists', editId), payload)
+      : mods.addDoc(mods.collection(db2, 'hillToolLists'), payload);
+    savePromise.then(function(){
+      if(window.showToast) showToast('green', editId ? 'Tool List updated' : 'Tool List saved', 'Part ' + part + (payload.op ? ' OP ' + payload.op : '') + ' — ' + payload.tools.length + ' tool(s)');
+      window._closeToolListForm();
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Save failed', e.message);
+    });
+  };
+
+  window._openToolListBrowser = function(){
+    var ov = document.getElementById('toolListBrowserOverlay');
+    if(ov) ov.style.display = 'flex';
+    document.getElementById('tlBrowserSearch').value = '';
+    window._renderToolListBrowser();
+  };
+  window._closeToolListBrowser = function(){
+    var ov = document.getElementById('toolListBrowserOverlay');
+    if(ov) ov.style.display = 'none';
+  };
+
+  // Reads straight from the live cache — instant, no Firestore round-trip.
+  window._renderToolListBrowser = function(){
+    var list = document.getElementById('tlBrowserList');
+    if(!list) return;
+    var q = (document.getElementById('tlBrowserSearch').value||'').trim().toLowerCase();
+    var all = Object.keys(window._toolListCache).map(function(k){ return window._toolListCache[k]; });
+    var filtered = q ? all.filter(function(r){ return (r.part||'').toLowerCase().indexOf(q) >= 0; }) : all;
+    filtered.sort(function(a,b){
+      var ta = a.createdAt ? a.createdAt.seconds||0 : 0, tb = b.createdAt ? b.createdAt.seconds||0 : 0;
+      return tb - ta;
+    });
+    if(!filtered.length){
+      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:12px;padding:16px;">' + (q ? 'No saved tool lists for "' + q + '".' : 'No tool lists saved yet.') + '</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(function(r){
+      var key = window._toolListKey(r.part, r.op);
+      var dateStr = r.createdAt ? new Date(r.createdAt.seconds*1000).toLocaleDateString() : '';
+      var toolLines = (r.tools||[]).map(function(t, i){
+        var bits = [];
+        if(t.ooh) bits.push('OOH ' + t.ooh);
+        if(t.dia) bits.push(t.dia);
+        if(t.ext) bits.push('Ext ' + t.ext + (t.extLen ? ' × ' + t.extLen : ''));
+        return '<div style="font-size:12px;color:#cbd5e1;padding-left:10px;margin-top:2px;">' + (i+1) + '. ' + t.desc + (bits.length ? ' <span style="color:#7dd3fc;">— ' + bits.join(' — ') + '</span>' : '') + '</div>';
+      }).join('');
+      return '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:8px;padding:10px 12px;">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+        + '<div style="font-size:13px;color:#4ade80;font-weight:700;">Part ' + r.part + (r.op ? ' — OP ' + r.op : '') + '</div>'
+        + '<button type="button" onclick="window._closeToolListBrowser();window._editToolList(' + JSON.stringify(key) + ')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;cursor:pointer;">EDIT</button>'
+        + '</div>'
+        + '<div style="font-size:11px;color:#64748b;margin:2px 0 4px;">Last WO: ' + (r.wo||'—') + ' · ' + (r.machine||'') + (dateStr ? ' · ' + dateStr : '') + (r.createdBy ? ' · by ' + r.createdBy : '') + '</div>'
+        + toolLines
+        + '</div>';
+    }).join('');
+  };
+
   window._startDmgListener();
+
+  // ── TOOL LIST CACHE — keyed by "part|op" (lowercase), kept live via
+  // onSnapshot so request cards can instantly show whether a tool list is
+  // already attached, without a Firestore round-trip per card render.
+  // Part # (not WO#) is the key — a part gets re-run under a new WO# every
+  // time, but the part number stays the same, so this is what actually lets
+  // a tool list carry over automatically between different runs. ──
+  window._toolListCache = {}; // { "12345-a|60": { id, part, tools, machine, dueDate, createdBy, createdAt } }
+  window._toolListKey = function(part, op){
+    return (String(part||'').trim() + '|' + String(op||'').trim()).toLowerCase();
+  };
+  window._startToolListCacheListener = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods){ setTimeout(window._startToolListCacheListener, 800); return; }
+    mods.onSnapshot(mods.collection(db2, 'hillToolLists'), function(snap){
+      var cache = {};
+      snap.forEach(function(d){
+        var r = d.data(); r.id = d.id;
+        var key = window._toolListKey(r.part, r.op);
+        // If the same Part/OP gets filled out more than once, keep the most recent.
+        var existing = cache[key];
+        if(!existing || (r.createdAt && existing.createdAt && r.createdAt.seconds > existing.createdAt.seconds)){
+          cache[key] = r;
+        }
+      });
+      window._toolListCache = cache;
+      // Re-render whatever's currently on screen so the attached indicator
+      // updates immediately when a tool list gets saved.
+      if(window._lastActionable){
+        if(typeof renderRequestsList === 'function') renderRequestsList(window._lastActionable, window._reqFilter || 'all');
+        if(typeof window.updateNotifFeed === 'function') window.updateNotifFeed(window._lastActionable);
+      }
+      var browserOv = document.getElementById('toolListBrowserOverlay');
+      if(browserOv && browserOv.style.display !== 'none') window._renderToolListBrowser();
+    }, function(e){ console.warn('ToolList cache listener:', e.message); });
+  };
+  window._startToolListCacheListener();
+
+  // Renders either a "Fill Tool List" button (nothing attached yet) or a
+  // compact "attached, tap to view" summary for a request card with a Part#.
+  window._toolListCardIndicator = function(n){
+    if(!n.part) return '';
+    var key = window._toolListKey(n.part, n.op);
+    var tl = window._toolListCache[key];
+    if(tl && tl.tools && tl.tools.length){
+      return '<button type="button" onclick="event.stopPropagation();window._toggleAttachedToolList(\'' + window._escAttr(key) + '\', this)" '
+        + 'style="margin-top:6px;width:100%;background:rgba(125,211,252,0.1);border:1px solid #0c4a6e;color:#7dd3fc;border-radius:6px;padding:6px 10px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:0.5px;cursor:pointer;text-align:left;">'
+        + '📋 Tool List Attached — ' + tl.tools.length + ' tool' + (tl.tools.length===1?'':'s') + ' ▾</button>'
+        + '<div class="tl-attached-detail" data-key="' + window._escAttr(key) + '" style="display:none;margin-top:4px;background:#0d1f35;border:1px solid #1e3a5c;border-radius:6px;padding:8px 10px;"></div>';
+    }
+    // Only offer to fill one out from a Pending WO card — that's the point
+    // in the workflow where tooling is actually being staged/sent out.
+    if(n.type === 'blue'){
+      return '<button type="button" onclick="event.stopPropagation();window._openToolListForm({part:' + JSON.stringify(n.part||'') + ',wo:' + JSON.stringify(n.wo||'') + ',op:' + JSON.stringify(n.op||'') + ',machine:' + JSON.stringify(n.machine||'') + '})" '
+        + 'style="margin-top:6px;width:100%;background:rgba(34,197,94,0.1);border:1px solid #166534;color:#4ade80;border-radius:6px;padding:6px 10px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:0.5px;cursor:pointer;">📋 FILL TOOL LIST</button>';
+    }
+    return '';
+  };
+
+  window._toggleAttachedToolList = function(key, btn){
+    var detail = document.querySelector('.tl-attached-detail[data-key="' + key.replace(/"/g,'\\"') + '"]');
+    if(!detail) return;
+    var tl = window._toolListCache[key];
+    if(detail.style.display === 'none'){
+      if(tl){
+        detail.innerHTML = (tl.tools||[]).map(function(t, i){
+          var bits = [];
+          if(t.ooh) bits.push('OOH ' + t.ooh);
+          if(t.dia) bits.push(t.dia);
+          if(t.ext) bits.push('Ext ' + t.ext + (t.extLen ? ' × ' + t.extLen : ''));
+          return '<div style="font-size:12px;color:#e2e8f0;margin-bottom:3px;">' + (i+1) + '. ' + t.desc + (bits.length ? ' <span style="color:#7dd3fc;">— ' + bits.join(' — ') + '</span>' : '') + '</div>';
+        }).join('')
+        + (tl.createdBy ? '<div style="font-size:10px;color:#64748b;margin-top:4px;">Filled out by ' + tl.createdBy + '</div>' : '')
+        + '<button type="button" onclick="event.stopPropagation();window._editToolList(' + JSON.stringify(key) + ')" style="margin-top:6px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;cursor:pointer;">✎ EDIT THIS TOOL LIST</button>';
+      }
+      detail.style.display = 'block';
+      if(btn) btn.innerHTML = btn.innerHTML.replace('▾','▴');
+    } else {
+      detail.style.display = 'none';
+      if(btn) btn.innerHTML = btn.innerHTML.replace('▴','▾');
+    }
+  };
 
   // Measuring equipment for Inspection requests — [name, needsDimension]
   // needsDimension = true means this is a range-based tool (Tri-Mic, Rod/Groove Mic, Bore Gage)
@@ -4920,6 +5375,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     const wo = document.getElementById('woInput').value.trim();
     const detail = document.getElementById('noteText').value.trim();
     const operator = document.getElementById('operatorName').value.trim();
+    const part = (document.getElementById('partInput') ? document.getElementById('partInput').value.trim() : '');
     // Safety net: if an item is picked in the dropdown but never tapped +ADD, don't lose it
     if (selectedType === 'yellow' && document.getElementById('supplyItem') && document.getElementById('supplyItem').value && document.getElementById('supplyItem').value !== 'other') {
       window._addSupplyItem();
@@ -4979,7 +5435,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       });
       combinedDetail = toolingLines.join('\n') + (combinedDetail ? '\n' + combinedDetail : '');
     }
-    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, assignedTo };
+    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, part, assignedTo };
     // If the voice note is still being converted in the background, give it
     // a moment rather than submitting without it (conversion is normally
     // near-instant, this just closes off an unlikely race).
