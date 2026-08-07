@@ -1830,7 +1830,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
      for tool lengths (OOH — Out Of Holder) and diameters, replacing the
      handwritten tag that used to travel with the tool tray. Saved for the
      record, attached to that work order. -->
-<div class="modal-overlay" id="toolListOverlay" onclick="if(event.target===this) window._closeToolListForm()" style="display:none;z-index:600;">
+<div class="modal-overlay" id="toolListOverlay" onclick="if(event.target===this) window._closeToolListForm()" style="display:none;">
   <div class="modal" style="max-width:520px;">
     <div class="modal-title" id="tlModalTitle">📋 Tool List</div>
     <div class="modal-machine" style="margin-bottom:12px;">Digital tool setup sheet — matched by Part # so it carries over automatically the next time this part runs, no matter what the new WO# is.</div>
@@ -1911,7 +1911,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
 <!-- TOOL LIST BROWSER — the tab opens here now: a searchable, editable
      record of every saved tool list, keyed by Part #. -->
-<div class="modal-overlay" id="toolListBrowserOverlay" onclick="if(event.target===this) window._closeToolListBrowser()" style="display:none;z-index:600;">
+<div class="modal-overlay" id="toolListBrowserOverlay" onclick="if(event.target===this) window._closeToolListBrowser()" style="display:none;">
   <div class="modal" style="max-width:520px;">
     <div class="modal-title">📋 Tool Lists</div>
     <div class="modal-machine" style="margin-bottom:12px;">Search by Part # to find, edit, or reuse a saved tool list</div>
@@ -4675,7 +4675,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // Only offer to fill one out from a Pending WO card — that's the point
     // in the workflow where tooling is actually being staged/sent out.
     if(n.type === 'blue'){
-      return '<button type="button" onclick="event.stopPropagation();window._openToolListForm({part:' + JSON.stringify(n.part||'') + ',wo:' + JSON.stringify(n.wo||'') + ',op:' + JSON.stringify(n.op||'') + ',machine:' + JSON.stringify(n.machine||'') + '})" '
+      var prefillJson = JSON.stringify({part:n.part||'', wo:n.wo||'', op:n.op||'', machine:n.machine||''});
+      return '<button type="button" onclick="event.stopPropagation();window._openToolListForm(' + window._escAttr(prefillJson) + ')" '
         + 'style="margin-top:6px;width:100%;background:rgba(34,197,94,0.1);border:1px solid #166534;color:#4ade80;border-radius:6px;padding:6px 10px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:0.5px;cursor:pointer;">📋 FILL TOOL LIST</button>';
     }
     return '';
