@@ -4394,6 +4394,25 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     window._renderToolListStaged();
   };
 
+  window._deleteToolList = function(key, btn){
+    var tl = window._toolListCache[key];
+    if(!tl || !tl.id) return;
+    if(!confirm('Delete the tool list for Part ' + tl.part + (tl.op ? ' OP ' + tl.op : '') + '? This can\'t be undone.')) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    if(btn){ btn.disabled = true; btn.textContent = '...'; }
+    mods.deleteDoc(mods.doc(db2, 'hillToolLists', tl.id)).then(function(){
+      if(window.showToast) showToast('green','Tool List deleted', 'Part ' + tl.part);
+      // The live cache listener picks this up automatically, but refresh the
+      // browser list immediately too so it doesn't wait on the round-trip.
+      var browserOv = document.getElementById('toolListBrowserOverlay');
+      if(browserOv && browserOv.style.display !== 'none') window._renderToolListBrowser();
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Delete failed', e.message);
+      if(btn){ btn.disabled = false; btn.textContent = 'DELETE'; }
+    });
+  };
+
   window._closeToolListForm = function(){
     var ov = document.getElementById('toolListOverlay');
     if(ov) ov.style.display = 'none';
@@ -4613,7 +4632,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       return '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:8px;padding:10px 12px;">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
         + '<div style="font-size:13px;color:#4ade80;font-weight:700;">Part ' + r.part + (r.op ? ' — OP ' + r.op : '') + '</div>'
-        + '<button type="button" onclick="window._closeToolListBrowser();window._editToolList(' + JSON.stringify(key) + ')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;cursor:pointer;">EDIT</button>'
+        + '<div style="display:flex;gap:6px;">'
+        + '<button type="button" onclick="window._closeToolListBrowser();window._editToolList(' + window._escAttr(JSON.stringify(key)) + ')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;cursor:pointer;">EDIT</button>'
+        + '<button type="button" onclick="window._deleteToolList(' + window._escAttr(JSON.stringify(key)) + ',this)" style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#f87171;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;cursor:pointer;">DELETE</button>'
+        + '</div>'
         + '</div>'
         + '<div style="font-size:11px;color:#64748b;margin:2px 0 4px;">Last WO: ' + (r.wo||'—') + ' · ' + (r.machine||'') + (dateStr ? ' · ' + dateStr : '') + (r.createdBy ? ' · by ' + r.createdBy : '') + '</div>'
         + toolLines
@@ -4696,7 +4718,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           return '<div style="font-size:12px;color:#e2e8f0;margin-bottom:3px;">' + (i+1) + '. ' + t.desc + (bits.length ? ' <span style="color:#7dd3fc;">— ' + bits.join(' — ') + '</span>' : '') + '</div>';
         }).join('')
         + (tl.createdBy ? '<div style="font-size:10px;color:#64748b;margin-top:4px;">Filled out by ' + tl.createdBy + '</div>' : '')
-        + '<button type="button" onclick="event.stopPropagation();window._editToolList(' + JSON.stringify(key) + ')" style="margin-top:6px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;cursor:pointer;">✎ EDIT THIS TOOL LIST</button>';
+        + '<button type="button" onclick="event.stopPropagation();window._editToolList(' + window._escAttr(JSON.stringify(key)) + ')" style="margin-top:6px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;cursor:pointer;">✎ EDIT THIS TOOL LIST</button>';
       }
       detail.style.display = 'block';
       if(btn) btn.innerHTML = btn.innerHTML.replace('▾','▴');
