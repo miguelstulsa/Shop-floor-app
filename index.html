@@ -1295,6 +1295,7 @@
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="window._openDmgTracker()" id="tab-qmidgp">📦 QMI/DGP <span class="tab-badge" id="qmidgpBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="window._openToolListBrowser()" id="tab-toollist">📋 Tool List</div>
+  <div class="nav-tab" onclick="window._openInventoryBrowser()" id="tab-inventory">📦 Inventory</div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
@@ -1941,6 +1942,36 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     <div id="tlBrowserList" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;"></div>
 
     <button type="button" onclick="window._closeToolListBrowser()" style="width:100%;margin-top:14px;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
+  </div>
+</div>
+
+<!-- INVENTORY BROWSER — all three catalogs in one place: ProShop Tooling,
+     Zengers Inventory, ProShop Measuring Equipment. Also lets you browse by
+     bin location, though only Zengers items actually have location data —
+     ProShop's own export never included it. -->
+<div class="modal-overlay" id="inventoryBrowserOverlay" onclick="if(event.target===this) window._closeInventoryBrowser()" style="display:none;">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-title">📦 Inventory</div>
+    <div class="modal-machine" style="margin-bottom:12px;">ProShop Tooling · Zengers Inventory · Measuring Equipment — all in one search</div>
+
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <button type="button" id="invTabSearch" onclick="window._setInventoryTab('search')" style="flex:1;background:rgba(255,255,255,0.08);border:1px solid #475569;color:#f0f4f8;border-radius:7px;padding:8px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:0.5px;cursor:pointer;">🔍 SEARCH ALL</button>
+      <button type="button" id="invTabBin" onclick="window._setInventoryTab('bin')" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #1e3a5c;color:#94a3b8;border-radius:7px;padding:8px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:0.5px;cursor:pointer;">📍 BROWSE BY BIN</button>
+    </div>
+
+    <div id="invSearchPane">
+      <input type="text" id="invSearchInput" placeholder="Search by name, code, size, thread..." oninput="window._renderInventorySearch()" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:10px 12px;font-size:14px;font-family:'Barlow',sans-serif;margin-bottom:10px;">
+      <div style="font-size:10px;color:#64748b;margin-bottom:10px;">Type at least 2 characters. <span style="color:#fcd34d;">🔧 amber = ProShop</span> · <span style="color:#7dd3fc;">🔷 blue = Zengers</span> · <span style="color:#86efac;">📏 green = Measuring</span></div>
+      <div id="invSearchResults" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;"></div>
+    </div>
+
+    <div id="invBinPane" style="display:none;">
+      <input type="text" id="invBinInput" placeholder="Zengers bin # (105-08) or ProShop cabinet (C, R, XC)..." oninput="window._renderInventoryByBin()" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:10px 12px;font-size:14px;font-family:'Barlow',sans-serif;margin-bottom:10px;">
+      <div style="font-size:10px;color:#64748b;margin-bottom:10px;">Zengers has bin locations for everything. ProShop locations are being built from real cabinet photos — only tools that have been photographed so far will show a cabinet.</div>
+      <div id="invBinResults" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;"></div>
+    </div>
+
+    <button type="button" onclick="window._closeInventoryBrowser()" style="width:100%;margin-top:14px;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
   </div>
 </div>
 
@@ -4852,6 +4883,110 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   window._startDmgListener();
 
+  // ── INVENTORY BROWSER — all three catalogs, one place ──
+  window._openInventoryBrowser = function(){
+    var ov = document.getElementById('inventoryBrowserOverlay');
+    if(ov) ov.style.display = 'flex';
+    document.getElementById('invSearchInput').value = '';
+    document.getElementById('invBinInput').value = '';
+    document.getElementById('invSearchResults').innerHTML = '';
+    document.getElementById('invBinResults').innerHTML = '';
+    window._setInventoryTab('search');
+  };
+  window._closeInventoryBrowser = function(){
+    var ov = document.getElementById('inventoryBrowserOverlay');
+    if(ov) ov.style.display = 'none';
+  };
+  window._setInventoryTab = function(tab){
+    var searchPane = document.getElementById('invSearchPane');
+    var binPane = document.getElementById('invBinPane');
+    var searchBtn = document.getElementById('invTabSearch');
+    var binBtn = document.getElementById('invTabBin');
+    var active = { background:'rgba(255,255,255,0.08)', border:'#475569', color:'#f0f4f8' };
+    var inactive = { background:'rgba(255,255,255,0.05)', border:'#1e3a5c', color:'#94a3b8' };
+    if(tab === 'search'){
+      searchPane.style.display = 'block'; binPane.style.display = 'none';
+      searchBtn.style.background = active.background; searchBtn.style.borderColor = active.border; searchBtn.style.color = active.color;
+      binBtn.style.background = inactive.background; binBtn.style.borderColor = inactive.border; binBtn.style.color = inactive.color;
+    } else {
+      searchPane.style.display = 'none'; binPane.style.display = 'block';
+      binBtn.style.background = active.background; binBtn.style.borderColor = active.border; binBtn.style.color = active.color;
+      searchBtn.style.background = inactive.background; searchBtn.style.borderColor = inactive.border; searchBtn.style.color = inactive.color;
+    }
+  };
+
+  function _invResultRow(source, primaryHtml, codeOrTag, locHtml){
+    var colors = {
+      proshop:  { bg:'rgba(251,191,36,0.08)',  border:'#92400e', tagBg:'#92400e', tagColor:'#fcd34d' },
+      zengers:  { bg:'rgba(14,116,144,0.1)',    border:'#0c4a6e', tagBg:'#0c4a6e', tagColor:'#7dd3fc' },
+      measuring:{ bg:'rgba(22,101,52,0.12)',    border:'#166534', tagBg:'#166534', tagColor:'#86efac' }
+    }[source];
+    return '<div style="background:'+colors.bg+';border:1px solid '+colors.border+';border-radius:7px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+      + '<div><div style="font-size:13px;color:#f0f4f8;">' + primaryHtml + '</div>' + (locHtml ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + locHtml + '</div>' : '') + '</div>'
+      + '<span style="background:'+colors.tagBg+';color:'+colors.tagColor+';border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;flex-shrink:0;">'+codeOrTag+'</span>'
+      + '</div>';
+  }
+
+  window._renderInventorySearch = function(){
+    var results = document.getElementById('invSearchResults');
+    var q = (document.getElementById('invSearchInput').value||'').trim();
+    if(q.length < 2){ results.innerHTML = ''; return; }
+    var qWords = _toolingTokenize(q);
+    if(!qWords.length){ results.innerHTML = ''; return; }
+
+    var proshopMatches = TOOLING_INVENTORY.filter(function(t){ return _toolingMatchesQuery(_toolingSearchText(t), qWords); }).slice(0, 25);
+    var zengersMatches = ZENGERS_INVENTORY.filter(function(z){ return _toolingMatchesQuery(_zengersSearchText(z), qWords); }).slice(0, 25);
+    var measuringMatches = MEASURING_TOOLS.filter(function(mt){ return _toolingMatchesQuery(mt[0], qWords); }).slice(0, 25);
+
+    var total = proshopMatches.length + zengersMatches.length + measuringMatches.length;
+    if(!total){ results.innerHTML = '<div style="text-align:center;color:#475569;font-size:12px;padding:16px;">No matches for "' + q + '".</div>'; return; }
+
+    var html = '';
+    proshopMatches.forEach(function(t){
+      var groupName = TOOLING_GROUPS[t[1]];
+      var groupTag = groupName ? (' <span style="color:#64748b;">('+t[1]+' - '+groupName+')</span>') : '';
+      var cab = PROSHOP_LOCATIONS[t[0]];
+      html += _invResultRow('proshop', _toolingDisplayLabel(t) + groupTag, t[0], cab ? '📍 Cabinet ' + cab : null);
+    });
+    zengersMatches.forEach(function(z){
+      html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3]);
+    });
+    measuringMatches.forEach(function(mt){
+      html += _invResultRow('measuring', mt[0], '📏', null);
+    });
+    results.innerHTML = html;
+  };
+
+  window._renderInventoryByBin = function(){
+    var results = document.getElementById('invBinResults');
+    var q = (document.getElementById('invBinInput').value||'').trim().toLowerCase();
+    if(!q){ results.innerHTML = ''; return; }
+
+    var zengersMatches = ZENGERS_INVENTORY.filter(function(z){ return (z[3]||'').toLowerCase().indexOf(q) >= 0; });
+    // Cabinet codes are short (C, R, XC) so this uses an exact match, not a
+    // substring search — a substring match on "c" would accidentally pull
+    // in half the Zengers bin numbers too.
+    var proshopMatches = TOOLING_INVENTORY.filter(function(t){
+      var cab = PROSHOP_LOCATIONS[t[0]];
+      return cab && cab.toLowerCase() === q;
+    });
+
+    if(!zengersMatches.length && !proshopMatches.length){
+      results.innerHTML = '<div style="text-align:center;color:#475569;font-size:12px;padding:16px;">Nothing found for "' + q + '". Try a Zengers bin # (e.g. 105-08) or a ProShop cabinet (C, R, XC).</div>';
+      return;
+    }
+    var html = '';
+    proshopMatches.forEach(function(t){
+      var groupName = TOOLING_GROUPS[t[1]];
+      var groupTag = groupName ? (' <span style="color:#64748b;">('+t[1]+' - '+groupName+')</span>') : '';
+      html += _invResultRow('proshop', _toolingDisplayLabel(t) + groupTag, t[0], '📍 Cabinet ' + PROSHOP_LOCATIONS[t[0]]);
+    });
+    zengersMatches.forEach(function(z){
+      html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3]);
+    });
+    results.innerHTML = html;
+  };
+
   // ── TOOL LIST CACHE — keyed by "part|op" (lowercase), kept live via
   // onSnapshot so request cards can instantly show whether a tool list is
   // already attached, without a Firestore round-trip per card render.
@@ -5172,6 +5307,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // so a search for "insert" or "tap" or "end mill" actually matches,
   // instead of only matching the cryptic letter code itself.
   var TOOLING_GROUPS = {"A": "End Mill", "B": "Rad/Ball End Mill", "C": "Taper End Mill", "CG": "Spade Drill body", "CSG": "Customer Supplied Gage", "CT": "CT", "D": "Drill", "E": "Center Drills", "F": "Ream and Bore", "G": "Insert", "H": "Saws", "I": "Insert Mills", "J": "T-Slot", "K": "Corner Rounding End Mills", "L": "Chamfer Tool", "M": "Special Tooling", "N": "Solid - Threading, Grooving, Threadmill", "O": "Spot Drill", "P": "Broach", "Q": "Arbour", "R": "Taps", "S": "CMM Styli", "T": "Insert Tool Hardware", "TA": "I.D. Threaders", "TB": "O.D. Threaders", "TC": "Indexable Drills", "TD": "Boring Bars", "TE": "Back Boring Bars", "TF": "External Turning Holders", "TG": "Knurling Tool Holders", "TH": "O.D. Groovers", "TI": "I.D. Groovers", "TJ": "Face Groovers", "TK": "Part Off Tools", "TL": "Boring Bar Inserts", "TM": "I.D. Threading Inserts", "TN": "O.D. Threading Inserts", "TO": "External Turning Inserts", "TP": "O.D. Grooving Inserts", "TQ": "I.D. Grooving Inserts", "TR": "Part Off Inserts", "TS": "Face Grooving Inserts", "TT": "Drill Inserts", "TU": "Knurling Inserts", "TV": "TV"};
+  // ProShop physical cabinet locations — built from photos of the actual
+  // drawer labels. NOT comprehensive: only tools that have been
+  // photographed so far are in here. More cabinets get added over time as
+  // more photos come in — this object just grows, nothing else needs to
+  // change when it does.
+  var PROSHOP_LOCATIONS = {"R206":"C","R207":"C","T210":"C","J213":"C","M215":"C","T216":"C","CT217":"C","D218":"C","TT221":"C","TT223":"C","TT222":"C","G224":"C","TC220":"C","G228":"C","G230":"C","G231":"C","D232":"C","G233":"C","N249":"C","N250":"C","G253":"C","T254":"C","G97":"C","R257":"C","B275":"C","N259":"C","R261":"C","TD260":"C","TT262":"C","G264":"C","M265":"C","G266":"C","G267":"C","G268":"C","N269":"C","N270":"C","N271":"C","T272":"C","A273":"C","G258":"C","B274":"C","B276":"C","T277":"C","R255":"C","K278":"C","T282":"C","T280":"C","T281":"C","T279":"C","T283":"C","T284":"C","T285":"C","T286":"C","L287":"C","T288":"C","N289":"C","D297":"C","R300":"C","R301":"C","R305":"C","R304":"C","R420":"C","R143":"R","G656":"R","G186":"R","R499":"R","G437":"R","A448":"R","G446":"R","G440":"R","G419":"R","G311":"R","D309":"R","A427":"R","A428":"R","A432":"R","A438":"R","D443":"R","R299":"R","J306":"R","R303":"R","M307":"R","R302":"R","R298":"R","TA423":"R","TA424":"R","M467":"R","N495":"R","R368":"R","G369":"R","R367":"R","N364":"R","T363":"R","L361":"R","M360":"R","D359":"R","J357":"R","J928":"R","B353":"R","B352":"R","R350":"R","R349":"R","G347":"R","TT344":"R","R335":"R","R336":"R","G332":"R","D308":"R","G333":"R","K256":"R","T348":"R","D320":"R","TP454":"R","G318":"R","N316":"R","J314":"R","CT313":"R","N312":"R","TJ204":"R","TJ200":"R","TJ198":"R","TJ199":"R","TJ201":"R","TJ202":"R","TJ205":"R","TJ203":"R","G498":"XC","G497":"XC","G944":"XC","R960":"XC","G961":"XC","TJ950":"XC","TJ949":"XC","TJ948":"XC","G954":"XC","A957":"XC","A956":"XC","R958":"XC","G959":"XC","L939":"XC","L940":"XC","A938":"XC","D943":"XC","G945":"XC","R947":"XC","TN951":"XC","D952":"XC","A920":"XC","R921":"XC","TT931":"XC","TT930":"XC","G932":"XC","G933":"XC","G936":"XC","A919":"XC","D924":"XC","G918":"XC","G818":"XC","M356":"XC","G441":"XC","D444":"XC","M355":"XC","G496":"XC","D442":"XC","A433":"XC","A435":"XC","A434":"XC"};
 
   // Zengers vending machine / crib inventory — [Code, DisplayPart#, Description, BinLocations].
   // Same search concept as ProShop, but a separate vendor/source, combined
