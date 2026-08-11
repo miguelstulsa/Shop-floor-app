@@ -5397,14 +5397,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // false positives, longer words tolerate substring containment and small
   // typos. This is what actually fixes "if you don't word it exactly right
   // it won't find it" — a strict full-phrase substring match was too rigid.
+  // Deliberately stricter than general text search: exact match for short
+  // words, substring containment for longer ones, and NO edit-distance
+  // fuzzy tolerance at all. Tool/part codes are often only one character
+  // apart (DNMG vs CNMG, D171 vs D172) and represent completely different,
+  // non-interchangeable tools — treating them as "close enough" to match
+  // each other risks a machinist picking the wrong physical insert.
   function _toolingWordMatch(qWord, hayWord){
     if(qWord.length < 3 || hayWord.length < 3) return qWord === hayWord;
-    if(hayWord.indexOf(qWord) >= 0 || qWord.indexOf(hayWord) >= 0) return true;
-    if(qWord.length >= 4 && hayWord.length >= 4){
-      var maxDist = qWord.length >= 7 ? 2 : 1;
-      return window._levenshtein(qWord, hayWord) <= maxDist;
-    }
-    return false;
+    return hayWord.indexOf(qWord) >= 0 || qWord.indexOf(hayWord) >= 0;
   }
   function _toolingTokenize(s){
     return (s||'').toLowerCase().replace(/[^a-z0-9\s\/\.\-]/g,' ').split(/[\s\/\-]+/).filter(Boolean);
