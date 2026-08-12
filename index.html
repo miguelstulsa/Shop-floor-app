@@ -1966,6 +1966,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     </div>
 
     <div id="invBinPane" style="display:none;">
+      <div id="invCabinetBtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;"></div>
       <input type="text" id="invBinInput" placeholder="Zengers bin # (105-08) or ProShop cabinet (C, R, XC)..." oninput="window._renderInventoryByBin()" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:10px 12px;font-size:14px;font-family:'Barlow',sans-serif;margin-bottom:10px;">
       <div style="font-size:10px;color:#64748b;margin-bottom:10px;">Zengers has bin locations for everything. ProShop locations are being built from real cabinet photos — only tools that have been photographed so far will show a cabinet.</div>
       <div id="invBinResults" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;"></div>
@@ -4891,6 +4892,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('invBinInput').value = '';
     document.getElementById('invSearchResults').innerHTML = '';
     document.getElementById('invBinResults').innerHTML = '';
+    window._renderInventoryCabinetBtns();
     window._setInventoryTab('search');
   };
   window._closeInventoryBrowser = function(){
@@ -4912,7 +4914,28 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       searchPane.style.display = 'none'; binPane.style.display = 'block';
       binBtn.style.background = active.background; binBtn.style.borderColor = active.border; binBtn.style.color = active.color;
       searchBtn.style.background = inactive.background; searchBtn.style.borderColor = inactive.border; searchBtn.style.color = inactive.color;
+      window._renderInventoryCabinetBtns();
     }
+  };
+
+  // Clickable cabinet buttons — built dynamically from whatever's actually
+  // in PROSHOP_LOCATIONS, so adding a new cabinet later (from more photos)
+  // just means adding to that data object; this list grows on its own,
+  // nothing else needs to change.
+  window._renderInventoryCabinetBtns = function(){
+    var wrap = document.getElementById('invCabinetBtns');
+    if(!wrap) return;
+    var cabinets = Array.from(new Set(Object.values(PROSHOP_LOCATIONS).map(function(v){ return v.cab; }))).sort();
+    if(!cabinets.length){ wrap.innerHTML = ''; return; }
+    wrap.innerHTML = '<div style="width:100%;font-size:10px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Tap a cabinet</div>'
+      + cabinets.map(function(c){
+        return '<button type="button" onclick="window._browseCabinet(' + window._escAttr(JSON.stringify(c)) + ')" '
+          + 'style="background:rgba(251,191,36,0.1);border:1px solid #92400e;color:#fcd34d;border-radius:7px;padding:8px 16px;font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">📍 CABINET ' + c + '</button>';
+      }).join('');
+  };
+  window._browseCabinet = function(cab){
+    document.getElementById('invBinInput').value = cab;
+    window._renderInventoryByBin();
   };
 
   function _invResultRow(source, primaryHtml, codeOrTag, locHtml){
@@ -4943,10 +4966,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     var html = '';
     proshopMatches.forEach(function(t){
+      var loc = PROSHOP_LOCATIONS[t[0]];
       var groupName = TOOLING_GROUPS[t[1]];
       var groupTag = groupName ? (' <span style="color:#64748b;">('+t[1]+' - '+groupName+')</span>') : '';
-      var cab = PROSHOP_LOCATIONS[t[0]];
-      html += _invResultRow('proshop', _toolingDisplayLabel(t) + groupTag, t[0], cab ? '📍 Cabinet ' + cab : null);
+      // Prefer the real name read off the actual drawer label — it's far
+      // more useful than the sparse size/thread data ProShop's own export
+      // has for most tools ("no size on file" etc.)
+      var primary = (loc && loc.name) ? loc.name + groupTag : _toolingDisplayLabel(t) + groupTag;
+      html += _invResultRow('proshop', primary, t[0], loc ? '📍 Cabinet ' + loc.cab : null);
     });
     zengersMatches.forEach(function(z){
       html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3]);
@@ -4967,8 +4994,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // substring search — a substring match on "c" would accidentally pull
     // in half the Zengers bin numbers too.
     var proshopMatches = TOOLING_INVENTORY.filter(function(t){
-      var cab = PROSHOP_LOCATIONS[t[0]];
-      return cab && cab.toLowerCase() === q;
+      var loc = PROSHOP_LOCATIONS[t[0]];
+      return loc && loc.cab.toLowerCase() === q;
     });
 
     if(!zengersMatches.length && !proshopMatches.length){
@@ -4977,9 +5004,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
     var html = '';
     proshopMatches.forEach(function(t){
+      var loc = PROSHOP_LOCATIONS[t[0]];
       var groupName = TOOLING_GROUPS[t[1]];
       var groupTag = groupName ? (' <span style="color:#64748b;">('+t[1]+' - '+groupName+')</span>') : '';
-      html += _invResultRow('proshop', _toolingDisplayLabel(t) + groupTag, t[0], '📍 Cabinet ' + PROSHOP_LOCATIONS[t[0]]);
+      var primary = (loc && loc.name) ? loc.name + groupTag : _toolingDisplayLabel(t) + groupTag;
+      html += _invResultRow('proshop', primary, t[0], '📍 Cabinet ' + loc.cab);
     });
     zengersMatches.forEach(function(z){
       html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3]);
@@ -5312,8 +5341,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // photographed so far are in here. More cabinets get added over time as
   // more photos come in — this object just grows, nothing else needs to
   // change when it does.
-  var PROSHOP_LOCATIONS = {"R206":"C","R207":"C","T210":"C","J213":"C","M215":"C","T216":"C","CT217":"C","D218":"C","TT221":"C","TT223":"C","TT222":"C","G224":"C","TC220":"C","G228":"C","G230":"C","G231":"C","D232":"C","G233":"C","N249":"C","N250":"C","G253":"C","T254":"C","G97":"C","R257":"C","B275":"C","N259":"C","R261":"C","TD260":"C","TT262":"C","G264":"C","M265":"C","G266":"C","G267":"C","G268":"C","N269":"C","N270":"C","N271":"C","T272":"C","A273":"C","G258":"C","B274":"C","B276":"C","T277":"C","R255":"C","K278":"C","T282":"C","T280":"C","T281":"C","T279":"C","T283":"C","T284":"C","T285":"C","T286":"C","L287":"C","T288":"C","N289":"C","D297":"C","R300":"C","R301":"C","R305":"C","R304":"C","R420":"C","R143":"R","G656":"R","G186":"R","R499":"R","G437":"R","A448":"R","G446":"R","G440":"R","G419":"R","G311":"R","D309":"R","A427":"R","A428":"R","A432":"R","A438":"R","D443":"R","R299":"R","J306":"R","R303":"R","M307":"R","R302":"R","R298":"R","TA423":"R","TA424":"R","M467":"R","N495":"R","R368":"R","G369":"R","R367":"R","N364":"R","T363":"R","L361":"R","M360":"R","D359":"R","J357":"R","J928":"R","B353":"R","B352":"R","R350":"R","R349":"R","G347":"R","TT344":"R","R335":"R","R336":"R","G332":"R","D308":"R","G333":"R","K256":"R","T348":"R","D320":"R","TP454":"R","G318":"R","N316":"R","J314":"R","CT313":"R","N312":"R","TJ204":"R","TJ200":"R","TJ198":"R","TJ199":"R","TJ201":"R","TJ202":"R","TJ205":"R","TJ203":"R","G498":"XC","G497":"XC","G944":"XC","R960":"XC","G961":"XC","TJ950":"XC","TJ949":"XC","TJ948":"XC","G954":"XC","A957":"XC","A956":"XC","R958":"XC","G959":"XC","L939":"XC","L940":"XC","A938":"XC","D943":"XC","G945":"XC","R947":"XC","TN951":"XC","D952":"XC","A920":"XC","R921":"XC","TT931":"XC","TT930":"XC","G932":"XC","G933":"XC","G936":"XC","A919":"XC","D924":"XC","G918":"XC","G818":"XC","M356":"XC","G441":"XC","D444":"XC","M355":"XC","G496":"XC","D442":"XC","A433":"XC","A435":"XC","A434":"XC"};
-
+  var PROSHOP_LOCATIONS = {"R206":{"cab":"C","name":"1/2-20 LEFT HAND TAP"},"R207":{"cab":"C","name":"M18 X1.0 TAP"},"T210":{"cab":"C","name":"ANVIL SCREW"},"J213":{"cab":"C","name":".250 X .062 WIDE KEY CUTTER"},"M215":{"cab":"C","name":"ES-394 PORT TOOL"},"T216":{"cab":"C","name":"SHORT OD GROOVE BLADE"},"CT217":{"cab":"C","name":"DA300 COLLETS"},"D218":{"cab":"C","name":"1/8 DRILL X 5 1/8 LONG"},"TT221":{"cab":"C","name":".7086 SUMOCHAM"},"TT223":{"cab":"C","name":".748 SUMOCHAM"},"TT222":{"cab":"C","name":".6181 SUMOCHAM"},"G224":{"cab":"C","name":"2\" ALUM FACEMILL INSERT"},"TC220":{"cab":"C","name":"SUMOCHAM DRILL .765-.748"},"G228":{"cab":"C","name":"CCMT 21.51 T6215"},"G230":{"cab":"C","name":"OUTSIDE INSERT FOR KEN DRILL"},"G231":{"cab":"C","name":"INSIDE INSERT FOR KEN DRILL"},"D232":{"cab":"C","name":"17/32 DRILL W/.135 DEG TA"},"G233":{"cab":"C","name":".125 WIDE PENTA GROOVE"},"N249":{"cab":"C","name":"3/8-24 THREAD MILL"},"N250":{"cab":"C","name":"1/4-28 THREAD MILL"},"G253":{"cab":"C","name":"INSERTS FOR 1.187 DRILL"},"T254":{"cab":"C","name":"INSERT DRILL SCREW"},"G97":{"cab":"C","name":"EMUGE THREAD MILL INSERTS"},"R257":{"cab":"C","name":"1/4-28 HELICOIL TAP"},"B275":{"cab":"C","name":"3/4 X .125 CR END MILL"},"N259":{"cab":"C","name":"SMALL CARB THREADING BAR"},"R261":{"cab":"C","name":"1/2-20 STI TAP"},"TT262":{"cab":"C","name":"1.06 SPADE DRILL INSERT"},"G264":{"cab":"C","name":"KENNAMETAL DRILL INSERT"},"M265":{"cab":"C","name":"1.382 DIA DOVETAIL CUTTER"},"G266":{"cab":"C","name":"WCG HIGH FEED MILL INSERTS"},"G267":{"cab":"C","name":"HEULE BLADES"},"G268":{"cab":"C","name":"7 PITCH STUB ACME"},"N269":{"cab":"C","name":"10-32 THREAD MILL"},"N270":{"cab":"C","name":"3/8-16 THREAD MILL"},"N271":{"cab":"C","name":"1/2-13 THREAD MILL"},"T272":{"cab":"C","name":"ISCAR 60ER"},"A273":{"cab":"C","name":"3/8 ROUGHING MILL"},"G258":{"cab":"C","name":".715 FULL RAD GROOVE"},"B274":{"cab":"C","name":"3/4 X .125 CR END MILL"},"B276":{"cab":"C","name":"3/8 X .12 CR"},"T277":{"cab":"C","name":"1.50 FEED MILL SCREWS"},"R255":{"cab":"C","name":"7/16-14 TAP ALU BRONZE"},"K278":{"cab":"C","name":"1/16 CORNER ROUND"},"T282":{"cab":"C","name":"SPADE DRILL SCREW"},"T280":{"cab":"C","name":"FOR TNMC 43 HOLDER"},"T281":{"cab":"C","name":"TOP CLAMP FOR TOP NOTCH"},"T279":{"cab":"C","name":"DOUBLE ENDED CLAMP SCREW"},"T283":{"cab":"C","name":"SPADE DRILL SCREW"},"T284":{"cab":"C","name":"SPADE DRILL SCREW"},"T285":{"cab":"C","name":"SPADE DRILL SCREW"},"T286":{"cab":"C","name":"SPADE DRILL SCREW"},"L287":{"cab":"C","name":"3/8 X 60 DEG COUNTERSINK"},"T288":{"cab":"C","name":"3/64 SPADE DRILL INSERT"},"N289":{"cab":"C","name":"5/16-18 THREAD MILL"},"D297":{"cab":"C","name":"1/32 COBALT DRILL"},"R300":{"cab":"C","name":"3/8-16 TAP STAINLESS"},"R301":{"cab":"C","name":"3/8-24 TAP STAINLESS"},"R305":{"cab":"C","name":"10-32 TAP STAINLESS"},"R304":{"cab":"C","name":"1/4-20 TAP STAINLESS"},"R420":{"cab":"C","name":"1/4-20 TAP"},"R143":{"cab":"R","name":"8-32 FORM TAP"},"G656":{"cab":"R","name":".156 WIDE FULL RADIUS GROOVE"},"G186":{"cab":"R","name":"TNMC 43 - 8 RD"},"R499":{"cab":"R","name":"1/4-20 FORM TAP"},"G437":{"cab":"R","name":"CNMG 432 WITH WIPER"},"A448":{"cab":"R","name":"4 MM HIGH FEED MILL"},"G446":{"cab":"R","name":".75 HS INSERT"},"G440":{"cab":"R","name":".625 BALL INSERT"},"G419":{"cab":"R","name":"TNMC 54 NT 3P"},"G311":{"cab":"R","name":"16 PITCH LEFT HAND BUTTRESS"},"D309":{"cab":"R","name":".125 COOLANT THRU DRILL"},"A427":{"cab":"R","name":"1/4 X 1/2 X 2 5 FLUTE END MILL"},"A428":{"cab":"R","name":"1/4 X 1/2 X 2 6 FLUTE END MILL"},"A432":{"cab":"R","name":"4MM DIA 5 FLUTE BULLNOSE END MILL"},"A436":{"cab":"R","name":".375 3FLUTE X FLAT EM"},"D443":{"cab":"R","name":"6.8 MM CARBIDE DRILL"},"R299":{"cab":"R","name":"1/2-20 TAP STAINLESS"},"J306":{"cab":"R","name":".250 X .015 SLOT MILL"},"R303":{"cab":"R","name":"5/16-24 TAP STAINLESS"},"M307":{"cab":"R","name":"-2 PORT TOOL"},"R302":{"cab":"R","name":"5/16-18 TAP STAINLESS"},"R298":{"cab":"R","name":"1/2-13 TAP STAINLESS"},"TA423":{"cab":"R","name":"IR 5 PITCH ACME"},"TA424":{"cab":"R","name":"ER 5 PITCH ACME"},"M467":{"cab":"R","name":"-3 PORT TOOL"},"N495":{"cab":"R","name":"1/2-20 THREAD MILL"},"R368":{"cab":"R","name":"M4 X .7 FORM TAP"},"G369":{"cab":"R","name":".094 WIDE OD GROOVE"},"R367":{"cab":"R","name":"M5 X .8 FORM TAP"},"N364":{"cab":"R","name":"5/16-24 THREAD MILL"},"T363":{"cab":"R","name":"MITSUBISHI GROOVE TOOL SCREWS"},"L361":{"cab":"R","name":"82 DEG INSERTED COUNTERSINK"},"M360":{"cab":"R","name":".500 DIA UNDERCUTTING END MILL"},"D359":{"cab":"R","name":"Q CARB DRILL"},"J357":{"cab":"R","name":".75 X .125 X .015R KEY CUTTER"},"J928":{"cab":"R","name":".375 DIA X .125 SLOT MILL"},"B353":{"cab":"R","name":"1/2 BALLNOSE END MILL"},"B352":{"cab":"R","name":"1/4 BALLNOSE END MILL"},"R350":{"cab":"R","name":"LEFT HANDED 1/4-28 TAP"},"R349":{"cab":"R","name":"1/2-14 BSPP TAP"},"G347":{"cab":"R","name":"VNMG 330.5 .005R"},"TT344":{"cab":"R","name":".952 SPADE DRILL INSERT"},"R335":{"cab":"R","name":"10-24 FORM TAP"},"R336":{"cab":"R","name":"10-32 FORM TAP"},"G332":{"cab":"R","name":"DFPR140406LC1 KCMS40"},"D308":{"cab":"R","name":".125 COOLANT THRU DRILL"},"G333":{"cab":"R","name":"DFPR14040BLCO KCU40"},"K256":{"cab":"R","name":"1/8 R BACK SIDE CORNER ROUND"},"T348":{"cab":"R","name":"SCREWS FOR CCMT 2 SERIES"},"D320":{"cab":"R","name":"29/64 DRILL .453"},"TP454":{"cab":"R","name":".094W GROOVER INSERTS"},"G318":{"cab":"R","name":"OSG HIGH FEED MILL INSERTS"},"N316":{"cab":"R","name":"5/8-11 THREAD MILL"},"J314":{"cab":"R","name":".495 DIA FULL RAD WHEEL CUTTER"},"CT313":{"cab":"R","name":".236 ER25 SEALED COLLET"},"N312":{"cab":"R","name":"1/16-27 THREAD MILL"},"TJ204":{"cab":"R","name":"FACE GROOVE 2.275-4.3307"},"TJ200":{"cab":"R","name":"FACE GROOVE 1.575-1.969"},"TJ198":{"cab":"R","name":"FACE GROOVE 3.346-4.921"},"TJ199":{"cab":"R","name":"FACE GROOVE 1.378-1.575"},"TJ201":{"cab":"R","name":"FACE GROOVE 1.969-2.362"},"TJ202":{"cab":"R","name":"FACE GROOVE 5.315-7.874"},"TJ205":{"cab":"R","name":"FACE GROOVE 2.755-4.3307"},"TJ203":{"cab":"R","name":"FACE GROOVE 2.362-2"},"G498":{"cab":"XC","name":"CCMT 32.51 FP KTP10"},"G497":{"cab":"XC","name":"DNMG 332 F3P IC8150"},"G944":{"cab":"XC","name":"VNMG 332 - MF4"},"R960":{"cab":"XC","name":"M8 x 1.25 FORM TAP"},"G961":{"cab":"XC","name":"CNMG 432 -GN IC8250"},"TJ950":{"cab":"XC","name":"WIDIA .125w FULL RADIUS INSERT GROOVE"},"TJ949":{"cab":"XC","name":"WIDIA .1875w INSERT GROOVE"},"TJ948":{"cab":"XC","name":"WIDIA .125w INSERT GROOVE"},"G954":{"cab":"XC","name":".020 WIDE OD GROOVE PENTA"},"A957":{"cab":"XC","name":".125 CEM"},"A956":{"cab":"XC","name":".1875 CEM"},"R958":{"cab":"XC","name":"M6 x 1.0 FORMTAP"},"G959":{"cab":"XC","name":"CNMG M3 TM1501"},"L939":{"cab":"XC","name":"3/8 x 82DEG DOUBLE ANGLE SHANK CUTTER"},"L940":{"cab":"XC","name":".375 x 15 DEGREE CHAMFER"},"A938":{"cab":"XC","name":"6F 3/4 (R.03) x 3/4  2-1/4 x 5\""},"D943":{"cab":"XC","name":"11 MM CARBIDE DRILL"},"G945":{"cab":"XC","name":"VNMG 331 - MF4"},"R947":{"cab":"XC","name":"M12 x 1.75 FORM TAP"},"TN951":{"cab":"XC","name":"16ER 8 UN IC908"},"D952":{"cab":"XC","name":"11.2mm KENNAMETAL THRU COOLANT DRILL"},"A920":{"cab":"XC","name":"1/4 X1/4 X 3/8 X 2 4 FLUTE END MILL"},"R921":{"cab":"XC","name":"9/16 SPIRAL FLUTE TAP"},"TT931":{"cab":"XC","name":"INBOARD INSERT 2.5 INSERT DRILL"},"TT930":{"cab":"XC","name":"OUTBOARD INSERT 2.5 INSERT DRILL"},"G932":{"cab":"XC","name":"3(16) ER 14UN"},"G933":{"cab":"XC","name":"TNMC 32 NGR.031 X .062DP GROOVE"},"G936":{"cab":"XC","name":".125 HORN BROACH INSERT"},"A919":{"cab":"XC","name":"1/4 X1/4 X 3/8 X 2 5 FLUTE END MILL"},"D924":{"cab":"XC","name":"11mm DRILL"},"G918":{"cab":"XC","name":"LNMT 1306PNTR - HSM INSERTS"},"G818":{"cab":"XC","name":"VNMG 332 ESU-T2500Z"},"M356":{"cab":"XC","name":".625 DIA. BACK SPOTFACE HEAD/ W 120 DEG ANGLE"},"G441":{"cab":"XC","name":"HNGJ0905ANERGM KCSM40 FACEMILL INSERT"},"D444":{"cab":"XC","name":"8.6 MM CARBIDE DRILL"},"M355":{"cab":"XC","name":".625 BACK SPOTFACE"},"G496":{"cab":"XC","name":".500 DIA. X 8 FLUTE END MILL"},"D442":{"cab":"XC","name":"1.2 MM COOLANT THRU DRILL"},"A433":{"cab":"XC","name":"20 MM DIA. x 7FLUTE x .0394 CR"},"A435":{"cab":"XC","name":".75 DIA 6 FLUTE YG x 1.5 FL x FLAT EM"},"A434":{"cab":"XC","name":".75 DIA 6 FLUTE ROUGHING MILL (S.S.)"}};
   // Zengers vending machine / crib inventory — [Code, DisplayPart#, Description, BinLocations].
   // Same search concept as ProShop, but a separate vendor/source, combined
   // into one search box and color-coded so results are easy to tell apart.
@@ -5553,7 +5581,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
   function _toolingSearchText(t){
     var groupName = TOOLING_GROUPS[t[1]] || '';
-    return (t[0]+' '+t[1]+' '+groupName+' '+t[2]+' '+t[3]+' '+t[4]);
+    var loc = PROSHOP_LOCATIONS[t[0]];
+    var realName = (loc && loc.name) ? loc.name : '';
+    return (t[0]+' '+t[1]+' '+groupName+' '+t[2]+' '+t[3]+' '+t[4]+' '+realName);
   }
   function _toolingDisplayLabel(t){
     var bits = [];
