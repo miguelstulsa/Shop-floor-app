@@ -1945,6 +1945,23 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   </div>
 </div>
 
+<!-- TOOL LIST VIEWER — large, easy-to-read view of ONE tool list. Opened
+     from the small "Tool List Attached" button on a request card, or from
+     tapping an entry in the Tool List browser. Fills most of the screen on
+     purpose so it's actually readable, not a cramped inline expand. Only
+     closes on an explicit tap of MINIMIZE — never on an outside click. -->
+<div class="modal-overlay" id="toolListViewerOverlay" style="display:none;">
+  <div class="modal" style="max-width:640px;width:94vw;height:88vh;display:flex;flex-direction:column;">
+    <div class="modal-title" id="tlViewerTitle">📋 Tool List</div>
+    <div class="modal-machine" id="tlViewerSubtitle" style="margin-bottom:12px;"></div>
+    <div id="tlViewerBody" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px;"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-shrink:0;">
+      <button type="button" id="tlViewerEditBtn" onclick="window._editFromViewer()" style="flex:1;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">✎ EDIT</button>
+      <button type="button" onclick="window._minimizeToolListViewer()" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">▾ MINIMIZE</button>
+    </div>
+  </div>
+</div>
+
 <!-- INVENTORY BROWSER — all three catalogs in one place: ProShop Tooling,
      Zengers Inventory, ProShop Measuring Equipment. Also lets you browse by
      bin location, though only Zengers items actually have location data —
@@ -4861,23 +4878,16 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     list.innerHTML = filtered.map(function(r){
       var key = window._toolListKey(r.part, r.op);
       var dateStr = r.createdAt ? new Date(r.createdAt.seconds*1000).toLocaleDateString() : '';
-      var toolLines = (r.tools||[]).map(function(t, i){
-        var bits = [];
-        if(t.ooh) bits.push('OOH ' + t.ooh);
-        if(t.dia) bits.push(t.dia);
-        if(t.ext) bits.push('Ext ' + t.ext + (t.extLen ? ' × ' + t.extLen : ''));
-        return '<div style="font-size:12px;color:#cbd5e1;padding-left:10px;margin-top:2px;">' + (i+1) + '. ' + t.desc + (bits.length ? ' <span style="color:#7dd3fc;">— ' + bits.join(' — ') + '</span>' : '') + '</div>';
-      }).join('');
-      return '<div style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:8px;padding:10px 12px;">'
+      return '<div onclick="window._openToolListViewer(' + window._escAttr(JSON.stringify(key)) + ')" style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:8px;padding:10px 12px;cursor:pointer;">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">'
         + '<div style="font-size:13px;color:#4ade80;font-weight:700;">Part ' + r.part + (r.op ? ' — OP ' + r.op : '') + '</div>'
-        + '<div style="display:flex;gap:6px;">'
+        + '<div style="display:flex;gap:6px;" onclick="event.stopPropagation()">'
         + '<button type="button" onclick="window._closeToolListBrowser();window._editToolList(' + window._escAttr(JSON.stringify(key)) + ')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;cursor:pointer;">EDIT</button>'
         + '<button type="button" onclick="window._deleteToolList(' + window._escAttr(JSON.stringify(key)) + ',this)" style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#f87171;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;cursor:pointer;">DELETE</button>'
         + '</div>'
         + '</div>'
-        + '<div style="font-size:11px;color:#64748b;margin:2px 0 4px;">Last WO: ' + (r.wo||'—') + ' · ' + (r.machine||'') + (dateStr ? ' · ' + dateStr : '') + (r.createdBy ? ' · by ' + r.createdBy : '') + '</div>'
-        + toolLines
+        + '<div style="font-size:11px;color:#64748b;margin:2px 0 0;">Last WO: ' + (r.wo||'—') + ' · ' + (r.machine||'') + (dateStr ? ' · ' + dateStr : '') + (r.createdBy ? ' · by ' + r.createdBy : '') + '</div>'
+        + '<div style="font-size:11px;color:#7dd3fc;margin-top:4px;">📋 ' + (r.tools||[]).length + ' tool' + ((r.tools||[]).length===1?'':'s') + ' — tap to view</div>'
         + '</div>';
     }).join('');
   };
@@ -5055,15 +5065,18 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   // Renders either a "Fill Tool List" button (nothing attached yet) or a
   // compact "attached, tap to view" summary for a request card with a Part#.
+  // Tapping it opens the large Tool List Viewer modal below, instead of an
+  // inline expand — a small inline expand kept getting silently reset back
+  // to collapsed by live data re-renders while someone was still reading it.
+
   window._toolListCardIndicator = function(n){
     if(!n.part) return '';
     var key = window._toolListKey(n.part, n.op);
     var tl = window._toolListCache[key];
     if(tl && tl.tools && tl.tools.length){
-      return '<button type="button" onclick="event.stopPropagation();window._toggleAttachedToolList(\'' + window._escAttr(key) + '\', this)" '
+      return '<button type="button" onclick="event.stopPropagation();window._openToolListViewer(\'' + window._escAttr(key) + '\')" '
         + 'style="margin-top:6px;width:100%;background:rgba(125,211,252,0.1);border:1px solid #0c4a6e;color:#7dd3fc;border-radius:6px;padding:6px 10px;font-size:11px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:0.5px;cursor:pointer;text-align:left;">'
-        + '📋 Tool List Attached — ' + tl.tools.length + ' tool' + (tl.tools.length===1?'':'s') + ' ▾</button>'
-        + '<div class="tl-attached-detail" data-key="' + window._escAttr(key) + '" style="display:none;margin-top:4px;background:#0d1f35;border:1px solid #1e3a5c;border-radius:6px;padding:8px 10px;"></div>';
+        + '📋 Tool List Attached — ' + tl.tools.length + ' tool' + (tl.tools.length===1?'':'s') + ' — tap to view</button>';
     }
     // Only offer to fill one out from a Pending WO card — that's the point
     // in the workflow where tooling is actually being staged/sent out.
@@ -5075,28 +5088,38 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     return '';
   };
 
-  window._toggleAttachedToolList = function(key, btn){
-    var detail = document.querySelector('.tl-attached-detail[data-key="' + key.replace(/"/g,'\\"') + '"]');
-    if(!detail) return;
+  function _toolListDetailHtml(tl){
+    return (tl.tools||[]).map(function(t, i){
+      var bits = [];
+      if(t.ooh) bits.push('OOH ' + t.ooh);
+      if(t.dia) bits.push(t.dia);
+      if(t.ext) bits.push('Ext ' + t.ext + (t.extLen ? ' × ' + t.extLen : ''));
+      return '<div style="background:rgba(125,211,252,0.06);border:1px solid #1e3a5c;border-radius:8px;padding:10px 12px;font-size:14px;color:#e2e8f0;">' + (i+1) + '. ' + t.desc + (bits.length ? '<div style="color:#7dd3fc;font-size:12px;margin-top:3px;">' + bits.join(' — ') + '</div>' : '') + '</div>';
+    }).join('');
+  }
+
+  // ── TOOL LIST VIEWER — large, fills most of the screen. Opened from a
+  // request card's "Tool List Attached" button, or from tapping an entry in
+  // the Tool List browser. Only closes on an explicit MINIMIZE tap. ──
+  window._toolListViewerKey = null;
+  window._openToolListViewer = function(key){
     var tl = window._toolListCache[key];
-    if(detail.style.display === 'none'){
-      if(tl){
-        detail.innerHTML = (tl.tools||[]).map(function(t, i){
-          var bits = [];
-          if(t.ooh) bits.push('OOH ' + t.ooh);
-          if(t.dia) bits.push(t.dia);
-          if(t.ext) bits.push('Ext ' + t.ext + (t.extLen ? ' × ' + t.extLen : ''));
-          return '<div style="font-size:12px;color:#e2e8f0;margin-bottom:3px;">' + (i+1) + '. ' + t.desc + (bits.length ? ' <span style="color:#7dd3fc;">— ' + bits.join(' — ') + '</span>' : '') + '</div>';
-        }).join('')
-        + (tl.createdBy ? '<div style="font-size:10px;color:#64748b;margin-top:4px;">Filled out by ' + tl.createdBy + '</div>' : '')
-        + '<button type="button" onclick="event.stopPropagation();window._editToolList(' + window._escAttr(JSON.stringify(key)) + ')" style="margin-top:6px;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 12px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;cursor:pointer;">✎ EDIT THIS TOOL LIST</button>';
-      }
-      detail.style.display = 'block';
-      if(btn) btn.innerHTML = btn.innerHTML.replace('▾','▴');
-    } else {
-      detail.style.display = 'none';
-      if(btn) btn.innerHTML = btn.innerHTML.replace('▴','▾');
-    }
+    if(!tl) return;
+    window._toolListViewerKey = key;
+    document.getElementById('tlViewerTitle').textContent = '📋 Part ' + tl.part + (tl.op ? ' — OP ' + tl.op : '');
+    document.getElementById('tlViewerSubtitle').textContent = 'Last WO: ' + (tl.wo||'—') + ' · ' + (tl.machine||'') + (tl.createdBy ? ' · by ' + tl.createdBy : '');
+    document.getElementById('tlViewerBody').innerHTML = _toolListDetailHtml(tl);
+    document.getElementById('toolListViewerOverlay').style.display = 'flex';
+  };
+  window._minimizeToolListViewer = function(){
+    document.getElementById('toolListViewerOverlay').style.display = 'none';
+    window._toolListViewerKey = null;
+  };
+  window._editFromViewer = function(){
+    var key = window._toolListViewerKey;
+    if(!key) return;
+    window._minimizeToolListViewer();
+    window._editToolList(key);
   };
 
   // Measuring equipment for Inspection requests — [name, needsDimension]
