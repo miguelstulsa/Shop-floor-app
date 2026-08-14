@@ -1127,7 +1127,7 @@
             TEST
           </button>
         </div>
-        <div style="font-size:11px;color:#64748b;line-height:1.6;">Every 🔴 <strong style="color:#f0f4f8;">Inspection Request</strong> fires a <strong style="color:#f87171;">siren alert</strong> to this key — directly to your Quality Manager's phone.</div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">⚠️ Currently inactive — Inspection alerts go only to the Second Inspector key below. This field is kept here in case that changes later.</div>
       </div>
 
       <!-- Second Inspector key -->
@@ -1144,7 +1144,7 @@
             TEST
           </button>
         </div>
-        <div style="font-size:11px;color:#64748b;line-height:1.6;">Same 🔴 <strong style="color:#f0f4f8;">Inspection Request</strong> siren alert also goes to this key — a second inspector's phone, in addition to the Quality Manager above.</div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">🔴 <strong style="color:#f0f4f8;">Inspection Request</strong> siren alerts go to this key only — this is currently the sole inspector.</div>
       </div>
 
       <!-- QMI/DGP Outside Tooling notification key -->
@@ -3711,13 +3711,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   setTimeout(function(){ _loadSharedAppSecrets(); }, 1500);
 
-  var QUALITY_MANAGER_KEY = 'uaaqjftkq7qibdc3o9bk6b4h7ksdez'; // QC Manager
-  var SECOND_INSPECTOR_KEY = 'u1kfi757yyujcssawzkfg989tsxtv6'; // Inspector (Ker) — hardwired directly (no longer a Pushover group)
+  var QUALITY_MANAGER_KEY = 'uaaqjftkq7qibdc3o9bk6b4h7ksdez'; // QC Manager — kept here but no longer sent to; Ker is the only inspector now
+  var SECOND_INSPECTOR_KEY = 'u1kfi757yyujcssawzkfg989tsxtv6'; // Inspector (Ker) — the ONLY one who gets Inspection alerts
   function qualityPushover(title, message) {
-    var qualityKey = localStorage.getItem('hillQualityPushoverKey') || QUALITY_MANAGER_KEY;
     var qualityKey2 = localStorage.getItem('hillQualityPushoverKey2') || SECOND_INSPECTOR_KEY;
-    console.log('[Pushover] qualityPushover firing. Keys (first 6 chars):', (qualityKey||'').slice(0,6), (qualityKey2||'').slice(0,6));
-    [qualityKey, qualityKey2].forEach(function(key){
+    console.log('[Pushover] qualityPushover firing. Key (first 6 chars):', (qualityKey2||'').slice(0,6));
+    [qualityKey2].forEach(function(key){
       if (!key) return;
       var fd = new FormData();
       fd.append('token',    PUSHOVER_TOKEN);
@@ -3738,8 +3737,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     key = key.trim();
     if (!key) { showToast('yellow', 'Enter a key first', 'Paste the Quality Manager\'s Pushover User Key above.'); return; }
     localStorage.setItem('hillQualityPushoverKey', key);
-    qualityPushover('🔴 TEST — Inspection Alert', 'Quality Manager alerts are working! You will receive this on every Inspection Request.');
-    showToast('green', 'Test sent!', 'Check the Quality Manager\'s Pushover app.');
+    showToast('yellow', 'This field is currently inactive', 'Real Inspection alerts only go to the Second Inspector key below — this key is saved but not being used yet.');
   }
 
   function testQualityPushover2() {
