@@ -1804,6 +1804,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
       <div style="font-size:11px;color:#d8b4fe;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Log Items Sent Out</div>
+
+      <button type="button" id="dmgStartBtn" onclick="window._startDmgPrep()" style="width:100%;margin-bottom:10px;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">▶ START — BEGIN PREPPING SHIPMENT</button>
+      <div id="dmgTimerRow" style="display:none;align-items:center;justify-content:center;margin-bottom:10px;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;padding:8px;">
+        <span id="dmgTimerDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#facc15;letter-spacing:1px;">⏱ 0:00</span>
+      </div>
+
       <div style="position:relative;">
         <input type="text" id="dmgItemDesc" placeholder="Search tooling &amp; gages — ProShop, Zengers, Measuring Equipment..." autocomplete="off"
           oninput="window._filterDmgTooling(this.value)" onfocus="window._filterDmgTooling(this.value)"
@@ -3706,7 +3712,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   setTimeout(function(){ _loadSharedAppSecrets(); }, 1500);
 
   var QUALITY_MANAGER_KEY = 'uaaqjftkq7qibdc3o9bk6b4h7ksdez'; // QC Manager
-  var SECOND_INSPECTOR_KEY = 'ufgno67z1wiucyymcvpgw4j7rxic68'; // Inspector (Dingo) — hardwired directly (no longer a Pushover group)
+  var SECOND_INSPECTOR_KEY = 'u1kfi757yyujcssawzkfg989tsxtv6'; // Inspector (Ker) — hardwired directly (no longer a Pushover group)
   function qualityPushover(title, message) {
     var qualityKey = localStorage.getItem('hillQualityPushoverKey') || QUALITY_MANAGER_KEY;
     var qualityKey2 = localStorage.getItem('hillQualityPushoverKey2') || SECOND_INSPECTOR_KEY;
@@ -4302,7 +4308,39 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
       window._dmgItems = items;
       window._renderDmgTracker();
+      window._checkDmgDueReminders();
     }, function(e){ console.warn('DMG tracker listener:', e.message); });
+  };
+
+  // Due-back reminders — fires a day before something's expected back.
+  // Honest limitation: this only runs when the app is actually open (the
+  // live listener above fires on load and on every data change) — there's
+  // no true server-side scheduler behind this, so it depends on the app
+  // being opened at some point on or before the reminder day. Each item
+  // only gets reminded once per day (tracked via lastReminderSent) so it
+  // doesn't re-fire every time the page loads.
+  window._checkDmgDueReminders = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods || !window._dmgItems) return;
+    var todayStr = new Date().toISOString().slice(0,10);
+    var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+    var tomorrowStr = tomorrow.toISOString().slice(0,10);
+
+    window._dmgItems.forEach(function(it){
+      if(it.returned || !it.dueDate) return;
+      if(it.lastReminderSent === todayStr) return; // already reminded today
+      var isDueTomorrow = it.dueDate === tomorrowStr;
+      var isOverdue = it.dueDate < todayStr;
+      if(!isDueTomorrow && !isOverdue) return;
+
+      if(window.qmiDgpPushover){
+        window.qmiDgpPushover(
+          isOverdue ? '📦 QMI/DGP — OVERDUE' : '📦 QMI/DGP — Due Back Tomorrow',
+          (isOverdue ? 'This was due back ' + it.dueDate + ' and is still out: ' : 'Due back tomorrow (' + it.dueDate + '): ') + ((it.qty>1?it.qty+'× ':'')+it.desc)
+        );
+      }
+      mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', it.id), { lastReminderSent: todayStr }).catch(function(){});
+    });
   };
 
   window._renderDmgTracker = function(){
@@ -4365,11 +4403,42 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = '1';
     window._renderDmgStagedList();
     window._renderDmgTracker();
+    window._resetDmgPrepTimer();
     document.getElementById('dmgTrackerOverlay').style.display = 'flex';
   };
 
   window._closeDmgTracker = function(){
     document.getElementById('dmgTrackerOverlay').style.display = 'none';
+  };
+
+  // ── START/FINISH timer for prepping a shipment — START marks when you
+  // began pulling everything together, FINISH means the package is
+  // physically ready for pickup. Same visible-timer pattern as every other
+  // request type in the app, applied here to the prep work itself. ──
+  window._dmgPrepStartedAt = null;
+  window._dmgPrepTimerInterval = null;
+
+  window._startDmgPrep = function(){
+    window._dmgPrepStartedAt = Date.now();
+    document.getElementById('dmgStartBtn').style.display = 'none';
+    document.getElementById('dmgTimerRow').style.display = 'flex';
+    var logBtn = document.getElementById('dmgLogBtn');
+    if(logBtn) logBtn.textContent = '✓ FINISH — READY FOR PICKUP';
+    if(window._dmgPrepTimerInterval) clearInterval(window._dmgPrepTimerInterval);
+    window._dmgPrepTimerInterval = setInterval(function(){
+      var secs = Math.floor((Date.now() - window._dmgPrepStartedAt) / 1000);
+      var m = Math.floor(secs/60), s = secs%60;
+      var disp = document.getElementById('dmgTimerDisplay');
+      if(disp) disp.textContent = '⏱ ' + m + ':' + (s<10?'0':'') + s;
+    }, 1000);
+  };
+
+  window._resetDmgPrepTimer = function(){
+    if(window._dmgPrepTimerInterval){ clearInterval(window._dmgPrepTimerInterval); window._dmgPrepTimerInterval = null; }
+    window._dmgPrepStartedAt = null;
+    var startBtn = document.getElementById('dmgStartBtn'); if(startBtn) startBtn.style.display = 'block';
+    var timerRow = document.getElementById('dmgTimerRow'); if(timerRow) timerRow.style.display = 'none';
+    var logBtn = document.getElementById('dmgLogBtn'); if(logBtn) logBtn.textContent = '＋ LOG ITEM';
   };
 
   // ── STAGED ITEMS — several tools/jobs can go out in one shipment,
@@ -4451,10 +4520,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods) return;
 
+    // Capture how long prep actually took, if Start was used — if they
+    // never tapped Start, just don't record a duration rather than block them.
+    var prepDurationSec = window._dmgPrepStartedAt ? Math.floor((Date.now() - window._dmgPrepStartedAt) / 1000) : null;
+
     Promise.all(items.map(function(item){
       return mods.addDoc(mods.collection(db2, 'hillOutsideTooling'), {
         desc: item.desc, qty: item.qty || 1, category: item.category || null, sentDate: sentDate, dueDate: dueDate, notes: notes,
         returned: false, loggedBy: window.currentUser || 'unknown',
+        prepDurationSec: prepDurationSec,
         createdAt: mods.serverTimestamp()
       });
     })).then(function(){
@@ -4465,6 +4539,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       window._dmgQty = 1;
       var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = '1';
       window._renderDmgStagedList();
+      window._resetDmgPrepTimer();
       if(window.showToast) showToast('green', items.length > 1 ? items.length+' items logged' : 'Logged', items.map(function(it){ return it.desc; }).join(', '));
       // Notify — this is the whole point: know immediately when something
       // gets sent out, don't have to go looking for it.
