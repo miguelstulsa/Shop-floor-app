@@ -1183,6 +1183,23 @@
         <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires ONLY when you tap FINISH on a QMI/DGP item — that's the "ready for pickup" signal to Justin. Nothing sends until this key is filled in.</div>
       </div>
 
+      <!-- Will Garcia — Floor Support notification key -->
+      <div style="margin-bottom:14px;padding:12px;background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.25);border-radius:10px;">
+        <label style="font-size:11px;color:#fb923c;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">🟠 Will Garcia — Floor Support Key</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input id="will-pushover-key" type="password"
+            placeholder="Will's Pushover User Key..."
+            style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(249,115,22,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
+            oninput="localStorage.setItem('hillFloorSupportPushoverKey',this.value.trim()); window._syncSecretToCloud('floorSupportPushoverKey',this.value.trim())"
+          />
+          <button onclick="testWillPushover()"
+            style="background:#f97316;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
+            TEST
+          </button>
+        </div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires on every 🟠 <strong style="color:#f0f4f8;">Floor Support</strong> request (material, hopper, supplies, etc). Prefilled with the key you already hard-wired in — you can update it here going forward.</div>
+      </div>
+
       <div style="margin-bottom:10px;">
         <label style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Group Key (notifies ALL managers)</label>
         <div style="display:flex;gap:8px;">
@@ -3687,7 +3704,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     groupPushoverKey:    'hillPushoverGroupKey',
     elevenLabsKey:       'jimKey',
     qmiDgpPushoverKey:   'hillQmiDgpPushoverKey',
-    justinPushoverKey:   'hillJustinPushoverKey'
+    justinPushoverKey:   'hillJustinPushoverKey',
+    floorSupportPushoverKey: 'hillFloorSupportPushoverKey'
   };
 
   function _refreshSecretInputsFromLocalStorage(){
@@ -3698,7 +3716,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       ['pushover-group-key','hillPushoverGroupKey'],
       ['eleven-key-input','jimKey'],
       ['qmidgp-pushover-key','hillQmiDgpPushoverKey'],
-      ['justin-pushover-key','hillJustinPushoverKey']
+      ['justin-pushover-key','hillJustinPushoverKey'],
+      ['will-pushover-key','hillFloorSupportPushoverKey']
     ];
     pairs.forEach(function(p){
       var el = document.getElementById(p[0]);
@@ -3856,6 +3875,23 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     fetch('https://api.pushover.net/1/messages.json', { method:'POST', mode:'no-cors', body:fd })
       .catch(function(e){ console.warn('Justin Pushover:', e.message); });
   };
+  function testWillPushover() {
+    var key = (document.getElementById('will-pushover-key') || {}).value || '';
+    key = key.trim();
+    if (!key) { showToast('yellow', 'Enter a key first', 'Paste Will\'s Pushover User Key above.'); return; }
+    localStorage.setItem('hillFloorSupportPushoverKey', key);
+    var fd = new FormData();
+    fd.append('token',    PUSHOVER_TOKEN);
+    fd.append('user',     key);
+    fd.append('title',    '🟠 TEST — Floor Support');
+    fd.append('message',  'This is a test of the Floor Support alert. You\'ll get this for real whenever someone submits a Floor Support request.');
+    fd.append('sound',    'magic');
+    fd.append('priority', '1');
+    fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST', mode: 'no-cors', body: fd
+    }).catch(function(e){ console.warn('Will Pushover test:', e.message); });
+    showToast('green', 'Test sent!', "Check Will's Pushover app.");
+  }
   function safePushover(title, message, sound, priority) {
     var userKey = localStorage.getItem('hillPushoverGroupKey') || savedGroupKey || PUSHOVER_DEFAULT_USER;
     console.log('[Pushover] safePushover firing. Key used (first 6 chars):', (userKey||'').slice(0,6), 'Title:', title);
@@ -6164,27 +6200,21 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       })();
     }
     showToast(selectedType, 'Request submitted for ' + currentMachine, wo);
-    if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue') {
+    if (selectedType==='red'||selectedType==='yellow'||selectedType==='blue'||selectedType==='orange') {
       // Store a dedup key so multi-session installs don't double-fire
       var _dedupKey = 'hillPushSent_' + Date.now();
       localStorage.setItem(_dedupKey, '1');
       setTimeout(function(){ localStorage.removeItem(_dedupKey); }, 10000);
       console.log('[Pushover] About to call sendPushover for type:', selectedType);
       try {
-        sendPushover(selectedType, currentCell, currentMachine, wo, combinedDetail, operator, op);
+        // window.sendPushover (patched below in the Floor Support script) handles
+        // orange by firing Will's Floor Support key + admin key + group key.
+        // Previously orange never reached this call at all, so Will's key never fired.
+        (window.sendPushover || sendPushover)(selectedType, currentCell, currentMachine, wo, combinedDetail, operator, op);
         console.log('[Pushover] sendPushover call completed without throwing.');
       } catch(pushErr) {
         console.error('[Pushover] sendPushover THREW an error:', pushErr);
       }
-    }
-    // Admin personal alert — only for orange (Floor Support) since sendPushover
-    // already handles blue/yellow via safePushover. Prevents double notifications.
-    if (selectedType === 'orange') {
-      adminPushover(
-        '🟠 FLOOR SUPPORT — ' + currentMachine,
-        'WO# ' + wo + (op?' OP'+op:'') + (operator?' · '+operator:'') + ' · ' + currentCell + (detail?' · '+detail.slice(0,60):''),
-        'pushover', 0
-      );
     }
   }
 
@@ -6711,6 +6741,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var adminKeyInput = document.getElementById('admin-pushover-key');
     if (adminKeyInput && localStorage.getItem('hillAdminPushoverKey')) {
       adminKeyInput.value = localStorage.getItem('hillAdminPushoverKey');
+    }
+    var willKeyInput = document.getElementById('will-pushover-key');
+    if (willKeyInput && !willKeyInput.value) {
+      willKeyInput.value = localStorage.getItem('hillFloorSupportPushoverKey') || (typeof FLOOR_SUPPORT_DEFAULT_KEY !== 'undefined' ? FLOOR_SUPPORT_DEFAULT_KEY : '');
     }
     // Update DNX status display
     updateDNXStatus(dnxConnected);
@@ -13165,6 +13199,11 @@ window.slSendMorning = function() {
       '.req-filter.orange{border-color:rgba(249,115,22,0.3);color:#fb923c;}',
       '.req-filter.orange.active{background:#f97316;border-color:#f97316;color:white;}',
       '.notif-item.orange .notif-type{color:#fb923c;}',
+      '.notif-item.orange{border-left-color:#f97316;background:rgba(249,115,22,0.15);box-shadow:inset 0 0 30px rgba(249,115,22,0.08),0 0 0 1px rgba(249,115,22,0.2);}',
+      '.notif-item.orange .notif-blink-dot{background:#f97316;box-shadow:0 0 12px 4px #f97316;animation:blink-orange 1.0s step-end infinite;}',
+      '.req-blink-dot.orange{background:#f97316;box-shadow:0 0 8px rgba(249,115,22,0.9);animation:blink-orange 1.0s step-end infinite;}',
+      '.note-dot.orange{background:#f97316;box-shadow:0 0 10px 3px rgba(249,115,22,0.9);animation:blink-orange 1.0s step-end infinite;}',
+      '@keyframes blink-orange{0%,49%{opacity:1}50%,100%{opacity:.1}}',
       '.dash-req-type.orange{background:rgba(249,115,22,0.15);color:#fb923c;}',
       '.dash-req-card.type-orange::before{background:#f97316;}',
       '#floor-support-extras{display:none;margin-bottom:8px;}',
