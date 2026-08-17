@@ -2377,8 +2377,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       window.updateNotifFeed(window._lastActionable);
     }
   }, 5000);
-  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢', dnx: '🔷' };
+  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert', orange: 'Floor Support' };
+  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢', dnx: '🔷', orange: '🟠' };
 
   // MACHINE NOTES
   const q = query(collection(db, "notes"), orderBy("createdAt", "desc"));
@@ -2512,7 +2512,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const item = document.createElement('div');
       item.className = 'notif-item ' + n.type;
       const timeStr = _fmtAlertTimestamp(n.createdAt);
-      var isAdmin = window._isAdmin || window.currentUser === 'hilladmin' || (window._isManager && n.type === 'red');
+      var isAdmin = window._isAdmin || window.currentUser === 'hilladmin' || (window._isManager && (n.type === 'red' || n.type === 'orange'));
       var inProg  = n.inProgress;
       var onHold  = n.onHold;
       var timerBtns = isAdmin
@@ -2566,7 +2566,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const item = document.createElement('div');
       item.className = 'req-card ' + n.type;
       const timeStr = _fmtAlertTimestamp(n.createdAt);
-      var isAdmin2 = window._isAdmin || window.currentUser === 'hilladmin' || (window._isManager && n.type === 'red');
+      var isAdmin2 = window._isAdmin || window.currentUser === 'hilladmin' || (window._isManager && (n.type === 'red' || n.type === 'orange'));
       var inProg2  = n.inProgress;
       var onHold2  = n.onHold;
       var adminBtns = isAdmin2
@@ -3985,8 +3985,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // ── MACHINE NOTES ──
   let currentMachine = '', currentCell = '', selectedType = null;
   window.machineNotes = {}; window.currentMachine = '';
-  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert' };
-  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢', dnx: '🔷' };
+  const typeLabels = { blue: 'Pending WO', red: 'Inspection Request', yellow: 'Machinist Request', green: 'Running WO', dnx: 'Datanomix Alert', orange: 'Floor Support' };
+  const typeIcons  = { blue: '🔵', red: '🔴', yellow: '🟡', green: '🟢', dnx: '🔷', orange: '🟠' };
 
   window._resolveDnxFromFloor = async function(reqId, machineName) {
     var db2=window.fbDb, mods=window._fbModules;
@@ -13096,17 +13096,22 @@ function renderDNXFromData(data) {
 var FLOOR_SUPPORT_DEFAULT_KEY = 'uiha46ccw7jdkjrd3sjotia2eddnb7'; // Will Garcia — Bryan is no longer in this role
 
 window.floorSupportPushover = function(title, message) {
-  var fsKey = localStorage.getItem('hillFloorSupportPushoverKey') || FLOOR_SUPPORT_DEFAULT_KEY;
-  if (!fsKey) return;
-  var fd = new FormData();
-  fd.append('token', window.PUSHOVER_TOKEN || 'a3fz1eugorhyxgrjk5svuw9ym2nwy6');
-  fd.append('user', fsKey);
-  fd.append('title', title || 'FLOOR SUPPORT REQUEST');
-  fd.append('message', message || '');
-  fd.append('sound', 'magic');
-  fd.append('priority', '1');
-  fetch('https://api.pushover.net/1/messages.json', {method:'POST',mode:'no-cors',body:fd})
-    .catch(function(e){ console.warn('FS Pushover:', e.message); });
+  var willKey = localStorage.getItem('hillFloorSupportPushoverKey') || FLOOR_SUPPORT_DEFAULT_KEY;
+  var miguelKey = localStorage.getItem('hillAdminPushoverKey') || '';
+  var keys = [willKey, miguelKey].filter(function(k){ return !!k; });
+  // De-dupe in case Miguel's own key and Will's key ever end up the same
+  keys = Array.from(new Set(keys));
+  keys.forEach(function(fsKey){
+    var fd = new FormData();
+    fd.append('token', window.PUSHOVER_TOKEN || 'a3fz1eugorhyxgrjk5svuw9ym2nwy6');
+    fd.append('user', fsKey);
+    fd.append('title', title || 'FLOOR SUPPORT REQUEST');
+    fd.append('message', message || '');
+    fd.append('sound', 'magic');
+    fd.append('priority', '1');
+    fetch('https://api.pushover.net/1/messages.json', {method:'POST',mode:'no-cors',body:fd})
+      .catch(function(e){ console.warn('FS Pushover:', e.message); });
+  });
 };
 
 // slSendMorning for shift leader tab
