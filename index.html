@@ -1164,6 +1164,24 @@
         <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires when anyone logs a new item sent to <strong style="color:#f0f4f8;">QMI/DGP</strong>, and again when someone marks one as returned (pending your approval) — both go straight to this key.</div>
       </div>
 
+      <!-- Justin Gray notification key — fires when Miguel finishes an item,
+           telling Justin it's ready for pickup. Empty until his key is added. -->
+      <div style="margin-bottom:14px;padding:12px;background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.25);border-radius:10px;">
+        <label style="font-size:11px;color:#7dd3fc;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">📦 Justin Gray Notification Key</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input id="justin-pushover-key" type="password"
+            placeholder="Justin's Pushover User Key..."
+            style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(56,189,248,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
+            oninput="localStorage.setItem('hillJustinPushoverKey',this.value.trim()); window._syncSecretToCloud('justinPushoverKey',this.value.trim())"
+          />
+          <button onclick="testJustinPushover()"
+            style="background:#38bdf8;border:none;color:#0f2338;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
+            TEST
+          </button>
+        </div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires ONLY when you tap FINISH on a QMI/DGP item — that's the "ready for pickup" signal to Justin. Nothing sends until this key is filled in.</div>
+      </div>
+
       <div style="margin-bottom:10px;">
         <label style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Group Key (notifies ALL managers)</label>
         <div style="display:flex;gap:8px;">
@@ -3655,7 +3673,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     qualityPushoverKey2: 'hillQualityPushoverKey2',
     groupPushoverKey:    'hillPushoverGroupKey',
     elevenLabsKey:       'jimKey',
-    qmiDgpPushoverKey:   'hillQmiDgpPushoverKey'
+    qmiDgpPushoverKey:   'hillQmiDgpPushoverKey',
+    justinPushoverKey:   'hillJustinPushoverKey'
   };
 
   function _refreshSecretInputsFromLocalStorage(){
@@ -3665,7 +3684,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       ['quality-pushover-key-2','hillQualityPushoverKey2'],
       ['pushover-group-key','hillPushoverGroupKey'],
       ['eleven-key-input','jimKey'],
-      ['qmidgp-pushover-key','hillQmiDgpPushoverKey']
+      ['qmidgp-pushover-key','hillQmiDgpPushoverKey'],
+      ['justin-pushover-key','hillJustinPushoverKey']
     ];
     pairs.forEach(function(p){
       var el = document.getElementById(p[0]);
@@ -3789,6 +3809,39 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     fd.append('priority', '1');
     fetch('https://api.pushover.net/1/messages.json', { method:'POST', mode:'no-cors', body:fd })
       .catch(function(e){ console.warn('QMI/DGP Pushover:', e.message); });
+  };
+  function testJustinPushover() {
+    var key = (document.getElementById('justin-pushover-key') || {}).value || '';
+    key = key.trim();
+    if (!key) { showToast('yellow', 'Enter a key first', 'Paste Justin\'s Pushover User Key above.'); return; }
+    localStorage.setItem('hillJustinPushoverKey', key);
+    var fd = new FormData();
+    fd.append('token',    PUSHOVER_TOKEN);
+    fd.append('user',     key);
+    fd.append('title',    '📦 TEST — Ready for Pickup');
+    fd.append('message',  'This is a test of the QMI/DGP "ready for pickup" alert. You\'ll get this for real once Miguel taps FINISH on an item.');
+    fd.append('sound',    'magic');
+    fd.append('priority', '1');
+    fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST', mode: 'no-cors', body: fd
+    }).catch(function(e){ console.warn('Justin Pushover test:', e.message); });
+    showToast('green', 'Test sent!', 'Check Justin\'s Pushover app.');
+  }
+  // Fires ONLY when Miguel taps FINISH on a QMI/DGP item — that's the
+  // deliberate "ready for pickup" signal to Justin. Silently does nothing
+  // if his key hasn't been added yet, rather than erroring.
+  window.justinPushover = function(title, message) {
+    var key = localStorage.getItem('hillJustinPushoverKey') || '';
+    if (!key) { console.warn('[Pushover] justinPushover: no key set yet, skipping'); return; }
+    var fd = new FormData();
+    fd.append('token',    PUSHOVER_TOKEN);
+    fd.append('user',     key);
+    fd.append('title',    title || '📦 Ready for Pickup');
+    fd.append('message',  message || '');
+    fd.append('sound',    'magic');
+    fd.append('priority', '1');
+    fetch('https://api.pushover.net/1/messages.json', { method:'POST', mode:'no-cors', body:fd })
+      .catch(function(e){ console.warn('Justin Pushover:', e.message); });
   };
   function safePushover(title, message, sound, priority) {
     var userKey = localStorage.getItem('hillPushoverGroupKey') || savedGroupKey || PUSHOVER_DEFAULT_USER;
@@ -4369,13 +4422,26 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var overdue = _dmgIsOverdue(it.dueDate);
       var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
       var actionHtml;
-      if(it.returnRequested){
+      if(!it.finished){
+        // Not yet finished — only admin can Start/Finish this. Non-admins
+        // just see where it stands, no button to push.
+        if(!it.started){
+          actionHtml = isAdmin
+            ? '<button type="button" onclick="window._startDmgItem(\'' + it.id + '\')" style="margin-top:8px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">▶ START</button>'
+            : '<div style="margin-top:8px;text-align:center;font-size:11px;color:#94a3b8;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ PENDING — waiting on admin</div>';
+        } else {
+          actionHtml = isAdmin
+            ? '<button type="button" onclick="window._finishDmgItem(\'' + it.id + '\')" style="margin-top:8px;width:100%;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#fbbf24;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ FINISH</button>'
+            : '<div style="margin-top:8px;text-align:center;font-size:11px;color:#fbbf24;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">🔧 IN PROGRESS</div>';
+        }
+      } else if(it.returnRequested){
         actionHtml = '<div style="margin-top:8px;background:rgba(234,179,8,0.12);border:1px solid #eab308;border-radius:6px;padding:7px;text-align:center;">'
           + '<div style="font-size:11px;color:#fde047;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ RETURN REQUESTED by ' + (it.returnRequestedBy||'someone') + '</div>'
           + (isAdmin ? '<button type="button" onclick="window._approveDmgReturn(\'' + it.id + '\')" style="margin-top:6px;width:100%;background:rgba(34,197,94,0.2);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:6px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ APPROVE RETURN</button>' : '<div style="font-size:10px;color:#94a3b8;margin-top:3px;">Waiting on admin approval</div>')
           + '</div>';
       } else {
-        actionHtml = '<button type="button" onclick="window._markDmgReturned(\'' + it.id + '\')" style="margin-top:8px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ MARK RETURNED</button>';
+        actionHtml = '<div style="margin-top:8px;font-size:10px;color:#4ade80;text-align:center;">✅ Ready for pickup — sent to Justin</div>'
+          + '<button type="button" onclick="window._markDmgReturned(\'' + it.id + '\')" style="margin-top:6px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ MARK RETURNED</button>';
       }
       return '<div style="background:'+(overdue?'rgba(239,68,68,0.1)':'rgba(168,85,247,0.08)')+';border:1px solid '+(overdue?'#ef4444':'rgba(168,85,247,0.35)')+';border-radius:8px;padding:10px 12px;">'
         + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;">' + ((it.qty && it.qty > 1) ? (it.qty + '× ') : '') + (it.desc||'(no description)') + _dmgCategoryBadge(it.category) + '</div>'
@@ -4386,6 +4452,35 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         + actionHtml
         + '</div>';
     }).join('');
+  };
+
+  // Admin-only — begins working the request.
+  window._startDmgItem = function(id){
+    if(!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', id), {
+      started: true, startedAt: mods.serverTimestamp(), startedBy: window.currentUser || 'unknown'
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
+  };
+
+  // Admin-only — marks it ready for pickup. This is the ONLY thing that
+  // triggers Justin's notification — nothing before this point does.
+  window._finishDmgItem = function(id){
+    if(!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var item = (window._dmgItems||[]).find(function(it){ return it.id === id; });
+    mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', id), {
+      finished: true, finishedAt: mods.serverTimestamp(), finishedBy: window.currentUser || 'unknown'
+    }).then(function(){
+      if(window.justinPushover){
+        window.justinPushover(
+          '📦 Ready for Pickup',
+          (item ? ((item.qty>1?item.qty+'× ':'')+item.desc) : 'An item') + ' is ready for pickup. Due back: ' + (item && item.dueDate ? item.dueDate : 'not set')
+        );
+      }
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
   };
 
   window._openDmgTracker = function(){
@@ -4525,7 +4620,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     Promise.all(items.map(function(item){
       return mods.addDoc(mods.collection(db2, 'hillOutsideTooling'), {
         desc: item.desc, qty: item.qty || 1, category: item.category || null, sentDate: sentDate, dueDate: dueDate, notes: notes,
-        returned: false, loggedBy: window.currentUser || 'unknown',
+        returned: false, started: false, finished: false, loggedBy: window.currentUser || 'unknown',
         prepDurationSec: prepDurationSec,
         createdAt: mods.serverTimestamp()
       });
