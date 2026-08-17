@@ -2418,7 +2418,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const notesEl = document.getElementById('notes-' + mid);
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
-    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.inProgress);
+    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.type === 'orange' || n.inProgress);
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
