@@ -6108,6 +6108,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       supplyPrefix = supplyLines.join('\n');
     }
     var combinedDetail = supplyPrefix ? (supplyPrefix + (detail ? '\n' + detail : '')) : detail;
+    // Fold the Floor Support quick-select into the actual detail text — this
+    // is what shows in the request card and gets sent to Pushover, so the
+    // selection needs to live here, not just as a separate unread field.
+    if (selectedType === 'orange') {
+      var fstForDetail = (document.getElementById('floorSupportType') || {}).value || '';
+      if (fstForDetail) {
+        combinedDetail = fstForDetail + (combinedDetail ? ' — ' + combinedDetail : '');
+      }
+    }
     // Fold the quick reason into the detail text for Inspection requests
     if (selectedType === 'red' && window._selectedReason) {
       combinedDetail = '🔍 ' + window._selectedReason + (combinedDetail ? '\n' + combinedDetail : '');
