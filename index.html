@@ -63,7 +63,7 @@
   .cell { background: linear-gradient(175deg, #112845 0%, #1a3555 100%); border-radius: 8px; padding: 6px 5px; display: flex; flex-direction: column; border: 1px solid rgba(59,130,246,0.35); box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06); }
   .cell-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; letter-spacing: 3px; text-transform: uppercase; color: #7dd3fc; text-shadow: 0 0 10px rgba(125,211,252,0.9), 0 0 20px rgba(125,211,252,0.5), 0 0 40px rgba(56,189,248,0.3); margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid rgba(125,211,252,0.25); display: flex; align-items: center; justify-content: center; gap: 6px; }
   .cell-title-text { display: inline-block; transform-origin: center center; }
-  .cell-title::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 8px #3b82f6; display: inline-block; flex-shrink: 0; }
+  .cell-title::before { display: none; }
   .machines { display: flex; flex-direction: column; gap: 2px; }
   .machine { position: relative; background: linear-gradient(160deg, #1c3f62 0%, #162f4a 50%, #112535 100%); border-radius: 8px; padding: 0; flex: 1; cursor: pointer; transition: all 0.18s ease; border: 1px solid rgba(59,130,246,0.45); box-shadow: 0 3px 12px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.08) inset; overflow: hidden; }
   .machine::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 45%; background: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 100%); pointer-events: none; border-radius: 8px 8px 0 0; }
@@ -81,11 +81,12 @@
   .machine-name { font-family: 'Bebas Neue', sans-serif; font-size: clamp(14px, 1.9vw, 22px); letter-spacing: 1.5px; color: #f5d050; text-shadow: 0 0 10px rgba(245,208,80,0.4); text-shadow: 0 0 10px rgba(245,208,80,0.5), 0 1px 3px rgba(0,0,0,0.7); line-height: 1; white-space: nowrap; overflow: visible; text-overflow: unset; display: block; text-align: center; transform-origin: center center; }
   .machine-right { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 14px; }
   .machine-led { display: none; }
-  .machine-led.led-blue   { display:block; width:10px; height:10px; border-radius:50%; background:#3b82f6; box-shadow:0 0 8px 3px rgba(59,130,246,.9);  animation:blink-blue   1.6s step-end infinite; }
-  .machine-led.led-red    { display:block; width:10px; height:10px; border-radius:50%; background:#ef4444; box-shadow:0 0 8px 3px rgba(239,68,68,.9);   animation:blink-red    0.7s step-end infinite; }
-  .machine-led.led-yellow { display:block; width:10px; height:10px; border-radius:50%; background:#eab308; box-shadow:0 0 8px 3px rgba(234,179,8,.9);   animation:blink-yellow 1.2s step-end infinite; }
-  .machine-led.led-green  { display:block; width:10px; height:10px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px 3px rgba(34,197,94,.9);   animation:blink-green  2.0s step-end infinite; }
-  .machine-led.led-dnx    { display:block; width:10px; height:10px; border-radius:50%; background:#7dd3fc; box-shadow:0 0 8px 3px rgba(125,211,252,.9); animation:blink-blue   1.4s step-end infinite; }
+  .machine-led.led-blue   { display:block; width:10px; height:10px; border-radius:50%; background:#3b82f6; box-shadow:0 0 8px 3px rgba(59,130,246,.9); }
+  .machine-led.led-red    { display:block; width:10px; height:10px; border-radius:50%; background:#ef4444; box-shadow:0 0 8px 3px rgba(239,68,68,.9); }
+  .machine-led.led-yellow { display:block; width:10px; height:10px; border-radius:50%; background:#eab308; box-shadow:0 0 8px 3px rgba(234,179,8,.9); }
+  .machine-led.led-green  { display:block; width:10px; height:10px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px 3px rgba(34,197,94,.9); }
+  .machine-led.led-orange { display:block; width:10px; height:10px; border-radius:50%; background:#f97316; box-shadow:0 0 8px 3px rgba(249,115,22,.9); }
+  .machine-led.led-dnx    { display:block; width:10px; height:10px; border-radius:50%; background:#7dd3fc; box-shadow:0 0 8px 3px rgba(125,211,252,.9); }
 
   @keyframes led-pulse-green  { 0%,100%{box-shadow:0 0 6px rgba(34,197,94,.7),inset 0 1px 2px rgba(255,255,255,.4)} 50%{box-shadow:0 0 14px rgba(34,197,94,1),0 0 22px rgba(34,197,94,.4),inset 0 1px 2px rgba(255,255,255,.4)} }
   @keyframes led-pulse-red    { 0%,100%{box-shadow:0 0 6px rgba(239,68,68,.8),inset 0 1px 2px rgba(255,255,255,.4);opacity:1} 50%{box-shadow:0 0 16px rgba(239,68,68,1),0 0 24px rgba(239,68,68,.5),inset 0 1px 2px rgba(255,255,255,.4);opacity:.7} }
