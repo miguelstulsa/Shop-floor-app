@@ -3831,10 +3831,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }).catch(function(e){ console.warn('QMI/DGP Pushover test:', e.message); });
     showToast('green', 'Test sent!', 'Check your Pushover app.');
   }
+  // Miguel's personal key — hardcoded fallback so this keeps working even
+  // if the Admin Panel field is ever empty/cleared on a given device.
+  var QMI_DGP_DEFAULT_KEY = 'uotiq5p4c7sycsw2wh1xv8mq9gpe4e';
   // Fires whenever an item gets logged as sent out, or a return gets
   // requested — both need your attention, so both go to this key.
   window.qmiDgpPushover = function(title, message) {
-    var key = localStorage.getItem('hillQmiDgpPushoverKey') || '';
+    var key = localStorage.getItem('hillQmiDgpPushoverKey') || QMI_DGP_DEFAULT_KEY;
     if (!key) { console.warn('[Pushover] qmiDgpPushover: no key set, skipping'); return; }
     var fd = new FormData();
     fd.append('token',    PUSHOVER_TOKEN);
@@ -4496,8 +4499,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         actionHtml = '<div style="margin-top:8px;font-size:10px;color:#4ade80;text-align:center;">✅ Ready for pickup — sent to Justin</div>'
           + '<button type="button" onclick="window._markDmgReturned(\'' + it.id + '\')" style="margin-top:6px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ MARK RETURNED</button>';
       }
-      return '<div style="background:'+(overdue?'rgba(239,68,68,0.1)':'rgba(168,85,247,0.08)')+';border:1px solid '+(overdue?'#ef4444':'rgba(168,85,247,0.35)')+';border-radius:8px;padding:10px 12px;">'
-        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;">' + ((it.qty && it.qty > 1) ? (it.qty + '× ') : '') + (it.desc||'(no description)') + _dmgCategoryBadge(it.category) + '</div>'
+      return '<div style="position:relative;background:'+(overdue?'rgba(239,68,68,0.1)':'rgba(168,85,247,0.08)')+';border:1px solid '+(overdue?'#ef4444':'rgba(168,85,247,0.35)')+';border-radius:8px;padding:10px 12px;">'
+        + (isAdmin ? '<button type="button" onclick="window._deleteDmgItem(\'' + it.id + '\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>' : '')
+        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + ((it.qty && it.qty > 1) ? (it.qty + '× ') : '') + (it.desc||'(no description)') + _dmgCategoryBadge(it.category) + '</div>'
         + '<div style="font-size:11px;color:'+(overdue?'#fca5a5':'#94a3b8')+';">'
           + 'Sent ' + _dmgFmtDate(it.sentDate) + ' · Due back ' + _dmgFmtDate(it.dueDate) + (overdue ? ' — OVERDUE' : '')
         + '</div>'
@@ -4698,6 +4702,20 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       }
     }).catch(function(e){
       if(window.showToast) showToast('red','Failed to log', e.message);
+    });
+  };
+
+  // Admin-only — permanently removes an item, e.g. one logged by mistake
+  // or a duplicate from a double-tap on LOG ITEM.
+  window._deleteDmgItem = function(id){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var item = (window._dmgItems||[]).find(function(it){ return it.id === id; });
+    if(!confirm('Delete "' + (item ? item.desc : 'this item') + '"? This can\'t be undone.')) return;
+    mods.deleteDoc(mods.doc(db2, 'hillOutsideTooling', id)).then(function(){
+      if(window.showToast) showToast('green','Deleted','Item removed.');
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Failed to delete', e.message);
     });
   };
 
