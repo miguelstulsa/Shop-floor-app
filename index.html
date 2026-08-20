@@ -72,6 +72,7 @@
   .machine:hover::after { background: #f59e0b; opacity: 1; }
   .machine:active { transform: translateY(1px); box-shadow: 0 1px 4px rgba(0,0,0,0.6), inset 0 2px 6px rgba(0,0,0,0.4); }
   .machine.has-red::after { background: #ef4444; opacity:1; box-shadow: 0 0 8px #ef4444; }
+  .machine.has-orange::after { background: #f97316; opacity:1; box-shadow: 0 0 8px #f97316; }
   .machine.has-yellow::after { background: #eab308; opacity:1; box-shadow: 0 0 8px #eab308; }
   .machine.has-green::after { background: #22c55e; opacity:1; box-shadow: 0 0 8px #22c55e; }
   .machine.has-blue::after { background: #3b82f6; opacity:1; box-shadow: 0 0 8px #3b82f6; }
@@ -79,7 +80,7 @@
   .machine-left { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; min-width: 0; }
   .machine-label { display: none; }
   .machine-name { font-family: 'Bebas Neue', sans-serif; font-size: clamp(14px, 1.9vw, 22px); letter-spacing: 1.5px; color: #f5d050; text-shadow: 0 0 10px rgba(245,208,80,0.4); text-shadow: 0 0 10px rgba(245,208,80,0.5), 0 1px 3px rgba(0,0,0,0.7); line-height: 1; white-space: nowrap; overflow: visible; text-overflow: unset; display: block; text-align: center; transform-origin: center center; }
-  .machine-right { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 14px; }
+  .machine-right { display: none !important; }
   .machine-led { display: none; }
   .machine-led.led-blue   { display:block; width:10px; height:10px; border-radius:50%; background:#3b82f6; box-shadow:0 0 8px 3px rgba(59,130,246,.9); }
   .machine-led.led-red    { display:block; width:10px; height:10px; border-radius:50%; background:#ef4444; box-shadow:0 0 8px 3px rgba(239,68,68,.9); }
@@ -2401,8 +2402,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
     document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
-    document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green'); });
-    const priority = { red:4, yellow:3, blue:2, green:1, dnx:2 };
+    document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green','has-orange'); });
+    const priority = { red:5, orange:4, yellow:3, blue:2, green:1, dnx:2 };
     const machinePriority = {};
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
@@ -2447,8 +2448,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
     document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
-    document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green'); });
-    const priority = { red:4, yellow:3, blue:2, green:1, dnx:2 };
+    document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green','has-orange'); });
+    const priority = { red:5, orange:4, yellow:3, blue:2, green:1, dnx:2 };
     const machinePriority = {};
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
