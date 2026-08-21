@@ -1900,63 +1900,33 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   </div>
 </div>
 
-<!-- INSPECTOR LIBRARY MODAL — library-style checkout/return/evaluate for
-     inspection equipment (gages, calipers, mics, etc). The machinist never
-     directly handles check-out/check-in themselves — every physical
-     handoff goes through the inspector (Ker/Admin/Manager), same access
-     rule already used for Inspection Requests and Floor Support. That's
-     the actual fix for equipment walking off: a machinist can request and
-     request pickup, but only the inspector ever releases or receives the
-     item. -->
+<!-- INSPECTOR ACCOUNTABILITY LOG — no separate request/checkout form here
+     anymore. Equipment now gets logged automatically the moment someone
+     adds it to an Inspection Request (red type, with the acknowledgment
+     checkbox) — this tab is purely a record of who has what, tied to
+     Employee/Machine/WO/OP/PO, so Ker always has something to point back
+     to if he's ever questioned about a piece of equipment. Tapping FINISH
+     on the Inspection Request is what marks it as pickup requested; the
+     only action left here is the final Examine & Check In step. -->
 <div class="modal-overlay" id="inspectorLibraryOverlay" style="display:none;">
   <div class="modal" style="max-width:480px;">
-    <div class="modal-title">🔍 Inspector — Equipment Library</div>
-    <div class="modal-machine" style="margin-bottom:12px;">Request → Inspector Checks Out → Request Pickup → Inspector Examines &amp; Checks In</div>
+    <div class="modal-title">🔍 Inspector — Equipment Log</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Logged automatically from Inspection Requests — who has what, and since when.</div>
 
-    <div style="background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
-      <div style="font-size:11px;color:#5eead4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Request Equipment</div>
-      <div style="position:relative;">
-        <input type="text" id="inspItemDesc" placeholder="Search inspection equipment — gages, calipers, mics..." autocomplete="off"
-          oninput="window._filterInspectorEquip(this.value)" onfocus="window._filterInspectorEquip(this.value)"
-          onblur="setTimeout(function(){ var b=document.getElementById('inspEquipSearchResults'); if(b) b.style.display='none'; }, 200)"
-          style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:10px 12px;font-size:14px;margin-bottom:8px;font-family:'Barlow',sans-serif;">
-        <div id="inspEquipSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:60;background:#042f2e;border:1px solid #0d9488;border-top:none;border-radius:0 0 8px 8px;max-height:240px;overflow-y:auto;margin-top:-8px;"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;font-weight:600;">Qty</div>
-        <button type="button" onclick="window._bumpInspQty(-1)" style="width:34px;height:34px;background:rgba(255,255,255,0.05);border:1px solid #0d9488;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;">−</button>
-        <div id="inspQtyDisplay" style="min-width:44px;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:7px;padding:7px 0;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#99f6e4;">1</div>
-        <button type="button" onclick="window._bumpInspQty(1)" style="width:34px;height:34px;background:rgba(255,255,255,0.05);border:1px solid #0d9488;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;">＋</button>
-      </div>
-      <div style="margin-bottom:10px;">
-        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Machine <span style="color:#f87171;">*</span> — so this shows up on the shop floor &amp; in Alerts</div>
-        <select id="inspMachine" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;">
-          <option value="">Select machine...</option>
-        </select>
-      </div>
-      <input type="text" id="inspCheckoutNotes" placeholder="What's it for? (optional — WO#, part, reason)" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;margin-bottom:10px;font-family:'Barlow',sans-serif;">
-      <button type="button" onclick="window._requestInspEquip()" style="width:100%;background:#14b8a6;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">📝 REQUEST EQUIPMENT</button>
-    </div>
-
-    <div style="font-size:11px;color:#f0abfc;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">📥 Pending Requests (needs gathering)</div>
-    <div id="inspRequestedList" style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-bottom:14px;">
-      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">No open requests.</div>
-    </div>
-
-    <div style="font-size:11px;color:#5eead4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">🔧 Checked Out (in machinist's hands)</div>
-    <div id="inspOutList" style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-bottom:14px;">
+    <div style="font-size:11px;color:#5eead4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">🔧 Currently Checked Out</div>
+    <div id="inspOutList" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;margin-bottom:14px;">
       <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing checked out.</div>
     </div>
 
     <div style="font-size:11px;color:#fbbf24;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">📚 Pickup Requested — Awaiting Inspector</div>
-    <div id="inspPendingList" style="display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto;margin-bottom:14px;">
+    <div id="inspPendingList" style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;margin-bottom:14px;">
       <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing waiting on pickup.</div>
     </div>
 
     <div style="cursor:pointer;user-select:none;" onclick="var el=document.getElementById('inspCheckedInList'); var arrow=document.getElementById('inspHistoryArrow'); var open = el.style.display!=='none'; el.style.display = open?'none':'flex'; arrow.textContent = open?'▸':'▾';">
       <div style="font-size:11px;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;"><span id="inspHistoryArrow">▸</span> Recently Checked In</div>
     </div>
-    <div id="inspCheckedInList" style="display:none;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-bottom:10px;">
+    <div id="inspCheckedInList" style="display:none;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;margin-bottom:10px;">
       <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing checked in yet.</div>
     </div>
 
@@ -2184,6 +2154,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <div style="margin-bottom:8px;">
         <input type="text" id="partInput" placeholder="Part # (e.g. 12345-A) — used to match tool lists" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:8px;color:#f0f4f8;padding:10px 12px;font-size:14px;font-family:'Barlow',sans-serif;" />
       </div>
+      <!-- PO # — shown only for Inspection Requests. Ties any equipment
+           checked out for the job back to a customer PO for accountability. -->
+      <div id="poField" style="display:none;margin-bottom:8px;">
+        <input type="text" id="poInput" placeholder="PO # (e.g. 4501234)" style="width:100%;background:#1a0d0d;border:1px solid #7f1d1d;border-radius:8px;color:#fca5a5;padding:10px 12px;font-size:14px;font-family:'Barlow',sans-serif;" />
+      </div>
       <div id="assignField" style="display:none;margin-bottom:8px;">
         <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">Assign Machinist to Run</div>
         <select id="assignedTo" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:10px;font-size:14px;">
@@ -2326,6 +2301,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         </div>
         <!-- Running checklist of added tools — only these get submitted with the request -->
         <div id="toolChecklist" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
+        <!-- Acknowledgment — only shown once at least one item is on the
+             checklist. Required before submitting; this is what makes
+             whoever's checking equipment out responsible for its condition,
+             instead of it just silently walking off. -->
+        <label id="equipAckWrap" style="display:none;margin-top:10px;align-items:flex-start;gap:8px;background:rgba(248,113,113,0.08);border:1px solid #7f1d1d;border-radius:8px;padding:10px 12px;cursor:pointer;">
+          <input type="checkbox" id="equipAckCheckbox" style="margin-top:2px;width:16px;height:16px;flex-shrink:0;accent-color:#ef4444;">
+          <span style="font-size:12px;color:#fca5a5;line-height:1.4;">I acknowledge I'm responsible for this equipment and will return it in the same condition I received it.</span>
+        </label>
       </div>
       <div style="position:relative;">
         <textarea id="noteText" rows="3" placeholder="Additional details..." style="width:100%;padding-right:44px;box-sizing:border-box;"></textarea>
@@ -3045,6 +3028,24 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // the request can be closed out.
   window._finishInspectionWithReminder = function(noteId, hillReqId){
     if (!confirm('Mark this inspection complete?\n\nBring it to Miguel for pickup before closing this out.')) return;
+    // Any equipment logged against this same request now moves to "pickup
+    // requested" — this is what puts it in front of the inspector to
+    // examine and check in. No separate manual step needed for this.
+    if (window.fbDb && window._fbModules && window._inspItems) {
+      var db2 = window.fbDb, mods = window._fbModules;
+      window._inspItems.filter(function(it){
+        return it.status === 'out' && (it.linkedNoteId === noteId || it.linkedReqId === hillReqId);
+      }).forEach(function(it){
+        mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', it.id), {
+          status: 'pending_eval',
+          pickupRequestedBy: window.currentUser || 'unknown',
+          pickupRequestedAt: mods.serverTimestamp()
+        }).catch(function(e){ console.warn('Equipment pickup request error:', e.message); });
+        var label = (it.equipment||[]).map(function(e){ return e.name; }).join(', ') || 'Equipment';
+        if (window.qualityPushover) window.qualityPushover('📚 Inspector — Pickup Requested', label + ' at ' + (it.machine||'') + ' — ready for pickup &amp; examination.');
+        if (window.adminPushover) window.adminPushover('📚 Inspector — Pickup Requested', label + ' at ' + (it.machine||'') + ' — ready for pickup &amp; examination.');
+      });
+    }
     window.finishRequest(noteId, hillReqId);
   };
 
@@ -4464,7 +4465,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
-    document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = ''; if(document.getElementById('partInput')) document.getElementById('partInput').value = '';
+    document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = ''; if(document.getElementById('partInput')) document.getElementById('partInput').value = ''; if(document.getElementById('poInput')) document.getElementById('poInput').value = '';
     // Reset supply dropdown
     var si = document.getElementById('supplyItem'); if(si) si.value = '';
     var gsf = document.getElementById('gloveSizeField'); if(gsf) gsf.style.display = 'none';
@@ -4977,17 +4978,17 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('dmgItemDesc').focus();
   };
 
-  // ── INSPECTOR EQUIPMENT LIBRARY — request/checkout/pickup-request/checkin
-  // workflow for inspection gages, calipers, mics, etc. The machinist never
-  // directly handles the equipment's check-out or check-in themselves —
-  // every physical handoff goes through the inspector (Ker/Admin/Manager).
-  // That's the actual fix for "equipment goes out and never comes back":
-  // a machinist can only ASK for something and ASK for pickup; only the
-  // inspector ever releases or receives the item. Four states:
-  //   requested → out → pending_eval → checked_in
+  // ── INSPECTOR EQUIPMENT LOG ── Equipment now only enters this system one
+  // way: as part of submitting an Inspection Request (red type) that has
+  // measuring equipment on its checklist (see submitNote() — it requires
+  // the acknowledgment checkbox and logs a hillInspectionEquip record with
+  // Employee/Machine/WO/OP/PO the moment the request is submitted, status
+  // 'out'). There's no separate request/gather form in this tab anymore —
+  // this tab is purely the accountability record: who has what, since
+  // when, so Ker always has something to point back to if he's ever
+  // questioned about a piece of equipment. Three states:
+  //   out → pending_eval (auto, when the Inspection Request is FINISHed) → checked_in
   window._inspItems = window._inspItems || [];
-  window._inspQty = window._inspQty || 1;
-  window._inspPendingSelectedText = null;
 
   window._startInspectorListener = function(){
     var db2 = window.fbDb, mods = window._fbModules;
@@ -5005,23 +5006,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
 
   window._openInspectorLibrary = function(){
-    document.getElementById('inspItemDesc').value = '';
-    document.getElementById('inspCheckoutNotes').value = '';
-    window._inspQty = 1;
-    window._inspPendingSelectedText = null;
-    var qd = document.getElementById('inspQtyDisplay'); if(qd) qd.textContent = '1';
-    // Populate the machine dropdown once, from the same machine list the
-    // Planner uses (window.PLANNER_MACHINES) — kept in sync automatically
-    // since it's the same array, not a second copy.
-    var msel = document.getElementById('inspMachine');
-    if(msel && msel.options.length <= 1 && window.PLANNER_MACHINES){
-      window.PLANNER_MACHINES.forEach(function(m){
-        var opt = document.createElement('option');
-        opt.value = m.name; opt.textContent = m.name + ' (' + m.cell + ')';
-        msel.appendChild(opt);
-      });
-    }
-    if(msel) msel.value = '';
     window._renderInspectorLibrary();
     document.getElementById('inspectorLibraryOverlay').style.display = 'flex';
   };
@@ -5030,159 +5014,32 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('inspectorLibraryOverlay').style.display = 'none';
   };
 
-  window._bumpInspQty = function(delta){
-    window._inspQty = Math.max(1, (window._inspQty || 1) + delta);
-    var qd = document.getElementById('inspQtyDisplay'); if(qd) qd.textContent = window._inspQty;
-  };
-
-  // Search is scoped to MEASURING_TOOLS only (the same gage/caliper/mic
-  // catalog used elsewhere) — this tab is specifically inspection
-  // equipment, not cutting tools, so tooling/Zengers aren't mixed in here.
-  window._filterInspectorEquip = function(query){
-    var box = document.getElementById('inspEquipSearchResults');
-    if(!box) return;
-    var q = (query||'').trim().toLowerCase();
-    if(!q){ box.style.display='none'; box.innerHTML=''; return; }
-    var qWords = _toolingTokenize(q);
-    if(!qWords.length){ box.style.display='none'; box.innerHTML=''; return; }
-    var matches = MEASURING_TOOLS.filter(function(mt){
-      return _toolingMatchesQuery(mt[0], qWords);
-    }).slice(0, 20);
-    if(!matches.length){ box.style.display='none'; return; }
-    box.innerHTML = matches.map(function(mt, i){
-      return '<div data-idx="'+i+'" onmousedown="window._selectInspectorEquip('+i+')" '
-        + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);">'
-        + mt[0] + '</div>';
-    }).join('');
-    box.setAttribute('data-matches', JSON.stringify(matches));
-    box.style.display = 'block';
-  };
-
-  window._selectInspectorEquip = function(idx){
-    var box = document.getElementById('inspEquipSearchResults');
-    var matches = JSON.parse(box.getAttribute('data-matches')||'[]');
-    var mt = matches[idx];
-    if(!mt) return;
-    document.getElementById('inspItemDesc').value = mt[0];
-    window._inspPendingSelectedText = mt[0];
-    box.style.display = 'none';
-    box.innerHTML = '';
-    document.getElementById('inspItemDesc').focus();
-  };
-
-  // STEP 1 — Machinist requests equipment. Nothing physical has happened
-  // yet; this just tells the inspector what's needed. Notifies Ker + Miguel
-  // so a request doesn't just sit there unnoticed. Also creates a
-  // companion "cyan" note purely so this shows a colored dot on the
-  // machine and flows into the same Alerts feed Ker already watches —
-  // hillInspectionEquip stays the actual source of truth for the workflow;
-  // the note is just a visual pointer to it that gets removed at check-in.
-  window._requestInspEquip = function(){
-    var desc = document.getElementById('inspItemDesc').value.trim();
-    if(!desc){ if(window.showToast) showToast('red','Enter what you need',''); return; }
-    var machine = (document.getElementById('inspMachine')||{}).value || '';
-    if(!machine){ if(window.showToast) showToast('red','Select a machine',''); return; }
-    var notes = document.getElementById('inspCheckoutNotes').value.trim();
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-    var qty = window._inspQty || 1;
-    var label = (qty>1?qty+'× ':'')+desc;
-    mods.addDoc(mods.collection(db2, 'hillInspectionEquip'), {
-      desc: desc, qty: qty, notes: notes, machine: machine,
-      status: 'requested',
-      requestedBy: window.currentUser || 'unknown', requestedAt: mods.serverTimestamp(),
-      createdAt: mods.serverTimestamp()
-    }).then(function(docRef){
-      // Companion note — cosmetic only, drives the machine dot + Alerts
-      // feed inclusion. Not used for any Start/Finish logic.
-      mods.addDoc(mods.collection(db2, 'notes'), {
-        machine: machine, type: 'cyan', wo: '', op: '',
-        detail: '🔍 ' + label + (notes ? (' — ' + notes) : ''),
-        operator: window.currentUser || 'unknown',
-        createdAt: mods.serverTimestamp()
-      }).then(function(noteRef){
-        mods.updateDoc(docRef, { companionNoteId: noteRef.id }).catch(function(){});
-      }).catch(function(e){ console.warn('Equipment companion note:', e.message); });
-
-      document.getElementById('inspItemDesc').value = '';
-      document.getElementById('inspCheckoutNotes').value = '';
-      document.getElementById('inspMachine').value = '';
-      window._inspQty = 1;
-      window._inspPendingSelectedText = null;
-      var qd = document.getElementById('inspQtyDisplay'); if(qd) qd.textContent = '1';
-      if(window.showToast) showToast('green','Requested', desc);
-      if(window.qualityPushover) window.qualityPushover('📥 Inspector — New Request', (window.currentUser||'Someone') + ' at ' + machine + ' needs: ' + label + (notes?('\n'+notes):''));
-      if(window.adminPushover) window.adminPushover('📥 Inspector — New Request', (window.currentUser||'Someone') + ' at ' + machine + ' needs: ' + label + (notes?('\n'+notes):''));
-    }).catch(function(e){
-      if(window.showToast) showToast('red','Failed to request', e.message);
-    });
-  };
-
-  // STEP 2 — Inspector physically gathers the equipment, then taps this to
-  // confirm it's been handed over. Gated to Ker/Admin/Manager.
-  window._fulfillInspRequest = function(id){
-    if(!_inspCanEvaluate()) return;
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-    mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', id), {
-      status: 'out', checkedOutBy: window.currentUser || 'unknown', checkedOutAt: mods.serverTimestamp()
-    }).then(function(){
-      if(window.showToast) showToast('green','Checked out','Handed off to the machinist.');
-    }).catch(function(e){ if(window.showToast) showToast('red','Failed to check out', e.message); });
-  };
-
-  // STEP 3 — Machinist is done and wants it picked up. This does NOT
-  // return the item itself — the inspector still has to go get it and
-  // examine it. Notifies Ker + Miguel, same as a request does.
-  window._requestInspPickup = function(id){
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-    var item = (window._inspItems||[]).find(function(it){ return it.id === id; });
-    mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', id), {
-      status: 'pending_eval', pickupRequestedBy: window.currentUser || 'unknown', pickupRequestedAt: mods.serverTimestamp()
-    }).then(function(){
-      if(window.showToast) showToast('green','Pickup requested','Waiting on inspector.');
-      var label = (item ? ((item.qty>1?item.qty+'× ':'')+item.desc) : 'An item');
-      if(window.qualityPushover) window.qualityPushover('📚 Inspector — Pickup Requested', label + ' — ' + (window.currentUser||'someone') + ' is done with it. Go collect &amp; examine.');
-      if(window.adminPushover) window.adminPushover('📚 Inspector — Pickup Requested', label + ' — ' + (window.currentUser||'someone') + ' is done with it. Awaiting Ker\'s pickup.');
-    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
-  };
-
-  // STEP 4 — Gated to Ker/Admin/Manager. The inspector goes and gets the
-  // item, examines it, and checks it in. Optional condition notes get
-  // attached so there's a record of what was found. Also removes the
-  // companion note so the machine's colored dot clears.
+  // Gated to Ker/Admin/Manager. The inspector goes and gets the item,
+  // examines it, and checks it in. Optional condition notes get attached
+  // so there's a record of what was found.
   window._evaluateAndCheckInInspItem = function(id){
     if(!_inspCanEvaluate()) return;
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods) return;
     var notesInput = document.getElementById('inspEvalNotes_' + id);
     var evalNotes = notesInput ? notesInput.value.trim() : '';
-    var item = (window._inspItems||[]).find(function(it){ return it.id === id; });
     mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', id), {
       status: 'checked_in', evaluatedBy: window.currentUser || 'unknown', evaluatedAt: mods.serverTimestamp(), evalNotes: evalNotes
     }).then(function(){
       if(window.showToast) showToast('green','Checked in','Examination complete.');
-      if(item && item.companionNoteId){
-        mods.deleteDoc(mods.doc(db2, 'notes', item.companionNoteId)).catch(function(){});
-      }
     }).catch(function(e){ if(window.showToast) showToast('red','Failed to check in', e.message); });
   };
 
-  // Admin-only — permanently removes an item, e.g. a mistaken/duplicate
-  // request. There's no separate "reject" step — delete serves that role.
-  // Also removes the companion note so a deleted request's dot clears.
+  // Admin-only — permanently removes a log entry, e.g. a mistaken duplicate.
   window._deleteInspItem = function(id){
     if(!window._isAdmin && window.currentUser !== 'hilladmin') return;
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods) return;
     var item = (window._inspItems||[]).find(function(it){ return it.id === id; });
-    if(!confirm('Delete "' + (item ? item.desc : 'this item') + '"? This can\'t be undone.')) return;
+    var label = item ? (item.equipment||[]).map(function(e){return e.name;}).join(', ') : 'this entry';
+    if(!confirm('Delete "' + (label||'this entry') + '"? This can\'t be undone.')) return;
     mods.deleteDoc(mods.doc(db2, 'hillInspectionEquip', id)).then(function(){
-      if(window.showToast) showToast('green','Deleted','Item removed.');
-      if(item && item.companionNoteId){
-        mods.deleteDoc(mods.doc(db2, 'notes', item.companionNoteId)).catch(function(){});
-      }
+      if(window.showToast) showToast('green','Deleted','Entry removed.');
     }).catch(function(e){ if(window.showToast) showToast('red','Failed to delete', e.message); });
   };
 
@@ -5193,9 +5050,28 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     return (d.getMonth()+1)+'/'+d.getDate()+' '+d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
   }
 
+  // Builds the "Employee · Machine · WO 26-0288 OP 10 · PO 4501234" line
+  // shown on every card — this is the accountability record itself.
+  function _inspJobLine(it){
+    var bits = [];
+    if(it.checkedOutBy) bits.push(it.checkedOutBy);
+    if(it.machine) bits.push(it.machine);
+    var job = [];
+    if(it.wo) job.push('WO ' + it.wo);
+    if(it.op) job.push('OP ' + it.op);
+    if(job.length) bits.push(job.join(' '));
+    if(it.po) bits.push('PO ' + it.po);
+    return bits.join(' · ');
+  }
+
+  function _inspEquipLine(it){
+    return (it.equipment||[]).map(function(e){
+      return '📏 ' + e.name + (e.dimVal ? ' — Set to ' + e.dimVal : '');
+    }).join('<br>');
+  }
+
   window._renderInspectorLibrary = function(){
     var all = window._inspItems || [];
-    var requested = all.filter(function(it){ return it.status === 'requested'; });
     var out = all.filter(function(it){ return it.status === 'out'; });
     var pending = all.filter(function(it){ return it.status === 'pending_eval'; });
     var checkedIn = all.filter(function(it){ return it.status === 'checked_in'; })
@@ -5204,34 +5080,16 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         return bt - at;
       }).slice(0, 15);
 
-    // Badge shows everything actionable for the inspector — new requests
-    // to gather, plus pickups to go collect.
-    var actionable = requested.length + pending.length;
+    // Badge shows what's actionable for the inspector — pickups to go
+    // collect and examine. "Out" items aren't actionable, just informational.
     var badge = document.getElementById('inspectorBadge');
     if(badge){
-      if(actionable > 0){ badge.textContent = actionable; badge.style.display = 'flex'; }
+      if(pending.length > 0){ badge.textContent = pending.length; badge.style.display = 'flex'; }
       else badge.style.display = 'none';
     }
 
     var canEval = _inspCanEvaluate();
     var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
-
-    var requestedList = document.getElementById('inspRequestedList');
-    if(requestedList){
-      requestedList.innerHTML = !requested.length
-        ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">No open requests.</div>'
-        : requested.map(function(it){
-            return '<div style="position:relative;background:rgba(217,70,239,0.08);border:1px solid rgba(217,70,239,0.35);border-radius:8px;padding:10px 12px;">'
-              + (isAdmin ? '<button type="button" onclick="window._deleteInspItem(\''+it.id+'\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>' : '')
-              + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)') + '</div>'
-              + '<div style="font-size:11px;color:#f0abfc;">Requested by ' + (it.requestedBy||'unknown') + ' · ' + _inspFmtTime(it.requestedAt) + '</div>'
-              + (it.notes ? '<div style="font-size:11px;color:#94a3b8;margin-top:3px;">' + it.notes + '</div>' : '')
-              + (canEval
-                  ? '<button type="button" onclick="window._fulfillInspRequest(\''+it.id+'\')" style="margin-top:8px;width:100%;background:rgba(20,184,166,0.15);border:1px solid #14b8a6;color:#5eead4;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">📤 GATHER &amp; CHECK OUT</button>'
-                  : '<div style="margin-top:8px;text-align:center;font-size:11px;color:#94a3b8;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ WAITING ON INSPECTOR</div>')
-              + '</div>';
-          }).join('');
-    }
 
     var outList = document.getElementById('inspOutList');
     if(outList){
@@ -5240,10 +5098,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         : out.map(function(it){
             return '<div style="position:relative;background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.35);border-radius:8px;padding:10px 12px;">'
               + (isAdmin ? '<button type="button" onclick="window._deleteInspItem(\''+it.id+'\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>' : '')
-              + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)') + '</div>'
-              + '<div style="font-size:11px;color:#94a3b8;">Checked out by ' + (it.checkedOutBy||'unknown') + ' · ' + _inspFmtTime(it.checkedOutAt) + ' · with ' + (it.requestedBy||'unknown') + '</div>'
-              + (it.notes ? '<div style="font-size:11px;color:#94a3b8;margin-top:3px;">' + it.notes + '</div>' : '')
-              + '<button type="button" onclick="window._requestInspPickup(\''+it.id+'\')" style="margin-top:8px;width:100%;background:rgba(234,179,8,0.15);border:1px solid #eab308;color:#fde047;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">📞 REQUEST PICKUP</button>'
+              + '<div style="font-size:12px;color:#5eead4;font-weight:700;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + _inspJobLine(it) + '</div>'
+              + '<div style="font-size:13px;color:#f0f4f8;margin-bottom:4px;">' + _inspEquipLine(it) + '</div>'
+              + '<div style="font-size:11px;color:#94a3b8;">Checked out ' + _inspFmtTime(it.checkedOutAt) + '</div>'
               + '</div>';
           }).join('');
     }
@@ -5255,8 +5112,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         : pending.map(function(it){
             return '<div style="position:relative;background:rgba(234,179,8,0.1);border:1px solid #eab308;border-radius:8px;padding:10px 12px;">'
               + (isAdmin ? '<button type="button" onclick="window._deleteInspItem(\''+it.id+'\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>' : '')
-              + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)') + '</div>'
-              + '<div style="font-size:11px;color:#fde047;">Pickup requested by ' + (it.pickupRequestedBy||'unknown') + ' · ' + _inspFmtTime(it.pickupRequestedAt) + '</div>'
+              + '<div style="font-size:12px;color:#fbbf24;font-weight:700;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + _inspJobLine(it) + '</div>'
+              + '<div style="font-size:13px;color:#f0f4f8;margin-bottom:4px;">' + _inspEquipLine(it) + '</div>'
+              + '<div style="font-size:11px;color:#fde047;">Pickup requested ' + _inspFmtTime(it.pickupRequestedAt) + '</div>'
               + (canEval
                   ? '<input type="text" id="inspEvalNotes_'+it.id+'" placeholder="Condition notes (optional)" style="width:100%;background:#1a1035;border:1px solid #eab308;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;margin-top:7px;font-family:\'Barlow\',sans-serif;">'
                     + '<button type="button" onclick="window._evaluateAndCheckInInspItem(\''+it.id+'\')" style="margin-top:6px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✅ EXAMINE &amp; CHECK IN</button>'
@@ -5271,7 +5129,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing checked in yet.</div>'
         : checkedIn.map(function(it){
             return '<div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.25);border-radius:7px;padding:8px 10px;">'
-              + '<div style="font-size:12px;color:#e2e8f0;">' + ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)') + '</div>'
+              + '<div style="font-size:11px;color:#86efac;font-weight:700;margin-bottom:3px;">' + _inspJobLine(it) + '</div>'
+              + '<div style="font-size:12px;color:#e2e8f0;">' + _inspEquipLine(it) + '</div>'
               + '<div style="font-size:10px;color:#4ade80;">✓ Checked in by ' + (it.evaluatedBy||'unknown') + ' · ' + _inspFmtTime(it.evaluatedAt) + '</div>'
               + (it.evalNotes ? '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">' + it.evalNotes + '</div>' : '')
               + '</div>';
@@ -5281,50 +5140,28 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     window._syncEquipmentAlerts();
   };
 
-  // ── SURFACE EQUIPMENT REQUESTS IN THE MAIN ALERTS FEED ──
+  // ── SURFACE PENDING PICKUPS IN THE MAIN ALERTS FEED ──
   // Ker already lives in the bell/sidebar Alerts feed for Inspection
-  // Requests — rather than making him also remember to check a separate
-  // Inspector tab, actionable equipment items (requested + pickup pending)
-  // get appended as their own cards into that same feed, with the same
-  // Gather/Pickup/Examine buttons as the Inspector tab. hillInspectionEquip
-  // stays the single source of truth; this is purely a second place the
-  // same data renders. The companion "cyan" notes (see _requestInspEquip)
-  // separately handle the colored dot on the machine itself.
+  // Requests — pickup-pending equipment cards get appended into that same
+  // feed so he doesn't have to separately remember to check this tab.
+  // "Out" items aren't actionable (nothing to DO until pickup is
+  // requested), so they only show in this tab's log, not in Alerts.
   window._syncEquipmentAlerts = function(){
     var list = document.getElementById('notifList');
     if(!list) return;
-    // Clear out any equipment cards from the last render before adding
-    // fresh ones — never touch the WO/Inspection/etc cards around them.
     list.querySelectorAll('.equip-alert-card').forEach(function(el){ el.remove(); });
 
     var all = window._inspItems || [];
-    var requested = all.filter(function(it){ return it.status === 'requested'; });
     var pending = all.filter(function(it){ return it.status === 'pending_eval'; });
     var canEval = _inspCanEvaluate();
     var cards = [];
 
-    requested.forEach(function(it){
-      var label = ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)');
-      var div = document.createElement('div');
-      div.className = 'notif-item equip-alert-card';
-      div.style.cssText = 'border-left-color:#22d3ee;background:rgba(34,211,238,0.1);box-shadow:inset 0 0 30px rgba(34,211,238,0.06),0 0 0 1px rgba(34,211,238,0.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;';
-      div.innerHTML = '<div style="font-size:11px;color:#67e8f9;letter-spacing:1px;font-weight:700;margin-bottom:3px;">🔍 EQUIPMENT REQUEST — ' + window._escAttr(it.machine||'') + '</div>'
-        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:3px;">' + window._escAttr(label) + '</div>'
-        + '<div style="font-size:11px;color:#94a3b8;">Requested by ' + window._escAttr(it.requestedBy||'unknown') + (it.notes ? ' — ' + window._escAttr(it.notes) : '') + '</div>'
-        + (canEval
-            ? '<button type="button" onclick="window._fulfillInspRequest(\''+it.id+'\')" style="margin-top:8px;width:100%;background:rgba(20,184,166,0.15);border:1px solid #14b8a6;color:#5eead4;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">📤 GATHER &amp; CHECK OUT</button>'
-            : '<div style="margin-top:8px;text-align:center;font-size:11px;color:#94a3b8;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ WAITING ON INSPECTOR</div>');
-      cards.push(div);
-    });
-
     pending.forEach(function(it){
-      var label = ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)');
       var div = document.createElement('div');
       div.className = 'notif-item equip-alert-card';
       div.style.cssText = 'border-left-color:#eab308;background:rgba(234,179,8,0.12);box-shadow:inset 0 0 30px rgba(234,179,8,0.06),0 0 0 1px rgba(234,179,8,0.25);border-radius:8px;padding:10px 12px;margin-bottom:8px;';
-      div.innerHTML = '<div style="font-size:11px;color:#fde047;letter-spacing:1px;font-weight:700;margin-bottom:3px;">📚 EQUIPMENT PICKUP — ' + window._escAttr(it.machine||'') + '</div>'
-        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:3px;">' + window._escAttr(label) + '</div>'
-        + '<div style="font-size:11px;color:#fde047;">Pickup requested by ' + window._escAttr(it.pickupRequestedBy||'unknown') + '</div>'
+      div.innerHTML = '<div style="font-size:11px;color:#fde047;letter-spacing:1px;font-weight:700;margin-bottom:3px;">📚 EQUIPMENT PICKUP — ' + window._escAttr(_inspJobLine(it)) + '</div>'
+        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:3px;">' + _inspEquipLine(it) + '</div>'
         + (canEval
             ? '<input type="text" id="inspEvalNotesAlert_'+it.id+'" placeholder="Condition notes (optional)" style="width:100%;background:#1a1035;border:1px solid #eab308;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;margin-top:7px;font-family:\'Barlow\',sans-serif;">'
               + '<button type="button" onclick="window._evaluateFromAlert(\''+it.id+'\')" style="margin-top:6px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✅ EXAMINE &amp; CHECK IN</button>'
@@ -5333,25 +5170,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
 
     if(cards.length){
-      // Clear the "no active requests" empty-state if that's all that's
-      // showing, so equipment cards aren't hidden behind it.
       var emptyState = list.querySelector('.empty-notif');
       if(emptyState) emptyState.remove();
       cards.forEach(function(c){ list.appendChild(c); });
     } else if(!list.children.length){
-      // Nothing left at all (this can happen on an equipment-only update,
-      // independent of the WO/Inspection listener) — restore the normal
-      // empty state instead of leaving the feed blank.
       list.innerHTML = '<div class="empty-notif"><div class="icon">📋</div><p>No active requests.<br>Tap a machine to add one.</p></div>';
     }
 
-    // Badges: total = normal WO/Inspection/etc actionable count (cached by
-    // the original updateNotifFeed) + equipment actionable count. Always
-    // recomputed from scratch rather than incremented, so this stays
-    // correct regardless of which listener (notes vs equipment) fired.
     var woCount = (window._lastActionable || []).length;
-    var equipCount = requested.length + pending.length;
-    var total = woCount + equipCount;
+    var total = woCount + pending.length;
     var reqBadge = document.getElementById('reqBadge');
     var reqCount = document.getElementById('reqCount');
     var notifCount = document.getElementById('notifCount');
@@ -5363,29 +5190,25 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(typeof updateSidebarBadge === 'function') updateSidebarBadge(total);
   };
 
-  // Wraps the modal's evaluate function so it also works from the alert
-  // card, which uses its own input id (inspEvalNotesAlert_ vs inspEvalNotes_).
+  // Wraps the check-in function for the alert card, which uses its own
+  // input id (inspEvalNotesAlert_ vs inspEvalNotes_).
   window._evaluateFromAlert = function(id){
     if(!_inspCanEvaluate()) return;
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods) return;
     var notesInput = document.getElementById('inspEvalNotesAlert_' + id);
     var evalNotes = notesInput ? notesInput.value.trim() : '';
-    var item = (window._inspItems||[]).find(function(it){ return it.id === id; });
     mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', id), {
       status: 'checked_in', evaluatedBy: window.currentUser || 'unknown', evaluatedAt: mods.serverTimestamp(), evalNotes: evalNotes
     }).then(function(){
       if(window.showToast) showToast('green','Checked in','Examination complete.');
-      if(item && item.companionNoteId){
-        mods.deleteDoc(mods.doc(db2, 'notes', item.companionNoteId)).catch(function(){});
-      }
     }).catch(function(e){ if(window.showToast) showToast('red','Failed to check in', e.message); });
   };
 
   // Wrap updateNotifFeed so every time the normal WO/Inspection/etc feed
   // re-renders (which fully replaces #notifList's contents), equipment
-  // cards get re-appended right after — otherwise a new WO alert arriving
-  // would wipe them out until the next equipment-only change.
+  // pickup cards get re-appended right after — otherwise a new WO alert
+  // arriving would wipe them out until the next equipment-only change.
   (function(){
     var _origUpdateNotifFeed = window.updateNotifFeed;
     if(typeof _origUpdateNotifFeed === 'function'){
@@ -5395,7 +5218,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       };
     }
   })();
-
 
   // ── TOOL LIST — digital replacement for the paper "TOOL LIST" setup tag ──
   window._tlStagedTools = []; // [{desc, ooh, dia}, ...]
@@ -6190,6 +6012,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var toolField = document.getElementById('inspectionToolField');
     if(toolField) toolField.style.display = type === 'red' ? 'block' : 'none';
     if(type !== 'red' && window._clearSelectedTool) window._clearSelectedTool();
+    var poField = document.getElementById('poField');
+    if(poField) poField.style.display = type === 'red' ? 'block' : 'none';
+    if(type !== 'red'){ var poInput = document.getElementById('poInput'); if(poInput) poInput.value = ''; }
     // Show tooling inventory search only for Machinist Req (yellow)
     var toolingField = document.getElementById('machinistToolingField');
     if(toolingField) toolingField.style.display = type === 'yellow' ? 'block' : 'none';
@@ -6367,7 +6192,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   window._renderToolChecklist = function(){
     var list = document.getElementById('toolChecklist');
     if(!list) return;
-    if(!window._selectedTools.length){ list.innerHTML = ''; return; }
+    var ackWrap = document.getElementById('equipAckWrap');
+    if(!window._selectedTools.length){
+      list.innerHTML = '';
+      if(ackWrap) ackWrap.style.display = 'none';
+      var ackCb = document.getElementById('equipAckCheckbox'); if(ackCb) ackCb.checked = false;
+      return;
+    }
+    if(ackWrap) ackWrap.style.display = 'flex';
     list.innerHTML = window._selectedTools.map(function(t, i){
       return '<div style="background:rgba(248,113,113,0.1);border:1px solid #f87171;border-radius:8px;padding:8px 10px;">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;">'
@@ -6400,6 +6232,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var staging = document.getElementById('toolStaging'); if(staging) staging.style.display = 'none';
     var stagingDim = document.getElementById('toolStagingDim'); if(stagingDim) stagingDim.value = '';
     var list = document.getElementById('toolChecklist'); if(list) list.innerHTML = '';
+    var ackWrap = document.getElementById('equipAckWrap'); if(ackWrap) ackWrap.style.display = 'none';
+    var ackCb = document.getElementById('equipAckCheckbox'); if(ackCb) ackCb.checked = false;
   };
 
   // ── TOOLING INVENTORY SEARCH (Machinist Requests) ──────────
@@ -6656,6 +6490,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     const detail = document.getElementById('noteText').value.trim();
     const operator = document.getElementById('operatorName').value.trim();
     const part = (document.getElementById('partInput') ? document.getElementById('partInput').value.trim() : '');
+    const po = (document.getElementById('poInput') ? document.getElementById('poInput').value.trim() : '');
     // Safety net: if an item is picked in the dropdown but never tapped +ADD, don't lose it
     if (selectedType === 'yellow' && document.getElementById('supplyItem') && document.getElementById('supplyItem').value && document.getElementById('supplyItem').value !== 'other') {
       window._addSupplyItem();
@@ -6685,6 +6520,16 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
     if (!wo && !hasSupply && !hasReason && !floorSupportSkipsJobInfo) { showToast('red', 'Enter a WO#, quick reason, or add a tool', 'At least one is required.'); return; }
     if (!wo && selectedType !== 'yellow' && !hasReason && !floorSupportSkipsJobInfo) { showToast('red', 'Enter a WO# or description', 'This field is required.'); return; }
+    // Equipment checked out on an Inspection Request requires the
+    // acknowledgment checkbox — this is what makes someone accountable
+    // for bringing it back in the condition they got it.
+    if (selectedType === 'red' && window._selectedTools && window._selectedTools.length) {
+      var ackCb = document.getElementById('equipAckCheckbox');
+      if (!ackCb || !ackCb.checked) {
+        showToast('red', 'Acknowledgment required', 'Check the box confirming you\'ll return the equipment in good condition.');
+        return;
+      }
+    }
     if (!window.submitNoteToFirebase) { showToast('red', 'Still connecting...', 'Wait a moment then try again.'); return; }
     const btn = document.querySelector('#modalOverlay .btn-submit');
     if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
@@ -6740,7 +6585,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       combinedDetail = toolingLines.join('\n') + (combinedDetail ? '\n' + combinedDetail : '');
     }
     const floorSupportType = selectedType === 'orange' ? (document.getElementById('floorSupportType') || {}).value || '' : '';
-    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, part, assignedTo, floorSupportType };
+    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, part, po, assignedTo, floorSupportType };
     // If the voice note is still being converted in the background, give it
     // a moment rather than submitting without it (conversion is normally
     // near-instant, this just closes off an unlikely race).
@@ -6762,6 +6607,25 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       return;
     }
     if (btn) { btn.disabled=false; btn.textContent='Submit'; }
+    // Log the equipment to the Inspector tab — this is the only place
+    // equipment gets checked out from now on; there's no separate
+    // request/gather step in the Inspector tab itself. Tapping FINISH on
+    // this same Inspection Request later is what marks it as pickup
+    // requested (see _finishInspectionWithReminder).
+    if (selectedType === 'red' && window._selectedTools && window._selectedTools.length && window.fbDb && window._fbModules) {
+      (function(){
+        var db2 = window.fbDb, mods = window._fbModules;
+        mods.addDoc(mods.collection(db2, 'hillInspectionEquip'), {
+          machine: currentMachine, wo: wo, op: op, part: part, po: po,
+          equipment: window._selectedTools.map(function(t){ return { name: t.name, dimVal: t.dimVal || '' }; }),
+          status: 'out',
+          checkedOutBy: operator || (window.currentUser || 'unknown'),
+          checkedOutAt: mods.serverTimestamp(),
+          linkedNoteId: noteId || null, linkedReqId: reqId || null,
+          createdAt: mods.serverTimestamp()
+        }).catch(function(e){ console.warn('Equipment log error:', e.message); });
+      })();
+    }
     // Save to quick recall
     var _supplyForRecall = (selectedType === 'yellow' && document.getElementById('supplyItem')) ? document.getElementById('supplyItem').value : '';
     recallSave(currentMachine, wo, op, _supplyForRecall, operator);
