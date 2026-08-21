@@ -1156,16 +1156,21 @@
         <label style="font-size:11px;color:#c084fc;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">📦 QMI/DGP Notification Key (your phone)</label>
         <div style="display:flex;gap:8px;margin-bottom:6px;">
           <input id="qmidgp-pushover-key" type="password"
-            placeholder="Your Pushover User Key..."
+            placeholder="Your Pushover User Key... (leave blank to use your default key)"
             style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(168,85,247,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
-            oninput="localStorage.setItem('hillQmiDgpPushoverKey',this.value.trim()); window._syncSecretToCloud('qmiDgpPushoverKey',this.value.trim())"
+            oninput="localStorage.setItem('hillQmiDgpPushoverKey',this.value.trim()); window._syncSecretToCloud('qmiDgpPushoverKey',this.value.trim()); window._renderQmiDgpKeyStatus();"
           />
           <button onclick="testQmiDgpPushover()"
             style="background:#a855f7;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
             TEST
           </button>
+          <button onclick="window._clearQmiDgpKeyOverride()" title="Clear this field and go back to your default key"
+            style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#fca5a5;border-radius:8px;padding:9px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
+            CLEAR
+          </button>
         </div>
-        <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires when anyone logs a new item sent to <strong style="color:#f0f4f8;">QMI/DGP</strong>, and again when someone marks one as returned (pending your approval) — both go straight to this key.</div>
+        <div id="qmidgp-key-status" style="font-size:11px;color:#4ade80;line-height:1.6;margin-bottom:4px;"></div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires when anyone logs a new item sent to <strong style="color:#f0f4f8;">QMI/DGP</strong>, and again when someone marks one as returned (pending your approval) — both go straight to this key. If this field is empty, it automatically uses your default key instead — this field only matters if you want a <em>different</em> phone/key notified specifically for QMI/DGP.</div>
       </div>
 
       <!-- Justin Gray notification key — fires when Miguel finishes an item,
@@ -1335,6 +1340,7 @@
   <div class="nav-tab" onclick="window._openDmgTracker()" id="tab-qmidgp">📦 QMI/DGP <span class="tab-badge" id="qmidgpBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="window._openToolListBrowser()" id="tab-toollist">📋 Tool List</div>
   <div class="nav-tab" onclick="window._openInventoryBrowser()" id="tab-inventory">📦 Inventory</div>
+  <div class="nav-tab" onclick="window._openInspectorLibrary()" id="tab-inspector">🔍 Inspector <span class="tab-badge" id="inspectorBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
@@ -1841,6 +1847,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     <div class="modal-title">📦 QMI/DGP — Outside Tooling</div>
     <div class="modal-machine" style="margin-bottom:12px;">Tools &amp; jobs sent between the two shops</div>
 
+    <button type="button" onclick="window._sendQmiDgpSelfTest()" style="width:100%;margin-bottom:14px;background:rgba(20,184,166,0.12);border:1px solid #14b8a6;color:#5eead4;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">🔔 SEND TEST NOTIFICATION TO MY PHONE</button>
+
     <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
       <div style="font-size:11px;color:#d8b4fe;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Log Items Sent Out</div>
 
@@ -1885,6 +1893,58 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     </div>
 
     <button type="button" onclick="window._closeDmgTracker()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
+  </div>
+</div>
+
+<!-- INSPECTOR LIBRARY MODAL — library-style checkout/return/evaluate for
+     inspection equipment (gages, calipers, mics, etc). Any machinist can
+     check out and return; only the check-in/evaluation step is gated to
+     Ker (Inspector) + Admin + Manager, same access rule already used for
+     Inspection Requests and Floor Support. This closes the loop that was
+     missing before — a return alone never fully clears an item, it just
+     hands it to the inspector to actually evaluate. -->
+<div class="modal-overlay" id="inspectorLibraryOverlay" style="display:none;">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">🔍 Inspector — Equipment Library</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Check out → Return → Inspector Evaluation → Checked In</div>
+
+    <div style="background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:11px;color:#5eead4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Check Out Equipment</div>
+      <div style="position:relative;">
+        <input type="text" id="inspItemDesc" placeholder="Search inspection equipment — gages, calipers, mics..." autocomplete="off"
+          oninput="window._filterInspectorEquip(this.value)" onfocus="window._filterInspectorEquip(this.value)"
+          onblur="setTimeout(function(){ var b=document.getElementById('inspEquipSearchResults'); if(b) b.style.display='none'; }, 200)"
+          style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:10px 12px;font-size:14px;margin-bottom:8px;font-family:'Barlow',sans-serif;">
+        <div id="inspEquipSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:60;background:#042f2e;border:1px solid #0d9488;border-top:none;border-radius:0 0 8px 8px;max-height:240px;overflow-y:auto;margin-top:-8px;"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;font-weight:600;">Qty</div>
+        <button type="button" onclick="window._bumpInspQty(-1)" style="width:34px;height:34px;background:rgba(255,255,255,0.05);border:1px solid #0d9488;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;">−</button>
+        <div id="inspQtyDisplay" style="min-width:44px;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:7px;padding:7px 0;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#99f6e4;">1</div>
+        <button type="button" onclick="window._bumpInspQty(1)" style="width:34px;height:34px;background:rgba(255,255,255,0.05);border:1px solid #0d9488;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;">＋</button>
+      </div>
+      <input type="text" id="inspCheckoutNotes" placeholder="What's it for? (optional — WO#, part, reason)" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;margin-bottom:10px;font-family:'Barlow',sans-serif;">
+      <button type="button" onclick="window._checkOutInspItem()" style="width:100%;background:#14b8a6;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">📤 CHECK OUT</button>
+    </div>
+
+    <div style="font-size:11px;color:#5eead4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Checked Out</div>
+    <div id="inspOutList" style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-bottom:14px;">
+      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing checked out.</div>
+    </div>
+
+    <div style="font-size:11px;color:#fbbf24;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">📚 Awaiting Inspector Evaluation</div>
+    <div id="inspPendingList" style="display:flex;flex-direction:column;gap:8px;max-height:240px;overflow-y:auto;margin-bottom:14px;">
+      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing waiting on evaluation.</div>
+    </div>
+
+    <div style="cursor:pointer;user-select:none;" onclick="var el=document.getElementById('inspCheckedInList'); var arrow=document.getElementById('inspHistoryArrow'); var open = el.style.display!=='none'; el.style.display = open?'none':'flex'; arrow.textContent = open?'▸':'▾';">
+      <div style="font-size:11px;color:#94a3b8;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;"><span id="inspHistoryArrow">▸</span> Recently Checked In</div>
+    </div>
+    <div id="inspCheckedInList" style="display:none;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-bottom:10px;">
+      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing checked in yet.</div>
+    </div>
+
+    <button type="button" onclick="window._closeInspectorLibrary()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
   </div>
 </div>
 
@@ -3816,21 +3876,37 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
   function testQmiDgpPushover() {
     var key = (document.getElementById('qmidgp-pushover-key') || {}).value || '';
-    key = key.trim();
-    if (!key) { showToast('yellow', 'Enter a key first', 'Paste your Pushover User Key above.'); return; }
-    localStorage.setItem('hillQmiDgpPushoverKey', key);
+    key = key.trim() || QMI_DGP_DEFAULT_KEY;
+    var usingDefault = !((document.getElementById('qmidgp-pushover-key')||{}).value||'').trim();
     var fd = new FormData();
     fd.append('token',    PUSHOVER_TOKEN);
     fd.append('user',     key);
     fd.append('title',    '📦 TEST — QMI/DGP Alert');
-    fd.append('message',  'QMI/DGP notifications are working! You\'ll get this every time an item is logged or a return is requested.');
+    fd.append('message',  'QMI/DGP notifications are working! You\'ll get this every time an item is logged or a return is requested.' + (usingDefault ? ' (sent to your default key)' : ' (sent to the override key in this field)'));
     fd.append('sound',    'magic');
     fd.append('priority', '1');
     fetch('https://api.pushover.net/1/messages.json', {
       method: 'POST', mode: 'no-cors', body: fd
     }).catch(function(e){ console.warn('QMI/DGP Pushover test:', e.message); });
-    showToast('green', 'Test sent!', 'Check your Pushover app.');
+    showToast('green', 'Test sent!', usingDefault ? 'Sent to your default key — check your Pushover app.' : 'Sent to the override key in this field — check that phone.');
   }
+  window._renderQmiDgpKeyStatus = function(){
+    var el = document.getElementById('qmidgp-key-status');
+    if(!el) return;
+    var stored = localStorage.getItem('hillQmiDgpPushoverKey') || '';
+    el.textContent = stored
+      ? '⚠️ Using an OVERRIDE key (ends in ' + stored.slice(-4) + ') — real alerts go here, not your default key.'
+      : '✅ Using your default key — no override set.';
+    el.style.color = stored ? '#fbbf24' : '#4ade80';
+  };
+  window._clearQmiDgpKeyOverride = function(){
+    localStorage.removeItem('hillQmiDgpPushoverKey');
+    window._syncSecretToCloud('qmiDgpPushoverKey', '');
+    var input = document.getElementById('qmidgp-pushover-key');
+    if(input) input.value = '';
+    window._renderQmiDgpKeyStatus();
+    if(window.showToast) showToast('green', 'Cleared', 'QMI/DGP alerts now go to your default key.');
+  };
   // Miguel's personal key — hardcoded fallback so this keeps working even
   // if the Admin Panel field is ever empty/cleared on a given device.
   var QMI_DGP_DEFAULT_KEY = 'uotiq5p4c7sycsw2wh1xv8mq9gpe4e';
@@ -3848,6 +3924,23 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     fd.append('priority', '1');
     fetch('https://api.pushover.net/1/messages.json', { method:'POST', mode:'no-cors', body:fd })
       .catch(function(e){ console.warn('QMI/DGP Pushover:', e.message); });
+  };
+  // One-tap test button inside the QMI/DGP modal itself — always fires
+  // straight to whatever key qmiDgpPushover would actually use for a real
+  // event (override if one's set, otherwise the default), so it tells you
+  // the truth about whether a real alert would reach your phone.
+  window._sendQmiDgpSelfTest = function(){
+    var key = localStorage.getItem('hillQmiDgpPushoverKey') || QMI_DGP_DEFAULT_KEY;
+    var fd = new FormData();
+    fd.append('token',    PUSHOVER_TOKEN);
+    fd.append('user',     key);
+    fd.append('title',    '🔔 TEST — QMI/DGP');
+    fd.append('message',  'If you got this, QMI/DGP notifications are reaching your phone.');
+    fd.append('sound',    'magic');
+    fd.append('priority', '1');
+    fetch('https://api.pushover.net/1/messages.json', { method:'POST', mode:'no-cors', body:fd })
+      .then(function(){ if(window.showToast) showToast('green','Test sent','Check your Pushover app in a few seconds.'); })
+      .catch(function(e){ if(window.showToast) showToast('red','Failed to send', e.message); });
   };
   function testJustinPushover() {
     var key = (document.getElementById('justin-pushover-key') || {}).value || '';
@@ -4854,6 +4947,224 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('dmgItemDesc').focus();
   };
 
+  // ── INSPECTOR EQUIPMENT LIBRARY — checkout/return/evaluate workflow for
+  // inspection gages, calipers, mics, etc. Fixes the "equipment goes out and
+  // never really comes back" problem: a return alone doesn't finish the
+  // loop — Ker (or admin/manager) still has to actually evaluate it and
+  // check it in before it counts as back in circulation. ──
+  window._inspItems = window._inspItems || [];
+  window._inspQty = window._inspQty || 1;
+  window._inspPendingSelectedText = null;
+
+  window._startInspectorListener = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods){ setTimeout(window._startInspectorListener, 800); return; }
+    mods.onSnapshot(mods.collection(db2, 'hillInspectionEquip'), function(snap){
+      var items = [];
+      snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
+      window._inspItems = items;
+      window._renderInspectorLibrary();
+    }, function(e){ console.warn('Inspector library listener:', e.message); });
+  };
+
+  function _inspCanEvaluate(){
+    return !!(window._isAdmin || window.currentUser === 'hilladmin' || window._isManager);
+  }
+
+  window._openInspectorLibrary = function(){
+    document.getElementById('inspItemDesc').value = '';
+    document.getElementById('inspCheckoutNotes').value = '';
+    window._inspQty = 1;
+    window._inspPendingSelectedText = null;
+    var qd = document.getElementById('inspQtyDisplay'); if(qd) qd.textContent = '1';
+    window._renderInspectorLibrary();
+    document.getElementById('inspectorLibraryOverlay').style.display = 'flex';
+  };
+
+  window._closeInspectorLibrary = function(){
+    document.getElementById('inspectorLibraryOverlay').style.display = 'none';
+  };
+
+  window._bumpInspQty = function(delta){
+    window._inspQty = Math.max(1, (window._inspQty || 1) + delta);
+    var qd = document.getElementById('inspQtyDisplay'); if(qd) qd.textContent = window._inspQty;
+  };
+
+  // Search is scoped to MEASURING_TOOLS only (the same gage/caliper/mic
+  // catalog used elsewhere) — this tab is specifically inspection
+  // equipment, not cutting tools, so tooling/Zengers aren't mixed in here.
+  window._filterInspectorEquip = function(query){
+    var box = document.getElementById('inspEquipSearchResults');
+    if(!box) return;
+    var q = (query||'').trim().toLowerCase();
+    if(!q){ box.style.display='none'; box.innerHTML=''; return; }
+    var qWords = _toolingTokenize(q);
+    if(!qWords.length){ box.style.display='none'; box.innerHTML=''; return; }
+    var matches = MEASURING_TOOLS.filter(function(mt){
+      return _toolingMatchesQuery(mt[0], qWords);
+    }).slice(0, 20);
+    if(!matches.length){ box.style.display='none'; return; }
+    box.innerHTML = matches.map(function(mt, i){
+      return '<div data-idx="'+i+'" onmousedown="window._selectInspectorEquip('+i+')" '
+        + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);">'
+        + mt[0] + '</div>';
+    }).join('');
+    box.setAttribute('data-matches', JSON.stringify(matches));
+    box.style.display = 'block';
+  };
+
+  window._selectInspectorEquip = function(idx){
+    var box = document.getElementById('inspEquipSearchResults');
+    var matches = JSON.parse(box.getAttribute('data-matches')||'[]');
+    var mt = matches[idx];
+    if(!mt) return;
+    document.getElementById('inspItemDesc').value = mt[0];
+    window._inspPendingSelectedText = mt[0];
+    box.style.display = 'none';
+    box.innerHTML = '';
+    document.getElementById('inspItemDesc').focus();
+  };
+
+  window._checkOutInspItem = function(){
+    var desc = document.getElementById('inspItemDesc').value.trim();
+    if(!desc){ if(window.showToast) showToast('red','Enter what\'s being checked out',''); return; }
+    var notes = document.getElementById('inspCheckoutNotes').value.trim();
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.addDoc(mods.collection(db2, 'hillInspectionEquip'), {
+      desc: desc, qty: window._inspQty || 1, notes: notes,
+      status: 'out',
+      checkedOutBy: window.currentUser || 'unknown', checkedOutAt: mods.serverTimestamp(),
+      createdAt: mods.serverTimestamp()
+    }).then(function(){
+      document.getElementById('inspItemDesc').value = '';
+      document.getElementById('inspCheckoutNotes').value = '';
+      window._inspQty = 1;
+      window._inspPendingSelectedText = null;
+      var qd = document.getElementById('inspQtyDisplay'); if(qd) qd.textContent = '1';
+      if(window.showToast) showToast('green','Checked out', desc);
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Failed to check out', e.message);
+    });
+  };
+
+  // Anyone can mark an item returned — this hands it to the inspector,
+  // it does NOT finish the loop. Notifies Ker + Miguel so the return
+  // doesn't just sit there unnoticed.
+  window._returnInspItem = function(id){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var item = (window._inspItems||[]).find(function(it){ return it.id === id; });
+    mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', id), {
+      status: 'pending_eval', returnedBy: window.currentUser || 'unknown', returnedAt: mods.serverTimestamp()
+    }).then(function(){
+      if(window.showToast) showToast('green','Marked returned','Waiting on inspector evaluation.');
+      var label = (item ? ((item.qty>1?item.qty+'× ':'')+item.desc) : 'An item');
+      if(window.qualityPushover) window.qualityPushover('📚 Inspector — Item Returned', label + ' was returned by ' + (window.currentUser||'someone') + '. Needs evaluation before check-in.');
+      if(window.adminPushover) window.adminPushover('📚 Inspector — Item Returned', label + ' was returned by ' + (window.currentUser||'someone') + '. Awaiting Ker\'s evaluation.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
+  };
+
+  // Gated to Ker/Admin/Manager — the actual evaluation step. Optional
+  // condition notes get attached so there's a record of what was found.
+  window._evaluateAndCheckInInspItem = function(id){
+    if(!_inspCanEvaluate()) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var notesInput = document.getElementById('inspEvalNotes_' + id);
+    var evalNotes = notesInput ? notesInput.value.trim() : '';
+    mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', id), {
+      status: 'checked_in', evaluatedBy: window.currentUser || 'unknown', evaluatedAt: mods.serverTimestamp(), evalNotes: evalNotes
+    }).then(function(){
+      if(window.showToast) showToast('green','Checked in','Evaluation complete.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to check in', e.message); });
+  };
+
+  // Admin-only — permanently removes an item, e.g. logged by mistake.
+  window._deleteInspItem = function(id){
+    if(!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var item = (window._inspItems||[]).find(function(it){ return it.id === id; });
+    if(!confirm('Delete "' + (item ? item.desc : 'this item') + '"? This can\'t be undone.')) return;
+    mods.deleteDoc(mods.doc(db2, 'hillInspectionEquip', id)).then(function(){
+      if(window.showToast) showToast('green','Deleted','Item removed.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to delete', e.message); });
+  };
+
+  function _inspFmtTime(ts){
+    if(!ts) return '';
+    var d = ts.toDate ? ts.toDate() : new Date(ts);
+    if(isNaN(d.getTime())) return '';
+    return (d.getMonth()+1)+'/'+d.getDate()+' '+d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  }
+
+  window._renderInspectorLibrary = function(){
+    var all = window._inspItems || [];
+    var out = all.filter(function(it){ return it.status === 'out'; });
+    var pending = all.filter(function(it){ return it.status === 'pending_eval'; });
+    var checkedIn = all.filter(function(it){ return it.status === 'checked_in'; })
+      .sort(function(a,b){
+        var at = a.evaluatedAt && a.evaluatedAt.seconds || 0, bt = b.evaluatedAt && b.evaluatedAt.seconds || 0;
+        return bt - at;
+      }).slice(0, 15);
+
+    // Badge shows what's actionable for Ker — items waiting on evaluation.
+    var badge = document.getElementById('inspectorBadge');
+    if(badge){
+      if(pending.length > 0){ badge.textContent = pending.length; badge.style.display = 'flex'; }
+      else badge.style.display = 'none';
+    }
+
+    var canEval = _inspCanEvaluate();
+    var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
+
+    var outList = document.getElementById('inspOutList');
+    if(outList){
+      outList.innerHTML = !out.length
+        ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing checked out.</div>'
+        : out.map(function(it){
+            return '<div style="position:relative;background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.35);border-radius:8px;padding:10px 12px;">'
+              + (isAdmin ? '<button type="button" onclick="window._deleteInspItem(\''+it.id+'\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>' : '')
+              + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)') + '</div>'
+              + '<div style="font-size:11px;color:#94a3b8;">Checked out by ' + (it.checkedOutBy||'unknown') + ' · ' + _inspFmtTime(it.checkedOutAt) + '</div>'
+              + (it.notes ? '<div style="font-size:11px;color:#94a3b8;margin-top:3px;">' + it.notes + '</div>' : '')
+              + '<button type="button" onclick="window._returnInspItem(\''+it.id+'\')" style="margin-top:8px;width:100%;background:rgba(20,184,166,0.15);border:1px solid #14b8a6;color:#5eead4;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">↩ RETURN</button>'
+              + '</div>';
+          }).join('');
+    }
+
+    var pendingList = document.getElementById('inspPendingList');
+    if(pendingList){
+      pendingList.innerHTML = !pending.length
+        ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing waiting on evaluation.</div>'
+        : pending.map(function(it){
+            return '<div style="position:relative;background:rgba(234,179,8,0.1);border:1px solid #eab308;border-radius:8px;padding:10px 12px;">'
+              + (isAdmin ? '<button type="button" onclick="window._deleteInspItem(\''+it.id+'\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>' : '')
+              + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)') + '</div>'
+              + '<div style="font-size:11px;color:#fde047;">Returned by ' + (it.returnedBy||'unknown') + ' · ' + _inspFmtTime(it.returnedAt) + '</div>'
+              + (canEval
+                  ? '<input type="text" id="inspEvalNotes_'+it.id+'" placeholder="Condition notes (optional)" style="width:100%;background:#1a1035;border:1px solid #eab308;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;margin-top:7px;font-family:\'Barlow\',sans-serif;">'
+                    + '<button type="button" onclick="window._evaluateAndCheckInInspItem(\''+it.id+'\')" style="margin-top:6px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✅ EVALUATE &amp; CHECK IN</button>'
+                  : '<div style="margin-top:7px;text-align:center;font-size:11px;color:#94a3b8;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ AWAITING INSPECTOR</div>')
+              + '</div>';
+          }).join('');
+    }
+
+    var checkedInList = document.getElementById('inspCheckedInList');
+    if(checkedInList){
+      checkedInList.innerHTML = !checkedIn.length
+        ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing checked in yet.</div>'
+        : checkedIn.map(function(it){
+            return '<div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.25);border-radius:7px;padding:8px 10px;">'
+              + '<div style="font-size:12px;color:#e2e8f0;">' + ((it.qty && it.qty>1)?(it.qty+'× '):'') + (it.desc||'(no description)') + '</div>'
+              + '<div style="font-size:10px;color:#4ade80;">✓ Checked in by ' + (it.evaluatedBy||'unknown') + ' · ' + _inspFmtTime(it.evaluatedAt) + '</div>'
+              + (it.evalNotes ? '<div style="font-size:10px;color:#94a3b8;margin-top:2px;">' + it.evalNotes + '</div>' : '')
+              + '</div>';
+          }).join('');
+    }
+  };
+
   // ── TOOL LIST — digital replacement for the paper "TOOL LIST" setup tag ──
   window._tlStagedTools = []; // [{desc, ooh, dia}, ...]
 
@@ -5132,6 +5443,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   };
 
   window._startDmgListener();
+  window._startInspectorListener();
 
   // ── INVENTORY BROWSER — all three catalogs, one place ──
   window._openInventoryBrowser = function(){
@@ -6777,6 +7089,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (willKeyInput && !willKeyInput.value) {
       willKeyInput.value = localStorage.getItem('hillFloorSupportPushoverKey') || (typeof FLOOR_SUPPORT_DEFAULT_KEY !== 'undefined' ? FLOOR_SUPPORT_DEFAULT_KEY : '');
     }
+    var qmidgpKeyInput = document.getElementById('qmidgp-pushover-key');
+    if (qmidgpKeyInput && localStorage.getItem('hillQmiDgpPushoverKey')) {
+      qmidgpKeyInput.value = localStorage.getItem('hillQmiDgpPushoverKey');
+    }
+    if (window._renderQmiDgpKeyStatus) window._renderQmiDgpKeyStatus();
     // Update DNX status display
     updateDNXStatus(dnxConnected);
     // Always force a fresh user load when opening panel
