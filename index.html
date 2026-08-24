@@ -1873,26 +1873,40 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   </div>
 </div>
 
-<!-- QMI/DGP LOG — permanent archive of everything finished on a QMI/DGP
-     request (never auto-cleared). A request originates and lives in the
-     normal Alerts feed exactly like any other machine's request; the
-     moment it's FINISHed, it disappears from Alerts (as usual) and a
-     permanent record lands here instead. Status (Ready / Awaiting Return /
-     Complete) is admin-only to set — managers and everyone else only ever
-     see the status as text, never the buttons. Editing and deleting
-     archived records is admin-only too. -->
+<!-- QMI/DGP LOG — fully self-contained request system, completely separate
+     from the normal machine-card/Alerts pipeline. A request is created,
+     started, and finished entirely within this tab — it never touches
+     notes/hillRequests and never appears in the Alerts feed. Everything
+     here is permanent (never auto-deleted). Lifecycle: pending → in
+     progress → finished, then admin sets Ready/Awaiting Return/Complete.
+     Start/Finish are admin+manager (matching how work gets done elsewhere
+     in the app); the post-finish status buttons, editing, and deleting are
+     strictly admin-only — not even managers get those, only a status readout. -->
 <div class="modal-overlay" id="qmiDgpLogOverlay" style="display:none;">
   <div class="modal" style="max-width:520px;">
     <div class="modal-title">📦 QMI/DGP Log</div>
     <div class="modal-machine" style="margin-bottom:12px;">Permanent record — nothing here is ever auto-deleted.</div>
 
-    <button type="button" onclick="window._closeQmiDgpLog(); openModal('QMI/DGP','Outside Shop');" style="width:100%;margin-bottom:12px;background:#14b8a6;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">+ NEW REQUEST</button>
+    <button type="button" onclick="window._toggleQmiDgpNewForm()" id="qmiDgpNewReqToggleBtn" style="width:100%;margin-bottom:12px;background:#14b8a6;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">+ NEW REQUEST</button>
+
+    <div id="qmiDgpNewReqForm" style="display:none;background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="qmiNewWo" placeholder="WO #" style="flex:1;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;">
+        <input type="text" id="qmiNewOp" placeholder="OP #" style="flex:1;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;">
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="qmiNewPart" placeholder="Part #" style="flex:1;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;">
+        <input type="text" id="qmiNewPo" placeholder="PO #" style="flex:1;background:#1a0d0d;border:1px solid #7f1d1d;border-radius:8px;color:#fca5a5;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;">
+      </div>
+      <textarea id="qmiNewDetail" placeholder="What's needed / notes…" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;margin-bottom:10px;min-height:60px;font-family:'Barlow',sans-serif;"></textarea>
+      <button type="button" onclick="window._submitQmiDgpRequest()" style="width:100%;background:#14b8a6;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">📤 SEND REQUEST</button>
+    </div>
 
     <input type="text" id="qmiDgpLogSearch" placeholder="Search WO, part, operator, notes…" oninput="window._renderQmiDgpLog()"
       style="width:100%;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;margin-bottom:12px;outline:none;">
 
     <div id="qmiDgpLogList" style="display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;margin-bottom:14px;">
-      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing archived yet — finish a QMI/DGP request to see it here.</div>
+      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing here yet — tap + NEW REQUEST to add one.</div>
     </div>
 
     <button type="button" onclick="window._closeQmiDgpLog()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
@@ -4370,14 +4384,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
-    // QMI/DGP isn't a physical machine on the floor — it only ever needs
-    // Inspection or Machinist Req, so Pending WO and Floor Support are
-    // hidden for it specifically. Everything else about this modal (the
-    // form, submit, notifications, showing up in Alerts) is identical to
-    // any real machine.
-    var isQmiDgp = (machine === 'QMI/DGP');
-    var blueBtn = document.getElementById('typeBtnBlue'); if(blueBtn) blueBtn.style.display = isQmiDgp ? 'none' : '';
-    var orangeBtn = document.getElementById('typeBtnOrange'); if(orangeBtn) orangeBtn.style.display = isQmiDgp ? 'none' : '';
     document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = ''; if(document.getElementById('partInput')) document.getElementById('partInput').value = ''; if(document.getElementById('poInput')) document.getElementById('poInput').value = '';
     // Reset supply dropdown
     var si = document.getElementById('supplyItem'); if(si) si.value = '';
@@ -4706,22 +4712,24 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
   })();
 
-  // ── QMI/DGP LOG — permanent archive, never auto-cleared ──
-  // A QMI/DGP request lives and is worked exactly like any other machine's
-  // request (shows in Alerts, gets Started/Finished the normal way). The
-  // moment it's FINISHed, this wraps window.finishRequest to catch it and
-  // write a permanent record — reusing hillInspections (the same permanent,
-  // never-cleared collection Inspection Requests already write to
-  // successfully) rather than a brand-new collection, since that's proven
-  // to already have working Firestore permissions. A qmiDgpFinishArchive
-  // marker field keeps these entries distinct from the regular Inspection
-  // Log's own records in that same collection. Status (Ready / Awaiting
-  // Return / Complete) and editing/deleting are strictly admin-only — not
-  // even managers get those buttons, only a status readout.
+  // ── QMI/DGP LOG — fully self-contained request system ──
+  // Completely separate from the normal machine-card/notes/hillRequests
+  // pipeline — a request is created, started, and finished entirely within
+  // this tab and never touches the Alerts feed. Reuses hillInspections (a
+  // collection already proven to have working Firestore permissions)
+  // rather than a new collection, marked with qmiDgpEntry so it never mixes
+  // with the regular Inspection Log. Lifecycle:
+  //   pending → in_progress → finished → (admin sets Ready/Awaiting
+  //   Return/Complete, changeable any time, no forced order)
+  // Start/Finish: admin+manager, same as work elsewhere in the app.
+  // Status buttons + Edit + Delete: strictly admin-only.
   window._qmiDgpArchive = [];
 
   function _qmiDgpIsAdmin(){
     return !!(window._isAdmin || window.currentUser === 'hilladmin');
+  }
+  function _qmiDgpCanWork(){
+    return !!(window._isAdmin || window.currentUser === 'hilladmin' || window._isManager);
   }
 
   window._startQmiDgpArchiveListener = function(){
@@ -4729,15 +4737,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(!db2 || !mods){ setTimeout(window._startQmiDgpArchiveListener, 800); return; }
     // No orderBy in the query itself — avoids needing a Firestore composite
     // index for a where+orderBy on different fields. Sorted client-side instead.
-    mods.onSnapshot(mods.query(mods.collection(db2, 'hillInspections'), mods.where('qmiDgpFinishArchive', '==', true)), function(snap){
+    mods.onSnapshot(mods.query(mods.collection(db2, 'hillInspections'), mods.where('qmiDgpEntry', '==', true)), function(snap){
       var items = [];
       snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
       items.sort(function(a,b){
-        var at = a.finishedAt && a.finishedAt.seconds || 0, bt = b.finishedAt && b.finishedAt.seconds || 0;
+        var at = a.requestedAt && a.requestedAt.seconds || 0, bt = b.requestedAt && b.requestedAt.seconds || 0;
         return bt - at;
       });
       window._qmiDgpArchive = items;
-      console.log('[QMI/DGP archive] listener received', items.length, 'record(s).');
       window._renderQmiDgpLog();
       var badge = document.getElementById('qmidgpBadge');
       if(badge){
@@ -4748,48 +4755,78 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }, function(e){ console.warn('QMI/DGP archive listener:', e.message); if(window.showToast) showToast('red','QMI/DGP log connection failed', e.message.slice(0,100)); });
   };
 
-  // Wraps the global finishRequest — fires for every request type/machine,
-  // so this only needs to check afterward whether what just got finished
-  // belonged to the QMI/DGP virtual machine.
-  (function(){
-    var _origFinishRequest = window.finishRequest;
-    if(typeof _origFinishRequest === 'function'){
-      window.finishRequest = async function(noteId, hillReqId){
-        await _origFinishRequest(noteId, hillReqId);
-        var note = window._lastFinishedNote;
-        console.log('[QMI/DGP archive] finishRequest wrapper ran. note.machine =', note && note.machine);
-        if(note && note.machine === 'QMI/DGP'){
-          if(!window.fbDb || !window._fbModules){
-            console.warn('[QMI/DGP archive] fbDb/_fbModules not ready — cannot archive.');
-            if(window.showToast) showToast('red','QMI/DGP archive failed','Not connected to database.');
-            return;
-          }
-          var db2 = window.fbDb, mods = window._fbModules;
-          mods.addDoc(mods.collection(db2, 'hillInspections'), {
-            qmiDgpFinishArchive: true,
-            type: note.type || '', wo: note.wo || '', op: note.op || '', part: note.part || '', po: note.po || '',
-            detail: note.detail || '', operator: note.operator || '',
-            status: 'ready',
-            createdAt: note.createdAt || mods.serverTimestamp(),
-            finishedAt: mods.serverTimestamp(),
-            linkedNoteId: noteId || null, linkedReqId: hillReqId || null
-          }).then(function(){
-            console.log('[QMI/DGP archive] write succeeded.');
-          }).catch(function(e){
-            console.warn('QMI/DGP archive write error:', e.message);
-            if(window.showToast) showToast('red','QMI/DGP archive failed', e.message.slice(0,100));
-          });
-        }
-      };
-    }
-  })();
-
   window._openQmiDgpLog = function(){
+    var form = document.getElementById('qmiDgpNewReqForm'); if(form) form.style.display = 'none';
     window._renderQmiDgpLog();
     document.getElementById('qmiDgpLogOverlay').style.display = 'flex';
   };
   window._closeQmiDgpLog = function(){
     document.getElementById('qmiDgpLogOverlay').style.display = 'none';
+  };
+  window._toggleQmiDgpNewForm = function(){
+    var form = document.getElementById('qmiDgpNewReqForm');
+    if(!form) return;
+    form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+  };
+
+  // Creates a request directly — no notes/hillRequests doc, no Alerts feed
+  // entry, ever. Still notifies Ker + Miguel the same way an Inspection
+  // Request would, since that part of the workflow is unchanged.
+  window._submitQmiDgpRequest = function(){
+    var wo = (document.getElementById('qmiNewWo').value || '').trim();
+    var op = (document.getElementById('qmiNewOp').value || '').trim();
+    var part = (document.getElementById('qmiNewPart').value || '').trim();
+    var po = (document.getElementById('qmiNewPo').value || '').trim();
+    var detail = (document.getElementById('qmiNewDetail').value || '').trim();
+    if(!wo && !detail){
+      if(window.showToast) showToast('red','Enter at least a WO# or some notes','');
+      return;
+    }
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.addDoc(mods.collection(db2, 'hillInspections'), {
+      qmiDgpEntry: true,
+      wo: wo, op: op, part: part, po: po, detail: detail,
+      operator: window.currentUser || 'unknown',
+      stage: 'pending',
+      requestedAt: mods.serverTimestamp()
+    }).then(function(){
+      document.getElementById('qmiNewWo').value = '';
+      document.getElementById('qmiNewOp').value = '';
+      document.getElementById('qmiNewPart').value = '';
+      document.getElementById('qmiNewPo').value = '';
+      document.getElementById('qmiNewDetail').value = '';
+      var form = document.getElementById('qmiDgpNewReqForm'); if(form) form.style.display = 'none';
+      if(window.showToast) showToast('green','Request sent', wo ? 'WO ' + wo : detail);
+      var label = (wo ? 'WO ' + wo : '') + (op ? ' OP ' + op : '') + (part ? ' Part ' + part : '') + (detail ? ' — ' + detail : '');
+      if(window.qualityPushover) window.qualityPushover('📦 QMI/DGP — New Request', (window.currentUser||'Someone') + ': ' + label);
+      if(window.adminPushover) window.adminPushover('📦 QMI/DGP — New Request', (window.currentUser||'Someone') + ': ' + label);
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Failed to send request', e.message);
+    });
+  };
+
+  // Admin+manager. Begins work on a pending request.
+  window._qmiDgpStart = function(id){
+    if(!_qmiDgpCanWork()) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillInspections', id), {
+      stage: 'in_progress', startedBy: window.currentUser || 'unknown', startedAt: mods.serverTimestamp()
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to start', e.message); });
+  };
+
+  // Admin+manager. Finishing reveals the Ready/Awaiting Return/Complete
+  // buttons — defaults to Ready, admin can change it any time after.
+  window._qmiDgpFinish = function(id){
+    if(!_qmiDgpCanWork()) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillInspections', id), {
+      stage: 'finished', finishedBy: window.currentUser || 'unknown', finishedAt: mods.serverTimestamp(), status: 'ready'
+    }).then(function(){
+      if(window.showToast) showToast('green','Finished','Set its Ready/Awaiting Return/Complete status below.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to finish', e.message); });
   };
 
   var QMI_DGP_STATUS_LABELS = { ready: '🟢 Ready', awaiting_return: '🟡 Awaiting Return', complete: '🔵 Complete' };
@@ -4863,20 +4900,21 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       });
     }
     if(!records.length){
-      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">' + (q ? 'No matches.' : 'Nothing archived yet — finish a QMI/DGP request to see it here.') + '</div>';
+      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">' + (q ? 'No matches.' : 'Nothing here yet — tap + NEW REQUEST to add one.') + '</div>';
       return;
     }
     var isAdmin = _qmiDgpIsAdmin();
+    var canWork = _qmiDgpCanWork();
     var editingId = window._editQmiDgpArchiveId;
     list.innerHTML = records.map(function(r){
-      var typeIcon = r.type === 'red' ? '🔴' : (r.type === 'yellow' ? '🟡' : '⚪');
       var jobBits = [];
       if(r.wo) jobBits.push('WO ' + r.wo);
       if(r.op) jobBits.push('OP ' + r.op);
       if(r.part) jobBits.push('Part ' + r.part);
       if(r.po) jobBits.push('PO ' + r.po);
-      var statusColor = QMI_DGP_STATUS_COLORS[r.status] || '#64748b';
-      var statusLabel = QMI_DGP_STATUS_LABELS[r.status] || r.status || '—';
+      var stage = r.stage || 'pending';
+      var statusColor = stage === 'finished' ? (QMI_DGP_STATUS_COLORS[r.status] || '#64748b') : (stage === 'in_progress' ? '#eab308' : '#94a3b8');
+      var statusLabel = stage === 'finished' ? (QMI_DGP_STATUS_LABELS[r.status] || r.status || '—') : (stage === 'in_progress' ? '🟡 In Progress' : '⚪ Not Started');
 
       if(isAdmin && editingId === r.id){
         return '<div style="background:rgba(255,255,255,0.04);border:1px solid #a855f7;border-radius:8px;padding:12px;">'
@@ -4894,21 +4932,34 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           + '</div>';
       }
 
+      var actionHtml;
+      if(stage === 'pending'){
+        actionHtml = canWork
+          ? '<button type="button" onclick="window._qmiDgpStart(\''+r.id+'\')" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:8px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">▶ START</button>'
+          : '<div style="text-align:center;font-size:11px;color:#94a3b8;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⚪ NOT STARTED</div>';
+      } else if(stage === 'in_progress'){
+        actionHtml = canWork
+          ? '<button type="button" onclick="window._qmiDgpFinish(\''+r.id+'\')" style="width:100%;background:rgba(59,130,246,0.15);border:1px solid #3b82f6;color:#93c5fd;border-radius:6px;padding:8px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">✓ FINISH</button>'
+          : '<div style="text-align:center;font-size:11px;color:#fde047;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">🟡 IN PROGRESS — started by ' + window._escAttr(r.startedBy||'') + '</div>';
+      } else {
+        actionHtml = isAdmin
+          ? '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'
+            + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'ready\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='ready'?'rgba(34,197,94,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='ready'?'#22c55e':'#334155')+';color:'+(r.status==='ready'?'#4ade80':'#94a3b8')+';">🟢 READY</button>'
+            + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'awaiting_return\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='awaiting_return'?'rgba(234,179,8,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='awaiting_return'?'#eab308':'#334155')+';color:'+(r.status==='awaiting_return'?'#fde047':'#94a3b8')+';">🟡 AWAITING RETURN</button>'
+            + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'complete\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='complete'?'rgba(59,130,246,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='complete'?'#3b82f6':'#334155')+';color:'+(r.status==='complete'?'#93c5fd':'#94a3b8')+';">🔵 COMPLETE</button>'
+            + '</div>'
+          : '<div style="display:inline-block;font-size:11px;font-weight:700;color:'+statusColor+';background:'+statusColor+'1a;border:1px solid '+statusColor+'55;border-radius:6px;padding:4px 10px;">' + statusLabel + '</div>';
+      }
+
       return '<div style="position:relative;background:rgba(255,255,255,0.03);border:1px solid '+statusColor+'44;border-left:3px solid '+statusColor+';border-radius:8px;padding:10px 12px;">'
         + (isAdmin ? '<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;">'
             + '<button type="button" onclick="window._startEditQmiDgp(\''+r.id+'\')" title="Edit" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;border-radius:6px;width:26px;height:26px;font-size:12px;line-height:1;cursor:pointer;">✏️</button>'
             + '<button type="button" onclick="window._deleteQmiDgpArchive(\''+r.id+'\')" title="Delete" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>'
             + '</div>' : '')
-        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:3px;padding-right:'+(isAdmin?'62px':'0')+';">' + typeIcon + ' ' + (jobBits.join(' · ') || '(no job info)') + '</div>'
+        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:3px;padding-right:'+(isAdmin?'62px':'0')+';">' + (jobBits.join(' · ') || '(no job info)') + '</div>'
         + (r.detail ? '<div style="font-size:12px;color:#cbd5e1;margin-bottom:4px;white-space:pre-wrap;">' + window._escAttr(r.detail) + '</div>' : '')
-        + '<div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">' + window._escAttr(r.operator||'unknown') + ' · Finished ' + _qmiDgpFmtTime(r.finishedAt) + '</div>'
-        + (isAdmin
-            ? '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'
-              + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'ready\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='ready'?'rgba(34,197,94,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='ready'?'#22c55e':'#334155')+';color:'+(r.status==='ready'?'#4ade80':'#94a3b8')+';">🟢 READY</button>'
-              + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'awaiting_return\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='awaiting_return'?'rgba(234,179,8,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='awaiting_return'?'#eab308':'#334155')+';color:'+(r.status==='awaiting_return'?'#fde047':'#94a3b8')+';">🟡 AWAITING RETURN</button>'
-              + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'complete\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='complete'?'rgba(59,130,246,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='complete'?'#3b82f6':'#334155')+';color:'+(r.status==='complete'?'#93c5fd':'#94a3b8')+';">🔵 COMPLETE</button>'
-              + '</div>'
-            : '<div style="display:inline-block;font-size:11px;font-weight:700;color:'+statusColor+';background:'+statusColor+'1a;border:1px solid '+statusColor+'55;border-radius:6px;padding:4px 10px;">' + statusLabel + '</div>')
+        + '<div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">' + window._escAttr(r.operator||'unknown') + ' · Requested ' + _qmiDgpFmtTime(r.requestedAt) + '</div>'
+        + actionHtml
         + '</div>';
     }).join('');
   };
