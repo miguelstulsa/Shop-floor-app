@@ -77,6 +77,19 @@
   .machine.has-yellow::after { background: #eab308; opacity:1; box-shadow: 0 0 8px #eab308; }
   .machine.has-green::after { background: #22c55e; opacity:1; box-shadow: 0 0 8px #22c55e; }
   .machine.has-blue::after { background: #3b82f6; opacity:1; box-shadow: 0 0 8px #3b82f6; }
+  /* New 4-edge system for real machine tiles (QMI/DGP keeps the old single
+     left-bar look above). Each edge lights independently based on which
+     request types are currently active — a machine can show several at
+     once, and each one clears on its own once that type's request resolves. */
+  .machine.new-edges::after { opacity: 0 !important; }
+  .machine-edge { position:absolute; opacity:0; transition:opacity 0.18s; pointer-events:none; z-index:2; }
+  .machine-edge-top    { top:0; left:0; right:0; height:3px; background:#eab308; box-shadow:0 0 8px #eab308; border-radius:8px 8px 0 0; }
+  .machine-edge-bottom { bottom:0; left:0; right:0; height:3px; background:#ef4444; box-shadow:0 0 8px #ef4444; border-radius:0 0 8px 8px; }
+  .machine-edge-left   { top:0; bottom:0; left:0; width:3px; background:#22c55e; box-shadow:0 0 8px #22c55e; border-radius:8px 0 0 8px; }
+  .machine-edge-right  { top:0; bottom:0; right:0; width:3px; background:#f97316; box-shadow:0 0 8px #f97316; border-radius:0 8px 8px 0; }
+  .machine-edge.lit { opacity:1; }
+  /* Pending WO (blue) doesn't get an edge — the whole card glows instead. */
+  .machine.pending-fill { box-shadow: inset 0 0 24px rgba(59,130,246,0.55), 0 3px 12px rgba(0,0,0,0.4); background: linear-gradient(160deg, #24466e 0%, #1c3a5c 50%, #16324a 100%); }
   .machine-body { padding: 4px 6px 3px 8px; display: flex; align-items: center; justify-content: space-between; gap: 4px; }
   .machine-left { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; min-width: 0; }
   .machine-label { display: none; }
@@ -2411,16 +2424,23 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
     document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
     document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green','has-orange','has-cyan'); });
+    window._setupMachineEdges();
     const priority = { red:5, orange:4, cyan:3.5, yellow:3, blue:2, green:1, dnx:2 };
     const machinePriority = {};
+    const machineActiveTypes = {};
     notes.forEach(n => {
+      if (n.machine !== 'QMI/DGP') {
+        if (!machineActiveTypes[n.machine]) machineActiveTypes[n.machine] = new Set();
+        machineActiveTypes[n.machine].add(n.type);
+        return;
+      }
       const container = document.getElementById('notes-' + n.machine);
       // Once a QMI/DGP request has a status, the dot/border reflects that
       // status color (green=Ready, yellow=Awaiting Return, blue=Complete)
       // instead of the original request type (red/yellow) — so the tile
       // shows where it stands now, not just that it started as one type.
       var colorKey = n.type;
-      if (n.machine === 'QMI/DGP' && n.qmiDgpStatus) {
+      if (n.qmiDgpStatus) {
         colorKey = n.qmiDgpStatus === 'awaiting_return' ? 'yellow' : 'green';
       }
       if (container) {
@@ -2432,11 +2452,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       // keep the tile permanently flagged the way an unresolved request
       // would — only count it toward the tile's colored border/dot if it's
       // still open.
-      if (n.machine === 'QMI/DGP' && n.qmiDgpStatus === 'complete') return;
+      if (n.qmiDgpStatus === 'complete') return;
       if (!machinePriority[n.machine] || priority[colorKey] > priority[machinePriority[n.machine]]) {
         machinePriority[n.machine] = colorKey;
       }
     });
+    window._applyMachineEdges(machineActiveTypes);
     Object.entries(machinePriority).forEach(([mid, type]) => {
       const led = document.getElementById('light-' + mid);
       if (led) led.className = 'machine-led led-' + type;
@@ -2471,12 +2492,19 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.querySelectorAll('.machine-notes').forEach(el => el.innerHTML = '');
     document.querySelectorAll('.machine-led').forEach(el => { el.className = 'machine-led'; });
     document.querySelectorAll('.machine').forEach(el => { el.classList.remove('has-red','has-yellow','has-blue','has-green','has-orange','has-cyan'); });
+    window._setupMachineEdges();
     const priority = { red:5, orange:4, cyan:3.5, yellow:3, blue:2, green:1, dnx:2 };
     const machinePriority = {};
+    const machineActiveTypes = {};
     notes.forEach(n => {
+      if (n.machine !== 'QMI/DGP') {
+        if (!machineActiveTypes[n.machine]) machineActiveTypes[n.machine] = new Set();
+        machineActiveTypes[n.machine].add(n.type);
+        return;
+      }
       const container = document.getElementById('notes-' + n.machine);
       var colorKey = n.type;
-      if (n.machine === 'QMI/DGP' && n.qmiDgpStatus) {
+      if (n.qmiDgpStatus) {
         colorKey = n.qmiDgpStatus === 'awaiting_return' ? 'yellow' : 'green';
       }
       if (container) {
@@ -2484,7 +2512,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         dot.className = 'note-dot ' + colorKey;
         container.appendChild(dot);
       }
-      if (n.machine === 'QMI/DGP' && n.qmiDgpStatus === 'complete') return;
+      if (n.qmiDgpStatus === 'complete') return;
       if (!machinePriority[n.machine] || priority[colorKey] > priority[machinePriority[n.machine]]) {
         machinePriority[n.machine] = colorKey;
       }
@@ -2495,6 +2523,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const notesEl = document.getElementById('notes-' + mid);
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
+    window._applyMachineEdges(machineActiveTypes);
     window._renderQmiDgpTileSummary(notes);
   };
 
@@ -3357,6 +3386,47 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       wrap.appendChild(line);
     });
     container.appendChild(wrap);
+  };
+
+  // Injects the 4 edge bars into every real machine tile (skips QMI/DGP,
+  // which keeps its existing single left-bar + dot look). Idempotent —
+  // safe to call every render pass since it skips tiles already set up.
+  window._setupMachineEdges = function(){
+    document.querySelectorAll('.machine').forEach(function(el){
+      if (el.querySelector('.machine-edge-top')) return;
+      var notesEl = el.querySelector('.machine-notes');
+      if (!notesEl || !notesEl.id) return;
+      var mid = notesEl.id.replace(/^notes-/, '');
+      el.setAttribute('data-machine', mid);
+      if (mid === 'QMI/DGP') return;
+      el.classList.add('new-edges');
+      ['top','bottom','left','right'].forEach(function(side){
+        var edge = document.createElement('div');
+        edge.className = 'machine-edge machine-edge-' + side;
+        el.appendChild(edge);
+      });
+    });
+  };
+
+  // Lights each edge independently based on every currently-active type for
+  // that machine (not just the highest priority) — a tile can show several
+  // edges at once, and each clears on its own once that type resolves.
+  // Pending WO (blue) doesn't get an edge; the whole card glows instead.
+  window._applyMachineEdges = function(machineActiveTypes){
+    document.querySelectorAll('.machine[data-machine]').forEach(function(el){
+      var mid = el.getAttribute('data-machine');
+      if (mid === 'QMI/DGP') return;
+      var types = machineActiveTypes[mid] || new Set();
+      var topEl   = el.querySelector('.machine-edge-top');
+      var botEl   = el.querySelector('.machine-edge-bottom');
+      var leftEl  = el.querySelector('.machine-edge-left');
+      var rightEl = el.querySelector('.machine-edge-right');
+      if (topEl)   topEl.classList.toggle('lit', types.has('yellow'));
+      if (botEl)   botEl.classList.toggle('lit', types.has('red'));
+      if (leftEl)  leftEl.classList.toggle('lit', types.has('green'));
+      if (rightEl) rightEl.classList.toggle('lit', types.has('orange'));
+      el.classList.toggle('pending-fill', types.has('blue'));
+    });
   };
 
   // ── HOLD REQUEST (PENDING) ─────────────────────────────────
