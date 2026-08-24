@@ -4759,8 +4759,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var _origFinishRequest = window.finishRequest;
     if(typeof _origFinishRequest === 'function'){
       window.finishRequest = async function(noteId, hillReqId){
+        alert('[DEBUG] finishRequest wrapper ENTERED. noteId=' + noteId + ' hillReqId=' + hillReqId);
         await _origFinishRequest(noteId, hillReqId);
         var note = window._lastFinishedNote;
+        alert('[DEBUG] After original finishRequest. note.machine = ' + (note ? note.machine : '(note is null/undefined)'));
         console.log('[QMI/DGP archive] finishRequest wrapper ran. note.machine =', note && note.machine);
         if(note && note.machine === 'QMI/DGP'){
           if(!window.fbDb || !window._fbModules){
