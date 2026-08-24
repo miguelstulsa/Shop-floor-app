@@ -4710,10 +4710,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // A QMI/DGP request lives and is worked exactly like any other machine's
   // request (shows in Alerts, gets Started/Finished the normal way). The
   // moment it's FINISHed, this wraps window.finishRequest to catch it and
-  // write a permanent record here — completely separate from the ephemeral
-  // notes/hillRequests collections that get cleaned up over time. Status
-  // (Ready / Awaiting Return / Complete) and editing/deleting are strictly
-  // admin-only — not even managers get those buttons, only a status readout.
+  // write a permanent record — reusing hillInspections (the same permanent,
+  // never-cleared collection Inspection Requests already write to
+  // successfully) rather than a brand-new collection, since that's proven
+  // to already have working Firestore permissions. A qmiDgpFinishArchive
+  // marker field keeps these entries distinct from the regular Inspection
+  // Log's own records in that same collection. Status (Ready / Awaiting
+  // Return / Complete) and editing/deleting are strictly admin-only — not
+  // even managers get those buttons, only a status readout.
   window._qmiDgpArchive = [];
 
   function _qmiDgpIsAdmin(){
@@ -4723,10 +4727,17 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   window._startQmiDgpArchiveListener = function(){
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods){ setTimeout(window._startQmiDgpArchiveListener, 800); return; }
-    mods.onSnapshot(mods.query(mods.collection(db2, 'hillQmiDgpArchive'), mods.orderBy('finishedAt', 'desc')), function(snap){
+    // No orderBy in the query itself — avoids needing a Firestore composite
+    // index for a where+orderBy on different fields. Sorted client-side instead.
+    mods.onSnapshot(mods.query(mods.collection(db2, 'hillInspections'), mods.where('qmiDgpFinishArchive', '==', true)), function(snap){
       var items = [];
       snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
+      items.sort(function(a,b){
+        var at = a.finishedAt && a.finishedAt.seconds || 0, bt = b.finishedAt && b.finishedAt.seconds || 0;
+        return bt - at;
+      });
       window._qmiDgpArchive = items;
+      console.log('[QMI/DGP archive] listener received', items.length, 'record(s).');
       window._renderQmiDgpLog();
       var badge = document.getElementById('qmidgpBadge');
       if(badge){
@@ -4734,7 +4745,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         if(open > 0){ badge.textContent = open; badge.style.display = 'flex'; }
         else badge.style.display = 'none';
       }
-    }, function(e){ console.warn('QMI/DGP archive listener:', e.message); });
+    }, function(e){ console.warn('QMI/DGP archive listener:', e.message); if(window.showToast) showToast('red','QMI/DGP log connection failed', e.message.slice(0,100)); });
   };
 
   // Wraps the global finishRequest — fires for every request type/machine,
@@ -4746,16 +4757,28 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       window.finishRequest = async function(noteId, hillReqId){
         await _origFinishRequest(noteId, hillReqId);
         var note = window._lastFinishedNote;
-        if(note && note.machine === 'QMI/DGP' && window.fbDb && window._fbModules){
+        console.log('[QMI/DGP archive] finishRequest wrapper ran. note.machine =', note && note.machine);
+        if(note && note.machine === 'QMI/DGP'){
+          if(!window.fbDb || !window._fbModules){
+            console.warn('[QMI/DGP archive] fbDb/_fbModules not ready — cannot archive.');
+            if(window.showToast) showToast('red','QMI/DGP archive failed','Not connected to database.');
+            return;
+          }
           var db2 = window.fbDb, mods = window._fbModules;
-          mods.addDoc(mods.collection(db2, 'hillQmiDgpArchive'), {
+          mods.addDoc(mods.collection(db2, 'hillInspections'), {
+            qmiDgpFinishArchive: true,
             type: note.type || '', wo: note.wo || '', op: note.op || '', part: note.part || '', po: note.po || '',
             detail: note.detail || '', operator: note.operator || '',
             status: 'ready',
             createdAt: note.createdAt || mods.serverTimestamp(),
             finishedAt: mods.serverTimestamp(),
             linkedNoteId: noteId || null, linkedReqId: hillReqId || null
-          }).catch(function(e){ console.warn('QMI/DGP archive write error:', e.message); });
+          }).then(function(){
+            console.log('[QMI/DGP archive] write succeeded.');
+          }).catch(function(e){
+            console.warn('QMI/DGP archive write error:', e.message);
+            if(window.showToast) showToast('red','QMI/DGP archive failed', e.message.slice(0,100));
+          });
         }
       };
     }
@@ -4778,7 +4801,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(!_qmiDgpIsAdmin()) return;
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods) return;
-    mods.updateDoc(mods.doc(db2, 'hillQmiDgpArchive', id), {
+    mods.updateDoc(mods.doc(db2, 'hillInspections', id), {
       status: status, statusUpdatedBy: window.currentUser || 'unknown', statusUpdatedAt: mods.serverTimestamp()
     }).catch(function(e){ if(window.showToast) showToast('red','Failed to update status', e.message); });
   };
@@ -4802,7 +4825,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var part = (document.getElementById('qmiEditPart_'+id)||{}).value || '';
     var po = (document.getElementById('qmiEditPo_'+id)||{}).value || '';
     var detail = (document.getElementById('qmiEditDetail_'+id)||{}).value || '';
-    mods.updateDoc(mods.doc(db2, 'hillQmiDgpArchive', id), {
+    mods.updateDoc(mods.doc(db2, 'hillInspections', id), {
       wo: wo.trim(), op: op.trim(), part: part.trim(), po: po.trim(), detail: detail.trim(),
       editedBy: window.currentUser || 'unknown', editedAt: mods.serverTimestamp()
     }).then(function(){
@@ -4817,7 +4840,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(!confirm('Delete this record permanently? WO ' + (r?r.wo:'') + '\n\nThis can\'t be undone.')) return;
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods) return;
-    mods.deleteDoc(mods.doc(db2, 'hillQmiDgpArchive', id)).then(function(){
+    mods.deleteDoc(mods.doc(db2, 'hillInspections', id)).then(function(){
       if(window.showToast) showToast('green','Deleted','Record removed.');
     }).catch(function(e){ if(window.showToast) showToast('red','Failed to delete', e.message); });
   };
