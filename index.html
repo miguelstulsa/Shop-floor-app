@@ -1155,28 +1155,6 @@
         <div style="font-size:11px;color:#64748b;line-height:1.6;">🔴 <strong style="color:#f0f4f8;">Inspection Request</strong> siren alerts go to this key only — this is currently the sole inspector.</div>
       </div>
 
-      <!-- QMI/DGP Outside Tooling notification key -->
-      <div style="margin-bottom:14px;padding:12px;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.25);border-radius:10px;">
-        <label style="font-size:11px;color:#c084fc;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">📦 QMI/DGP Notification Key (your phone)</label>
-        <div style="display:flex;gap:8px;margin-bottom:6px;">
-          <input id="qmidgp-pushover-key" type="password"
-            placeholder="Your Pushover User Key... (leave blank to use your default key)"
-            style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(168,85,247,0.3);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
-            oninput="localStorage.setItem('hillQmiDgpPushoverKey',this.value.trim()); window._syncSecretToCloud('qmiDgpPushoverKey',this.value.trim()); window._renderQmiDgpKeyStatus();"
-          />
-          <button onclick="testQmiDgpPushover()"
-            style="background:#a855f7;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
-            TEST
-          </button>
-          <button onclick="window._clearQmiDgpKeyOverride()" title="Clear this field and go back to your default key"
-            style="background:rgba(239,68,68,0.15);border:1px solid #ef4444;color:#fca5a5;border-radius:8px;padding:9px 12px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">
-            CLEAR
-          </button>
-        </div>
-        <div id="qmidgp-key-status" style="font-size:11px;color:#4ade80;line-height:1.6;margin-bottom:4px;"></div>
-        <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires when anyone logs a new item sent to <strong style="color:#f0f4f8;">QMI/DGP</strong>, and again when someone marks one as returned (pending your approval) — both go straight to this key. If this field is empty, it automatically uses your default key instead — this field only matters if you want a <em>different</em> phone/key notified specifically for QMI/DGP.</div>
-      </div>
-
       <!-- Justin Gray notification key — fires when Miguel finishes an item,
            telling Justin it's ready for pickup. Empty until his key is added. -->
       <div style="margin-bottom:14px;padding:12px;background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.25);border-radius:10px;">
@@ -1341,7 +1319,7 @@
   <button class="nav-scroll-btn left" onclick="scrollTabs(-120)" aria-label="Scroll tabs left">&#8249;</button>
   <nav class="nav-tabs" id="navTabsEl">
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
-  <div class="nav-tab" onclick="window._openDmgTracker()" id="tab-qmidgp">📦 QMI/DGP <span class="tab-badge" id="qmidgpBadge" style="display:none">0</span></div>
+  <div class="nav-tab" onclick="window._openQmiDgpLog()" id="tab-qmidgp">📦 QMI/DGP <span class="tab-badge" id="qmidgpBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="window._openToolListBrowser()" id="tab-toollist">📋 Tool List</div>
   <div class="nav-tab" onclick="window._openInventoryBrowser()" id="tab-inventory">📦 Inventory</div>
   <div class="nav-tab" onclick="window._openInspectorLibrary()" id="tab-inspector">🔍 Inspector <span class="tab-badge" id="inspectorBadge" style="display:none">0</span></div>
@@ -1845,60 +1823,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
 </div>
 
-<!-- DMG OUTSIDE TOOLING TRACKER MODAL -->
-<div class="modal-overlay" id="dmgTrackerOverlay" style="display:none;">
-  <div class="modal" style="max-width:480px;">
-    <div class="modal-title">📦 QMI/DGP — Outside Tooling</div>
-    <div class="modal-machine" style="margin-bottom:12px;">Tools &amp; jobs sent between the two shops</div>
-
-    <button type="button" onclick="window._sendQmiDgpSelfTest()" style="width:100%;margin-bottom:14px;background:rgba(20,184,166,0.12);border:1px solid #14b8a6;color:#5eead4;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">🔔 SEND TEST NOTIFICATION TO MY PHONE</button>
-
-    <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
-      <div style="font-size:11px;color:#d8b4fe;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Log Items Sent Out</div>
-
-      <button type="button" id="dmgStartBtn" onclick="window._startDmgPrep()" style="width:100%;margin-bottom:10px;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">▶ START — BEGIN PREPPING SHIPMENT</button>
-      <div id="dmgTimerRow" style="display:none;align-items:center;justify-content:center;margin-bottom:10px;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;padding:8px;">
-        <span id="dmgTimerDisplay" style="font-family:'Bebas Neue',sans-serif;font-size:15px;color:#facc15;letter-spacing:1px;">⏱ 0:00</span>
-      </div>
-
-      <div style="position:relative;">
-        <input type="text" id="dmgItemDesc" placeholder="Search tooling &amp; gages — ProShop, Zengers, Measuring Equipment..." autocomplete="off"
-          oninput="window._filterDmgTooling(this.value)" onfocus="window._filterDmgTooling(this.value)"
-          onblur="setTimeout(function(){ var b=document.getElementById('dmgToolingSearchResults'); if(b) b.style.display='none'; }, 200)"
-          style="width:100%;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;color:#f0f4f8;padding:10px 12px;font-size:14px;margin-bottom:8px;font-family:'Barlow',sans-serif;">
-        <div id="dmgToolingSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:60;background:#1a1035;border:1px solid #6b21a8;border-top:none;border-radius:0 0 8px 8px;max-height:240px;overflow-y:auto;margin-top:-8px;"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-        <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;font-weight:600;">Qty</div>
-        <button type="button" onclick="window._bumpDmgQty(-1)" style="width:34px;height:34px;background:rgba(255,255,255,0.05);border:1px solid #6b21a8;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;">−</button>
-        <div id="dmgQtyDisplay" style="min-width:44px;text-align:center;background:#1a1035;border:1px solid #6b21a8;border-radius:7px;padding:7px 0;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#e9d5ff;">1</div>
-        <button type="button" onclick="window._bumpDmgQty(1)" style="width:34px;height:34px;background:rgba(255,255,255,0.05);border:1px solid #6b21a8;border-radius:7px;color:#e2e8f0;font-family:'Bebas Neue',sans-serif;font-size:18px;cursor:pointer;">＋</button>
-      </div>
-      <button type="button" onclick="window._addDmgItemToList()" style="width:100%;margin-bottom:10px;background:rgba(168,85,247,0.15);border:1px solid #a855f7;color:#d8b4fe;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">＋ ADD ITEM TO THIS SHIPMENT</button>
-      <!-- Staged items — several can be added before logging, same pattern as Supply Item / Tooling -->
-      <div id="dmgStagedList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <div style="flex:1;">
-          <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Sent <span style="color:#f87171;">*</span></div>
-          <input type="date" id="dmgSentDate" required style="width:100%;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;color:#f0f4f8;padding:8px 10px;font-size:13px;font-family:'Barlow',sans-serif;">
-        </div>
-        <div style="flex:1;">
-          <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Due Back <span style="color:#f87171;">*</span></div>
-          <input type="date" id="dmgDueDate" required style="width:100%;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;color:#f0f4f8;padding:8px 10px;font-size:13px;font-family:'Barlow',sans-serif;">
-        </div>
-      </div>
-      <input type="text" id="dmgNotes" placeholder="Notes (optional, applies to all items in this shipment)" style="width:100%;background:#1a1035;border:1px solid #6b21a8;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;margin-bottom:10px;font-family:'Barlow',sans-serif;">
-      <button type="button" onclick="window._logDmgItem()" style="width:100%;background:#a855f7;border:none;color:#1a1035;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;" id="dmgLogBtn">＋ LOG ITEM</button>
-    </div>
-
-    <div style="font-size:11px;color:#d8b4fe;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">Currently Out</div>
-    <div id="dmgOutList" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:10px;">
-      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing currently out.</div>
-    </div>
-
-    <button type="button" onclick="window._closeDmgTracker()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
-  </div>
-</div>
 
 <!-- INSPECTOR ACCOUNTABILITY LOG — no separate request/checkout form here
      anymore. Equipment now gets logged automatically the moment someone
@@ -1906,16 +1830,26 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
      checkbox) — this tab is purely a record of who has what, tied to
      Employee/Machine/WO/OP/PO, so Ker always has something to point back
      to if he's ever questioned about a piece of equipment. Tapping FINISH
-     on the Inspection Request is what marks it as pickup requested; the
-     only action left here is the final Examine & Check In step. -->
+     on the Inspection Request is what creates the entry here (checked
+     out) — the machinist then has to submit a separate, required pickup
+     request (WO/Part/OP) before the inspector can examine and check it in. -->
 <div class="modal-overlay" id="inspectorLibraryOverlay" style="display:none;">
   <div class="modal" style="max-width:480px;">
     <div class="modal-title">🔍 Inspector — Equipment Log</div>
-    <div class="modal-machine" style="margin-bottom:12px;">Requested on an Inspection Request → Inspector checks out → pickup requested at FINISH → Inspector checks in.</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Created at FINISH on an Inspection Request → machinist requests pickup → inspector examines &amp; checks in.</div>
 
-    <div style="font-size:11px;color:#f0abfc;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">📥 Requested — Awaiting Check-Out</div>
-    <div id="inspRequestedList" style="display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;margin-bottom:14px;">
-      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">No open requests.</div>
+    <!-- REQUEST EQUIPMENT PICKUP — the machinist's one required action to
+         hand equipment back. WO/Part/OP are mandatory so this matches
+         exactly to the right checked-out entry — nothing gets picked up on
+         a vague "I'm done" with no job info attached. -->
+    <div style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:11px;color:#fde047;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">📞 Request Equipment Pickup</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input type="text" id="pickupWoInput" placeholder="WO # *" style="flex:1;background:#1a1035;border:1px solid #92400e;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;">
+        <input type="text" id="pickupOpInput" placeholder="OP # *" style="flex:1;background:#1a1035;border:1px solid #92400e;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;">
+      </div>
+      <input type="text" id="pickupPartInput" placeholder="Part # *" style="width:100%;background:#1a1035;border:1px solid #92400e;border-radius:8px;color:#f0f4f8;padding:9px 12px;font-size:13px;margin-bottom:10px;font-family:'Barlow',sans-serif;">
+      <button type="button" onclick="window._submitPickupRequest()" style="width:100%;background:#eab308;border:none;color:#1a1000;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">📞 SEND PICKUP REQUEST</button>
     </div>
 
     <div style="font-size:11px;color:#5eead4;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">🔧 Currently Checked Out</div>
@@ -1936,6 +1870,32 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     </div>
 
     <button type="button" onclick="window._closeInspectorLibrary()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
+  </div>
+</div>
+
+<!-- QMI/DGP LOG — permanent archive of everything finished on a QMI/DGP
+     request (never auto-cleared). A request originates and lives in the
+     normal Alerts feed exactly like any other machine's request; the
+     moment it's FINISHed, it disappears from Alerts (as usual) and a
+     permanent record lands here instead. Status (Ready / Awaiting Return /
+     Complete) is admin-only to set — managers and everyone else only ever
+     see the status as text, never the buttons. Editing and deleting
+     archived records is admin-only too. -->
+<div class="modal-overlay" id="qmiDgpLogOverlay" style="display:none;">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title">📦 QMI/DGP Log</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Permanent record — nothing here is ever auto-deleted.</div>
+
+    <button type="button" onclick="window._closeQmiDgpLog(); openModal('QMI/DGP','Outside Shop');" style="width:100%;margin-bottom:12px;background:#14b8a6;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">+ NEW REQUEST</button>
+
+    <input type="text" id="qmiDgpLogSearch" placeholder="Search WO, part, operator, notes…" oninput="window._renderQmiDgpLog()"
+      style="width:100%;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;margin-bottom:12px;outline:none;">
+
+    <div id="qmiDgpLogList" style="display:flex;flex-direction:column;gap:8px;max-height:420px;overflow-y:auto;margin-bottom:14px;">
+      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing archived yet — finish a QMI/DGP request to see it here.</div>
+    </div>
+
+    <button type="button" onclick="window._closeQmiDgpLog()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
   </div>
 </div>
 
@@ -2095,10 +2055,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     <div class="modal-title" id="modalTitle">Add Request</div>
     <div class="modal-machine" id="modalMachineName"></div>
     <div class="note-types">
-      <button class="note-type-btn blue" onclick="selectType('blue')"><div class="note-type-label">🔵 Pending WO</div><div class="note-type-desc">Work order pending</div></button>
+      <button class="note-type-btn blue" id="typeBtnBlue" onclick="selectType('blue')"><div class="note-type-label">🔵 Pending WO</div><div class="note-type-desc">Work order pending</div></button>
       <button class="note-type-btn red" onclick="selectType('red')"><div class="note-type-label">🔴 Inspection</div><div class="note-type-desc">Quality check needed</div></button>
       <button class="note-type-btn yellow" onclick="selectType('yellow')"><div class="note-type-label">🟡 Machinist Req</div><div class="note-type-desc">Tool or fixture request</div></button>
-      <button class="note-type-btn orange" onclick="selectType('orange')" style="border-color:#f97316;"><div class="note-type-label" style="color:#fb923c;">🟠 Floor Support</div><div class="note-type-desc">Material · Hopper · Supplies</div></button>
+      <button class="note-type-btn orange" id="typeBtnOrange" onclick="selectType('orange')" style="border-color:#f97316;"><div class="note-type-label" style="color:#fb923c;">🟠 Floor Support</div><div class="note-type-desc">Material · Hopper · Supplies</div></button>
     </div>
     <div id="floor-support-extras" style="display:none;margin-bottom:8px;">
       <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;font-weight:600;">What's needed?</div>
@@ -3033,23 +2993,31 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // the request can be closed out.
   window._finishInspectionWithReminder = function(noteId, hillReqId){
     if (!confirm('Mark this inspection complete?\n\nBring it to Miguel for pickup before closing this out.')) return;
-    // Any equipment logged against this same request now moves to "pickup
-    // requested" — this is what puts it in front of the inspector to
-    // examine and check in. No separate manual step needed for this.
-    if (window.fbDb && window._fbModules && window._inspItems) {
-      var db2 = window.fbDb, mods = window._fbModules;
-      window._inspItems.filter(function(it){
-        return (it.status === 'out' || it.status === 'requested') && (it.linkedNoteId === noteId || it.linkedReqId === hillReqId);
-      }).forEach(function(it){
-        mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', it.id), {
-          status: 'pending_eval',
-          pickupRequestedBy: window.currentUser || 'unknown',
-          pickupRequestedAt: mods.serverTimestamp()
-        }).catch(function(e){ console.warn('Equipment pickup request error:', e.message); });
-        var label = (it.equipment||[]).map(function(e){ return e.name; }).join(', ') || 'Equipment';
-        if (window.qualityPushover) window.qualityPushover('📚 Inspector — Pickup Requested', label + ' at ' + (it.machine||'') + ' — ready for pickup &amp; examination.');
-        if (window.adminPushover) window.adminPushover('📚 Inspector — Pickup Requested', label + ' at ' + (it.machine||'') + ' — ready for pickup &amp; examination.');
-      });
+    // If this request had equipment on it, THIS is the moment it first
+    // enters the Inspector tab — as "checked out". Nothing shows up there
+    // before Finish is tapped; the inspector already knows to gather
+    // equipment as part of handling the Inspection Request itself, no
+    // separate digital check-out step needed. From here, the machinist
+    // still has to submit a separate, required WO/Part/OP pickup request
+    // before the inspector can examine and check it back in.
+    if (window.fbDb && window._fbModules && hillReqId) {
+      (function(){
+        var db2 = window.fbDb, mods = window._fbModules;
+        mods.getDoc(mods.doc(db2, 'hillRequests', hillReqId)).then(function(snap){
+          if (!snap.exists()) return;
+          var req = snap.data();
+          if (!req.equipmentList || !req.equipmentList.length) return;
+          mods.addDoc(mods.collection(db2, 'hillInspectionEquip'), {
+            machine: req.machine || '', wo: req.wo || '', op: req.op || '', part: req.part || '', po: req.po || '',
+            equipment: req.equipmentList,
+            status: 'out',
+            checkedOutBy: req.operator || 'unknown',
+            checkedOutAt: mods.serverTimestamp(),
+            linkedNoteId: noteId || null, linkedReqId: hillReqId || null,
+            createdAt: mods.serverTimestamp()
+          }).catch(function(e){ console.warn('Equipment log error:', e.message); });
+        }).catch(function(e){ console.warn('Equipment log lookup error:', e.message); });
+      })();
     }
     window.finishRequest(noteId, hillReqId);
   };
@@ -3907,74 +3875,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }).catch(function(e){ console.warn('Second Inspector Pushover test:', e.message); });
     showToast('green', 'Test sent!', 'Check the Second Inspector\'s Pushover app.');
   }
-  function testQmiDgpPushover() {
-    var key = (document.getElementById('qmidgp-pushover-key') || {}).value || '';
-    key = key.trim() || QMI_DGP_DEFAULT_KEY;
-    var usingDefault = !((document.getElementById('qmidgp-pushover-key')||{}).value||'').trim();
-    var fd = new FormData();
-    fd.append('token',    PUSHOVER_TOKEN);
-    fd.append('user',     key);
-    fd.append('title',    '📦 TEST — QMI/DGP Alert');
-    fd.append('message',  'QMI/DGP notifications are working! You\'ll get this every time an item is logged or a return is requested.' + (usingDefault ? ' (sent to your default key)' : ' (sent to the override key in this field)'));
-    fd.append('sound',    'magic');
-    fd.append('priority', '1');
-    fetch('https://api.pushover.net/1/messages.json', {
-      method: 'POST', mode: 'no-cors', body: fd
-    }).catch(function(e){ console.warn('QMI/DGP Pushover test:', e.message); });
-    showToast('green', 'Test sent!', usingDefault ? 'Sent to your default key — check your Pushover app.' : 'Sent to the override key in this field — check that phone.');
-  }
-  window._renderQmiDgpKeyStatus = function(){
-    var el = document.getElementById('qmidgp-key-status');
-    if(!el) return;
-    var stored = localStorage.getItem('hillQmiDgpPushoverKey') || '';
-    el.textContent = stored
-      ? '⚠️ Using an OVERRIDE key (ends in ' + stored.slice(-4) + ') — real alerts go here, not your default key.'
-      : '✅ Using your default key — no override set.';
-    el.style.color = stored ? '#fbbf24' : '#4ade80';
-  };
-  window._clearQmiDgpKeyOverride = function(){
-    localStorage.removeItem('hillQmiDgpPushoverKey');
-    window._syncSecretToCloud('qmiDgpPushoverKey', '');
-    var input = document.getElementById('qmidgp-pushover-key');
-    if(input) input.value = '';
-    window._renderQmiDgpKeyStatus();
-    if(window.showToast) showToast('green', 'Cleared', 'QMI/DGP alerts now go to your default key.');
-  };
-  // Miguel's personal key — hardcoded fallback so this keeps working even
-  // if the Admin Panel field is ever empty/cleared on a given device.
-  var QMI_DGP_DEFAULT_KEY = 'uotiq5p4c7sycsw2wh1xv8mq9gpe4e';
-  // Fires whenever an item gets logged as sent out, or a return gets
-  // requested — both need your attention, so both go to this key.
-  window.qmiDgpPushover = function(title, message) {
-    var key = localStorage.getItem('hillQmiDgpPushoverKey') || QMI_DGP_DEFAULT_KEY;
-    if (!key) { console.warn('[Pushover] qmiDgpPushover: no key set, skipping'); return; }
-    var fd = new FormData();
-    fd.append('token',    PUSHOVER_TOKEN);
-    fd.append('user',     key);
-    fd.append('title',    title || '📦 QMI/DGP');
-    fd.append('message',  message || '');
-    fd.append('sound',    'magic');
-    fd.append('priority', '1');
-    fetch('https://api.pushover.net/1/messages.json', { method:'POST', mode:'no-cors', body:fd })
-      .catch(function(e){ console.warn('QMI/DGP Pushover:', e.message); });
-  };
-  // One-tap test button inside the QMI/DGP modal itself — always fires
-  // straight to whatever key qmiDgpPushover would actually use for a real
-  // event (override if one's set, otherwise the default), so it tells you
-  // the truth about whether a real alert would reach your phone.
-  window._sendQmiDgpSelfTest = function(){
-    var key = localStorage.getItem('hillQmiDgpPushoverKey') || QMI_DGP_DEFAULT_KEY;
-    var fd = new FormData();
-    fd.append('token',    PUSHOVER_TOKEN);
-    fd.append('user',     key);
-    fd.append('title',    '🔔 TEST — QMI/DGP');
-    fd.append('message',  'If you got this, QMI/DGP notifications are reaching your phone.');
-    fd.append('sound',    'magic');
-    fd.append('priority', '1');
-    fetch('https://api.pushover.net/1/messages.json', { method:'POST', mode:'no-cors', body:fd })
-      .then(function(){ if(window.showToast) showToast('green','Test sent','Check your Pushover app in a few seconds.'); })
-      .catch(function(e){ if(window.showToast) showToast('red','Failed to send', e.message); });
-  };
   function testJustinPushover() {
     var key = (document.getElementById('justin-pushover-key') || {}).value || '';
     key = key.trim();
@@ -4470,6 +4370,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
+    // QMI/DGP isn't a physical machine on the floor — it only ever needs
+    // Inspection or Machinist Req, so Pending WO and Floor Support are
+    // hidden for it specifically. Everything else about this modal (the
+    // form, submit, notifications, showing up in Alerts) is identical to
+    // any real machine.
+    var isQmiDgp = (machine === 'QMI/DGP');
+    var blueBtn = document.getElementById('typeBtnBlue'); if(blueBtn) blueBtn.style.display = isQmiDgp ? 'none' : '';
+    var orangeBtn = document.getElementById('typeBtnOrange'); if(orangeBtn) orangeBtn.style.display = isQmiDgp ? 'none' : '';
     document.getElementById('woInput').value = ''; document.getElementById('noteText').value = ''; if(document.getElementById('opInput')) document.getElementById('opInput').value = ''; if(document.getElementById('partInput')) document.getElementById('partInput').value = ''; if(document.getElementById('poInput')) document.getElementById('poInput').value = '';
     // Reset supply dropdown
     var si = document.getElementById('supplyItem'); if(si) si.value = '';
@@ -4515,474 +4423,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   }
   function handleOverlayClick(e) { /* clicking outside no longer closes this — only Cancel/Submit do */ }
 
-  // ── DMG OUTSIDE TOOLING TRACKER ──────────────────────────────
-  // Tracks tools/jobs sent to the owner's other shop — separate from the
-  // regular machine request flow since it needs sent/due dates, not just
-  // a description. Persists to its own Firestore collection with a live
-  // listener so the "currently out" list and badge count stay current
-  // for anyone viewing the shop floor, same as everything else here.
-  window._dmgItems = [];
-
-  function _dmgFmtDate(dateStr){
-    if(!dateStr) return '';
-    var d = new Date(dateStr + 'T00:00:00');
-    if(isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'});
-  }
-  function _dmgIsOverdue(dueDateStr){
-    if(!dueDateStr) return false;
-    var due = new Date(dueDateStr + 'T00:00:00');
-    var today = new Date(); today.setHours(0,0,0,0);
-    return due.getTime() < today.getTime();
-  }
-
-  window._startDmgListener = function(){
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods){ setTimeout(window._startDmgListener, 800); return; }
-    mods.onSnapshot(mods.collection(db2, 'hillOutsideTooling'), function(snap){
-      var items = [];
-      snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
-      window._dmgItems = items;
-      window._renderDmgTracker();
-      window._checkDmgDueReminders();
-    }, function(e){ console.warn('DMG tracker listener:', e.message); });
-  };
-
-  // Due-back reminders — fires a day before something's expected back.
-  // Honest limitation: this only runs when the app is actually open (the
-  // live listener above fires on load and on every data change) — there's
-  // no true server-side scheduler behind this, so it depends on the app
-  // being opened at some point on or before the reminder day. Each item
-  // only gets reminded once per day (tracked via lastReminderSent) so it
-  // doesn't re-fire every time the page loads.
-  window._checkDmgDueReminders = function(){
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods || !window._dmgItems) return;
-    var todayStr = new Date().toISOString().slice(0,10);
-    var tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-    var tomorrowStr = tomorrow.toISOString().slice(0,10);
-
-    window._dmgItems.forEach(function(it){
-      if(it.returned || !it.dueDate) return;
-      if(it.lastReminderSent === todayStr) return; // already reminded today
-      var isDueTomorrow = it.dueDate === tomorrowStr;
-      var isOverdue = it.dueDate < todayStr;
-      if(!isDueTomorrow && !isOverdue) return;
-
-      if(window.qmiDgpPushover){
-        window.qmiDgpPushover(
-          isOverdue ? '📦 QMI/DGP — OVERDUE' : '📦 QMI/DGP — Due Back Tomorrow',
-          (isOverdue ? 'This was due back ' + it.dueDate + ' and is still out: ' : 'Due back tomorrow (' + it.dueDate + '): ') + ((it.qty>1?it.qty+'× ':'')+it.desc)
-        );
-      }
-      mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', it.id), { lastReminderSent: todayStr }).catch(function(){});
-    });
-  };
-
-  window._renderDmgTracker = function(){
-    var outItems = window._dmgItems.filter(function(it){ return !it.returned; });
-    outItems.sort(function(a,b){ return (a.dueDate||'9999').localeCompare(b.dueDate||'9999'); });
-
-    // Badge on the nav tab
-    var badge = document.getElementById('qmidgpBadge');
-    if(badge){
-      if(outItems.length > 0){
-        badge.textContent = outItems.length;
-        badge.style.display = 'flex';
-        var anyOverdue = outItems.some(function(it){ return _dmgIsOverdue(it.dueDate); });
-        badge.classList.toggle('overdue', anyOverdue);
-      } else {
-        badge.style.display = 'none';
-      }
-    }
-
-    // List inside the modal
-    var list = document.getElementById('dmgOutList');
-    if(!list) return;
-    if(!outItems.length){
-      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">Nothing currently out.</div>';
-      return;
-    }
-    list.innerHTML = outItems.map(function(it){
-      var overdue = _dmgIsOverdue(it.dueDate);
-      var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
-      var actionHtml;
-      if(!it.finished){
-        // Not yet finished — only admin can Start/Finish this. Non-admins
-        // just see where it stands, no button to push.
-        if(!it.started){
-          actionHtml = isAdmin
-            ? '<button type="button" onclick="window._startDmgItem(\'' + it.id + '\')" style="margin-top:8px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">▶ START</button>'
-            : '<div style="margin-top:8px;text-align:center;font-size:11px;color:#94a3b8;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ PENDING — waiting on admin</div>';
-        } else {
-          actionHtml = isAdmin
-            ? '<button type="button" onclick="window._finishDmgItem(\'' + it.id + '\')" style="margin-top:8px;width:100%;background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#fbbf24;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ FINISH</button>'
-            : '<div style="margin-top:8px;text-align:center;font-size:11px;color:#fbbf24;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">🔧 IN PROGRESS</div>';
-        }
-      } else if(it.returnRequested){
-        actionHtml = '<div style="margin-top:8px;background:rgba(234,179,8,0.12);border:1px solid #eab308;border-radius:6px;padding:7px;text-align:center;">'
-          + '<div style="font-size:11px;color:#fde047;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ RETURN REQUESTED by ' + (it.returnRequestedBy||'someone') + '</div>'
-          + (isAdmin ? '<button type="button" onclick="window._approveDmgReturn(\'' + it.id + '\')" style="margin-top:6px;width:100%;background:rgba(34,197,94,0.2);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:6px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ APPROVE RETURN</button>' : '<div style="font-size:10px;color:#94a3b8;margin-top:3px;">Waiting on admin approval</div>')
-          + '</div>';
-      } else {
-        actionHtml = '<div style="margin-top:8px;font-size:10px;color:#4ade80;text-align:center;">✅ Ready for pickup — sent to Justin</div>'
-          + '<button type="button" onclick="window._markDmgReturned(\'' + it.id + '\')" style="margin-top:6px;width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ MARK RETURNED</button>';
-      }
-      return '<div style="position:relative;background:'+(overdue?'rgba(239,68,68,0.1)':'rgba(168,85,247,0.08)')+';border:1px solid '+(overdue?'#ef4444':'rgba(168,85,247,0.35)')+';border-radius:8px;padding:10px 12px;">'
-        + (isAdmin ? '<button type="button" onclick="window._deleteDmgItem(\'' + it.id + '\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>' : '')
-        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + ((it.qty && it.qty > 1) ? (it.qty + '× ') : '') + (it.desc||'(no description)') + _dmgCategoryBadge(it.category) + '</div>'
-        + '<div style="font-size:11px;color:'+(overdue?'#fca5a5':'#94a3b8')+';">'
-          + 'Sent ' + _dmgFmtDate(it.sentDate) + ' · Due back ' + _dmgFmtDate(it.dueDate) + (overdue ? ' — OVERDUE' : '')
-        + '</div>'
-        + (it.notes ? '<div style="font-size:11px;color:#94a3b8;margin-top:3px;">' + it.notes + '</div>' : '')
-        + actionHtml
-        + '</div>';
-    }).join('');
-  };
-
-  // Admin-only — begins working the request.
-  window._startDmgItem = function(id){
-    if(!window._isAdmin && window.currentUser !== 'hilladmin') return;
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-    mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', id), {
-      started: true, startedAt: mods.serverTimestamp(), startedBy: window.currentUser || 'unknown'
-    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
-  };
-
-  // Admin-only — marks it ready for pickup. This is the ONLY thing that
-  // triggers Justin's notification — nothing before this point does.
-  window._finishDmgItem = function(id){
-    if(!window._isAdmin && window.currentUser !== 'hilladmin') return;
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-    var item = (window._dmgItems||[]).find(function(it){ return it.id === id; });
-    mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', id), {
-      finished: true, finishedAt: mods.serverTimestamp(), finishedBy: window.currentUser || 'unknown'
-    }).then(function(){
-      if(window.justinPushover){
-        window.justinPushover(
-          '📦 Ready for Pickup',
-          (item ? ((item.qty>1?item.qty+'× ':'')+item.desc) : 'An item') + ' is ready for pickup. Due back: ' + (item && item.dueDate ? item.dueDate : 'not set')
-        );
-      }
-    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
-  };
-
-  window._openDmgTracker = function(){
-    var today = new Date().toISOString().slice(0,10);
-    document.getElementById('dmgItemDesc').value = '';
-    document.getElementById('dmgSentDate').value = today;
-    document.getElementById('dmgDueDate').value = '';
-    document.getElementById('dmgNotes').value = '';
-    window._dmgStagedItems = [];
-    window._dmgQty = 1;
-    window._dmgPendingCategory = null;
-    window._dmgPendingCategoryText = null;
-    var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = '1';
-    window._renderDmgStagedList();
-    window._renderDmgTracker();
-    window._resetDmgPrepTimer();
-    document.getElementById('dmgTrackerOverlay').style.display = 'flex';
-  };
-
-  window._closeDmgTracker = function(){
-    document.getElementById('dmgTrackerOverlay').style.display = 'none';
-  };
-
-  // ── START/FINISH timer for prepping a shipment — START marks when you
-  // began pulling everything together, FINISH means the package is
-  // physically ready for pickup. Same visible-timer pattern as every other
-  // request type in the app, applied here to the prep work itself. ──
-  window._dmgPrepStartedAt = null;
-  window._dmgPrepTimerInterval = null;
-
-  window._startDmgPrep = function(){
-    window._dmgPrepStartedAt = Date.now();
-    document.getElementById('dmgStartBtn').style.display = 'none';
-    document.getElementById('dmgTimerRow').style.display = 'flex';
-    var logBtn = document.getElementById('dmgLogBtn');
-    if(logBtn) logBtn.textContent = '✓ FINISH — READY FOR PICKUP';
-    if(window._dmgPrepTimerInterval) clearInterval(window._dmgPrepTimerInterval);
-    window._dmgPrepTimerInterval = setInterval(function(){
-      var secs = Math.floor((Date.now() - window._dmgPrepStartedAt) / 1000);
-      var m = Math.floor(secs/60), s = secs%60;
-      var disp = document.getElementById('dmgTimerDisplay');
-      if(disp) disp.textContent = '⏱ ' + m + ':' + (s<10?'0':'') + s;
-    }, 1000);
-  };
-
-  window._resetDmgPrepTimer = function(){
-    if(window._dmgPrepTimerInterval){ clearInterval(window._dmgPrepTimerInterval); window._dmgPrepTimerInterval = null; }
-    window._dmgPrepStartedAt = null;
-    var startBtn = document.getElementById('dmgStartBtn'); if(startBtn) startBtn.style.display = 'block';
-    var timerRow = document.getElementById('dmgTimerRow'); if(timerRow) timerRow.style.display = 'none';
-    var logBtn = document.getElementById('dmgLogBtn'); if(logBtn) logBtn.textContent = '＋ LOG ITEM';
-  };
-
-  // ── STAGED ITEMS — several tools/jobs can go out in one shipment,
-  // just like Supply Item / Tooling requests build up a checklist before
-  // submitting. Each staged description becomes its own tracked record
-  // (so each can be individually marked returned later), but they all
-  // share the same sent date, due date, and notes.
-  window._dmgStagedItems = window._dmgStagedItems || []; // [{desc, qty}, ...]
-  window._dmgQty = window._dmgQty || 1;
-
-  window._bumpDmgQty = function(delta){
-    window._dmgQty = Math.max(1, (window._dmgQty || 1) + delta);
-    var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = window._dmgQty;
-  };
-
-  window._addDmgItemToList = function(){
-    var input = document.getElementById('dmgItemDesc');
-    var desc = input.value.trim();
-    if(!desc){ if(window.showToast) showToast('red','Enter a description first',''); return; }
-    // Only trust the tracked category if the text still exactly matches what
-    // was picked from search — if they edited it afterward, or typed their
-    // own description from scratch, there's no reliable way to know which
-    // category it is, so it's left uncategorized rather than guessed at.
-    var category = (window._dmgPendingCategory && desc === window._dmgPendingCategoryText) ? window._dmgPendingCategory : null;
-    window._dmgStagedItems.push({ desc: desc, qty: window._dmgQty || 1, category: category });
-    input.value = '';
-    window._dmgQty = 1;
-    window._dmgPendingCategory = null;
-    window._dmgPendingCategoryText = null;
-    var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = '1';
-    var box = document.getElementById('dmgToolingSearchResults');
-    if(box){ box.style.display='none'; box.innerHTML=''; }
-    window._renderDmgStagedList();
-    input.focus();
-  };
-
-  window._removeDmgStagedItem = function(idx){
-    window._dmgStagedItems.splice(idx, 1);
-    window._renderDmgStagedList();
-  };
-
-  function _dmgCategoryBadge(category){
-    if(category === 'tooling') return '<span style="background:#92400e;color:#fcd34d;border-radius:4px;padding:1px 6px;font-size:9px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:0.5px;margin-left:6px;">🔧 TOOLING</span>';
-    if(category === 'measuring') return '<span style="background:#166534;color:#86efac;border-radius:4px;padding:1px 6px;font-size:9px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:0.5px;margin-left:6px;">📏 GAGE</span>';
-    return '<span style="background:#334155;color:#94a3b8;border-radius:4px;padding:1px 6px;font-size:9px;font-family:\'Bebas Neue\',sans-serif;letter-spacing:0.5px;margin-left:6px;">UNCATEGORIZED</span>';
-  }
-
-  window._renderDmgStagedList = function(){
-    var list = document.getElementById('dmgStagedList');
-    var btn = document.getElementById('dmgLogBtn');
-    if(!list) return;
-    var n = window._dmgStagedItems.length;
-    list.innerHTML = window._dmgStagedItems.map(function(item, i){
-      var qtyPrefix = (item.qty && item.qty > 1) ? (item.qty + '× ') : '';
-      return '<div style="background:rgba(168,85,247,0.12);border:1px solid #a855f7;border-radius:7px;padding:7px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">'
-        + '<span style="font-size:12.5px;color:#e9d5ff;">' + (i+1) + '. ' + qtyPrefix + item.desc + _dmgCategoryBadge(item.category) + '</span>'
-        + '<button type="button" onclick="window._removeDmgStagedItem(' + i + ')" style="background:none;border:none;color:#d8b4fe;font-size:15px;cursor:pointer;padding:0 4px;">✕</button>'
-        + '</div>';
-    }).join('');
-    if(btn) btn.textContent = n > 1 ? '＋ LOG ' + n + ' ITEMS' : '＋ LOG ITEM';
-  };
-
-  window._logDmgItem = function(){
-    // If something's still sitting in the description field (typed but never
-    // explicitly added), fold it in as the last item rather than silently
-    // dropping it — this keeps the single-item case just as quick as before.
-    var leftover = document.getElementById('dmgItemDesc').value.trim();
-    if(leftover) window._dmgStagedItems.push({ desc: leftover, qty: window._dmgQty || 1 });
-
-    var items = window._dmgStagedItems.slice();
-    var sentDate = document.getElementById('dmgSentDate').value;
-    var dueDate = document.getElementById('dmgDueDate').value;
-    var notes = document.getElementById('dmgNotes').value.trim();
-
-    if(!items.length){ if(window.showToast) showToast('red','Add at least one item','What tool/job is being sent?'); return; }
-    if(!sentDate){ if(window.showToast) showToast('red','Sent date is required','Fill in the Sent date before logging.'); return; }
-    if(!dueDate){ if(window.showToast) showToast('red','Due back date is required','Fill in the Due Back date before logging.'); return; }
-
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-
-    // Capture how long prep actually took, if Start was used — if they
-    // never tapped Start, just don't record a duration rather than block them.
-    var prepDurationSec = window._dmgPrepStartedAt ? Math.floor((Date.now() - window._dmgPrepStartedAt) / 1000) : null;
-
-    Promise.all(items.map(function(item){
-      return mods.addDoc(mods.collection(db2, 'hillOutsideTooling'), {
-        desc: item.desc, qty: item.qty || 1, category: item.category || null, sentDate: sentDate, dueDate: dueDate, notes: notes,
-        returned: false, started: false, finished: false, loggedBy: window.currentUser || 'unknown',
-        prepDurationSec: prepDurationSec,
-        createdAt: mods.serverTimestamp()
-      });
-    })).then(function(){
-      document.getElementById('dmgItemDesc').value = '';
-      document.getElementById('dmgDueDate').value = '';
-      document.getElementById('dmgNotes').value = '';
-      window._dmgStagedItems = [];
-      window._dmgQty = 1;
-      var qd = document.getElementById('dmgQtyDisplay'); if(qd) qd.textContent = '1';
-      window._renderDmgStagedList();
-      window._resetDmgPrepTimer();
-      if(window.showToast) showToast('green', items.length > 1 ? items.length+' items logged' : 'Logged', items.map(function(it){ return it.desc; }).join(', '));
-      // Notify — this is the whole point: know immediately when something
-      // gets sent out, don't have to go looking for it.
-      if(window.qmiDgpPushover){
-        var itemList = items.map(function(it){ return (it.qty>1?it.qty+'× ':'')+it.desc; }).join(', ');
-        window.qmiDgpPushover(
-          '📦 QMI/DGP — New Item' + (items.length>1?'s':'') + ' Logged',
-          (window.currentUser||'Someone') + ' logged: ' + itemList + '\nDue back: ' + (dueDate||'not set')
-        );
-      }
-    }).catch(function(e){
-      if(window.showToast) showToast('red','Failed to log', e.message);
-    });
-  };
-
-  // Admin-only — permanently removes an item, e.g. one logged by mistake
-  // or a duplicate from a double-tap on LOG ITEM.
-  window._deleteDmgItem = function(id){
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-    var item = (window._dmgItems||[]).find(function(it){ return it.id === id; });
-    if(!confirm('Delete "' + (item ? item.desc : 'this item') + '"? This can\'t be undone.')) return;
-    mods.deleteDoc(mods.doc(db2, 'hillOutsideTooling', id)).then(function(){
-      if(window.showToast) showToast('green','Deleted','Item removed.');
-    }).catch(function(e){
-      if(window.showToast) showToast('red','Failed to delete', e.message);
-    });
-  };
-
-  // Tapping this REQUESTS a return — it doesn't finalize it. An admin still
-  // has to approve before it actually counts as returned. If an admin taps
-  // it themselves, there's nobody to approve it but them, so it completes
-  // immediately instead of making them approve their own action.
-  window._markDmgReturned = function(id){
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-    var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
-    var item = (window._dmgItems||[]).find(function(it){ return it.id === id; });
-    if(isAdmin){
-      mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', id), {
-        returned: true, returnedAt: mods.serverTimestamp(), returnedBy: window.currentUser || 'unknown'
-      }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
-      return;
-    }
-    mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', id), {
-      returnRequested: true, returnRequestedAt: mods.serverTimestamp(), returnRequestedBy: window.currentUser || 'unknown'
-    }).then(function(){
-      if(window.showToast) showToast('green','Return requested', 'Waiting on approval.');
-      if(window.qmiDgpPushover){
-        window.qmiDgpPushover(
-          '📦 QMI/DGP — Return Requested',
-          (window.currentUser||'Someone') + ' says this is back: ' + (item ? item.desc : '(item)') + '\nApprove it in the app to finish.'
-        );
-      }
-    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
-  };
-
-  // Admin-only — actually finalizes a requested return.
-  window._approveDmgReturn = function(id){
-    var db2 = window.fbDb, mods = window._fbModules;
-    if(!db2 || !mods) return;
-    mods.updateDoc(mods.doc(db2, 'hillOutsideTooling', id), {
-      returned: true, returnedAt: mods.serverTimestamp(), returnedBy: window.currentUser || 'unknown',
-      approvedBy: window.currentUser || 'unknown', approvedAt: mods.serverTimestamp()
-    }).then(function(){
-      if(window.showToast) showToast('green','Return approved','');
-    }).catch(function(e){ if(window.showToast) showToast('red','Failed to approve', e.message); });
-  };
-
-  // Same search box/matching logic used for Machinist Req's tooling search,
-  // reused here so "what's being sent" is filled from the real ProShop/
-  // Zengers catalog instead of free-typed text. The underlying data
-  // (TOOLING_INVENTORY, ZENGERS_INVENTORY) and matching functions
-  // (_toolingTokenize, _toolingWordMatch, _toolingMatchesQuery) are defined
-  // elsewhere and reused as-is — this just wires a second, independent
-  // search UI to them so it can't collide with the Machinist Req one.
-  window._filterDmgTooling = function(query){
-    var box = document.getElementById('dmgToolingSearchResults');
-    if(!box) return;
-    var q = (query||'').trim().toLowerCase();
-    if(!q){ box.style.display='none'; box.innerHTML=''; return; }
-    var qWords = _toolingTokenize(q);
-    if(!qWords.length){ box.style.display='none'; box.innerHTML=''; return; }
-
-    var proshopMatches = TOOLING_INVENTORY.filter(function(t){
-      return _toolingMatchesQuery(_toolingSearchText(t), qWords);
-    }).slice(0, 15).map(function(t){ return { source:'proshop', t:t }; });
-
-    var zengersMatches = ZENGERS_INVENTORY.filter(function(z){
-      return _toolingMatchesQuery(_zengersSearchText(z), qWords);
-    }).slice(0, 15).map(function(z){ return { source:'zengers', z:z }; });
-
-    // Same measuring equipment list used in Inspection Requests — gauges,
-    // mics, calipers, etc. also get sent between the two shops, so they
-    // need to show up in this search too, not just tooling.
-    var measuringMatches = MEASURING_TOOLS.filter(function(mt){
-      return _toolingMatchesQuery(mt[0], qWords);
-    }).slice(0, 15).map(function(mt){ return { source:'measuring', m:mt }; });
-
-    var matches = proshopMatches.concat(zengersMatches, measuringMatches).slice(0, 30);
-
-    if(!matches.length){
-      box.style.display = 'none'; // let them keep typing a free-text description instead
-      return;
-    }
-    box.innerHTML = matches.map(function(m, i){
-      if(m.source === 'proshop'){
-        var t = m.t;
-        var label = _toolingDisplayLabel(t);
-        var groupName = TOOLING_GROUPS[t[1]];
-        var groupTag = groupName ? (t[1]+' - '+groupName) : t[1];
-        return '<div data-idx="'+i+'" onmousedown="window._selectDmgTooling('+i+')" '
-          + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-          + '<span>' + label + (groupTag ? ' <span style="color:#64748b;font-size:11px;">('+groupTag+')</span>' : '') + '</span>'
-          + '<span style="background:#92400e;color:#fcd34d;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">'+t[0]+'</span>'
-          + '</div>';
-      } else if(m.source === 'zengers') {
-        var z = m.z;
-        return '<div data-idx="'+i+'" onmousedown="window._selectDmgTooling('+i+')" '
-          + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-          + '<span>' + z[2] + ' <span style="color:#7dd3fc;font-size:11px;">(Bin ' + z[3] + ')</span></span>'
-          + '<span style="background:#0c4a6e;color:#7dd3fc;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">'+z[0]+'</span>'
-          + '</div>';
-      } else {
-        var mt = m.m;
-        return '<div data-idx="'+i+'" onmousedown="window._selectDmgTooling('+i+')" '
-          + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-          + '<span>' + mt[0] + '</span>'
-          + '<span style="background:#166534;color:#86efac;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">📏 GAGE</span>'
-          + '</div>';
-      }
-    }).join('');
-    box.setAttribute('data-matches', JSON.stringify(matches));
-    box.style.display = 'block';
-  };
-
-  // Picking a result fills the description field with the real Tool #/
-  // Zengers code + description, then moves straight to the due date —
-  // same "search converts to the real catalog entry" idea as Machinist Req.
-  window._selectDmgTooling = function(idx){
-    var box = document.getElementById('dmgToolingSearchResults');
-    var matches = JSON.parse(box.getAttribute('data-matches')||'[]');
-    var m = matches[idx];
-    if(!m) return;
-    var text;
-    if(m.source === 'proshop'){
-      var t = m.t;
-      text = '🔧 Tool #' + t[0] + ' — ' + _toolingDisplayLabel(t);
-      window._dmgPendingCategory = 'tooling';
-    } else if(m.source === 'zengers') {
-      var z = m.z;
-      text = '🔷 Zengers ' + z[0] + ' — ' + z[2] + ' (Bin ' + z[3] + ')';
-      window._dmgPendingCategory = 'tooling';
-    } else {
-      text = '📏 ' + m.m[0];
-      window._dmgPendingCategory = 'measuring';
-    }
-    document.getElementById('dmgItemDesc').value = text;
-    window._dmgPendingCategoryText = text;
-    box.style.display = 'none';
-    box.innerHTML = '';
-    document.getElementById('dmgItemDesc').focus();
-  };
-
   // ── INSPECTOR EQUIPMENT LOG ── Equipment now only enters this system one
   // way: as part of submitting an Inspection Request (red type) that has
   // measuring equipment on its checklist (see submitNote() — it requires
@@ -5010,18 +4450,44 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     return !!(window._isAdmin || window.currentUser === 'hilladmin' || window._isManager);
   }
 
-  // Gated to Ker/Admin/Manager. This is the actual physical handoff —
-  // Ker gathers the equipment, then taps this to confirm it's been given
-  // to the machinist. Before this, nothing has actually left the crib yet.
-  window._fulfillInspRequest = function(id){
-    if(!_inspCanEvaluate()) return;
+  // The machinist's required action to hand equipment back. WO/OP/Part all
+  // required so this matches the exact checked-out entry — no vague "I'm
+  // done" with no job info. Matches against every 'out' entry whose
+  // wo/op/part all match (trimmed, case-insensitive) and moves them to
+  // "pending_eval", which is what unlocks Examine & Check In for the
+  // inspector.
+  window._submitPickupRequest = function(){
+    var wo = (document.getElementById('pickupWoInput').value || '').trim();
+    var op = (document.getElementById('pickupOpInput').value || '').trim();
+    var part = (document.getElementById('pickupPartInput').value || '').trim();
+    if(!wo || !op || !part){
+      if(window.showToast) showToast('red','WO#, OP#, and Part# are all required','Fill in all three to send a pickup request.');
+      return;
+    }
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods) return;
-    mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', id), {
-      status: 'out', checkedOutBy: window.currentUser || 'unknown', checkedOutAt: mods.serverTimestamp()
-    }).then(function(){
-      if(window.showToast) showToast('green','Checked out','Handed off to the machinist.');
-    }).catch(function(e){ if(window.showToast) showToast('red','Failed to check out', e.message); });
+    var norm = function(s){ return (s||'').trim().toLowerCase(); };
+    var matches = (window._inspItems||[]).filter(function(it){
+      return it.status === 'out' && norm(it.wo) === norm(wo) && norm(it.op) === norm(op) && norm(it.part) === norm(part);
+    });
+    if(!matches.length){
+      if(window.showToast) showToast('red','No matching checked-out equipment','Double check the WO#, OP#, and Part# match exactly.');
+      return;
+    }
+    matches.forEach(function(it){
+      mods.updateDoc(mods.doc(db2, 'hillInspectionEquip', it.id), {
+        status: 'pending_eval',
+        pickupRequestedBy: window.currentUser || 'unknown',
+        pickupRequestedAt: mods.serverTimestamp()
+      }).catch(function(e){ console.warn('Equipment pickup request error:', e.message); });
+      var label = (it.equipment||[]).map(function(e){ return e.name; }).join(', ') || 'Equipment';
+      if (window.qualityPushover) window.qualityPushover('📚 Inspector — Pickup Requested', label + ' at ' + (it.machine||'') + ' (WO ' + wo + ' OP ' + op + ') — ready for pickup &amp; examination.');
+      if (window.adminPushover) window.adminPushover('📚 Inspector — Pickup Requested', label + ' at ' + (it.machine||'') + ' (WO ' + wo + ' OP ' + op + ') — ready for pickup &amp; examination.');
+    });
+    document.getElementById('pickupWoInput').value = '';
+    document.getElementById('pickupOpInput').value = '';
+    document.getElementById('pickupPartInput').value = '';
+    if(window.showToast) showToast('green','Pickup requested', matches.length + ' item(s) — waiting on inspector.');
   };
 
   window._openInspectorLibrary = function(){
@@ -5092,7 +4558,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   window._renderInspectorLibrary = function(){
     var all = window._inspItems || [];
-    var requested = all.filter(function(it){ return it.status === 'requested'; });
     var out = all.filter(function(it){ return it.status === 'out'; });
     var pending = all.filter(function(it){ return it.status === 'pending_eval'; });
     var checkedIn = all.filter(function(it){ return it.status === 'checked_in'; })
@@ -5101,34 +4566,17 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         return bt - at;
       }).slice(0, 15);
 
-    // Badge shows what's actionable for the inspector — new requests to
-    // gather + pickups to go collect and examine.
-    var actionable = requested.length + pending.length;
+    // Badge shows what's actionable for the inspector — pickups to go
+    // collect and examine. "Out" items aren't actionable yet; they're
+    // waiting on the machinist's required pickup request.
     var badge = document.getElementById('inspectorBadge');
     if(badge){
-      if(actionable > 0){ badge.textContent = actionable; badge.style.display = 'flex'; }
+      if(pending.length > 0){ badge.textContent = pending.length; badge.style.display = 'flex'; }
       else badge.style.display = 'none';
     }
 
     var canEval = _inspCanEvaluate();
     var isAdmin = (window._isAdmin || window.currentUser === 'hilladmin');
-
-    var requestedList = document.getElementById('inspRequestedList');
-    if(requestedList){
-      requestedList.innerHTML = !requested.length
-        ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">No open requests.</div>'
-        : requested.map(function(it){
-            return '<div style="position:relative;background:rgba(217,70,239,0.08);border:1px solid rgba(217,70,239,0.35);border-radius:8px;padding:10px 12px;">'
-              + (isAdmin ? '<button type="button" onclick="window._deleteInspItem(\''+it.id+'\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>' : '')
-              + '<div style="font-size:12px;color:#f0abfc;font-weight:700;margin-bottom:4px;padding-right:'+(isAdmin?'30px':'0')+';">' + _inspJobLine(it) + '</div>'
-              + '<div style="font-size:13px;color:#f0f4f8;margin-bottom:4px;">' + _inspEquipLine(it) + '</div>'
-              + '<div style="font-size:11px;color:#94a3b8;">Requested ' + _inspFmtTime(it.requestedAt) + '</div>'
-              + (canEval
-                  ? '<button type="button" onclick="window._fulfillInspRequest(\''+it.id+'\')" style="margin-top:8px;width:100%;background:rgba(20,184,166,0.15);border:1px solid #14b8a6;color:#5eead4;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">📤 GATHER &amp; CHECK OUT</button>'
-                  : '<div style="margin-top:8px;text-align:center;font-size:11px;color:#94a3b8;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ WAITING ON INSPECTOR</div>')
-              + '</div>';
-          }).join('');
-    }
 
     var outList = document.getElementById('inspOutList');
     if(outList){
@@ -5191,22 +4639,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     list.querySelectorAll('.equip-alert-card').forEach(function(el){ el.remove(); });
 
     var all = window._inspItems || [];
-    var requested = all.filter(function(it){ return it.status === 'requested'; });
     var pending = all.filter(function(it){ return it.status === 'pending_eval'; });
     var canEval = _inspCanEvaluate();
     var cards = [];
-
-    requested.forEach(function(it){
-      var div = document.createElement('div');
-      div.className = 'notif-item equip-alert-card';
-      div.style.cssText = 'border-left-color:#22d3ee;background:rgba(34,211,238,0.1);box-shadow:inset 0 0 30px rgba(34,211,238,0.06),0 0 0 1px rgba(34,211,238,0.2);border-radius:8px;padding:10px 12px;margin-bottom:8px;';
-      div.innerHTML = '<div style="font-size:11px;color:#67e8f9;letter-spacing:1px;font-weight:700;margin-bottom:3px;">🔍 EQUIPMENT REQUEST — ' + window._escAttr(_inspJobLine(it)) + '</div>'
-        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:3px;">' + _inspEquipLine(it) + '</div>'
-        + (canEval
-            ? '<button type="button" onclick="window._fulfillInspRequest(\''+it.id+'\')" style="margin-top:8px;width:100%;background:rgba(20,184,166,0.15);border:1px solid #14b8a6;color:#5eead4;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">📤 GATHER &amp; CHECK OUT</button>'
-            : '<div style="margin-top:8px;text-align:center;font-size:11px;color:#94a3b8;font-family:\'Bebas Neue\',sans-serif;letter-spacing:1px;">⏳ WAITING ON INSPECTOR</div>');
-      cards.push(div);
-    });
 
     pending.forEach(function(it){
       var div = document.createElement('div');
@@ -5230,7 +4665,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
 
     var woCount = (window._lastActionable || []).length;
-    var total = woCount + requested.length + pending.length;
+    var total = woCount + pending.length;
     var reqBadge = document.getElementById('reqBadge');
     var reqCount = document.getElementById('reqCount');
     var notifCount = document.getElementById('notifCount');
@@ -5270,6 +4705,190 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       };
     }
   })();
+
+  // ── QMI/DGP LOG — permanent archive, never auto-cleared ──
+  // A QMI/DGP request lives and is worked exactly like any other machine's
+  // request (shows in Alerts, gets Started/Finished the normal way). The
+  // moment it's FINISHed, this wraps window.finishRequest to catch it and
+  // write a permanent record here — completely separate from the ephemeral
+  // notes/hillRequests collections that get cleaned up over time. Status
+  // (Ready / Awaiting Return / Complete) and editing/deleting are strictly
+  // admin-only — not even managers get those buttons, only a status readout.
+  window._qmiDgpArchive = [];
+
+  function _qmiDgpIsAdmin(){
+    return !!(window._isAdmin || window.currentUser === 'hilladmin');
+  }
+
+  window._startQmiDgpArchiveListener = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods){ setTimeout(window._startQmiDgpArchiveListener, 800); return; }
+    mods.onSnapshot(mods.query(mods.collection(db2, 'hillQmiDgpArchive'), mods.orderBy('finishedAt', 'desc')), function(snap){
+      var items = [];
+      snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
+      window._qmiDgpArchive = items;
+      window._renderQmiDgpLog();
+      var badge = document.getElementById('qmidgpBadge');
+      if(badge){
+        var open = items.filter(function(r){ return r.status !== 'complete'; }).length;
+        if(open > 0){ badge.textContent = open; badge.style.display = 'flex'; }
+        else badge.style.display = 'none';
+      }
+    }, function(e){ console.warn('QMI/DGP archive listener:', e.message); });
+  };
+
+  // Wraps the global finishRequest — fires for every request type/machine,
+  // so this only needs to check afterward whether what just got finished
+  // belonged to the QMI/DGP virtual machine.
+  (function(){
+    var _origFinishRequest = window.finishRequest;
+    if(typeof _origFinishRequest === 'function'){
+      window.finishRequest = async function(noteId, hillReqId){
+        await _origFinishRequest(noteId, hillReqId);
+        var note = window._lastFinishedNote;
+        if(note && note.machine === 'QMI/DGP' && window.fbDb && window._fbModules){
+          var db2 = window.fbDb, mods = window._fbModules;
+          mods.addDoc(mods.collection(db2, 'hillQmiDgpArchive'), {
+            type: note.type || '', wo: note.wo || '', op: note.op || '', part: note.part || '', po: note.po || '',
+            detail: note.detail || '', operator: note.operator || '',
+            status: 'ready',
+            createdAt: note.createdAt || mods.serverTimestamp(),
+            finishedAt: mods.serverTimestamp(),
+            linkedNoteId: noteId || null, linkedReqId: hillReqId || null
+          }).catch(function(e){ console.warn('QMI/DGP archive write error:', e.message); });
+        }
+      };
+    }
+  })();
+
+  window._openQmiDgpLog = function(){
+    window._renderQmiDgpLog();
+    document.getElementById('qmiDgpLogOverlay').style.display = 'flex';
+  };
+  window._closeQmiDgpLog = function(){
+    document.getElementById('qmiDgpLogOverlay').style.display = 'none';
+  };
+
+  var QMI_DGP_STATUS_LABELS = { ready: '🟢 Ready', awaiting_return: '🟡 Awaiting Return', complete: '🔵 Complete' };
+  var QMI_DGP_STATUS_COLORS = { ready: '#22c55e', awaiting_return: '#eab308', complete: '#3b82f6' };
+
+  // Admin-only. Click any of the 3 at any time — this isn't a locked
+  // progression, it just sets whichever status currently applies.
+  window._setQmiDgpStatus = function(id, status){
+    if(!_qmiDgpIsAdmin()) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillQmiDgpArchive', id), {
+      status: status, statusUpdatedBy: window.currentUser || 'unknown', statusUpdatedAt: mods.serverTimestamp()
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update status', e.message); });
+  };
+
+  window._editQmiDgpArchiveId = null;
+  window._startEditQmiDgp = function(id){
+    if(!_qmiDgpIsAdmin()) return;
+    window._editQmiDgpArchiveId = id;
+    window._renderQmiDgpLog();
+  };
+  window._cancelEditQmiDgp = function(){
+    window._editQmiDgpArchiveId = null;
+    window._renderQmiDgpLog();
+  };
+  window._saveEditQmiDgp = function(id){
+    if(!_qmiDgpIsAdmin()) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var wo = (document.getElementById('qmiEditWo_'+id)||{}).value || '';
+    var op = (document.getElementById('qmiEditOp_'+id)||{}).value || '';
+    var part = (document.getElementById('qmiEditPart_'+id)||{}).value || '';
+    var po = (document.getElementById('qmiEditPo_'+id)||{}).value || '';
+    var detail = (document.getElementById('qmiEditDetail_'+id)||{}).value || '';
+    mods.updateDoc(mods.doc(db2, 'hillQmiDgpArchive', id), {
+      wo: wo.trim(), op: op.trim(), part: part.trim(), po: po.trim(), detail: detail.trim(),
+      editedBy: window.currentUser || 'unknown', editedAt: mods.serverTimestamp()
+    }).then(function(){
+      window._editQmiDgpArchiveId = null;
+      if(window.showToast) showToast('green','Saved','Record updated.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to save', e.message); });
+  };
+
+  window._deleteQmiDgpArchive = function(id){
+    if(!_qmiDgpIsAdmin()) return;
+    var r = (window._qmiDgpArchive||[]).find(function(x){ return x.id === id; });
+    if(!confirm('Delete this record permanently? WO ' + (r?r.wo:'') + '\n\nThis can\'t be undone.')) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.deleteDoc(mods.doc(db2, 'hillQmiDgpArchive', id)).then(function(){
+      if(window.showToast) showToast('green','Deleted','Record removed.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to delete', e.message); });
+  };
+
+  function _qmiDgpFmtTime(ts){
+    if(!ts) return '';
+    var d = ts.toDate ? ts.toDate() : new Date(ts);
+    if(isNaN(d.getTime())) return '';
+    return d.toLocaleDateString([], {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  }
+
+  window._renderQmiDgpLog = function(){
+    var list = document.getElementById('qmiDgpLogList');
+    if(!list) return;
+    var q = ((document.getElementById('qmiDgpLogSearch')||{}).value || '').trim().toLowerCase();
+    var records = window._qmiDgpArchive || [];
+    if(q){
+      records = records.filter(function(r){
+        return [r.wo, r.op, r.part, r.po, r.detail, r.operator].join(' ').toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    if(!records.length){
+      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">' + (q ? 'No matches.' : 'Nothing archived yet — finish a QMI/DGP request to see it here.') + '</div>';
+      return;
+    }
+    var isAdmin = _qmiDgpIsAdmin();
+    var editingId = window._editQmiDgpArchiveId;
+    list.innerHTML = records.map(function(r){
+      var typeIcon = r.type === 'red' ? '🔴' : (r.type === 'yellow' ? '🟡' : '⚪');
+      var jobBits = [];
+      if(r.wo) jobBits.push('WO ' + r.wo);
+      if(r.op) jobBits.push('OP ' + r.op);
+      if(r.part) jobBits.push('Part ' + r.part);
+      if(r.po) jobBits.push('PO ' + r.po);
+      var statusColor = QMI_DGP_STATUS_COLORS[r.status] || '#64748b';
+      var statusLabel = QMI_DGP_STATUS_LABELS[r.status] || r.status || '—';
+
+      if(isAdmin && editingId === r.id){
+        return '<div style="background:rgba(255,255,255,0.04);border:1px solid #a855f7;border-radius:8px;padding:12px;">'
+          + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">'
+          + '<input id="qmiEditWo_'+r.id+'" value="'+window._escAttr(r.wo||'')+'" placeholder="WO#" style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;">'
+          + '<input id="qmiEditOp_'+r.id+'" value="'+window._escAttr(r.op||'')+'" placeholder="OP#" style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;">'
+          + '<input id="qmiEditPart_'+r.id+'" value="'+window._escAttr(r.part||'')+'" placeholder="Part#" style="background:#0d1f35;border:1px solid #1e3a5c;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;">'
+          + '<input id="qmiEditPo_'+r.id+'" value="'+window._escAttr(r.po||'')+'" placeholder="PO#" style="background:#1a0d0d;border:1px solid #7f1d1d;border-radius:6px;color:#fca5a5;padding:7px 9px;font-size:12px;">'
+          + '</div>'
+          + '<textarea id="qmiEditDetail_'+r.id+'" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;margin-bottom:8px;min-height:50px;font-family:Barlow,sans-serif;">'+window._escAttr(r.detail||'')+'</textarea>'
+          + '<div style="display:flex;gap:6px;">'
+          + '<button type="button" onclick="window._saveEditQmiDgp(\''+r.id+'\')" style="flex:1;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">✓ SAVE</button>'
+          + '<button type="button" onclick="window._cancelEditQmiDgp()" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">CANCEL</button>'
+          + '</div>'
+          + '</div>';
+      }
+
+      return '<div style="position:relative;background:rgba(255,255,255,0.03);border:1px solid '+statusColor+'44;border-left:3px solid '+statusColor+';border-radius:8px;padding:10px 12px;">'
+        + (isAdmin ? '<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;">'
+            + '<button type="button" onclick="window._startEditQmiDgp(\''+r.id+'\')" title="Edit" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;border-radius:6px;width:26px;height:26px;font-size:12px;line-height:1;cursor:pointer;">✏️</button>'
+            + '<button type="button" onclick="window._deleteQmiDgpArchive(\''+r.id+'\')" title="Delete" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:26px;height:26px;font-size:13px;line-height:1;cursor:pointer;">🗑</button>'
+            + '</div>' : '')
+        + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:3px;padding-right:'+(isAdmin?'62px':'0')+';">' + typeIcon + ' ' + (jobBits.join(' · ') || '(no job info)') + '</div>'
+        + (r.detail ? '<div style="font-size:12px;color:#cbd5e1;margin-bottom:4px;white-space:pre-wrap;">' + window._escAttr(r.detail) + '</div>' : '')
+        + '<div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">' + window._escAttr(r.operator||'unknown') + ' · Finished ' + _qmiDgpFmtTime(r.finishedAt) + '</div>'
+        + (isAdmin
+            ? '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'
+              + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'ready\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='ready'?'rgba(34,197,94,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='ready'?'#22c55e':'#334155')+';color:'+(r.status==='ready'?'#4ade80':'#94a3b8')+';">🟢 READY</button>'
+              + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'awaiting_return\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='awaiting_return'?'rgba(234,179,8,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='awaiting_return'?'#eab308':'#334155')+';color:'+(r.status==='awaiting_return'?'#fde047':'#94a3b8')+';">🟡 AWAITING RETURN</button>'
+              + '<button type="button" onclick="window._setQmiDgpStatus(\''+r.id+'\',\'complete\')" style="padding:7px 4px;border-radius:6px;font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:0.5px;cursor:pointer;background:'+(r.status==='complete'?'rgba(59,130,246,0.2)':'rgba(255,255,255,0.04)')+';border:1px solid '+(r.status==='complete'?'#3b82f6':'#334155')+';color:'+(r.status==='complete'?'#93c5fd':'#94a3b8')+';">🔵 COMPLETE</button>'
+              + '</div>'
+            : '<div style="display:inline-block;font-size:11px;font-weight:700;color:'+statusColor+';background:'+statusColor+'1a;border:1px solid '+statusColor+'55;border-radius:6px;padding:4px 10px;">' + statusLabel + '</div>')
+        + '</div>';
+    }).join('');
+  };
 
   // ── TOOL LIST — digital replacement for the paper "TOOL LIST" setup tag ──
   window._tlStagedTools = []; // [{desc, ooh, dia}, ...]
@@ -5548,8 +5167,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }).join('');
   };
 
-  window._startDmgListener();
   window._startInspectorListener();
+  window._startQmiDgpArchiveListener();
 
   // ── INVENTORY BROWSER — all three catalogs, one place ──
   window._openInventoryBrowser = function(){
@@ -6638,6 +6257,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
     const floorSupportType = selectedType === 'orange' ? (document.getElementById('floorSupportType') || {}).value || '' : '';
     const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, part, po, assignedTo, floorSupportType };
+    // Carry the raw equipment list through on the request itself — the
+    // actual Inspector-tab log entry doesn't get created until FINISH is
+    // tapped (see _finishInspectionWithReminder), so this is what that
+    // later step reads back to know what equipment was involved.
+    if (selectedType === 'red' && window._selectedTools && window._selectedTools.length) {
+      note.equipmentList = window._selectedTools.map(function(t){ return { name: t.name, dimVal: t.dimVal || '' }; });
+    }
     // If the voice note is still being converted in the background, give it
     // a moment rather than submitting without it (conversion is normally
     // near-instant, this just closes off an unlikely race).
@@ -6659,25 +6285,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       return;
     }
     if (btn) { btn.disabled=false; btn.textContent='Submit'; }
-    // Log the equipment to the Inspector tab as REQUESTED — not checked out
-    // yet. Ker still has to actually gather it and tap CHECK OUT once it's
-    // physically been handed over; this record is just what he's fulfilling.
-    // Tapping FINISH on this same Inspection Request later is what marks it
-    // as pickup requested (see _finishInspectionWithReminder).
-    if (selectedType === 'red' && window._selectedTools && window._selectedTools.length && window.fbDb && window._fbModules) {
-      (function(){
-        var db2 = window.fbDb, mods = window._fbModules;
-        mods.addDoc(mods.collection(db2, 'hillInspectionEquip'), {
-          machine: currentMachine, wo: wo, op: op, part: part, po: po,
-          equipment: window._selectedTools.map(function(t){ return { name: t.name, dimVal: t.dimVal || '' }; }),
-          status: 'requested',
-          requestedBy: operator || (window.currentUser || 'unknown'),
-          requestedAt: mods.serverTimestamp(),
-          linkedNoteId: noteId || null, linkedReqId: reqId || null,
-          createdAt: mods.serverTimestamp()
-        }).catch(function(e){ console.warn('Equipment log error:', e.message); });
-      })();
-    }
     // Save to quick recall
     var _supplyForRecall = (selectedType === 'yellow' && document.getElementById('supplyItem')) ? document.getElementById('supplyItem').value : '';
     recallSave(currentMachine, wo, op, _supplyForRecall, operator);
@@ -7264,11 +6871,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if (willKeyInput && !willKeyInput.value) {
       willKeyInput.value = localStorage.getItem('hillFloorSupportPushoverKey') || (typeof FLOOR_SUPPORT_DEFAULT_KEY !== 'undefined' ? FLOOR_SUPPORT_DEFAULT_KEY : '');
     }
-    var qmidgpKeyInput = document.getElementById('qmidgp-pushover-key');
-    if (qmidgpKeyInput && localStorage.getItem('hillQmiDgpPushoverKey')) {
-      qmidgpKeyInput.value = localStorage.getItem('hillQmiDgpPushoverKey');
-    }
-    if (window._renderQmiDgpKeyStatus) window._renderQmiDgpKeyStatus();
     // Update DNX status display
     updateDNXStatus(dnxConnected);
     // Always force a fresh user load when opening panel
