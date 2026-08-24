@@ -2421,7 +2421,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       // shows where it stands now, not just that it started as one type.
       var colorKey = n.type;
       if (n.machine === 'QMI/DGP' && n.qmiDgpStatus) {
-        colorKey = n.qmiDgpStatus === 'complete' ? 'blue' : n.qmiDgpStatus === 'awaiting_return' ? 'yellow' : 'green';
+        colorKey = n.qmiDgpStatus === 'awaiting_return' ? 'yellow' : 'green';
       }
       if (container) {
         const dot = document.createElement('span');
@@ -2477,7 +2477,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const container = document.getElementById('notes-' + n.machine);
       var colorKey = n.type;
       if (n.machine === 'QMI/DGP' && n.qmiDgpStatus) {
-        colorKey = n.qmiDgpStatus === 'complete' ? 'blue' : n.qmiDgpStatus === 'awaiting_return' ? 'yellow' : 'green';
+        colorKey = n.qmiDgpStatus === 'awaiting_return' ? 'yellow' : 'green';
       }
       if (container) {
         const dot = document.createElement('span');
@@ -3346,7 +3346,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     wrap.style.cssText = 'padding:4px 6px 6px;display:flex;flex-direction:column;gap:3px;';
     mine.forEach(function(n){
       var typeIcon = n.type === 'red' ? '🔴' : (n.type === 'yellow' ? '🟡' : '⚪');
-      var statusText = n.qmiDgpStatus === 'complete' ? '🔵 Complete'
+      var statusText = n.qmiDgpStatus === 'complete' ? '🟢 Ready'
         : n.qmiDgpStatus === 'awaiting_return' ? '🟡 Awaiting Return'
         : n.qmiDgpStatus === 'ready' ? '🟢 Ready'
         : n.inProgress ? '⏱ In Progress'
