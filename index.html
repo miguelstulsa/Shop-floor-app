@@ -2572,7 +2572,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         (n.voiceNoteUrl ? '<audio src="' + n.voiceNoteUrl + '" controls style="width:100%;margin-top:6px;height:32px;"></audio>' : '') +
         '<div class="notif-time">' + timeStr + '</div>' +
         timerBtns +
-        '<button class="notif-dismiss" data-id="' + n.id + '">✕</button>';
+        (n.qmiDgpStatus
+          ? (strictAdmin
+              ? '<div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;">'
+                + '<button onclick="window._editQmiDgpNote(\'' + n.id + '\',\'' + _escAttr(n.wo||'') + '\',\'' + _escAttr(n.op||'') + '\',\'' + _escAttr(n.part||'') + '\',\'' + _escAttr(n.po||'') + '\')" title="Edit" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;border-radius:6px;width:22px;height:22px;font-size:10px;line-height:1;cursor:pointer;">✏️</button>'
+                + '<button onclick="window._deleteQmiDgpNote(\'' + n.id + '\')" title="Delete" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:22px;height:22px;font-size:11px;line-height:1;cursor:pointer;">🗑</button>'
+                + '</div>'
+              : '')
+          : '<button class="notif-dismiss" data-id="' + n.id + '">✕</button>');
       list.appendChild(item);
     });
   }
@@ -2648,7 +2655,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           '<div class="req-time">⏱ ' + timeStr + '</div>' +
           adminBtns +
         '</div>' +
-        '<button class="req-dismiss" data-id="' + n.id + '">✕</button>';
+        (n.qmiDgpStatus
+          ? (strictAdmin2
+              ? '<div style="position:absolute;top:10px;right:10px;display:flex;gap:4px;">'
+                + '<button onclick="window._editQmiDgpNote(\'' + n.id + '\',\'' + _escAttr(n.wo||'') + '\',\'' + _escAttr(n.op||'') + '\',\'' + _escAttr(n.part||'') + '\',\'' + _escAttr(n.po||'') + '\')" title="Edit" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;border-radius:6px;width:22px;height:22px;font-size:10px;line-height:1;cursor:pointer;">✏️</button>'
+                + '<button onclick="window._deleteQmiDgpNote(\'' + n.id + '\')" title="Delete" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:22px;height:22px;font-size:11px;line-height:1;cursor:pointer;">🗑</button>'
+                + '</div>'
+              : '')
+          : '<button class="req-dismiss" data-id="' + n.id + '">✕</button>');
       list.appendChild(item);
     });
   }
@@ -3249,9 +3263,49 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var db2  = window.fbDb || window._db;
     var mods = window._fbModules;
     if(!mods || !db2) return;
+    var labels = {ready:'Ready', awaiting_return:'Awaiting Return', complete:'Complete'};
     mods.updateDoc(mods.doc(db2, 'notes', noteId), {
       qmiDgpStatus: status, qmiDgpStatusBy: window.currentUser || 'unknown', qmiDgpStatusAt: mods.serverTimestamp()
+    }).then(function(){
+      if(window.showToast) showToast('green','Status updated', labels[status] || status);
     }).catch(function(e){ if(window.showToast) showToast('red','Failed to update status', e.message); });
+  };
+
+  // Strictly admin-only — permanently deletes a QMI/DGP card. Nothing else
+  // in the app can remove these once finished (the normal ✕ dismiss button
+  // is hidden on these cards specifically), so this is the only way one
+  // goes away.
+  window._deleteQmiDgpNote = function(noteId){
+    if(!(window._isAdmin || window.currentUser === 'hilladmin')) return;
+    if(!confirm('Delete this QMI/DGP record permanently? This can\'t be undone.')) return;
+    var db2  = window.fbDb || window._db;
+    var mods = window._fbModules;
+    if(!mods || !db2) return;
+    mods.deleteDoc(mods.doc(db2, 'notes', noteId)).then(function(){
+      if(window.showToast) showToast('green','Deleted','Record removed.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to delete', e.message); });
+  };
+
+  // Strictly admin-only — quick inline edit via prompts for WO/OP/Part/PO.
+  window._editQmiDgpNote = function(noteId, curWo, curOp, curPart, curPo){
+    if(!(window._isAdmin || window.currentUser === 'hilladmin')) return;
+    var wo = prompt('WO #', curWo || '');
+    if(wo === null) return;
+    var op = prompt('OP #', curOp || '');
+    if(op === null) return;
+    var part = prompt('Part #', curPart || '');
+    if(part === null) return;
+    var po = prompt('PO #', curPo || '');
+    if(po === null) return;
+    var db2  = window.fbDb || window._db;
+    var mods = window._fbModules;
+    if(!mods || !db2) return;
+    mods.updateDoc(mods.doc(db2, 'notes', noteId), {
+      wo: wo.trim(), op: op.trim(), part: part.trim(), po: po.trim(),
+      qmiDgpEditedBy: window.currentUser || 'unknown', qmiDgpEditedAt: mods.serverTimestamp()
+    }).then(function(){
+      if(window.showToast) showToast('green','Saved','Record updated.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to save', e.message); });
   };
 
   // ── HOLD REQUEST (PENDING) ─────────────────────────────────
