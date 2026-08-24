@@ -2562,13 +2562,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
             ? '<div style="margin-top:6px;"><div style="font-size:9px;color:#f59e0b;letter-spacing:1px;font-weight:700;margin-bottom:3px;">⏸ ON HOLD' + (n.holdReason ? ' — ' + n.holdReason : '') + '</div>' +
               '<div style="display:flex;gap:6px;">' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
-              '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>' +
+              '<button class="req-timer-btn req-finish-btn" onclick="window._debugFinishClick(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>' +
               '</div></div>'
             : inProg
             ? '<div class="req-timer-badge" data-started-at="' + (n.startedAt && n.startedAt.seconds ? (n.startedAt.seconds - (n.accumulatedElapsedMins||0)*60) : '') + '" style="font-size:11px;font-weight:700;">⏱ ' + (n.startedAt && n.startedAt.seconds ? _fmtElapsed(Math.floor(Date.now()/1000) - (n.startedAt.seconds - (n.accumulatedElapsedMins||0)*60)) : 'IN PROGRESS') + '</div>' +
               '<div style="display:flex;gap:6px;margin-top:6px;">' +
               '<button class="req-timer-btn req-pending-btn" onclick="window.holdRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">⏸ PENDING</button>' +
-              '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>' +
+              '<button class="req-timer-btn req-finish-btn" onclick="window._debugFinishClick(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>' +
               '</div>'
             : '<div style="display:flex;gap:6px;margin-top:6px;">' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>' +
@@ -2620,13 +2620,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ RESUME</button>' +
               (n.type === 'red'
                 ? '<button class="req-timer-btn req-finish-btn" onclick="window._finishInspectionWithReminder(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>'
-                : '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>')
+                : '<button class="req-timer-btn req-finish-btn" onclick="window._debugFinishClick(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>')
             : inProg2
             ? '<div style="width:100%;font-size:11px;font-weight:700;color:#f5c500;" data-started-at="' + (n.startedAt && n.startedAt.seconds ? (n.startedAt.seconds - (n.accumulatedElapsedMins||0)*60) : '') + '">⏱ ' + (n.startedAt && n.startedAt.seconds ? _fmtElapsed(Math.floor(Date.now()/1000) - (n.startedAt.seconds - (n.accumulatedElapsedMins||0)*60)) : 'IN PROGRESS') + '</div>' +
               '<button class="req-timer-btn req-pending-btn" onclick="window.holdRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">⏸ PENDING</button>' +
               (n.type === 'red'
                 ? '<button class="req-timer-btn req-finish-btn" onclick="window._finishInspectionWithReminder(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>'
-                : '<button class="req-timer-btn req-finish-btn" onclick="window.finishRequest(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>')
+                : '<button class="req-timer-btn req-finish-btn" onclick="window._debugFinishClick(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ FINISH</button>')
             : (n.type === 'red' && n.forwardedToInspection
                 ? '<div style="width:100%;font-size:9px;color:#d8b4fe;margin-bottom:3px;">📨 Forwarded to Inspection' + (n.forwardedBy ? ' by ' + n.forwardedBy.split(' ')[0] : '') + '</div>' +
                   '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>'
@@ -3032,7 +3032,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       finBtn.className = 'req-timer-btn req-finish-btn';
       finBtn.style.cssText = 'padding:6px 14px;font-size:12px;';
       finBtn.textContent = '✓ FINISH & CLOSE';
-      finBtn.onclick = function() { window.finishRequest(noteId, reqId); };
+      finBtn.onclick = function() { window._debugFinishClick(noteId, reqId); };
       // Build badge
       var badge = document.createElement('div');
       badge.style.cssText = 'font-size:9px;color:#f5c500;letter-spacing:1px;margin-bottom:4px;font-family:Bebas Neue,sans-serif;';
@@ -4714,14 +4714,6 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // regular Inspection Log's own records in that same collection. Status
   // (Ready / Awaiting Return / Complete) and editing/deleting are strictly
   // admin-only — not even managers get those buttons, only a status readout.
-  (function(){
-    try {
-      var box = document.createElement('div');
-      box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#052e16;border-top:4px solid #22c55e;font-family:monospace;font-size:12px;color:#4ade80;padding:6px;';
-      box.textContent = new Date().toLocaleTimeString() + ' — QMI/DGP archive script block reached and is loading.';
-      document.body.appendChild(box);
-    } catch(e) { console.error('QMI/DGP top-of-block diagnostic failed:', e); }
-  })();
   window._qmiDgpArchive = [];
 
   function _qmiDgpIsAdmin(){
@@ -4777,6 +4769,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     line.style.cssText = 'padding:4px 0;border-bottom:1px solid #333;white-space:pre-wrap;word-break:break-all;';
     line.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
     box.insertBefore(line, box.firstChild);
+  };
+
+  // Called directly from the FINISH button's onclick (every path — the
+  // static card HTML and the dynamic Start→Finish swap) so we know for
+  // certain the click itself registered, independent of whether the
+  // window.finishRequest wrapper below is actually taking effect.
+  window._debugFinishClick = function(noteId, hillReqId){
+    window._debugBanner('FINISH button clicked. noteId=' + noteId + ' hillReqId=' + hillReqId);
+    window.finishRequest(noteId, hillReqId);
   };
 
   // Wraps the global finishRequest — fires for every request type/machine,
