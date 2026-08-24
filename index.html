@@ -2415,13 +2415,26 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     const machinePriority = {};
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
+      // Once a QMI/DGP request has a status, the dot/border reflects that
+      // status color (green=Ready, yellow=Awaiting Return, blue=Complete)
+      // instead of the original request type (red/yellow) — so the tile
+      // shows where it stands now, not just that it started as one type.
+      var colorKey = n.type;
+      if (n.machine === 'QMI/DGP' && n.qmiDgpStatus) {
+        colorKey = n.qmiDgpStatus === 'complete' ? 'blue' : n.qmiDgpStatus === 'awaiting_return' ? 'yellow' : 'green';
+      }
       if (container) {
         const dot = document.createElement('span');
-        dot.className = 'note-dot ' + n.type;
+        dot.className = 'note-dot ' + colorKey;
         container.appendChild(dot);
       }
-      if (!machinePriority[n.machine] || priority[n.type] > priority[machinePriority[n.machine]]) {
-        machinePriority[n.machine] = n.type;
+      // QMI/DGP requests are never deleted, so a "Complete" one shouldn't
+      // keep the tile permanently flagged the way an unresolved request
+      // would — only count it toward the tile's colored border/dot if it's
+      // still open.
+      if (n.machine === 'QMI/DGP' && n.qmiDgpStatus === 'complete') return;
+      if (!machinePriority[n.machine] || priority[colorKey] > priority[machinePriority[n.machine]]) {
+        machinePriority[n.machine] = colorKey;
       }
     });
     Object.entries(machinePriority).forEach(([mid, type]) => {
@@ -2430,6 +2443,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const notesEl = document.getElementById('notes-' + mid);
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
+    window._renderQmiDgpTileSummary(notes);
     const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.type === 'orange' || n.inProgress);
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
@@ -2461,13 +2475,18 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     const machinePriority = {};
     notes.forEach(n => {
       const container = document.getElementById('notes-' + n.machine);
+      var colorKey = n.type;
+      if (n.machine === 'QMI/DGP' && n.qmiDgpStatus) {
+        colorKey = n.qmiDgpStatus === 'complete' ? 'blue' : n.qmiDgpStatus === 'awaiting_return' ? 'yellow' : 'green';
+      }
       if (container) {
         const dot = document.createElement('span');
-        dot.className = 'note-dot ' + n.type;
+        dot.className = 'note-dot ' + colorKey;
         container.appendChild(dot);
       }
-      if (!machinePriority[n.machine] || priority[n.type] > priority[machinePriority[n.machine]]) {
-        machinePriority[n.machine] = n.type;
+      if (n.machine === 'QMI/DGP' && n.qmiDgpStatus === 'complete') return;
+      if (!machinePriority[n.machine] || priority[colorKey] > priority[machinePriority[n.machine]]) {
+        machinePriority[n.machine] = colorKey;
       }
     });
     Object.entries(machinePriority).forEach(([mid, type]) => {
@@ -2476,6 +2495,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       const notesEl = document.getElementById('notes-' + mid);
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
+    window._renderQmiDgpTileSummary(notes);
   };
 
   window._escJs = function(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
@@ -3306,6 +3326,37 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }).then(function(){
       if(window.showToast) showToast('green','Saved','Record updated.');
     }).catch(function(e){ if(window.showToast) showToast('red','Failed to save', e.message); });
+  };
+
+  // Shows the same summary you'd see in the Alerts tab directly on the
+  // QMI/DGP shop-floor tile itself — WO/status text under the tile name,
+  // not just a colored dot. Called every time the notes listener re-renders
+  // machine tiles, right after the dot/priority pass (which already
+  // cleared and rebuilt .machine-notes for every tile this cycle).
+  window._renderQmiDgpTileSummary = function(allNotes){
+    var container = document.getElementById('notes-QMI/DGP');
+    if(!container) return;
+    var mine = (allNotes||[]).filter(function(n){ return n.machine === 'QMI/DGP'; });
+    mine.sort(function(a,b){
+      var at = a.createdAt && a.createdAt.seconds || 0, bt = b.createdAt && b.createdAt.seconds || 0;
+      return bt - at;
+    });
+    mine = mine.slice(0, 5);
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'padding:4px 6px 6px;display:flex;flex-direction:column;gap:3px;';
+    mine.forEach(function(n){
+      var typeIcon = n.type === 'red' ? '🔴' : (n.type === 'yellow' ? '🟡' : '⚪');
+      var statusText = n.qmiDgpStatus === 'complete' ? '🔵 Complete'
+        : n.qmiDgpStatus === 'awaiting_return' ? '🟡 Awaiting Return'
+        : n.qmiDgpStatus === 'ready' ? '🟢 Ready'
+        : n.inProgress ? '⏱ In Progress'
+        : '⚪ Not Started';
+      var line = document.createElement('div');
+      line.style.cssText = 'font-size:9px;color:#cbd5e1;background:rgba(255,255,255,0.05);border-radius:4px;padding:2px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+      line.textContent = typeIcon + ' WO ' + (n.wo||'—') + ' · ' + statusText;
+      wrap.appendChild(line);
+    });
+    container.appendChild(wrap);
   };
 
   // ── HOLD REQUEST (PENDING) ─────────────────────────────────
