@@ -4714,6 +4714,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // regular Inspection Log's own records in that same collection. Status
   // (Ready / Awaiting Return / Complete) and editing/deleting are strictly
   // admin-only — not even managers get those buttons, only a status readout.
+  (function(){
+    try {
+      var box = document.createElement('div');
+      box.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:999999;background:#052e16;border-top:4px solid #22c55e;font-family:monospace;font-size:12px;color:#4ade80;padding:6px;';
+      box.textContent = new Date().toLocaleTimeString() + ' — QMI/DGP archive script block reached and is loading.';
+      document.body.appendChild(box);
+    } catch(e) { console.error('QMI/DGP top-of-block diagnostic failed:', e); }
+  })();
   window._qmiDgpArchive = [];
 
   function _qmiDgpIsAdmin(){
@@ -4752,6 +4760,25 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('qmiDgpLogOverlay').style.display = 'none';
   };
 
+  // Temporary debugging aid — a fixed on-screen banner that can't be
+  // silently suppressed the way alert() can (Chrome offers a "prevent this
+  // page from creating additional dialogs" checkbox after repeated alerts,
+  // which silently blocks every alert() after that with zero visible sign).
+  // Stacks multiple messages so nothing gets overwritten before it's read.
+  window._debugBanner = function(msg){
+    var box = document.getElementById('_debugBannerBox');
+    if(!box){
+      box = document.createElement('div');
+      box.id = '_debugBannerBox';
+      box.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#000;border-bottom:4px solid #ef4444;max-height:50vh;overflow-y:auto;font-family:monospace;font-size:13px;color:#4ade80;padding:8px;';
+      document.body.appendChild(box);
+    }
+    var line = document.createElement('div');
+    line.style.cssText = 'padding:4px 0;border-bottom:1px solid #333;white-space:pre-wrap;word-break:break-all;';
+    line.textContent = new Date().toLocaleTimeString() + ' — ' + msg;
+    box.insertBefore(line, box.firstChild);
+  };
+
   // Wraps the global finishRequest — fires for every request type/machine,
   // so this only needs to check afterward whether what just got finished
   // belonged to the QMI/DGP virtual machine.
@@ -4759,10 +4786,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var _origFinishRequest = window.finishRequest;
     if(typeof _origFinishRequest === 'function'){
       window.finishRequest = async function(noteId, hillReqId){
-        alert('[DEBUG] finishRequest wrapper ENTERED. noteId=' + noteId + ' hillReqId=' + hillReqId);
+        window._debugBanner('finishRequest wrapper ENTERED. noteId=' + noteId + ' hillReqId=' + hillReqId);
         await _origFinishRequest(noteId, hillReqId);
         var note = window._lastFinishedNote;
-        alert('[DEBUG] After original finishRequest. note.machine = ' + (note ? note.machine : '(note is null/undefined)'));
+        window._debugBanner('After original finishRequest. note.machine = ' + (note ? note.machine : '(note is null/undefined)'));
         console.log('[QMI/DGP archive] finishRequest wrapper ran. note.machine =', note && note.machine);
         if(note && note.machine === 'QMI/DGP'){
           if(!window.fbDb || !window._fbModules){
