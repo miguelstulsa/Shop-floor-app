@@ -1336,6 +1336,7 @@
   <div class="nav-tab" onclick="window._openInventoryBrowser()" id="tab-inventory" style="display:none;">📦 Inventory</div>
   <div class="nav-tab" onclick="window._openInspectorLibrary()" id="tab-inspector" style="display:none;">🔍 Inspector <span class="tab-badge" id="inspectorBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
+  <div class="nav-tab" onclick="window._openTimeStudy()" id="tab-timestudy" style="display:none;">⏱ Time Study <span class="tab-badge" id="timeStudyBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
@@ -1882,6 +1883,121 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     </div>
 
     <button type="button" onclick="window._closeInspectorLibrary()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
+  </div>
+</div>
+
+<!-- TIME STUDY — track actual parts produced vs. expected during a
+     dedicated hour with an employee. Employee list and machine list are
+     both preloaded (same roster as the request form's operator dropdown,
+     same machine list the Planner uses) — nothing to set up first.
+     Admin/Manager only, since this is individual performance data. -->
+<div class="modal-overlay" id="timeStudyOverlay" style="display:none;">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-title">⏱ Employee Time Study</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Track actual parts made vs. expected during a dedicated hour.</div>
+
+    <button type="button" onclick="window._toggleTimeStudyForm()" style="width:100%;margin-bottom:12px;background:#14b8a6;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">+ NEW ENTRY</button>
+
+    <div id="timeStudyForm" style="display:none;background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <select id="tsEmployee" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+        <option value="">-- Employee --</option>
+      </select>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="date" id="tsDate" style="flex:1;min-width:0;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 8px;font-size:13px;">
+        <input type="time" id="tsTime" style="flex:1;min-width:0;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 8px;font-size:13px;">
+      </div>
+
+      <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Machines — most run 2 or 3 at once, each with its own job. Part count comes later, after the hour is up.</div>
+
+      <!-- MACHINE 1 (required) -->
+      <div style="background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.3);border-radius:8px;padding:10px;margin-bottom:8px;">
+        <div style="font-size:10px;color:#5eead4;letter-spacing:1px;font-weight:700;margin-bottom:6px;">MACHINE 1</div>
+        <select id="tsMachine1" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:6px;">
+          <option value="">-- Select machine --</option>
+        </select>
+        <input type="text" id="tsWo1" placeholder="WO #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="tsOp1" placeholder="OP #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="tsPart1" placeholder="Part #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:0.5px;margin-bottom:3px;">Standard Cycle Time</div>
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
+          <input type="number" id="tsCycleTime1_h" min="0" step="1" placeholder="HH" oninput="window._tsUpdatePreview(1)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+          <span style="color:#5eead4;font-weight:700;">:</span>
+          <input type="number" id="tsCycleTime1_m" min="0" max="59" step="1" placeholder="MM" oninput="window._tsUpdatePreview(1)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+          <span style="color:#5eead4;font-weight:700;">:</span>
+          <input type="number" id="tsCycleTime1_s" min="0" max="59" step="1" placeholder="SS" oninput="window._tsUpdatePreview(1)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+        </div>
+        <div id="tsExpectedPreview1" style="font-size:11px;color:#5eead4;margin-bottom:6px;"></div>
+        <textarea id="tsNotes1" placeholder="Notes for this machine (optional)" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;min-height:40px;"></textarea>
+      </div>
+
+      <!-- MACHINE 2 (optional) -->
+      <div style="background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.3);border-radius:8px;padding:10px;margin-bottom:8px;">
+        <div style="font-size:10px;color:#5eead4;letter-spacing:1px;font-weight:700;margin-bottom:6px;">MACHINE 2 (optional)</div>
+        <select id="tsMachine2" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:6px;">
+          <option value="">-- Select machine --</option>
+        </select>
+        <input type="text" id="tsWo2" placeholder="WO #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="tsOp2" placeholder="OP #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="tsPart2" placeholder="Part #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:0.5px;margin-bottom:3px;">Standard Cycle Time</div>
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
+          <input type="number" id="tsCycleTime2_h" min="0" step="1" placeholder="HH" oninput="window._tsUpdatePreview(2)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+          <span style="color:#5eead4;font-weight:700;">:</span>
+          <input type="number" id="tsCycleTime2_m" min="0" max="59" step="1" placeholder="MM" oninput="window._tsUpdatePreview(2)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+          <span style="color:#5eead4;font-weight:700;">:</span>
+          <input type="number" id="tsCycleTime2_s" min="0" max="59" step="1" placeholder="SS" oninput="window._tsUpdatePreview(2)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+        </div>
+        <div id="tsExpectedPreview2" style="font-size:11px;color:#5eead4;margin-bottom:6px;"></div>
+        <textarea id="tsNotes2" placeholder="Notes for this machine (optional)" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;min-height:40px;"></textarea>
+      </div>
+
+      <!-- MACHINE 3 (optional) -->
+      <div style="background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.3);border-radius:8px;padding:10px;margin-bottom:10px;">
+        <div style="font-size:10px;color:#5eead4;letter-spacing:1px;font-weight:700;margin-bottom:6px;">MACHINE 3 (optional)</div>
+        <select id="tsMachine3" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:6px;">
+          <option value="">-- Select machine --</option>
+        </select>
+        <input type="text" id="tsWo3" placeholder="WO #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="tsOp3" placeholder="OP #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <input type="text" id="tsPart3" placeholder="Part #" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;margin-bottom:6px;">
+        <div style="font-size:10px;color:#94a3b8;letter-spacing:0.5px;margin-bottom:3px;">Standard Cycle Time</div>
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
+          <input type="number" id="tsCycleTime3_h" min="0" step="1" placeholder="HH" oninput="window._tsUpdatePreview(3)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+          <span style="color:#5eead4;font-weight:700;">:</span>
+          <input type="number" id="tsCycleTime3_m" min="0" max="59" step="1" placeholder="MM" oninput="window._tsUpdatePreview(3)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+          <span style="color:#5eead4;font-weight:700;">:</span>
+          <input type="number" id="tsCycleTime3_s" min="0" max="59" step="1" placeholder="SS" oninput="window._tsUpdatePreview(3)" style="width:100%;text-align:center;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 4px;font-size:12px;">
+        </div>
+        <div id="tsExpectedPreview3" style="font-size:11px;color:#5eead4;margin-bottom:6px;"></div>
+        <textarea id="tsNotes3" placeholder="Notes for this machine (optional)" style="width:100%;background:#042f2e;border:1px solid #0d9488;border-radius:8px;color:#f0f4f8;padding:8px 9px;font-size:12px;min-height:40px;"></textarea>
+      </div>
+
+      <button type="button" onclick="window._startTimeStudyEntry()" style="width:100%;background:#14b8a6;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">▶ START — 60 MIN TIMER</button>
+    </div>
+
+    <!-- IN PROGRESS — entries that have been started but not yet completed.
+         A background check fires a Pushover alert once 60 minutes has
+         passed since Start, reminding you to go record the part count. -->
+    <div id="timeStudyInProgressWrap" style="display:none;margin-bottom:14px;">
+      <div style="font-size:11px;color:#fbbf24;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-weight:700;">⏱ In Progress</div>
+      <div id="timeStudyInProgressList" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:12px;">
+      <button type="button" id="tsViewLogBtn" onclick="window._setTimeStudyView('log')" style="flex:1;background:rgba(20,184,166,0.2);border:1px solid #14b8a6;color:#5eead4;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📋 LOG</button>
+      <button type="button" id="tsViewSummaryBtn" onclick="window._setTimeStudyView('summary')" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid #334155;color:#94a3b8;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📊 SUMMARY BY EMPLOYEE</button>
+    </div>
+    <button type="button" onclick="window._printTimeStudyReport()" style="width:100%;margin-bottom:12px;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#e2e8f0;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">🖨 EXPORT / SAVE AS PDF</button>
+
+    <input type="text" id="tsLogSearch" placeholder="Search employee, machine, WO, part…" oninput="window._renderTimeStudy()"
+      style="width:100%;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;margin-bottom:12px;outline:none;">
+
+    <div id="timeStudyLogList" style="display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;margin-bottom:14px;">
+      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">No entries yet — tap + NEW ENTRY to log one.</div>
+    </div>
+    <div id="timeStudySummaryList" style="display:none;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;margin-bottom:14px;"></div>
+
+    <button type="button" onclick="window._closeTimeStudy()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
   </div>
 </div>
 
@@ -4908,7 +5024,416 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
   })();
 
-  // ── TOOL LIST — digital replacement for the paper "TOOL LIST" setup tag ──
+  // ── EMPLOYEE TIME STUDY ── Track actual parts made vs. expected during a
+  // dedicated hour with an employee. Preloaded employee roster (the same
+  // list used in the request form's operator dropdown) and machine list
+  // (the same one the Planner uses) — nothing to set up first. Permanent
+  // record, admin/manager only since it's individual performance data.
+  var TIME_STUDY_EMPLOYEES = [
+    'Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield',
+    'Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin','Jason Cox',
+    'Jimmy Pollard','John McGuire','Keith Groden','Ker Vang','Mario Cacoperdo',
+    'Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt',
+    'Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'
+  ];
+  window._timeStudyEntries = [];
+  window._timeStudyView = 'log';
+  window._tsAlertingInFlight = {}; // local guard against double-firing while a Firestore write is in progress
+
+  function _tsCanUse(){
+    return !!(window._isAdmin || window.currentUser === 'hilladmin');
+  }
+
+  window._startTimeStudyListener = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods){ setTimeout(window._startTimeStudyListener, 800); return; }
+    mods.onSnapshot(mods.collection(db2, 'hillTimeStudies'), function(snap){
+      var items = [];
+      snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
+      items.sort(function(a,b){
+        var at = a.createdAt && a.createdAt.seconds || 0, bt = b.createdAt && b.createdAt.seconds || 0;
+        return bt - at;
+      });
+      window._timeStudyEntries = items;
+      window._renderTimeStudy();
+    }, function(e){ console.warn('Time Study listener:', e.message); });
+  };
+
+  // Checks every in-progress entry once a minute — fires a Pushover alert
+  // the first time 60 minutes has passed since Start, then marks it so it
+  // never fires twice for the same entry. This only works while the app is
+  // open somewhere, same as every other live alert in this app.
+  window._checkTimeStudyAlerts = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var now = Math.floor(Date.now()/1000);
+    (window._timeStudyEntries||[]).forEach(function(e){
+      if(e.stage !== 'in_progress') return;
+      if(e.alertSent) return;
+      if(window._tsAlertingInFlight[e.id]) return;
+      var started = e.startedAt && e.startedAt.seconds;
+      if(!started) return;
+      if(now - started < 3600) return;
+      window._tsAlertingInFlight[e.id] = true;
+      mods.updateDoc(mods.doc(db2, 'hillTimeStudies', e.id), { alertSent: true }).catch(function(){});
+      var machines = (e.jobs||[]).map(function(j){ return j.machine; }).join(', ');
+      if(window.adminPushover) window.adminPushover('⏱ Time Study — 60 Minutes Up', e.employee + ' (' + machines + ') — go record the part count.');
+    });
+  };
+  setInterval(window._checkTimeStudyAlerts, 60000);
+
+  window._openTimeStudy = function(){
+    if(!_tsCanUse()) return;
+    var empSel = document.getElementById('tsEmployee');
+    if(empSel && empSel.options.length <= 1){
+      TIME_STUDY_EMPLOYEES.forEach(function(name){
+        var opt = document.createElement('option');
+        opt.value = name; opt.textContent = name;
+        empSel.appendChild(opt);
+      });
+    }
+    ['tsMachine1','tsMachine2','tsMachine3'].forEach(function(id){
+      var machSel = document.getElementById(id);
+      if(machSel && machSel.options.length <= 1 && window.PLANNER_MACHINES){
+        window.PLANNER_MACHINES.forEach(function(m){
+          var opt = document.createElement('option');
+          opt.value = m.name; opt.textContent = m.name + ' (' + m.cell + ')';
+          machSel.appendChild(opt);
+        });
+      }
+    });
+    var dateInput = document.getElementById('tsDate');
+    if(dateInput && !dateInput.value) dateInput.value = new Date().toISOString().slice(0,10);
+    var timeInput = document.getElementById('tsTime');
+    if(timeInput && !timeInput.value){
+      var now = new Date();
+      timeInput.value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    }
+    window._renderTimeStudy();
+    document.getElementById('timeStudyOverlay').style.display = 'flex';
+  };
+  window._closeTimeStudy = function(){
+    document.getElementById('timeStudyOverlay').style.display = 'none';
+  };
+  window._toggleTimeStudyForm = function(){
+    var form = document.getElementById('timeStudyForm');
+    if(!form) return;
+    form.style.display = (form.style.display === 'none') ? 'block' : 'none';
+  };
+  window._setTimeStudyView = function(view){
+    window._timeStudyView = view;
+    var logBtn = document.getElementById('tsViewLogBtn'), summaryBtn = document.getElementById('tsViewSummaryBtn');
+    var logList = document.getElementById('timeStudyLogList'), summaryList = document.getElementById('timeStudySummaryList');
+    var active = 'background:rgba(20,184,166,0.2);border:1px solid #14b8a6;color:#5eead4;';
+    var inactive = 'background:rgba(255,255,255,0.05);border:1px solid #334155;color:#94a3b8;';
+    var baseStyle = 'flex:1;border-radius:8px;padding:9px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;';
+    if(logBtn) logBtn.style.cssText = baseStyle + (view==='log'?active:inactive);
+    if(summaryBtn) summaryBtn.style.cssText = baseStyle + (view==='summary'?active:inactive);
+    if(logList) logList.style.display = view==='log' ? 'flex' : 'none';
+    if(summaryList) summaryList.style.display = view==='summary' ? 'flex' : 'none';
+    window._renderTimeStudy();
+  };
+
+  // Live preview while filling out the form — expected rate only, since
+  // actual parts aren't known until the hour is up.
+  // Reads the HH/MM/SS trio for a machine slot and returns total seconds
+  // (or 0 if nothing's filled in).
+  function _tsReadCycleTime(slot){
+    var h = parseFloat(document.getElementById('tsCycleTime' + slot + '_h').value) || 0;
+    var m = parseFloat(document.getElementById('tsCycleTime' + slot + '_m').value) || 0;
+    var s = parseFloat(document.getElementById('tsCycleTime' + slot + '_s').value) || 0;
+    return (h * 3600) + (m * 60) + s;
+  }
+
+  window._tsUpdatePreview = function(slot){
+    var cycle = _tsReadCycleTime(slot);
+    var preview = document.getElementById('tsExpectedPreview' + slot);
+    if(!preview) return;
+    if(!cycle || cycle <= 0){ preview.textContent = ''; return; }
+    var expected = 3600 / cycle;
+    preview.textContent = 'Expected: ' + expected.toFixed(1) + ' parts/hr';
+  };
+
+  // STEP 1 — Start. Records the job info and starts the clock; no part
+  // count yet. A Pushover alert fires automatically 60 minutes from now.
+  window._startTimeStudyEntry = function(){
+    if(!_tsCanUse()) return;
+    var employee = document.getElementById('tsEmployee').value;
+    var date = document.getElementById('tsDate').value;
+    var time = document.getElementById('tsTime').value;
+
+    if(!employee){ if(window.showToast) showToast('red','Employee is required',''); return; }
+
+    var jobs = [];
+    for(var slot = 1; slot <= 3; slot++){
+      var machine = document.getElementById('tsMachine' + slot).value;
+      if(!machine) continue;
+      var cycleTime = _tsReadCycleTime(slot);
+      if(!cycleTime || cycleTime <= 0){ if(window.showToast) showToast('red','Machine ' + slot + ' needs a standard cycle time',''); return; }
+      jobs.push({
+        machine: machine,
+        wo: document.getElementById('tsWo' + slot).value.trim(),
+        op: document.getElementById('tsOp' + slot).value.trim(),
+        part: document.getElementById('tsPart' + slot).value.trim(),
+        cycleTimeSec: cycleTime,
+        expectedPartsPerHr: 3600 / cycleTime,
+        notes: document.getElementById('tsNotes' + slot).value.trim()
+      });
+    }
+    if(!jobs.length){ if(window.showToast) showToast('red','Fill in at least Machine 1',''); return; }
+
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.addDoc(mods.collection(db2, 'hillTimeStudies'), {
+      employee: employee, jobs: jobs,
+      testDate: date, testTime: time,
+      stage: 'in_progress', alertSent: false,
+      startedBy: window.currentUser || 'unknown', startedAt: mods.serverTimestamp(),
+      createdAt: mods.serverTimestamp()
+    }).then(function(){
+      document.getElementById('tsEmployee').value = '';
+      for(var slot = 1; slot <= 3; slot++){
+        document.getElementById('tsMachine' + slot).value = '';
+        document.getElementById('tsWo' + slot).value = '';
+        document.getElementById('tsOp' + slot).value = '';
+        document.getElementById('tsPart' + slot).value = '';
+        document.getElementById('tsCycleTime' + slot + '_h').value = '';
+        document.getElementById('tsCycleTime' + slot + '_m').value = '';
+        document.getElementById('tsCycleTime' + slot + '_s').value = '';
+        document.getElementById('tsExpectedPreview' + slot).textContent = '';
+        document.getElementById('tsNotes' + slot).value = '';
+      }
+      window._toggleTimeStudyForm();
+      if(window.showToast) showToast('green','Timer started', employee + ' — you\'ll get a Pushover in 60 minutes.');
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Failed to start', e.message);
+    });
+  };
+
+  // STEP 2 — Complete. Shows one part-count input per machine job, then saves.
+  window._completeTimeStudyEntry = function(id){
+    if(!_tsCanUse()) return;
+    var wrap = document.getElementById('tsCompleteWrap_' + id);
+    if(wrap) wrap.style.display = (wrap.style.display === 'none') ? 'block' : 'none';
+  };
+
+  window._saveTimeStudyCompletion = function(id){
+    if(!_tsCanUse()) return;
+    var entry = (window._timeStudyEntries||[]).find(function(e){ return e.id === id; });
+    if(!entry) return;
+    var jobs = (entry.jobs||[]).map(function(j, idx){
+      var actualInput = document.getElementById('tsCompleteActual_' + id + '_' + idx);
+      var actual = actualInput ? parseFloat(actualInput.value) : NaN;
+      if(isNaN(actual) || actual < 0) actual = 0;
+      return Object.assign({}, j, {
+        actualParts: actual,
+        variance: actual - (j.expectedPartsPerHr||0),
+        pctExpected: (j.expectedPartsPerHr||0) > 0 ? actual / j.expectedPartsPerHr : 0
+      });
+    });
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillTimeStudies', id), {
+      jobs: jobs, stage: 'complete',
+      completedBy: window.currentUser || 'unknown', completedAt: mods.serverTimestamp()
+    }).then(function(){
+      if(window.showToast) showToast('green','Entry completed','Saved to the log.');
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Failed to save', e.message);
+    });
+  };
+
+  window._deleteTimeStudyEntry = function(id){
+    if(!(window._isAdmin || window.currentUser === 'hilladmin')) return;
+    if(!confirm('Delete this entry permanently?')) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.deleteDoc(mods.doc(db2, 'hillTimeStudies', id)).then(function(){
+      if(window.showToast) showToast('green','Deleted','Entry removed.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to delete', e.message); });
+  };
+
+  function _tsStatusColor(pct){
+    if(pct >= 1) return '#22c55e';
+    if(pct >= 0.85) return '#eab308';
+    return '#ef4444';
+  }
+  function _tsStatusLabel(pct){
+    if(pct >= 1) return 'On/Above Target';
+    if(pct >= 0.85) return 'Slightly Below';
+    return 'Needs Attention';
+  }
+  function _tsFmtElapsed(startedAt){
+    if(!startedAt || !startedAt.seconds) return '';
+    var mins = Math.floor((Date.now()/1000 - startedAt.seconds) / 60);
+    if(mins < 60) return mins + ' min';
+    return Math.floor(mins/60) + 'h ' + (mins%60) + 'm';
+  }
+
+  window._renderTimeStudy = function(){
+    var q = ((document.getElementById('tsLogSearch')||{}).value || '').trim().toLowerCase();
+    var all = window._timeStudyEntries || [];
+    var inProgress = all.filter(function(e){ return e.stage === 'in_progress'; });
+    var completed = all.filter(function(e){ return e.stage === 'complete'; });
+    if(q){
+      completed = completed.filter(function(e){
+        var jobText = (e.jobs||[]).map(function(j){ return [j.machine, j.wo, j.op, j.part, j.notes].join(' '); }).join(' ');
+        return [e.employee, jobText].join(' ').toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    var isAdmin = window._isAdmin || window.currentUser === 'hilladmin';
+    var canUse = _tsCanUse();
+
+    // ── In Progress ──
+    var ipWrap = document.getElementById('timeStudyInProgressWrap');
+    var ipList = document.getElementById('timeStudyInProgressList');
+    if(ipWrap && ipList){
+      ipWrap.style.display = inProgress.length ? 'block' : 'none';
+      ipList.innerHTML = inProgress.map(function(e){
+        var machines = (e.jobs||[]).map(function(j){ return j.machine; }).join(', ');
+        var elapsed = _tsFmtElapsed(e.startedAt);
+        var pastHour = e.startedAt && e.startedAt.seconds && (Math.floor(Date.now()/1000) - e.startedAt.seconds >= 3600);
+        var completeRows = (e.jobs||[]).map(function(j, idx){
+          return '<div style="margin-bottom:6px;">'
+            + '<div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">' + window._escAttr(j.machine||'') + (j.wo?(' — WO '+window._escAttr(j.wo)):'') + '</div>'
+            + '<input type="number" id="tsCompleteActual_' + e.id + '_' + idx + '" min="0" step="1" placeholder="Actual parts made" style="width:100%;background:#1a1035;border:1px solid #eab308;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;">'
+            + '</div>';
+        }).join('');
+        return '<div style="background:rgba(234,179,8,0.08);border:1px solid ' + (pastHour?'#ef4444':'#eab308') + ';border-radius:8px;padding:10px 12px;">'
+          + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:2px;">' + window._escAttr(e.employee||'') + ' · ' + window._escAttr(machines) + '</div>'
+          + '<div style="font-size:11px;color:' + (pastHour?'#fca5a5':'#fde047') + ';margin-bottom:8px;">' + (pastHour ? '⏰ Past 60 min — ' : '⏱ Running — ') + elapsed + ' elapsed</div>'
+          + (canUse
+              ? '<button onclick="window._completeTimeStudyEntry(\'' + e.id + '\')" style="width:100%;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;margin-bottom:6px;">✓ COMPLETE — ENTER PART COUNT</button>'
+                + '<div id="tsCompleteWrap_' + e.id + '" style="display:none;">'
+                  + completeRows
+                  + '<button onclick="window._saveTimeStudyCompletion(\'' + e.id + '\')" style="width:100%;background:#14b8a6;border:none;color:#042f2e;border-radius:6px;padding:8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">SAVE &amp; COMPLETE</button>'
+                + '</div>'
+              : '<div style="text-align:center;font-size:11px;color:#94a3b8;">In progress</div>')
+          + '</div>';
+      }).join('');
+    }
+
+    // ── Log view — completed entries only ──
+    var logList = document.getElementById('timeStudyLogList');
+    if(logList){
+      logList.innerHTML = !completed.length
+        ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">' + (q ? 'No matches.' : 'No completed entries yet.') + '</div>'
+        : completed.map(function(e){
+            var jobs = e.jobs || [];
+            var totalExpected = jobs.reduce(function(s,j){ return s + (j.expectedPartsPerHr||0); }, 0);
+            var totalActual = jobs.reduce(function(s,j){ return s + (j.actualParts||0); }, 0);
+            var overallUtil = totalExpected > 0 ? totalActual / totalExpected : 0;
+            var color = _tsStatusColor(overallUtil);
+            var jobLines = jobs.map(function(j){
+              var jc = _tsStatusColor(j.pctExpected);
+              var jobBits = [];
+              if(j.wo) jobBits.push('WO ' + j.wo);
+              if(j.op) jobBits.push('OP ' + j.op);
+              if(j.part) jobBits.push('Part ' + j.part);
+              return '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">'
+                + '<div style="font-size:12px;color:#f0f4f8;font-weight:600;">' + window._escAttr(j.machine||'') + (jobBits.length ? ' — ' + window._escAttr(jobBits.join(' · ')) : '') + '</div>'
+                + '<div style="font-size:11px;color:#cbd5e1;">Expected ' + (j.expectedPartsPerHr||0).toFixed(1) + '/hr · Actual ' + j.actualParts + ' · <span style="color:' + jc + ';font-weight:700;">' + Math.round((j.pctExpected||0)*100) + '% utilization (' + _tsStatusLabel(j.pctExpected) + ')</span></div>'
+                + (j.notes ? '<div style="font-size:11px;color:#94a3b8;margin-top:3px;font-style:italic;">' + window._escAttr(j.notes) + '</div>' : '')
+                + '</div>';
+            }).join('');
+            return '<div style="position:relative;background:rgba(255,255,255,0.03);border:1px solid ' + color + '44;border-left:3px solid ' + color + ';border-radius:8px;padding:10px 12px;">'
+              + (isAdmin ? '<button onclick="window._deleteTimeStudyEntry(\'' + e.id + '\')" title="Delete" style="position:absolute;top:8px;right:8px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;width:24px;height:24px;font-size:11px;cursor:pointer;">🗑</button>' : '')
+              + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:2px;padding-right:' + (isAdmin?'30px':'0') + ';">' + window._escAttr(e.employee||'') + '</div>'
+              + '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;">' + (e.testDate||'') + (e.testTime?(' ' + e.testTime):'') + '</div>'
+              + '<div style="display:inline-block;background:' + color + '22;border:1px solid ' + color + ';border-radius:6px;padding:5px 10px;font-size:13px;font-weight:700;color:' + color + ';">⏱ ' + Math.round(overallUtil*100) + '% Overall Utilization</div>'
+              + jobLines
+              + '</div>';
+          }).join('');
+    }
+
+    // ── Summary by employee view — aggregated across every completed machine job ──
+    var summaryList = document.getElementById('timeStudySummaryList');
+    if(summaryList){
+      var byEmp = {};
+      completed.forEach(function(e){
+        if(!byEmp[e.employee]) byEmp[e.employee] = { machines: {}, hours: 0, jobCount: 0, expected: 0, actual: 0 };
+        var b = byEmp[e.employee];
+        b.hours++;
+        (e.jobs||[]).forEach(function(j){
+          b.jobCount++;
+          b.expected += (j.expectedPartsPerHr||0);
+          b.actual += (j.actualParts||0);
+          if(j.machine) b.machines[j.machine] = true;
+        });
+      });
+      var names = Object.keys(byEmp).sort();
+      if(q) names = names.filter(function(n){ return n.toLowerCase().indexOf(q) !== -1; });
+      summaryList.innerHTML = !names.length
+        ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">No completed entries yet.</div>'
+        : names.map(function(name){
+            var b = byEmp[name];
+            var pct = b.expected > 0 ? b.actual / b.expected : 0;
+            var color = _tsStatusColor(pct);
+            var machList = Object.keys(b.machines).join(', ');
+            return '<div style="background:rgba(255,255,255,0.03);border:1px solid ' + color + '44;border-left:3px solid ' + color + ';border-radius:8px;padding:10px 12px;">'
+              + '<div style="font-size:13px;color:#f0f4f8;font-weight:600;margin-bottom:2px;">' + window._escAttr(name) + '</div>'
+              + (machList ? '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">' + window._escAttr(machList) + '</div>' : '')
+              + '<div style="font-size:12px;color:#cbd5e1;">' + b.hours + ' hour(s) logged · ' + b.jobCount + ' machine-job(s) · Expected ' + b.expected.toFixed(1) + ' · Actual ' + b.actual + ' · <span style="color:' + color + ';font-weight:700;">' + Math.round(pct*100) + '% Utilization (' + _tsStatusLabel(pct) + ')</span></div>'
+              + '</div>';
+          }).join('');
+    }
+
+    var badge = document.getElementById('timeStudyBadge');
+    if(badge){
+      var needsAttention = inProgress.filter(function(e){
+        return e.startedAt && e.startedAt.seconds && (Math.floor(Date.now()/1000) - e.startedAt.seconds >= 3600);
+      }).length;
+      if(needsAttention > 0){ badge.textContent = needsAttention; badge.style.display = 'flex'; }
+      else badge.style.display = 'none';
+    }
+  };
+
+  // Opens a printable report in a new tab — same pattern as the Datanomix
+  // report. "Print / Save PDF" uses the browser's own print dialog, which
+  // can save directly to a PDF file ready to email or print.
+  window._printTimeStudyReport = function(){
+    var completed = (window._timeStudyEntries||[]).filter(function(e){ return e.stage === 'complete'; });
+
+    // Summary by employee
+    var byEmp = {};
+    completed.forEach(function(e){
+      if(!byEmp[e.employee]) byEmp[e.employee] = { machines: {}, hours: 0, expected: 0, actual: 0 };
+      var b = byEmp[e.employee];
+      b.hours++;
+      (e.jobs||[]).forEach(function(j){
+        b.expected += (j.expectedPartsPerHr||0);
+        b.actual += (j.actualParts||0);
+        if(j.machine) b.machines[j.machine] = true;
+      });
+    });
+    var summaryRows = Object.keys(byEmp).sort().map(function(name){
+      var b = byEmp[name];
+      var pct = b.expected > 0 ? b.actual / b.expected : 0;
+      return '<tr><td>'+name+'</td><td>'+Object.keys(b.machines).join(', ')+'</td><td>'+b.hours+'</td><td>'+b.expected.toFixed(1)+'</td><td>'+b.actual+'</td><td style="font-weight:700;color:'+_tsStatusColor(pct)+';">'+Math.round(pct*100)+'%</td><td>'+_tsStatusLabel(pct)+'</td></tr>';
+    }).join('');
+
+    // Detailed log — one row per machine job
+    var detailRows = [];
+    completed.forEach(function(e){
+      (e.jobs||[]).forEach(function(j){
+        detailRows.push('<tr><td>'+(e.employee||'')+'</td><td>'+(e.testDate||'')+' '+(e.testTime||'')+'</td><td>'+(j.machine||'')+'</td><td>'+(j.wo||'')+'</td><td>'+(j.op||'')+'</td><td>'+(j.part||'')+'</td><td>'+(j.expectedPartsPerHr||0).toFixed(1)+'</td><td>'+j.actualParts+'</td><td style="font-weight:700;color:'+_tsStatusColor(j.pctExpected)+';">'+Math.round((j.pctExpected||0)*100)+'%</td><td>'+(j.notes||'')+'</td></tr>');
+      });
+    });
+
+    var win = window.open('','_blank');
+    win.document.write('<!DOCTYPE html><html><head><title>Employee Time Study Report — Hill Manufacturing</title>'
+      +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#1a2744;}h1{font-size:20px;margin-bottom:2px;}h2{font-size:15px;margin-top:28px;border-bottom:2px solid #1a2744;padding-bottom:4px;}table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}th{background:#1a2744;color:#fff;padding:7px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #e5e7eb;}tr:nth-child(even){background:#f9fafb;}p.meta{color:#555;font-size:12px;}@media print{button{display:none!important;}}</style></head><body>'
+      +'<button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 Print / Save PDF</button>'
+      +'<h1>Hill Manufacturing — Employee Time Study Report</h1>'
+      +'<p class="meta">Generated: '+new Date().toLocaleString()+' &nbsp;|&nbsp; Completed studies: '+completed.length+'</p>'
+      +'<h2>Summary by Employee</h2>'
+      +'<table><thead><tr><th>Employee</th><th>Machine(s)</th><th>Hours Logged</th><th>Total Expected</th><th>Total Actual</th><th>Utilization</th><th>Status</th></tr></thead><tbody>'+(summaryRows||'<tr><td colspan="7">No completed studies yet.</td></tr>')+'</tbody></table>'
+      +'<h2>Detailed Log</h2>'
+      +'<table><thead><tr><th>Employee</th><th>Date/Time</th><th>Machine</th><th>WO#</th><th>OP#</th><th>Part#</th><th>Expected/hr</th><th>Actual</th><th>Utilization</th><th>Notes</th></tr></thead><tbody>'+(detailRows.join('')||'<tr><td colspan="10">No completed studies yet.</td></tr>')+'</tbody></table>'
+      +'</body></html>');
+    win.document.close();
+  };
+
   window._tlStagedTools = []; // [{desc, ooh, dia}, ...]
 
   window._openToolListForm = function(prefill){
@@ -5186,6 +5711,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   };
 
   window._startInspectorListener();
+  window._startTimeStudyListener();
 
   // ── INVENTORY BROWSER — all three catalogs, one place ──
   window._openInventoryBrowser = function(){
@@ -6801,6 +7327,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       document.getElementById('adminBtn').classList.add('visible');
       window._isAdmin = true;
       listenToUsers();
+      var tsTabAdmin = document.getElementById('tab-timestudy');
+      if (tsTabAdmin) tsTabAdmin.style.display = 'flex';
       // Production Log tab — hidden for now per request (not deleted,
       // just commented out — uncomment these 2 lines to bring it back).
       // var dashTab = document.getElementById('tab-dashboard');
@@ -6844,6 +7372,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     } else if (user.role === 'manager') {
       window._isManager = true;
       listenToUsers();
+      // Time Study tab is admin-only per request — not revealed for managers.
       // Production Log tab — hidden for now per request (not deleted,
       // just commented out — uncomment these 2 lines to bring it back).
       // var dashTab = document.getElementById('tab-dashboard');
@@ -6872,7 +7401,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var sb = document.getElementById('shopSwitchBtn');
     if (sb) sb.classList.remove('visible');
     // Hide admin-only tabs
-    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections'].forEach(function(id){
+    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections','tab-timestudy'].forEach(function(id){
       var t = document.getElementById(id); if(t) t.style.display = 'none';
     });
     // Switch back to shop floor if on a hidden tab
