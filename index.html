@@ -1333,8 +1333,8 @@
   <nav class="nav-tabs" id="navTabsEl">
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="window._openToolListBrowser()" id="tab-toollist">📋 Tool List</div>
-  <div class="nav-tab" onclick="window._openInventoryBrowser()" id="tab-inventory">📦 Inventory</div>
-  <div class="nav-tab" onclick="window._openInspectorLibrary()" id="tab-inspector">🔍 Inspector <span class="tab-badge" id="inspectorBadge" style="display:none">0</span></div>
+  <div class="nav-tab" onclick="window._openInventoryBrowser()" id="tab-inventory" style="display:none;">📦 Inventory</div>
+  <div class="nav-tab" onclick="window._openInspectorLibrary()" id="tab-inspector" style="display:none;">🔍 Inspector <span class="tab-badge" id="inspectorBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
@@ -1358,44 +1358,44 @@
     <div id="proshop-live-bar" style="display:none;background:rgba(0,7,26,0.9);border-bottom:1px solid #1e3a5c;padding:6px 16px;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;min-height:36px;">
       <span style="font-family:'Bebas Neue',sans-serif;font-size:10px;color:#475569;letter-spacing:2px;flex-shrink:0;">PROSHOP</span>
     </div>
-    <!-- LIVE REQUEST STATUS STRIP -->
-    <div onclick="window._toggleLiveStrip()" style="background:rgba(245,197,0,0.08);border:1px solid rgba(245,197,0,0.25);border-radius:8px;padding:6px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;">
-      <span style="font-family:'Bebas Neue',sans-serif;font-size:11px;color:#f5c842;letter-spacing:2px;">⚡ LIVE FEED</span>
-      <span style="font-size:10px;color:#64748b;letter-spacing:1px;">TAP TO VIEW ▼</span>
-    </div>
-    <div id="live-status-strip" onclick="window._toggleLiveStrip()" style="background:#060d1a;border:1px solid #1e3a5c;border-radius:6px;padding:5px 10px;margin-bottom:4px;min-height:52px;display:flex;align-items:center;gap:10px;overflow-x:hidden;scrollbar-width:none;flex-wrap:nowrap;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:rgba(245,200,0,0.2);">
-      <div id="live-strip-content" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;width:100%;">
-        <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
-          <span style="font-size:11px;color:#334155;letter-spacing:2px;font-family:'Bebas Neue',sans-serif;">LIVE FEED</span>
-          <span style="font-size:8px;color:#1e3a5c;">tap to expand</span>
+    <!-- LIVE REQUEST STATUS STRIP + SPARKY — combined into one compact row.
+         Left side is the running-request ticker (unchanged ids/behavior,
+         still tap-to-expand); right side is Sparky, shrunk down since the
+         full-width purple bar was taking too much vertical space. -->
+    <div style="display:flex;align-items:stretch;gap:8px;margin-bottom:4px;">
+      <div id="live-status-strip" onclick="window._toggleLiveStrip()" style="flex:1;min-width:0;background:#060d1a;border:1px solid #1e3a5c;border-radius:6px;padding:5px 10px;display:flex;align-items:center;gap:10px;overflow-x:hidden;scrollbar-width:none;flex-wrap:nowrap;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:rgba(245,200,0,0.2);">
+        <div id="live-strip-content" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;width:100%;">
+          <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+            <span style="font-size:11px;color:#334155;letter-spacing:2px;font-family:'Bebas Neue',sans-serif;">LIVE FEED</span>
+            <span style="font-size:8px;color:#1e3a5c;">tap to expand</span>
+          </div>
+          <span id="live-strip-empty" style="font-size:11px;color:#1e3a5c;font-style:italic;">No active requests</span>
         </div>
-        <span id="live-strip-empty" style="font-size:11px;color:#1e3a5c;font-style:italic;">No active requests</span>
       </div>
-    </div>
 
-    <!-- ── SPARKY BUTTON ── -->
-    <!-- Hidden Audio Player for background music -->
-    <audio id="sparky-audio" preload="none" style="display:none;"></audio>
+      <!-- ── SPARKY BUTTON — compact, right-aligned ── -->
+      <!-- Hidden Audio Player for background music -->
+      <audio id="sparky-audio" preload="none" style="display:none;"></audio>
 
-    <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:10px;padding:6px 12px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,0.15);">
-      <!-- Sparky Icon -->
-      <div id="sparky-avatar" style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid rgba(196,181,253,0.4);position:relative;box-shadow:0 0 8px rgba(139,92,246,0.3);">
-        🎙️
-        <div id="sparky-pulse" style="display:none;position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(139,92,246,0.7);animation:sparkypulse 1.4s ease-out infinite;"></div>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;color:#c4b5fd;letter-spacing:2px;">SPARKY</div>
-          <span id="sparky-onair" style="display:none;background:rgba(239,68,68,0.25);border:1px solid rgba(239,68,68,0.6);border-radius:999px;padding:2px 8px;font-size:10px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">&#11044; ON AIR</span>
+      <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:flex;align-items:center;gap:6px;flex-shrink:0;background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:10px;padding:4px 8px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,0.15);">
+        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+          <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:4px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;">SPEAK</button>
+          <button onclick="event.stopPropagation();if(window._sparkyNextSong)window._sparkyNextSong();" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Next song">&#9654;&#9654;</button>
+          <button onclick="event.stopPropagation();if(window._sparkyMusicToggle)window._sparkyMusicToggle();" id="sparky-music-btn" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Toggle music">&#127925;</button>
+          <button id="sparky-mute-btn" onclick="event.stopPropagation();if(window._sparkyMute)window._sparkyMute();" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;letter-spacing:1px;">🔊 MUTE</button>
+          <button id="sparky-main-toggle" onclick="event.stopPropagation();if(window._djToggle)window._djToggle();" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;min-width:38px;">OFF</button>
         </div>
-        <div id="sparky-status-text" style="font-size:9px;color:#7c3aed;">TAP TO ACTIVATE</div>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
-        <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:4px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;">SPEAK</button>
-        <button onclick="event.stopPropagation();if(window._sparkyNextSong)window._sparkyNextSong();" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Next song">&#9654;&#9654;</button>
-        <button onclick="event.stopPropagation();if(window._sparkyMusicToggle)window._sparkyMusicToggle();" id="sparky-music-btn" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Toggle music">&#127925;</button>
-        <button id="sparky-mute-btn" onclick="event.stopPropagation();if(window._sparkyMute)window._sparkyMute();" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;letter-spacing:1px;">🔊 MUTE</button>
-        <button id="sparky-main-toggle" onclick="event.stopPropagation();if(window._djToggle)window._djToggle();" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;min-width:38px;">OFF</button>
+        <div style="text-align:right;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+            <span id="sparky-onair" style="display:none;background:rgba(239,68,68,0.25);border:1px solid rgba(239,68,68,0.6);border-radius:999px;padding:2px 8px;font-size:9px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">&#11044; ON AIR</span>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#c4b5fd;letter-spacing:2px;">SPARKY</div>
+          </div>
+          <div id="sparky-status-text" style="font-size:8px;color:#7c3aed;">TAP TO ACTIVATE</div>
+        </div>
+        <div id="sparky-avatar" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:1px solid rgba(196,181,253,0.4);position:relative;box-shadow:0 0 8px rgba(139,92,246,0.3);">
+          🎙️
+          <div id="sparky-pulse" style="display:none;position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(139,92,246,0.7);animation:sparkypulse 1.4s ease-out infinite;"></div>
+        </div>
       </div>
     </div>
     <style>
@@ -6801,16 +6801,19 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       document.getElementById('adminBtn').classList.add('visible');
       window._isAdmin = true;
       listenToUsers();
-      // Production Log tab — always visible to admin
-      var dashTab = document.getElementById('tab-dashboard');
-      if (dashTab) dashTab.style.display = '';
+      // Production Log tab — hidden for now per request (not deleted,
+      // just commented out — uncomment these 2 lines to bring it back).
+      // var dashTab = document.getElementById('tab-dashboard');
+      // if (dashTab) dashTab.style.display = '';
       // These tabs are hidden until ProShop/Datanomix APIs are ready
       // They appear automatically in Demo Mode
       // tab-mgmt, tab-proshop, tab-planner, tab-datanomix, tab-shoptv — demo only
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
-      var annTab = document.getElementById('tab-announce');
-      if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
+      // Announce tab — hidden for now per request (not deleted, just
+      // commented out — uncomment this line to bring it back).
+      // var annTab = document.getElementById('tab-announce');
+      // if (annTab) { annTab.style.display = 'flex'; annTab.style.removeProperty('display'); annTab.style.cssText = ''; }
       var aiTab = document.getElementById('tab-aichat');
       if (aiTab) aiTab.style.display = 'flex';
       var dnxTab = document.getElementById('tab-dnxalerts');
@@ -6818,8 +6821,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var emuWrap = document.getElementById('emulatorCardWrap');
       if (emuWrap) emuWrap.style.display = 'grid';
       setTimeout(function(){
-        var a = document.getElementById('tab-announce');
-        if(a) a.style.display = 'flex';
+        // Announce tab reveal disabled per request — see comment above.
+        // var a = document.getElementById('tab-announce');
+        // if(a) a.style.display = 'flex';
         var b = document.getElementById('tab-aichat');
         if(b) b.style.display = 'flex';
         var c = document.getElementById('tab-dnxalerts');
@@ -6840,9 +6844,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     } else if (user.role === 'manager') {
       window._isManager = true;
       listenToUsers();
-      // Production Log always visible to manager
-      var dashTab = document.getElementById('tab-dashboard');
-      if (dashTab) dashTab.style.display = '';
+      // Production Log tab — hidden for now per request (not deleted,
+      // just commented out — uncomment these 2 lines to bring it back).
+      // var dashTab = document.getElementById('tab-dashboard');
+      // if (dashTab) dashTab.style.display = '';
       var inspTab = document.getElementById('tab-inspections');
       if (inspTab) inspTab.style.display = '';
       // tab-mgmt, tab-proshop, tab-planner, tab-datanomix, tab-shoptv — demo only
