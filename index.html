@@ -4071,6 +4071,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       method: 'POST', mode: 'no-cors', body: fd
     }).catch(function(e){ console.warn('Admin Pushover:', e.message); });
   }
+  // Exposed on window — several features (Time Study, Inspector, Floor
+  // Support, job-complete/alarm alerts) call this as window.adminPushover
+  // from other script blocks. Without this line those calls all silently
+  // no-op, since the `if(window.adminPushover)` guard evaluates false.
+  window.adminPushover = adminPushover;
 
   // ── QUALITY MANAGER PUSHOVER — fires on every red/inspection request ──
   // ── SHARED APP SECRETS SYNC ─────────────────────────────────
@@ -4168,6 +4173,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         .catch(function(e){ console.warn('[Pushover] qualityPushover fetch FAILED:', e.message); });
     });
   }
+  // Exposed on window — same reason as adminPushover above (see comment there).
+  window.qualityPushover = qualityPushover;
 
   function testQualityPushover() {
     var key = (document.getElementById('quality-pushover-key') || {}).value || '';
@@ -4262,6 +4269,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }).then(function(){ console.log('[Pushover] safePushover fetch resolved (no-cors, cannot see real status).'); })
       .catch(function(e){ console.warn('[Pushover] safePushover fetch FAILED:', e.message); });
   }
+  // Exposed on window — same reason as adminPushover above (see comment there).
+  window.safePushover = safePushover;
 
   // ── TAB SWITCHING ──
   function scrollTabs(amount) {
@@ -5225,10 +5234,24 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var actualInput = document.getElementById('tsCompleteActual_' + id + '_' + idx);
       var actual = actualInput ? parseFloat(actualInput.value) : NaN;
       if(isNaN(actual) || actual < 0) actual = 0;
+      var downtimeInput = document.getElementById('tsCompleteDowntime_' + id + '_' + idx);
+      var downtimeMin = downtimeInput ? parseFloat(downtimeInput.value) : NaN;
+      if(isNaN(downtimeMin) || downtimeMin < 0) downtimeMin = 0;
+      if(downtimeMin > 60) downtimeMin = 60;
+      var reasonSelect = document.getElementById('tsCompleteReason_' + id + '_' + idx);
+      var reason = reasonSelect ? reasonSelect.value : '';
+      // Adjusted expected accounts for reported downtime — a fairer
+      // comparison than assuming a full 60 productive minutes when part of
+      // the hour was lost to material wait, tooling, changeover, etc.
+      var availableSec = Math.max(0, 3600 - (downtimeMin * 60));
+      var adjustedExpected = (j.cycleTimeSec > 0) ? (availableSec / j.cycleTimeSec) : 0;
       return Object.assign({}, j, {
         actualParts: actual,
-        variance: actual - (j.expectedPartsPerHr||0),
-        pctExpected: (j.expectedPartsPerHr||0) > 0 ? actual / j.expectedPartsPerHr : 0
+        downtimeMin: downtimeMin,
+        reason: reason,
+        adjustedExpectedPartsPerHr: adjustedExpected,
+        variance: actual - adjustedExpected,
+        pctExpected: adjustedExpected > 0 ? actual / adjustedExpected : 0
       });
     });
     var db2 = window.fbDb, mods = window._fbModules;
@@ -5294,9 +5317,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         var elapsed = _tsFmtElapsed(e.startedAt);
         var pastHour = e.startedAt && e.startedAt.seconds && (Math.floor(Date.now()/1000) - e.startedAt.seconds >= 3600);
         var completeRows = (e.jobs||[]).map(function(j, idx){
-          return '<div style="margin-bottom:6px;">'
+          var reasonOpts = ['','Material Wait','Tooling Issue','Quality Hold','Changeover','Training','Other']
+            .map(function(r){ return '<option value="' + r + '">' + (r || '-- Reason (if below target) --') + '</option>'; }).join('');
+          return '<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.08);">'
             + '<div style="font-size:11px;color:#94a3b8;margin-bottom:3px;">' + window._escAttr(j.machine||'') + (j.wo?(' — WO '+window._escAttr(j.wo)):'') + '</div>'
-            + '<input type="number" id="tsCompleteActual_' + e.id + '_' + idx + '" min="0" step="1" placeholder="Actual parts made" style="width:100%;background:#1a1035;border:1px solid #eab308;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;">'
+            + '<input type="number" id="tsCompleteActual_' + e.id + '_' + idx + '" min="0" step="1" placeholder="Actual parts made" style="width:100%;background:#1a1035;border:1px solid #eab308;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;margin-bottom:5px;">'
+            + '<input type="number" id="tsCompleteDowntime_' + e.id + '_' + idx + '" min="0" step="1" placeholder="Downtime this hour (min) — material wait, tooling, etc." style="width:100%;background:#1a1035;border:1px solid #eab308;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;margin-bottom:5px;">'
+            + '<select id="tsCompleteReason_' + e.id + '_' + idx + '" style="width:100%;background:#1a1035;border:1px solid #eab308;border-radius:6px;color:#f0f4f8;padding:7px 9px;font-size:12px;">' + reasonOpts + '</select>'
             + '</div>';
         }).join('');
         return '<div style="background:rgba(234,179,8,0.08);border:1px solid ' + (pastHour?'#ef4444':'#eab308') + ';border-radius:8px;padding:10px 12px;">'
@@ -5320,7 +5347,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         ? '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">' + (q ? 'No matches.' : 'No completed entries yet.') + '</div>'
         : completed.map(function(e){
             var jobs = e.jobs || [];
-            var totalExpected = jobs.reduce(function(s,j){ return s + (j.expectedPartsPerHr||0); }, 0);
+            var totalExpected = jobs.reduce(function(s,j){ return s + (j.adjustedExpectedPartsPerHr!=null ? j.adjustedExpectedPartsPerHr : (j.expectedPartsPerHr||0)); }, 0);
             var totalActual = jobs.reduce(function(s,j){ return s + (j.actualParts||0); }, 0);
             var overallUtil = totalExpected > 0 ? totalActual / totalExpected : 0;
             var color = _tsStatusColor(overallUtil);
@@ -5330,9 +5357,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
               if(j.wo) jobBits.push('WO ' + j.wo);
               if(j.op) jobBits.push('OP ' + j.op);
               if(j.part) jobBits.push('Part ' + j.part);
+              var hasDowntime = j.downtimeMin > 0;
+              var adjustedExpected = j.adjustedExpectedPartsPerHr != null ? j.adjustedExpectedPartsPerHr : j.expectedPartsPerHr;
+              var expectedLine = hasDowntime
+                ? 'Expected ' + (j.expectedPartsPerHr||0).toFixed(1) + '/hr (full hr) → ' + adjustedExpected.toFixed(1) + '/hr adjusted for ' + j.downtimeMin + ' min downtime'
+                : 'Expected ' + (j.expectedPartsPerHr||0).toFixed(1) + '/hr';
               return '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">'
                 + '<div style="font-size:12px;color:#f0f4f8;font-weight:600;">' + window._escAttr(j.machine||'') + (jobBits.length ? ' — ' + window._escAttr(jobBits.join(' · ')) : '') + '</div>'
-                + '<div style="font-size:11px;color:#cbd5e1;">Expected ' + (j.expectedPartsPerHr||0).toFixed(1) + '/hr · Actual ' + j.actualParts + ' · <span style="color:' + jc + ';font-weight:700;">' + Math.round((j.pctExpected||0)*100) + '% utilization (' + _tsStatusLabel(j.pctExpected) + ')</span></div>'
+                + '<div style="font-size:11px;color:#cbd5e1;">' + expectedLine + ' · Actual ' + j.actualParts + ' · <span style="color:' + jc + ';font-weight:700;">' + Math.round((j.pctExpected||0)*100) + '% utilization (' + _tsStatusLabel(j.pctExpected) + ')</span></div>'
+                + (j.reason ? '<div style="font-size:11px;color:#fbbf24;margin-top:3px;">⚠ ' + window._escAttr(j.reason) + '</div>' : '')
                 + (j.notes ? '<div style="font-size:11px;color:#94a3b8;margin-top:3px;font-style:italic;">' + window._escAttr(j.notes) + '</div>' : '')
                 + '</div>';
             }).join('');
@@ -5356,7 +5389,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         b.hours++;
         (e.jobs||[]).forEach(function(j){
           b.jobCount++;
-          b.expected += (j.expectedPartsPerHr||0);
+          b.expected += (j.adjustedExpectedPartsPerHr!=null ? j.adjustedExpectedPartsPerHr : (j.expectedPartsPerHr||0));
           b.actual += (j.actualParts||0);
           if(j.machine) b.machines[j.machine] = true;
         });
@@ -5401,7 +5434,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var b = byEmp[e.employee];
       b.hours++;
       (e.jobs||[]).forEach(function(j){
-        b.expected += (j.expectedPartsPerHr||0);
+        b.expected += (j.adjustedExpectedPartsPerHr!=null ? j.adjustedExpectedPartsPerHr : (j.expectedPartsPerHr||0));
         b.actual += (j.actualParts||0);
         if(j.machine) b.machines[j.machine] = true;
       });
@@ -5416,7 +5449,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var detailRows = [];
     completed.forEach(function(e){
       (e.jobs||[]).forEach(function(j){
-        detailRows.push('<tr><td>'+(e.employee||'')+'</td><td>'+(e.testDate||'')+' '+(e.testTime||'')+'</td><td>'+(j.machine||'')+'</td><td>'+(j.wo||'')+'</td><td>'+(j.op||'')+'</td><td>'+(j.part||'')+'</td><td>'+(j.expectedPartsPerHr||0).toFixed(1)+'</td><td>'+j.actualParts+'</td><td style="font-weight:700;color:'+_tsStatusColor(j.pctExpected)+';">'+Math.round((j.pctExpected||0)*100)+'%</td><td>'+(j.notes||'')+'</td></tr>');
+        var adjustedExpected = j.adjustedExpectedPartsPerHr != null ? j.adjustedExpectedPartsPerHr : j.expectedPartsPerHr;
+        detailRows.push('<tr><td>'+(e.employee||'')+'</td><td>'+(e.testDate||'')+' '+(e.testTime||'')+'</td><td>'+(j.machine||'')+'</td><td>'+(j.wo||'')+'</td><td>'+(j.op||'')+'</td><td>'+(j.part||'')+'</td><td>'+(adjustedExpected||0).toFixed(1)+'</td><td>'+j.actualParts+'</td><td style="font-weight:700;color:'+_tsStatusColor(j.pctExpected)+';">'+Math.round((j.pctExpected||0)*100)+'%</td><td>'+(j.downtimeMin||0)+'</td><td>'+(j.reason||'')+'</td><td>'+(j.notes||'')+'</td></tr>');
       });
     });
 
@@ -5429,7 +5463,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       +'<h2>Summary by Employee</h2>'
       +'<table><thead><tr><th>Employee</th><th>Machine(s)</th><th>Hours Logged</th><th>Total Expected</th><th>Total Actual</th><th>Utilization</th><th>Status</th></tr></thead><tbody>'+(summaryRows||'<tr><td colspan="7">No completed studies yet.</td></tr>')+'</tbody></table>'
       +'<h2>Detailed Log</h2>'
-      +'<table><thead><tr><th>Employee</th><th>Date/Time</th><th>Machine</th><th>WO#</th><th>OP#</th><th>Part#</th><th>Expected/hr</th><th>Actual</th><th>Utilization</th><th>Notes</th></tr></thead><tbody>'+(detailRows.join('')||'<tr><td colspan="10">No completed studies yet.</td></tr>')+'</tbody></table>'
+      +'<table><thead><tr><th>Employee</th><th>Date/Time</th><th>Machine</th><th>WO#</th><th>OP#</th><th>Part#</th><th>Expected/hr</th><th>Actual</th><th>Utilization</th><th>Downtime (min)</th><th>Reason</th><th>Notes</th></tr></thead><tbody>'+(detailRows.join('')||'<tr><td colspan="12">No completed studies yet.</td></tr>')+'</tbody></table>'
       +'</body></html>');
     win.document.close();
   };
