@@ -6792,6 +6792,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     const roleEmoji = roleMap[user.role] || '🔧';
     greetingName.innerHTML = roleEmoji + ' <strong>' + escHtml(user.name) + '</strong>';
 
+    // Retro Emulator — everyone gets this, not just admin. It's just for
+    // breaks; ROMs are saved per-device only, never shared or synced.
+    var emuWrapAllUsers = document.getElementById('emulatorCardWrap');
+    if (emuWrapAllUsers) emuWrapAllUsers.style.display = 'grid';
+
     if (user.role === 'admin') {
       document.getElementById('adminBtn').classList.add('visible');
       window._isAdmin = true;
