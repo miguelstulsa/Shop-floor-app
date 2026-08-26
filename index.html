@@ -1330,7 +1330,6 @@
 </header>
 
 <div class="nav-tabs-wrap">
-  <button class="nav-scroll-btn left" onclick="scrollTabs(-120)" aria-label="Scroll tabs left">&#8249;</button>
   <nav class="nav-tabs" id="navTabsEl">
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="window._openToolListBrowser()" id="tab-toollist">📋 Tool List</div>
@@ -1349,7 +1348,6 @@
   <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;">📅 Planner</div>
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
   </nav>
-  <button class="nav-scroll-btn right" onclick="scrollTabs(120)" aria-label="Scroll tabs right">&#8250;</button>
 </div>
 
 <!-- SHOP FLOOR PAGE -->
@@ -1382,11 +1380,12 @@
       <audio id="sparky-audio" preload="none" style="display:none;"></audio>
 
       <div id="sparky-btn-wrap" onclick="window._djToggle()" style="display:flex;align-items:center;gap:8px;flex-shrink:0;background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:10px;padding:6px 14px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,0.15);">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#c4b5fd;letter-spacing:2px;">SPARKY</span>
         <div id="sparky-avatar" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:1px solid rgba(196,181,253,0.4);position:relative;box-shadow:0 0 8px rgba(139,92,246,0.3);">
           🎙️
           <div id="sparky-pulse" style="display:none;position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(139,92,246,0.7);animation:sparkypulse 1.4s ease-out infinite;"></div>
         </div>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#c4b5fd;letter-spacing:2px;">SPARKY RADIO</span>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#c4b5fd;letter-spacing:2px;">RADIO</span>
       </div>
     </div>
     <style>
