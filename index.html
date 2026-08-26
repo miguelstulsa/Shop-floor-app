@@ -39,6 +39,7 @@
   .nav-tabs-wrap { position: sticky; top: 0; z-index: 200; background: #0b1c2e; border-bottom: 2px solid #2a5a8c; display: flex; align-items: stretch; }
   .nav-tabs { background: transparent; display: flex; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; scroll-behavior: smooth; flex: 1; padding: 0; }
   .nav-tabs::-webkit-scrollbar { display: none; }
+  #live-status-strip::-webkit-scrollbar { display: none; }
   .nav-scroll-btn { background: rgba(0,0,0,0.5); border: none; color: #64748b; width: 32px; flex-shrink: 0; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; z-index: 1; }
   .nav-scroll-btn:active { background: rgba(245,158,11,0.2); color: #f59e0b; }
   .nav-scroll-btn.left { border-right: 1px solid #1a4a8c; }
@@ -1364,7 +1365,7 @@
          still tap-to-expand); right side is Sparky, shrunk down since the
          full-width purple bar was taking too much vertical space. -->
     <div style="display:flex;align-items:stretch;gap:8px;margin-bottom:4px;">
-      <div id="live-status-strip" onclick="window._toggleLiveStrip()" style="flex:1;min-width:0;background:#060d1a;border:1px solid #1e3a5c;border-radius:6px;padding:5px 10px;display:flex;align-items:center;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;flex-wrap:nowrap;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:rgba(245,200,0,0.2);">
+      <div id="live-status-strip" ondblclick="window._toggleLiveStrip()" style="flex:1;min-width:0;background:#060d1a;border:1px solid #1e3a5c;border-radius:6px;padding:5px 10px;display:flex;align-items:center;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;cursor:grab;transition:all .2s;-webkit-tap-highlight-color:transparent;">
         <div id="live-strip-content" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;width:100%;">
           <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
             <span style="font-size:11px;color:#334155;letter-spacing:2px;font-family:'Bebas Neue',sans-serif;">LIVE FEED</span>
@@ -15401,6 +15402,37 @@ setInterval(function() {
 <script>
 // ── LIVE REQUEST STATUS STRIP ─────────────────────────────────
 // Shows all active requests as compact chips on the shop floor
+// ── DRAG-TO-SCROLL — lets a mouse click-and-drag pan the ticker
+// horizontally, same as a touch swipe already does natively. Distinguishes
+// a real drag from a plain click/double-click by tracking how far the
+// mouse actually moved, so double-clicking a chip still works normally.
+(function(){
+  var stripEl = document.getElementById('live-status-strip');
+  if(!stripEl) return;
+  var isDown = false, startX = 0, startScroll = 0, moved = 0;
+  stripEl.addEventListener('mousedown', function(e){
+    isDown = true; moved = 0;
+    startX = e.pageX;
+    startScroll = stripEl.scrollLeft;
+    stripEl.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mouseup', function(){
+    isDown = false;
+    stripEl.style.cursor = 'grab';
+  });
+  window.addEventListener('mousemove', function(e){
+    if(!isDown) return;
+    var dx = e.pageX - startX;
+    moved = Math.max(moved, Math.abs(dx));
+    stripEl.scrollLeft = startScroll - dx;
+  });
+  // If the mouse actually dragged (not just clicked), swallow the
+  // resulting click/dblclick so a drag never accidentally opens a chip.
+  stripEl.addEventListener('click', function(e){
+    if(moved > 5) e.stopPropagation();
+  }, true);
+})();
+
 function updateLiveStrip() {
   var strip = document.getElementById('live-strip-content');
   var empty = document.getElementById('live-strip-empty');
@@ -15487,10 +15519,13 @@ function updateLiveStrip() {
               + (n.startedAt&&n.startedAt.seconds ? _fmtElapsed(nowSecs-n.startedAt.seconds) : '▶')
               + '</span>'
             : '');
-      // Click chip = open modal and highlight that job
+      // Double-click chip = open modal and highlight that job. Single
+      // click does nothing on purpose — a drag-to-scroll gesture starts
+      // with a mousedown/click too, so single-click can't safely open
+      // anything without fighting the drag.
       chip.style.cursor = 'pointer';
       (function(noteId){
-        chip.onclick = function(e){
+        chip.ondblclick = function(e){
           e.stopPropagation();
           window._toggleLiveStrip();
           // Scroll to this card after modal opens
