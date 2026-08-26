@@ -1364,7 +1364,7 @@
          Left side is the running-request ticker (unchanged ids/behavior,
          still tap-to-expand); right side is Sparky, shrunk down since the
          full-width purple bar was taking too much vertical space. -->
-    <div style="display:flex;align-items:stretch;gap:8px;margin-bottom:4px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
       <div id="live-status-strip" ondblclick="window._toggleLiveStrip()" style="flex:1;min-width:0;background:#060d1a;border:1px solid #1e3a5c;border-radius:6px;padding:5px 10px;display:flex;align-items:center;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;cursor:grab;transition:all .2s;-webkit-tap-highlight-color:transparent;">
         <div id="live-strip-content" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;width:100%;">
           <div style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
@@ -1379,25 +1379,20 @@
       <!-- Hidden Audio Player for background music -->
       <audio id="sparky-audio" preload="none" style="display:none;"></audio>
 
-      <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:flex;align-items:center;gap:6px;flex-shrink:0;background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:10px;padding:4px 8px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,0.15);">
-        <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
-          <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:4px 8px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;">SPEAK</button>
-          <button onclick="event.stopPropagation();if(window._sparkyNextSong)window._sparkyNextSong();" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Next song">&#9654;&#9654;</button>
-          <button onclick="event.stopPropagation();if(window._sparkyMusicToggle)window._sparkyMusicToggle();" id="sparky-music-btn" style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:13px;" title="Toggle music">&#127925;</button>
-          <button id="sparky-mute-btn" onclick="event.stopPropagation();if(window._sparkyMute)window._sparkyMute();" style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:11px;letter-spacing:1px;">🔊 MUTE</button>
-          <button id="sparky-main-toggle" onclick="event.stopPropagation();if(window._djToggle)window._djToggle();" style="background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1px;min-width:38px;">OFF</button>
+      <div id="sparky-btn-wrap" onclick="window._sparkyButtonTap()" style="display:grid;grid-template-columns:auto auto auto;grid-template-rows:auto auto auto;align-items:center;justify-items:center;gap:2px 8px;flex-shrink:0;background:linear-gradient(135deg,#1a0033,#2d0060);border:1px solid rgba(139,92,246,0.5);border-radius:10px;padding:5px 10px;cursor:pointer;box-shadow:0 2px 10px rgba(139,92,246,0.15);">
+        <div style="grid-column:1/4;display:flex;align-items:center;gap:6px;justify-content:center;">
+          <span id="sparky-onair" style="display:none;background:rgba(239,68,68,0.25);border:1px solid rgba(239,68,68,0.6);border-radius:999px;padding:2px 8px;font-size:9px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">&#11044; ON AIR</span>
+          <span style="font-family:'Bebas Neue',sans-serif;font-size:11px;color:#c4b5fd;letter-spacing:2px;">SPARKY</span>
+          <span id="sparky-status-text" style="font-size:8px;color:#7c3aed;">TAP TO ACTIVATE</span>
         </div>
-        <div style="text-align:right;min-width:0;">
-          <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
-            <span id="sparky-onair" style="display:none;background:rgba(239,68,68,0.25);border:1px solid rgba(239,68,68,0.6);border-radius:999px;padding:2px 8px;font-size:9px;color:#f87171;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;">&#11044; ON AIR</span>
-            <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;color:#c4b5fd;letter-spacing:2px;">SPARKY</div>
-          </div>
-          <div id="sparky-status-text" style="font-size:8px;color:#7c3aed;">TAP TO ACTIVATE</div>
-        </div>
-        <div id="sparky-avatar" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:1px solid rgba(196,181,253,0.4);position:relative;box-shadow:0 0 8px rgba(139,92,246,0.3);">
+        <button onclick="event.stopPropagation();if(window._djNow)window._djNow();" style="grid-column:1;grid-row:2;background:rgba(139,92,246,0.2);border:1px solid rgba(139,92,246,0.5);color:#c4b5fd;border-radius:8px;padding:5px 9px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;">SPEAK</button>
+        <div id="sparky-avatar" style="grid-column:2;grid-row:2;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#4c1d95,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:1px solid rgba(196,181,253,0.4);position:relative;box-shadow:0 0 8px rgba(139,92,246,0.3);">
           🎙️
           <div id="sparky-pulse" style="display:none;position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(139,92,246,0.7);animation:sparkypulse 1.4s ease-out infinite;"></div>
         </div>
+        <button id="sparky-mute-btn" onclick="event.stopPropagation();if(window._sparkyMute)window._sparkyMute();" style="grid-column:3;grid-row:2;background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:10px;letter-spacing:1px;">🔊 MUTE</button>
+        <button id="sparky-main-toggle" onclick="event.stopPropagation();if(window._djToggle)window._djToggle();" style="grid-column:2;grid-row:3;background:linear-gradient(135deg,#7c3aed,#8b5cf6);border:none;color:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:1px;min-width:38px;">OFF</button>
+      </div>
       </div>
     </div>
     <style>
