@@ -1331,6 +1331,7 @@
 </header>
 
 <div class="nav-tabs-wrap">
+
   <nav class="nav-tabs" id="navTabsEl">
   <div class="nav-tab active" onclick="switchTab('shop')" id="tab-shop">🏭 Shop Floor</div>
   <div class="nav-tab" onclick="window._openToolListBrowser()" id="tab-toollist">📋 Tool List</div>
@@ -1349,6 +1350,7 @@
   <div class="nav-tab" onclick="switchTab('planner')" id="tab-planner" style="display:none;">📅 Planner</div>
   <div class="nav-tab" onclick="switchTab('mgmt')" id="tab-mgmt" style="display:none;">💼 Management</div>
   </nav>
+
 </div>
 
 <!-- SHOP FLOOR PAGE -->
@@ -8199,11 +8201,76 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   };
 
   window._emuObjectUrl = null;
+  window._emuLoadStateObjectUrl = null;
 
-  function _emuLaunch(system, blob){
+  // Hashes the ROM's actual bytes (not its filename) so the same game is
+  // recognized as the same game regardless of what device it was added on
+  // or what it happened to be named there.
+  function _emuHashRom(arrayBuffer){
+    return crypto.subtle.digest('SHA-256', arrayBuffer).then(function(hashBuf){
+      var bytes = new Uint8Array(hashBuf);
+      var hex = '';
+      for (var i = 0; i < bytes.length; i++) hex += bytes[i].toString(16).padStart(2, '0');
+      return hex.slice(0, 24);
+    });
+  }
+
+  // Called directly by the emulator running inside the iframe (same-origin,
+  // so it can call parent functions directly — no postMessage needed)
+  // every time a save state is captured, whether via the Save State button,
+  // Quick Save, or an in-game autosave. Uploads it to Firestore keyed by
+  // this employee's login + this specific game, so picking the same game
+  // back up on any device restores exactly where they left off.
+  window._emuUploadSave = function(gameId, base64State){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods || !window.currentUser) return;
+    var docId = window.currentUser + '_' + gameId;
+    mods.setDoc(mods.doc(db2, 'hillGameSaves', docId), {
+      gameId: gameId, stateData: base64State,
+      savedBy: window.currentUser, savedAt: mods.serverTimestamp()
+    }).then(function(){
+      if(window.showToast) showToast('green', 'Progress saved', 'Synced to your login — pick up on any device.');
+    }).catch(function(e){ console.warn('Game save sync error:', e.message); });
+  };
+
+  function _emuFetchCloudSave(gameId){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods || !window.currentUser) return Promise.resolve(null);
+    var docId = window.currentUser + '_' + gameId;
+    return mods.getDoc(mods.doc(db2, 'hillGameSaves', docId)).then(function(snap){
+      if(!snap.exists()) return null;
+      return snap.data().stateData || null;
+    }).catch(function(e){ console.warn('Game save fetch error:', e.message); return null; });
+  }
+
+  function _base64ToBlob(base64){
+    var binary = atob(base64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: 'application/octet-stream' });
+  }
+
+  async function _emuLaunch(system, blob){
     if (window._emuObjectUrl) { URL.revokeObjectURL(window._emuObjectUrl); window._emuObjectUrl = null; }
+    if (window._emuLoadStateObjectUrl) { URL.revokeObjectURL(window._emuLoadStateObjectUrl); window._emuLoadStateObjectUrl = null; }
     var container = document.getElementById('emulatorContainer');
     container.innerHTML = '';
+
+    var romArrayBuffer = await blob.arrayBuffer();
+    var gameId = await _emuHashRom(romArrayBuffer);
+
+    // Check for existing progress saved under this login for this exact
+    // game (by content hash) before starting — if found, EmulatorJS loads
+    // it automatically via EJS_loadStateURL, no button press needed.
+    var cloudSaveB64 = await _emuFetchCloudSave(gameId);
+    var loadStateLine = '';
+    if (cloudSaveB64) {
+      var stateBlob = _base64ToBlob(cloudSaveB64);
+      var stateUrl = URL.createObjectURL(stateBlob);
+      window._emuLoadStateObjectUrl = stateUrl;
+      loadStateLine = 'window.EJS_loadStateURL = ' + JSON.stringify(stateUrl) + ';';
+      if (window.showToast) showToast('green', 'Resuming saved progress', 'Picking up where you left off.');
+    }
 
     var objectUrl = URL.createObjectURL(blob);
     window._emuObjectUrl = objectUrl;
@@ -8220,6 +8287,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     iframe.id = 'emulatorIframe';
     iframe.style.cssText = 'width:100%;height:100%;border:none;background:#000;display:block;';
     iframe.setAttribute('allow', 'autoplay; fullscreen; gamepad');
+    // allow-same-origin means this iframe shares the parent's origin, so
+    // its script can call parent._emuUploadSave(...) directly — no
+    // postMessage bridge needed for the save-sync hook below.
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-pointer-lock allow-forms allow-popups');
     iframe.srcdoc =
       '<!DOCTYPE html><html><head><style>html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden;}#gm{width:100%;height:100%;}</style></head>' +
@@ -8227,11 +8297,28 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       'window.EJS_player = "#gm";' +
       'window.EJS_core = ' + JSON.stringify(system) + ';' +
       'window.EJS_gameUrl = ' + JSON.stringify(objectUrl) + ';' +
+      // Stable identity for save data — a hash of the ROM's own bytes,
+      // not the ephemeral blob URL above (which changes every launch) and
+      // not the filename (which could differ between devices).
+      'window.EJS_gameID = ' + JSON.stringify(gameId) + ';' +
+      loadStateLine +
       'window.EJS_pathtodata = "https://cdn.emulatorjs.org/stable/data/";' +
       'window.EJS_startOnLoaded = true;' +
       // Explicitly guarantee save/load state controls are turned on
       // in the built-in menu bar, so there is always a visible save point.
       'window.EJS_Buttons = { playPause:true, restart:true, mute:true, settings:true, fullscreen:true, saveState:true, loadState:true, screenRecord:false, gamepad:true, cheat:false, volume:true, saveSavFiles:true, loadSavFiles:true, quickSave:true, quickLoad:true, screenshot:false, cacheManager:false };' +
+      // Every time a save state is captured (Save State button or Quick
+      // Save), sync it up to this login immediately — this is what makes
+      // "pick up where I left off on any device" actually work.
+      'window.EJS_onSaveState = function(args){' +
+        'try{' +
+          'var bytes = new Uint8Array(args.state);' +
+          'var binary = "";' +
+          'for(var i=0;i<bytes.length;i++) binary += String.fromCharCode(bytes[i]);' +
+          'var b64 = btoa(binary);' +
+          'if(parent && parent._emuUploadSave) parent._emuUploadSave(' + JSON.stringify(gameId) + ', b64);' +
+        '}catch(e){ console.warn("Save sync failed:", e.message); }' +
+      '};' +
       'var s = document.createElement("script"); s.src = "https://cdn.emulatorjs.org/stable/data/loader.js"; document.body.appendChild(s);' +
       '</scr' + 'ipt></body></html>';
     container.appendChild(iframe);
