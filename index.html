@@ -1046,8 +1046,10 @@
       <div style="font-size:11px;color:#64748b;margin-top:6px;">Current: <span id="qmi-url-display" style="color:#d8b4fe;">not set</span></div>
     </div>
 
-    <!-- DATANOMIX API INTEGRATION -->
-    <div class="admin-section" style="border:1px solid rgba(245,197,0,0.3);background:linear-gradient(145deg,#0a1a00,#1a2a00);">
+    <!-- DATANOMIX API INTEGRATION — hidden per request (not deleted, just
+         commented out via display:none — this was never actually
+         connected anyway; no API key was ever entered). -->
+    <div class="admin-section" style="display:none;border:1px solid rgba(245,197,0,0.3);background:linear-gradient(145deg,#0a1a00,#1a2a00);">
       <div class="admin-section-title" style="color:#f5c500;">⚡ Datanomix API Integration</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.7;">
         Paste your API key below to connect live machine data — utilization, cycle times, OEE, and part counts will appear directly on every machine card on the shop floor.
@@ -1108,6 +1110,30 @@
       <!-- Machine ID map confirmation -->
       <div style="font-size:11px;color:#475569;line-height:1.6;">
         All <strong style="color:#f0f4f8;">26 machines</strong> are pre-mapped to their Datanomix IDs — no setup needed. The moment you paste the API key, every machine card updates live every 60 seconds.
+      </div>
+    </div>
+
+    <!-- TIME REPORT — straight time on Pending WO + Machinist Req only,
+         nothing from Inspection, Running WO, or Datanomix. Meant to be a
+         clean, presentable number for a manager conversation. -->
+    <div class="admin-section" style="border:1px solid rgba(59,130,246,0.3);background:linear-gradient(145deg,#0a1220,#0f1a2e);">
+      <div class="admin-section-title" style="color:#93c5fd;">⏱ Time Report — Pending WO &amp; Machinist Req</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.7;">
+        Real time spent, tracked from Start to Finish — Pending WO and Machinist Req only. Nothing from Inspection, Running WO, or Datanomix gets counted here.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <select id="timeReportPeriod" style="flex:1;min-width:140px;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;">
+          <option value="today">Today</option>
+          <option value="week" selected>This Week</option>
+          <option value="lastweek">Last Week</option>
+          <option value="month">This Month</option>
+          <option value="lastmonth">Last Month</option>
+          <option value="all">All Time</option>
+        </select>
+        <button onclick="window._generateTimeReport()" style="background:#3b82f6;border:none;color:#fff;border-radius:8px;padding:9px 18px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">📊 GENERATE REPORT</button>
+      </div>
+      <div style="font-size:11px;color:#475569;line-height:1.6;">
+        Opens a clean, printable summary — total time, broken down by employee and by machine — with a "Print / Save PDF" button, ready to hand to your boss.
       </div>
     </div>
 
@@ -1321,7 +1347,9 @@
       <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Inspection</div>
       <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div>Machinist Req</div>
       <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Running WO</div>
-      <div class="legend-item" style="margin-left:8px;border-left:1px solid #2a5a8c;padding-left:8px;"><div style="width:18px;height:4px;background:#22c55e;border-radius:2px;"></div>DNX Perf</div>
+    </div>
+    <div class="notif-bell" onclick="window._openShopDisplay()" style="background:rgba(14,165,233,0.12);border-color:rgba(14,165,233,0.4);">
+      <span>📺</span><span>Shop Activity</span>
     </div>
     <div class="notif-bell" onclick="scrollToSidebar()">
       <span>🔔</span><span>Alerts</span>
@@ -1339,6 +1367,7 @@
   <div class="nav-tab" onclick="window._openInspectorLibrary()" id="tab-inspector" style="display:none;">🔍 Inspector <span class="tab-badge" id="inspectorBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="switchTab('board')" id="tab-board">📌 Bulletin Board <span class="tab-badge" id="boardBadge" style="display:none">0</span></div>
   <div class="nav-tab" onclick="window._openTimeStudy()" id="tab-timestudy" style="display:none;">⏱ Time Study <span class="tab-badge" id="timeStudyBadge" style="display:none">0</span></div>
+  <div class="nav-tab" onclick="window._openScheduler()" id="tab-jobtracker" style="display:none;">📅 Scheduler <span class="tab-badge" id="jobTrackerBadge" style="display:none">0</span></div>
   <div class="nav-tab admin-only" onclick="switchTab('announce')" id="tab-announce" style="display:none">📣 Announce</div>
   <div class="nav-tab admin-only" onclick="switchTab('aichat')" id="tab-aichat" style="display:none">🤖 AI</div>
   <div class="nav-tab" onclick="switchTab('video')" id="tab-video">🎬 Hill TV</div>
@@ -1993,6 +2022,85 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   </div>
 </div>
 
+<!-- SCHEDULER — daily floor-walk job tracker. One or more jobs per
+     machine (current + queued up next), each with customer/WO/part/op,
+     rate, and progress. Shows a live summary right on the machine's own
+     tile on Shop Floor, and has a full-screen Shop Display mode meant to
+     be left open on a monitor around the shop. -->
+<div class="modal-overlay" id="schedulerOverlay" style="display:none;">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-title">📅 Scheduler — Daily Floor Walk</div>
+    <div class="modal-machine" style="margin-bottom:12px;">Every job on the floor, by machine — what's running, what's next, and whether it's on pace for the due date.</div>
+
+    <div style="display:flex;gap:6px;margin-bottom:12px;">
+      <button type="button" onclick="window._toggleSchedulerForm()" style="flex:1;background:#0ea5e9;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">+ ADD JOB</button>
+      <button type="button" onclick="window._openShopDisplay()" style="flex:1;background:rgba(14,165,233,0.15);border:1px solid #0ea5e9;color:#7dd3fc;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">📺 SHOP DISPLAY</button>
+    </div>
+
+    <div id="schedulerForm" style="display:none;background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <input type="hidden" id="schEditId" value="">
+      <div id="schFormTitle" style="font-size:11px;color:#5eead4;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;"></div>
+      <select id="schMachine" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+        <option value="">-- Machine --</option>
+      </select>
+      <select id="schQueuePos" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+        <option value="0">Now Running (current job on this machine)</option>
+        <option value="1">Up Next (queued after current job)</option>
+      </select>
+      <input type="text" id="schCustomer" placeholder="Customer name" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+      <input type="text" id="schWo" placeholder="WO #" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+      <input type="text" id="schPart" placeholder="Part #" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+      <input type="text" id="schOp" placeholder="OP #" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div style="flex:1;">
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Parts / Hour (rate)</div>
+          <input type="number" id="schRate" min="0" step="0.1" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Qty Total (OP)</div>
+          <input type="number" id="schQtyTotal" min="0" step="1" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div style="flex:1;">
+          <div style="font-size:10px;color:#4ade80;margin-bottom:4px;">Qty GOOD So Far</div>
+          <input type="number" id="schQtyRan" min="0" step="1" value="0" style="width:100%;background:#08202e;border:1px solid #22c55e;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:10px;color:#f87171;margin-bottom:4px;">Qty Scrap</div>
+          <input type="number" id="schQtyScrap" min="0" step="1" value="0" style="width:100%;background:#08202e;border:1px solid #ef4444;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Due Date (optional)</div>
+        <input type="date" id="schDueDate" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+      </div>
+      <button type="button" id="schSaveBtn" onclick="window._saveScheduledJob()" style="width:100%;background:#0ea5e9;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">SAVE JOB</button>
+    </div>
+
+    <input type="text" id="schSearch" placeholder="Search machine, customer, WO, part…" oninput="window._renderScheduler()"
+      style="width:100%;background:rgba(255,255,255,0.05);border:1px solid #2a5a8c;border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;margin-bottom:12px;outline:none;">
+
+    <div id="schedulerList" style="display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;">
+      <div style="text-align:center;color:#475569;font-size:13px;padding:16px;">No jobs logged yet — tap + ADD JOB to start today's walk.</div>
+    </div>
+
+    <button type="button" onclick="window._closeScheduler()" style="width:100%;margin-top:14px;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:15px;cursor:pointer;">CLOSE</button>
+  </div>
+</div>
+
+<!-- SHOP DISPLAY — full-screen, meant to be left open on a monitor around
+     the shop. Auto-rotates through every machine that has a job logged,
+     big and readable from a distance. -->
+<div id="shopDisplayOverlay" style="display:none;position:fixed;inset:0;z-index:99998;background:#020617;flex-direction:column;padding:40px;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:3px;color:#f5c842;">HILL MANUFACTURING — SHOP FLOOR</div>
+    <div id="shopDisplayClock" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:#7dd3fc;"></div>
+    <button onclick="window._closeShopDisplay()" style="background:rgba(255,255,255,0.08);border:1px solid #475569;color:#94a3b8;border-radius:8px;padding:8px 16px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">✕ EXIT</button>
+  </div>
+  <div id="shopDisplayGrid" style="flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;overflow-y:auto;"></div>
+</div>
+
 <!-- TOOL LIST MODAL — digital version of the paper "TOOL LIST" setup tag.
      Filled out per WO/OP after checking ProShop's program/sequence detail
      for tool lengths (OOH — Out Of Holder) and diameters, replacing the
@@ -2588,6 +2696,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       }
     });
     window._applyMachineEdges(machineActiveTypes);
+    if (window._renderSchedulerTiles) window._renderSchedulerTiles();
     Object.entries(machinePriority).forEach(([mid, type]) => {
       const led = document.getElementById('light-' + mid);
       if (led) led.className = 'machine-led led-' + type;
@@ -2654,6 +2763,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
     window._applyMachineEdges(machineActiveTypes);
+    if (window._renderSchedulerTiles) window._renderSchedulerTiles();
     window._renderQmiDgpTileSummary(notes);
   };
 
@@ -5535,6 +5645,373 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     win.document.close();
   };
 
+
+  // ── SCHEDULER — daily floor-walk job tracker ──
+  // One entry per job; multiple jobs can queue on the same machine
+  // (queueOrder 0 = currently running, 1 = up next, etc). Status
+  // (On Track/At Risk/Late) is computed live from qty remaining, the
+  // due date, and the rate you logged — same math either way, whether
+  // you're looking at the Scheduler tab, the machine's own tile on Shop
+  // Floor, or the Shop Display.
+  window._scheduledJobs = [];
+
+  function _schCanUse(){
+    return !!(window._isAdmin || window.currentUser === 'hilladmin');
+  }
+
+  window._startSchedulerListener = function(){
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods){ setTimeout(window._startSchedulerListener, 800); return; }
+    mods.onSnapshot(mods.collection(db2, 'hillScheduledJobs'), function(snap){
+      var items = [];
+      snap.forEach(function(d){ var r = d.data(); r.id = d.id; items.push(r); });
+      items.sort(function(a,b){
+        if (a.machine !== b.machine) return (a.machine||'').localeCompare(b.machine||'');
+        return (a.queueOrder||0) - (b.queueOrder||0);
+      });
+      window._scheduledJobs = items;
+      window._renderScheduler();
+      window._renderSchedulerTiles();
+      if (document.getElementById('shopDisplayOverlay').style.display !== 'none') window._renderShopDisplay();
+    }, function(e){ console.warn('Scheduler listener:', e.message); });
+  };
+
+  window._openScheduler = function(){
+    if(!_schCanUse()) return;
+    var machSel = document.getElementById('schMachine');
+    if(machSel && machSel.options.length <= 1 && window.PLANNER_MACHINES){
+      window.PLANNER_MACHINES.forEach(function(m){
+        var opt = document.createElement('option');
+        opt.value = m.name; opt.textContent = m.name + ' (' + m.cell + ')';
+        machSel.appendChild(opt);
+      });
+    }
+    window._renderScheduler();
+    document.getElementById('schedulerOverlay').style.display = 'flex';
+  };
+  window._closeScheduler = function(){
+    document.getElementById('schedulerOverlay').style.display = 'none';
+  };
+  window._toggleSchedulerForm = function(){
+    var form = document.getElementById('schedulerForm');
+    if(!form) return;
+    var opening = (form.style.display === 'none' || !form.style.display);
+    if (opening) {
+      _schResetForm(); // always start fresh in "add new" mode via this button — Edit opens the form itself, bypassing this
+      form.style.display = 'block';
+    } else {
+      form.style.display = 'none';
+    }
+  };
+
+  function _schResetForm(){
+    document.getElementById('schEditId').value = '';
+    document.getElementById('schMachine').value = '';
+    document.getElementById('schCustomer').value = '';
+    document.getElementById('schWo').value = '';
+    document.getElementById('schPart').value = '';
+    document.getElementById('schOp').value = '';
+    document.getElementById('schRate').value = '';
+    document.getElementById('schQtyRan').value = '0';
+    document.getElementById('schQtyScrap').value = '0';
+    document.getElementById('schQtyTotal').value = '';
+    document.getElementById('schDueDate').value = '';
+    document.getElementById('schQueuePos').value = '0';
+    document.getElementById('schFormTitle').textContent = 'New Job';
+    document.getElementById('schSaveBtn').textContent = 'SAVE JOB';
+  }
+
+  // Opens the same form used for adding a job, pre-filled with an
+  // existing job's data — saving updates that job in place instead of
+  // creating a new one. This is the general "fix anything" tool; for the
+  // common case of just moving to the next operation on the same job,
+  // use ⏭ NEXT OP instead (one tap, no form).
+  window._editScheduledJob = function(id){
+    if(!_schCanUse()) return;
+    var job = window._scheduledJobs.find(function(j){ return j.id === id; });
+    if(!job) return;
+    document.getElementById('schEditId').value = id;
+    document.getElementById('schMachine').value = job.machine || '';
+    document.getElementById('schCustomer').value = job.customer || '';
+    document.getElementById('schWo').value = job.wo || '';
+    document.getElementById('schPart').value = job.part || '';
+    document.getElementById('schOp').value = job.op || '';
+    document.getElementById('schRate').value = job.partsPerHour || '';
+    document.getElementById('schQtyRan').value = job.qtyRan || 0;
+    document.getElementById('schQtyScrap').value = job.qtyScrap || 0;
+    document.getElementById('schQtyTotal').value = job.qtyTotal || '';
+    document.getElementById('schDueDate').value = job.dueDate || '';
+    document.getElementById('schQueuePos').value = String(job.queueOrder || 0);
+    document.getElementById('schFormTitle').textContent = 'Editing Existing Job — saving updates it, doesn\'t create a new one';
+    document.getElementById('schSaveBtn').textContent = 'SAVE CHANGES';
+    document.getElementById('schedulerForm').style.display = 'block';
+    document.getElementById('schedulerForm').scrollIntoView({behavior:'smooth', block:'start'});
+  };
+
+  // The one-tap shortcut for the common case: this operation's done,
+  // same job moves to the next operation on the same machine. Keeps
+  // customer/machine/WO/part, just asks for the new OP# and its qty
+  // total, and resets good/scrap counts to 0 for the new operation —
+  // without touching the Add Job form at all.
+  window._nextOperation = function(id){
+    if(!_schCanUse()) return;
+    var job = window._scheduledJobs.find(function(j){ return j.id === id; });
+    if(!job) return;
+    var newOp = prompt('Moving ' + (job.customer||job.wo||job.part) + ' to the next operation.\n\nNew OP #:', '');
+    if(newOp === null) return;
+    var newQtyTotal = prompt('Qty total for OP ' + newOp + ':', job.qtyTotal || '');
+    if(newQtyTotal === null) return;
+    var qtyTotal = parseFloat(newQtyTotal);
+    if(isNaN(qtyTotal) || qtyTotal <= 0){ if(window.showToast) showToast('red','Enter a valid qty total',''); return; }
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillScheduledJobs', id), {
+      op: newOp.trim(), qtyTotal: qtyTotal, qtyRan: 0, qtyScrap: 0,
+      updatedBy: window.currentUser || 'unknown', updatedAt: mods.serverTimestamp()
+    }).then(function(){
+      if(window.showToast) showToast('green','Moved to next operation', 'OP ' + newOp + ' — same job, same machine.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
+  };
+
+  function _schJobStatus(job){
+    var qtyRemaining = (job.qtyTotal||0) - (job.qtyRan||0);
+    if (qtyRemaining <= 0) return {code:'complete', label:'✅ Complete', color:'#22c55e'};
+    if (!job.dueDate) return {code:'tracking', label:'📋 Tracking', color:'#7dd3fc'};
+    var due = new Date(job.dueDate + 'T23:59:59');
+    var hoursRemaining = (due - new Date()) / 3600000;
+    if (hoursRemaining <= 0) return {code:'late', label:'🔴 Late', color:'#ef4444'};
+    var capacity = job.partsPerHour || 0;
+    if (capacity <= 0) return {code:'tracking', label:'📋 Tracking', color:'#7dd3fc'};
+    var neededRate = qtyRemaining / hoursRemaining;
+    var ratio = neededRate / capacity;
+    if (ratio > 1) return {code:'late', label:'🔴 Will Be Late', color:'#ef4444'};
+    if (ratio > 0.8) return {code:'at_risk', label:'🟡 At Risk', color:'#eab308'};
+    return {code:'on_track', label:'🟢 On Track', color:'#22c55e'};
+  }
+
+  window._saveScheduledJob = function(){
+    if(!_schCanUse()) return;
+    var editId = document.getElementById('schEditId').value;
+    var machine = document.getElementById('schMachine').value;
+    var customer = document.getElementById('schCustomer').value.trim();
+    var wo = document.getElementById('schWo').value.trim();
+    var part = document.getElementById('schPart').value.trim();
+    var op = document.getElementById('schOp').value.trim();
+    var rate = parseFloat(document.getElementById('schRate').value);
+    var qtyRan = parseFloat(document.getElementById('schQtyRan').value) || 0;
+    var qtyScrap = parseFloat(document.getElementById('schQtyScrap').value) || 0;
+    var qtyTotal = parseFloat(document.getElementById('schQtyTotal').value);
+    var dueDate = document.getElementById('schDueDate').value;
+    var queueOrder = parseInt(document.getElementById('schQueuePos').value, 10) || 0;
+
+    if(!machine){ if(window.showToast) showToast('red','Pick a machine',''); return; }
+    if(!wo && !part){ if(window.showToast) showToast('red','Enter at least a WO# or Part#',''); return; }
+    if(!qtyTotal || qtyTotal <= 0){ if(window.showToast) showToast('red','Enter the total qty for this operation',''); return; }
+
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var payload = {
+      machine: machine, customer: customer, wo: wo, part: part, op: op,
+      partsPerHour: rate || 0, qtyRan: qtyRan, qtyScrap: qtyScrap, qtyTotal: qtyTotal, dueDate: dueDate || null,
+      queueOrder: queueOrder, updatedBy: window.currentUser || 'unknown', updatedAt: mods.serverTimestamp()
+    };
+    var savePromise = editId
+      ? mods.updateDoc(mods.doc(db2, 'hillScheduledJobs', editId), payload)
+      : mods.addDoc(mods.collection(db2, 'hillScheduledJobs'), Object.assign({}, payload, {
+          createdBy: window.currentUser || 'unknown', createdAt: mods.serverTimestamp()
+        }));
+    savePromise.then(function(){
+      _schResetForm();
+      window._toggleSchedulerForm();
+      if(window.showToast) showToast('green', editId ? 'Job updated' : 'Job added', machine + ' — ' + (customer||wo||part));
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Failed to save', e.message);
+    });
+  };
+
+  window._updateJobProgress = function(id){
+    if(!_schCanUse()) return;
+    var job = window._scheduledJobs.find(function(j){ return j.id === id; });
+    if(!job) return;
+    var goodInput = prompt('Qty GOOD so far for ' + (job.customer||job.wo||job.part) + ' (out of ' + job.qtyTotal + '):', job.qtyRan||0);
+    if(goodInput === null) return;
+    var qtyRan = parseFloat(goodInput);
+    if(isNaN(qtyRan) || qtyRan < 0){ if(window.showToast) showToast('red','Enter a valid number',''); return; }
+    var scrapInput = prompt('Qty SCRAP so far (parts that won\'t count toward the total):', job.qtyScrap||0);
+    if(scrapInput === null) return;
+    var qtyScrap = parseFloat(scrapInput);
+    if(isNaN(qtyScrap) || qtyScrap < 0){ if(window.showToast) showToast('red','Enter a valid number',''); return; }
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillScheduledJobs', id), {
+      qtyRan: qtyRan, qtyScrap: qtyScrap, updatedBy: window.currentUser || 'unknown', updatedAt: mods.serverTimestamp()
+    }).then(function(){
+      if(window.showToast) showToast('green','Progress updated', qtyRan + ' good / ' + qtyScrap + ' scrap');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
+  };
+
+  // Marks a job done and promotes whatever was queued up next on that
+  // same machine (queueOrder 1 becomes 0, 2 becomes 1, and so on) — so
+  // the machine's tile always shows the right "now running" job without
+  // you having to manually re-enter it.
+  window._completeScheduledJob = function(id){
+    if(!_schCanUse()) return;
+    if(!confirm('Mark this job complete and remove it from the floor?')) return;
+    var job = window._scheduledJobs.find(function(j){ return j.id === id; });
+    if(!job) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var sameMachine = window._scheduledJobs.filter(function(j){ return j.machine === job.machine && j.id !== id && (j.queueOrder||0) > (job.queueOrder||0); });
+    mods.deleteDoc(mods.doc(db2, 'hillScheduledJobs', id))
+      .then(function(){
+        var updates = sameMachine.map(function(j){
+          return mods.updateDoc(mods.doc(db2, 'hillScheduledJobs', j.id), { queueOrder: (j.queueOrder||0) - 1 });
+        });
+        return Promise.all(updates);
+      })
+      .then(function(){ if(window.showToast) showToast('green','Job complete','Removed from the floor.'); })
+      .catch(function(e){ if(window.showToast) showToast('red','Failed to complete', e.message); });
+  };
+
+  window._deleteScheduledJob = function(id){
+    if(!_schCanUse()) return;
+    if(!confirm('Delete this job permanently?')) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.deleteDoc(mods.doc(db2, 'hillScheduledJobs', id)).then(function(){
+      if(window.showToast) showToast('green','Deleted','Job removed.');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to delete', e.message); });
+  };
+
+  window._renderScheduler = function(){
+    var list = document.getElementById('schedulerList');
+    if(!list) return;
+    var q = ((document.getElementById('schSearch')||{}).value || '').trim().toLowerCase();
+    var jobs = window._scheduledJobs || [];
+    if(q){
+      jobs = jobs.filter(function(j){
+        return [j.machine,j.customer,j.wo,j.part,j.op].join(' ').toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    if(!jobs.length){
+      list.innerHTML = '<div style="text-align:center;color:#475569;font-size:13px;padding:16px;">' + (q?'No matches.':'No jobs logged yet — tap + ADD JOB to start today\'s walk.') + '</div>';
+      return;
+    }
+    var byMachine = {};
+    jobs.forEach(function(j){ if(!byMachine[j.machine]) byMachine[j.machine]=[]; byMachine[j.machine].push(j); });
+    var canUse = _schCanUse();
+    list.innerHTML = Object.keys(byMachine).sort().map(function(machine){
+      var machJobs = byMachine[machine];
+      var rows = machJobs.map(function(j){
+        var st = _schJobStatus(j);
+        var qtyRemaining = Math.max(0, (j.qtyTotal||0) - (j.qtyRan||0));
+        var pct = j.qtyTotal>0 ? Math.min(100, Math.round((j.qtyRan||0)/j.qtyTotal*100)) : 0;
+        var scrap = j.qtyScrap||0;
+        var attempted = (j.qtyRan||0) + scrap;
+        var scrapPct = attempted>0 ? Math.round(scrap/attempted*100) : 0;
+        var scrapWarn = scrapPct >= 10;
+        var label = j.queueOrder === 0 ? 'NOW RUNNING' : (j.queueOrder === 1 ? 'UP NEXT' : 'QUEUED #' + (j.queueOrder+1));
+        return '<div style="background:rgba(255,255,255,0.03);border:1px solid ' + st.color + '44;border-left:3px solid ' + st.color + ';border-radius:8px;padding:10px 12px;margin-top:8px;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
+          + '<div><span style="font-size:9px;color:#64748b;letter-spacing:1px;">' + label + '</span><div style="font-size:13px;color:#f0f4f8;font-weight:600;">' + window._escAttr(j.customer||'(no customer)') + '</div></div>'
+          + '<span style="font-size:11px;font-weight:700;color:' + st.color + ';white-space:nowrap;">' + st.label + '</span>'
+          + '</div>'
+          + '<div style="font-size:11px;color:#94a3b8;margin:4px 0;">' + [j.wo?('WO '+j.wo):'', j.part?('Part '+j.part):'', j.op?('OP '+j.op):''].filter(Boolean).join(' · ') + (j.dueDate ? (' · Due ' + j.dueDate) : '') + '</div>'
+          + '<div style="background:rgba(255,255,255,0.08);border-radius:6px;height:8px;overflow:hidden;margin:6px 0;"><div style="background:' + st.color + ';height:100%;width:' + pct + '%;"></div></div>'
+          + '<div style="font-size:12px;color:#cbd5e1;">' + (j.qtyRan||0) + ' / ' + j.qtyTotal + ' (' + pct + '%) · ' + qtyRemaining + ' remaining · ' + (j.partsPerHour||0) + '/hr</div>'
+          + (scrap > 0 ? ('<div style="font-size:11px;margin-top:3px;color:' + (scrapWarn ? '#f87171' : '#94a3b8') + ';font-weight:' + (scrapWarn ? '700' : '400') + ';">' + (scrapWarn ? '⚠ ' : '') + scrap + ' scrapped (' + scrapPct + '% of parts attempted)' + (scrapWarn ? ' — worth checking on' : '') + '</div>') : '')
+          + (canUse ? ('<div style="display:flex;gap:6px;margin-top:8px;">'
+              + '<button onclick="window._updateJobProgress(\'' + j.id + '\')" style="flex:1;background:rgba(14,165,233,0.15);border:1px solid #0ea5e9;color:#7dd3fc;border-radius:6px;padding:7px;font-size:11px;letter-spacing:0.5px;cursor:pointer;">✏️ UPDATE QTY</button>'
+              + '<button onclick="window._nextOperation(\'' + j.id + '\')" style="flex:1;background:rgba(168,85,247,0.15);border:1px solid #a855f7;color:#d8b4fe;border-radius:6px;padding:7px;font-size:11px;letter-spacing:0.5px;cursor:pointer;">⏭ NEXT OP</button>'
+              + '</div><div style="display:flex;gap:6px;margin-top:6px;">'
+              + '<button onclick="window._editScheduledJob(\'' + j.id + '\')" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#cbd5e1;border-radius:6px;padding:7px;font-size:11px;letter-spacing:0.5px;cursor:pointer;">⚙️ EDIT</button>'
+              + '<button onclick="window._completeScheduledJob(\'' + j.id + '\')" style="flex:1;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-size:11px;letter-spacing:0.5px;cursor:pointer;">✓ COMPLETE</button>'
+              + '<button onclick="window._deleteScheduledJob(\'' + j.id + '\')" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;padding:7px 10px;font-size:11px;cursor:pointer;">🗑</button>'
+              + '</div>') : '')
+          + '</div>';
+      }).join('');
+      return '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:#f5c842;letter-spacing:1px;border-bottom:1px solid #2a5a8c;padding-bottom:4px;">' + window._escAttr(machine) + '</div>' + rows + '</div>';
+    }).join('');
+  };
+
+  // Shows the current ("now running") job right on the machine's own
+  // tile on Shop Floor — same spot the QMI/DGP tile shows its summary.
+  window._renderSchedulerTiles = function(){
+    var jobs = window._scheduledJobs || [];
+    var byMachine = {};
+    jobs.forEach(function(j){
+      if (j.queueOrder !== 0) return; // tile only shows the currently-running job
+      byMachine[j.machine] = j;
+    });
+    document.querySelectorAll('.machine[data-machine]').forEach(function(el){
+      var mid = el.getAttribute('data-machine');
+      if (mid === 'QMI/DGP') return;
+      var existing = el.querySelector('.sch-tile-summary');
+      if (existing) existing.remove();
+      var job = byMachine[mid];
+      if (!job) return;
+      var st = _schJobStatus(job);
+      var notesEl = el.querySelector('.machine-notes');
+      if (!notesEl) return;
+      var line = document.createElement('div');
+      line.className = 'sch-tile-summary';
+      line.style.cssText = 'font-size:9px;color:#cbd5e1;background:rgba(14,165,233,0.1);border:1px solid ' + st.color + '55;border-radius:4px;padding:2px 5px;margin:2px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+      line.textContent = (job.customer||job.wo||job.part||'Job') + ' · ' + (job.qtyRan||0) + '/' + job.qtyTotal + ' · ' + st.label;
+      notesEl.appendChild(line);
+    });
+  };
+
+  // ── SHOP DISPLAY — full-screen, meant to stay open on a monitor ──
+  var _shopDisplayClockTimer = null;
+  window._openShopDisplay = function(){
+    document.getElementById('schedulerOverlay').style.display = 'none';
+    document.getElementById('shopDisplayOverlay').style.display = 'flex';
+    window._renderShopDisplay();
+    if (_shopDisplayClockTimer) clearInterval(_shopDisplayClockTimer);
+    _shopDisplayClockTimer = setInterval(function(){
+      var el = document.getElementById('shopDisplayClock');
+      if (el) el.textContent = new Date().toLocaleTimeString();
+    }, 1000);
+  };
+  window._closeShopDisplay = function(){
+    document.getElementById('shopDisplayOverlay').style.display = 'none';
+    if (_shopDisplayClockTimer) { clearInterval(_shopDisplayClockTimer); _shopDisplayClockTimer = null; }
+  };
+  window._renderShopDisplay = function(){
+    var grid = document.getElementById('shopDisplayGrid');
+    if (!grid) return;
+    var jobs = (window._scheduledJobs || []).filter(function(j){ return j.queueOrder === 0; });
+    var nextByMachine = {};
+    (window._scheduledJobs || []).forEach(function(j){ if (j.queueOrder === 1) nextByMachine[j.machine] = j; });
+    if (!jobs.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#475569;font-size:16px;padding:60px;">No jobs currently logged. Add jobs from the Scheduler tab.</div>';
+      return;
+    }
+    grid.innerHTML = jobs.map(function(j){
+      var st = _schJobStatus(j);
+      var next = nextByMachine[j.machine];
+      var pct = j.qtyTotal>0 ? Math.min(100, Math.round((j.qtyRan||0)/j.qtyTotal*100)) : 0;
+      var scrap = j.qtyScrap||0;
+      var attempted = (j.qtyRan||0) + scrap;
+      var scrapPct = attempted>0 ? Math.round(scrap/attempted*100) : 0;
+      var scrapWarn = scrapPct >= 10;
+      return '<div style="background:linear-gradient(160deg,#0f2338,#0a1826);border:2px solid ' + st.color + ';border-radius:14px;padding:18px;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:#f5c842;letter-spacing:1px;">' + window._escAttr(j.machine) + '</div>'
+        + '<div style="font-size:13px;font-weight:700;color:' + st.color + ';">' + st.label + '</div>'
+        + '</div>'
+        + '<div style="font-size:16px;color:#f0f4f8;font-weight:600;margin-bottom:4px;">' + window._escAttr(j.customer||'—') + '</div>'
+        + '<div style="font-size:12px;color:#94a3b8;margin-bottom:10px;">' + [j.wo?('WO '+j.wo):'', j.part?('Part '+j.part):'', j.op?('OP '+j.op):''].filter(Boolean).join(' · ') + (j.dueDate?(' · Due '+j.dueDate):'') + '</div>'
+        + '<div style="background:rgba(255,255,255,0.08);border-radius:8px;height:14px;overflow:hidden;margin-bottom:6px;"><div style="background:' + st.color + ';height:100%;width:' + pct + '%;"></div></div>'
+        + '<div style="font-size:14px;color:#cbd5e1;">' + (j.qtyRan||0) + ' / ' + j.qtyTotal + ' parts (' + pct + '%) · ' + (j.partsPerHour||0) + '/hr</div>'
+        + (scrap > 0 ? ('<div style="font-size:12px;margin-top:4px;color:' + (scrapWarn?'#f87171':'#94a3b8') + ';font-weight:' + (scrapWarn?'700':'400') + ';">' + (scrapWarn?'⚠ ':'') + scrap + ' scrapped (' + scrapPct + '%)</div>') : '')
+        + (next ? '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #1e3a5c;font-size:11px;color:#64748b;">NEXT UP: ' + window._escAttr(next.customer||next.wo||next.part||'') + '</div>' : '')
+        + '</div>';
+    }).join('');
+  };
+
+
+  // ── TOOL LIST — digital replacement for the paper "TOOL LIST" setup tag ──
   window._tlStagedTools = []; // [{desc, ooh, dia}, ...]
 
   window._openToolListForm = function(prefill){
@@ -5813,6 +6290,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   window._startInspectorListener();
   window._startTimeStudyListener();
+  window._startSchedulerListener();
 
   // ── INVENTORY BROWSER — all three catalogs, one place ──
   window._openInventoryBrowser = function(){
@@ -7437,6 +7915,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       listenToUsers();
       var tsTabAdmin = document.getElementById('tab-timestudy');
       if (tsTabAdmin) tsTabAdmin.style.display = 'flex';
+      var jtTabAdmin = document.getElementById('tab-jobtracker');
+      if (jtTabAdmin) jtTabAdmin.style.display = 'flex';
       // Production Log tab — hidden for now per request (not deleted,
       // just commented out — uncomment these 2 lines to bring it back).
       // var dashTab = document.getElementById('tab-dashboard');
@@ -7509,7 +7989,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var sb = document.getElementById('shopSwitchBtn');
     if (sb) sb.classList.remove('visible');
     // Hide admin-only tabs
-    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections','tab-timestudy'].forEach(function(id){
+    ['tab-mgmt','tab-dashboard','tab-datanomix','tab-proshop','tab-planner','tab-inspections','tab-timestudy','tab-jobtracker'].forEach(function(id){
       var t = document.getElementById(id); if(t) t.style.display = 'none';
     });
     // Switch back to shop floor if on a hidden tab
@@ -17531,6 +18011,117 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       return out;
     } catch(e){ console.warn('Archived requests fetch failed:', e.message); return []; }
   }
+
+  // ── TIME REPORT — straight time on Pending WO + Machinist Req only ──
+  // Independent of the (hidden) Production Log's own period state, since
+  // this is meant to be a focused, presentable number, not that whole
+  // dashboard. Includes archived/cleared history too, same reasoning as
+  // the Production Log: "Clear Request History" shouldn't make real
+  // worked time disappear from a report like this.
+  function _timeReportRange(period){
+    var now = new Date();
+    var start, end = now;
+    if (period === 'today')     { start = new Date(now); start.setHours(0,0,0,0); }
+    else if (period === 'week')      { start = new Date(now); start.setDate(start.getDate()-start.getDay()); start.setHours(0,0,0,0); }
+    else if (period === 'lastweek')  { start = new Date(now); start.setDate(start.getDate()-start.getDay()-7); start.setHours(0,0,0,0); end = new Date(now); end.setDate(end.getDate()-end.getDay()); end.setHours(0,0,0,0); }
+    else if (period === 'month')     { start = new Date(now.getFullYear(), now.getMonth(), 1); }
+    else if (period === 'lastmonth') { start = new Date(now.getFullYear(), now.getMonth()-1, 1); end = new Date(now.getFullYear(), now.getMonth(), 1); }
+    else { start = new Date(0); }
+    return { start: start, end: end };
+  }
+
+  function _timeReportFmt(mins){
+    if (!mins && mins !== 0) return '—';
+    return mins >= 60 ? Math.floor(mins/60)+'h '+Math.round(mins%60)+'m' : Math.round(mins)+'m';
+  }
+
+  window._generateTimeReport = async function(){
+    var periodSel = document.getElementById('timeReportPeriod');
+    var period = periodSel ? periodSel.value : 'week';
+    var periodLabels = {today:'Today', week:'This Week', lastweek:'Last Week', month:'This Month', lastmonth:'Last Month', all:'All Time'};
+    var range = _timeReportRange(period);
+
+    var db2 = window.fbDb, mods = window._fbModules;
+    if (!db2 || !mods) { if(window.showToast) showToast('red','Not connected',''); return; }
+    if (window.showToast) showToast('green','Building report…','One moment.');
+
+    var snap, archived;
+    try {
+      snap = await mods.getDocs(mods.collection(db2, 'hillRequests'));
+      archived = await _getArchivedRequests();
+    } catch(e) {
+      if (window.showToast) showToast('red','Failed to load data', e.message);
+      return;
+    }
+    var all = [];
+    snap.forEach(function(d){ all.push(Object.assign({id:d.id}, d.data())); });
+    all = all.concat(archived);
+
+    // Straight time only — Pending WO (blue) and Machinist Req (yellow),
+    // actually finished (resolved), with a real elapsed time recorded.
+    // Nothing from Inspection, Running WO, or Datanomix ever enters this.
+    var filtered = all.filter(function(r){
+      if (r.type !== 'blue' && r.type !== 'yellow') return false;
+      if (!r.resolved || r.elapsedMins == null) return false;
+      var ts = r.resolvedAt ? new Date(r.resolvedAt.seconds*1000) : (r.createdAt ? new Date(r.createdAt.seconds*1000) : null);
+      if (!ts) return false;
+      return ts >= range.start && ts < range.end;
+    });
+
+    var totalMins = filtered.reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
+    var blueMins = filtered.filter(function(r){return r.type==='blue';}).reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
+    var yellowMins = filtered.filter(function(r){return r.type==='yellow';}).reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
+
+    var byEmployee = {};
+    filtered.forEach(function(r){
+      var name = r.operator || 'Unassigned';
+      if (!byEmployee[name]) byEmployee[name] = { mins:0, count:0 };
+      byEmployee[name].mins += r.elapsedMins||0;
+      byEmployee[name].count++;
+    });
+    var employeeRows = Object.entries(byEmployee).sort(function(a,b){ return b[1].mins - a[1].mins; })
+      .map(function(e){ return '<tr><td>'+e[0]+'</td><td>'+_timeReportFmt(e[1].mins)+'</td><td>'+e[1].count+'</td></tr>'; }).join('');
+
+    var byMachine = {};
+    filtered.forEach(function(r){
+      var m = r.machine || 'Unknown';
+      if (!byMachine[m]) byMachine[m] = { mins:0, count:0 };
+      byMachine[m].mins += r.elapsedMins||0;
+      byMachine[m].count++;
+    });
+    var machineRows = Object.entries(byMachine).sort(function(a,b){ return b[1].mins - a[1].mins; })
+      .map(function(e){ return '<tr><td>'+e[0]+'</td><td>'+_timeReportFmt(e[1].mins)+'</td><td>'+e[1].count+'</td></tr>'; }).join('');
+
+    var detailRows = filtered.slice().sort(function(a,b){
+      var at = a.resolvedAt ? a.resolvedAt.seconds : 0, bt = b.resolvedAt ? b.resolvedAt.seconds : 0;
+      return bt - at;
+    }).map(function(r){
+      var ts = r.resolvedAt ? new Date(r.resolvedAt.seconds*1000) : null;
+      var typeLabel = r.type === 'blue' ? '🔵 Pending WO' : '🟡 Machinist Req';
+      return '<tr><td>'+(ts ? ts.toLocaleDateString() : '')+'</td><td>'+typeLabel+'</td><td>'+(r.operator||'')+'</td><td>'+(r.machine||'')+'</td><td>'+(r.wo||'')+'</td><td>'+_timeReportFmt(r.elapsedMins)+'</td></tr>';
+    }).join('');
+
+    var win = window.open('','_blank');
+    win.document.write('<!DOCTYPE html><html><head><title>Time Report — Hill Manufacturing</title>'
+      +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#1a2744;}h1{font-size:20px;margin-bottom:2px;}h2{font-size:15px;margin-top:28px;border-bottom:2px solid #1a2744;padding-bottom:4px;}table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}th{background:#1a2744;color:#fff;padding:7px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #e5e7eb;}tr:nth-child(even){background:#f9fafb;}p.meta{color:#555;font-size:12px;}.totals{display:flex;gap:16px;margin-top:12px;}.tbox{flex:1;border:2px solid #1a2744;border-radius:8px;padding:14px;text-align:center;}.tbox .n{font-size:26px;font-weight:900;color:#1a2744;}.tbox .l{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-top:4px;}@media print{button{display:none!important;}}</style></head><body>'
+      +'<button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 Print / Save PDF</button>'
+      +'<h1>Hill Manufacturing — Time Report</h1>'
+      +'<p class="meta">Period: '+(periodLabels[period]||period)+' &nbsp;|&nbsp; Generated: '+new Date().toLocaleString()+' &nbsp;|&nbsp; Pending WO + Machinist Req only</p>'
+      +'<div class="totals">'
+        +'<div class="tbox"><div class="n">'+_timeReportFmt(totalMins)+'</div><div class="l">Total Time</div></div>'
+        +'<div class="tbox"><div class="n">'+_timeReportFmt(blueMins)+'</div><div class="l">Pending WO</div></div>'
+        +'<div class="tbox"><div class="n">'+_timeReportFmt(yellowMins)+'</div><div class="l">Machinist Req</div></div>'
+        +'<div class="tbox"><div class="n">'+filtered.length+'</div><div class="l">Requests Timed</div></div>'
+      +'</div>'
+      +'<h2>By Employee</h2>'
+      +'<table><thead><tr><th>Employee</th><th>Total Time</th><th>Requests</th></tr></thead><tbody>'+(employeeRows||'<tr><td colspan="3">No timed requests in this period.</td></tr>')+'</tbody></table>'
+      +'<h2>By Machine</h2>'
+      +'<table><thead><tr><th>Machine</th><th>Total Time</th><th>Requests</th></tr></thead><tbody>'+(machineRows||'<tr><td colspan="3">No timed requests in this period.</td></tr>')+'</tbody></table>'
+      +'<h2>Detail</h2>'
+      +'<table><thead><tr><th>Date</th><th>Type</th><th>Employee</th><th>Machine</th><th>WO#</th><th>Time</th></tr></thead><tbody>'+(detailRows||'<tr><td colspan="6">No timed requests in this period.</td></tr>')+'</tbody></table>'
+      +'</body></html>');
+    win.document.close();
+  };
 
   // ── BUILD ALL REQUESTS RECEIPT ────────────────────────────
   async function _buildAllReceipt(filter) {
