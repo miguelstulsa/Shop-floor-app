@@ -869,6 +869,11 @@
 
   /* FULL SCREEN LAYOUT */
   html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+  /* Everything below this point was meant for mobile only — it was
+     missing its @media wrapper, so it was forcing the same
+     everything-crammed-into-one-screen-no-scroll layout onto desktop
+     too, clipping the bottom row with no way to scroll to it. */
+  @media (max-width: 900px) {
   .shop-page.active { display: block !important; height: calc(100vh - 82px) !important; max-height: calc(100vh - 82px) !important; overflow: hidden !important; }
   .floor-section { overflow: hidden !important; height: calc(100dvh - 150px) !important; padding: 4px 6px !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; }
   .floor-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; grid-template-rows: repeat(2, 1fr) auto !important; gap: 4px !important; padding: 4px !important; flex: 1 !important; min-height: 0 !important; overflow: hidden !important; align-items: stretch !important; }
@@ -897,6 +902,7 @@
   .perf-bar { height: 3px !important; flex-shrink: 0 !important; }
   .note-dot { width: 8px !important; height: 8px !important; }
   .machine-led { width: 8px !important; height: 8px !important; }
+  }
   .sidebar { position: fixed; bottom: 0; left: 0; right: 0; max-height: 80vh; overflow: hidden; z-index: 500; background: #0a1829; border-top: 2px solid #f59e0b; border-left: none; border-radius: 16px 16px 0 0; display: none; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
   .sidebar.open { display: flex !important; }
   .sidebar-header { cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; position: relative; flex-shrink: 0; min-height: 48px; }
@@ -2036,6 +2042,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <button type="button" onclick="window._toggleSchedulerForm()" style="flex:1;background:#0ea5e9;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">+ ADD JOB</button>
       <button type="button" onclick="window._openShopDisplay()" style="flex:1;background:rgba(14,165,233,0.15);border:1px solid #0ea5e9;color:#7dd3fc;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">📺 SHOP DISPLAY</button>
     </div>
+    <button type="button" onclick="window._toggleProShopImport()" style="width:100%;margin-bottom:12px;background:rgba(34,197,94,0.12);border:1px solid #22c55e;color:#4ade80;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">📋 IMPORT FROM PROSHOP TIME TRACKING</button>
+
+    <div id="proshopImportPanel" style="display:none;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.3);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;line-height:1.5;">In ProShop, open Time Tracking, select today, then copy the whole table (select all, copy) and paste it below. This updates progress on jobs you already have, and flags any new ones it finds — nothing gets added without you confirming.</div>
+      <textarea id="proshopPasteBox" placeholder="Paste the ProShop Time Tracking table here…" style="width:100%;min-height:100px;background:#08202e;border:1px solid #22c55e;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:12px;font-family:monospace;margin-bottom:8px;"></textarea>
+      <button type="button" onclick="window._previewProShopImport()" style="width:100%;background:#22c55e;border:none;color:#042f2e;border-radius:8px;padding:10px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;margin-bottom:10px;">PREVIEW IMPORT</button>
+      <div id="proshopImportPreview"></div>
+    </div>
 
     <div id="schedulerForm" style="display:none;background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.4);border-radius:10px;padding:12px;margin-bottom:14px;">
       <input type="hidden" id="schEditId" value="">
@@ -2050,31 +2064,30 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <input type="text" id="schCustomer" placeholder="Customer name" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
       <input type="text" id="schWo" placeholder="WO #" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
       <input type="text" id="schPart" placeholder="Part #" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
-      <input type="text" id="schOp" placeholder="OP #" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <div style="flex:1;">
-          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Parts / Hour (rate)</div>
-          <input type="number" id="schRate" min="0" step="0.1" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+      <input type="number" id="schQtyTotal" min="0" step="1" placeholder="Qty Total (OP)" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+
+      <button type="button" onclick="window._toggleSchMoreDetails()" id="schMoreBtn" style="width:100%;background:none;border:none;color:#5eead4;font-size:11px;text-decoration:underline;cursor:pointer;padding:4px;margin-bottom:6px;">+ More details (OP#, rate, due date — all optional)</button>
+
+      <div id="schMoreDetails" style="display:none;">
+        <input type="text" id="schOp" placeholder="OP #" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Parts / Hour (rate) — needed for On Track/At Risk/Late to calculate</div>
+        <input type="number" id="schRate" min="0" step="0.1" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;margin-bottom:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <div style="flex:1;">
+            <div style="font-size:10px;color:#4ade80;margin-bottom:4px;">Qty GOOD So Far</div>
+            <input type="number" id="schQtyRan" min="0" step="1" value="0" style="width:100%;background:#08202e;border:1px solid #22c55e;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:10px;color:#f87171;margin-bottom:4px;">Qty Scrap</div>
+            <input type="number" id="schQtyScrap" min="0" step="1" value="0" style="width:100%;background:#08202e;border:1px solid #ef4444;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+          </div>
         </div>
-        <div style="flex:1;">
-          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Qty Total (OP)</div>
-          <input type="number" id="schQtyTotal" min="0" step="1" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Due Date</div>
+          <input type="date" id="schDueDate" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:8px;">
-        <div style="flex:1;">
-          <div style="font-size:10px;color:#4ade80;margin-bottom:4px;">Qty GOOD So Far</div>
-          <input type="number" id="schQtyRan" min="0" step="1" value="0" style="width:100%;background:#08202e;border:1px solid #22c55e;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
-        </div>
-        <div style="flex:1;">
-          <div style="font-size:10px;color:#f87171;margin-bottom:4px;">Qty Scrap</div>
-          <input type="number" id="schQtyScrap" min="0" step="1" value="0" style="width:100%;background:#08202e;border:1px solid #ef4444;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
-        </div>
-      </div>
-      <div style="margin-bottom:10px;">
-        <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">Due Date (optional)</div>
-        <input type="date" id="schDueDate" style="width:100%;background:#08202e;border:1px solid #0ea5e9;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:13px;">
-      </div>
+
       <button type="button" id="schSaveBtn" onclick="window._saveScheduledJob()" style="width:100%;background:#0ea5e9;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">SAVE JOB</button>
     </div>
 
@@ -5704,6 +5717,15 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
   };
 
+  window._toggleSchMoreDetails = function(){
+    var el = document.getElementById('schMoreDetails');
+    var btn = document.getElementById('schMoreBtn');
+    if(!el) return;
+    var opening = (el.style.display === 'none' || !el.style.display);
+    el.style.display = opening ? 'block' : 'none';
+    if (btn) btn.textContent = opening ? '– Hide details' : '+ More details (OP#, rate, due date — all optional)';
+  };
+
   function _schResetForm(){
     document.getElementById('schEditId').value = '';
     document.getElementById('schMachine').value = '';
@@ -5719,6 +5741,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('schQueuePos').value = '0';
     document.getElementById('schFormTitle').textContent = 'New Job';
     document.getElementById('schSaveBtn').textContent = 'SAVE JOB';
+    document.getElementById('schMoreDetails').style.display = 'none';
+    document.getElementById('schMoreBtn').textContent = '+ More details (OP#, rate, due date — all optional)';
   }
 
   // Opens the same form used for adding a job, pre-filled with an
@@ -5744,6 +5768,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('schQueuePos').value = String(job.queueOrder || 0);
     document.getElementById('schFormTitle').textContent = 'Editing Existing Job — saving updates it, doesn\'t create a new one';
     document.getElementById('schSaveBtn').textContent = 'SAVE CHANGES';
+    // Editing shows everything up front — nothing worth hiding once
+    // you're already fixing a specific job.
+    document.getElementById('schMoreDetails').style.display = 'block';
+    document.getElementById('schMoreBtn').textContent = '– Hide details';
     document.getElementById('schedulerForm').style.display = 'block';
     document.getElementById('schedulerForm').scrollIntoView({behavior:'smooth', block:'start'});
   };
@@ -5829,6 +5857,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
   };
 
+  // One prompt, one tap — this is the one you'll use at almost every
+  // machine, every time. Scrap is a separate action (+ LOG SCRAP) so you
+  // don't get asked about it on every single stop when most of the time
+  // there isn't any.
   window._updateJobProgress = function(id){
     if(!_schCanUse()) return;
     var job = window._scheduledJobs.find(function(j){ return j.id === id; });
@@ -5837,16 +5869,29 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     if(goodInput === null) return;
     var qtyRan = parseFloat(goodInput);
     if(isNaN(qtyRan) || qtyRan < 0){ if(window.showToast) showToast('red','Enter a valid number',''); return; }
-    var scrapInput = prompt('Qty SCRAP so far (parts that won\'t count toward the total):', job.qtyScrap||0);
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    mods.updateDoc(mods.doc(db2, 'hillScheduledJobs', id), {
+      qtyRan: qtyRan, updatedBy: window.currentUser || 'unknown', updatedAt: mods.serverTimestamp()
+    }).then(function(){
+      if(window.showToast) showToast('green','Progress updated', qtyRan + ' good');
+    }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
+  };
+
+  window._logScrap = function(id){
+    if(!_schCanUse()) return;
+    var job = window._scheduledJobs.find(function(j){ return j.id === id; });
+    if(!job) return;
+    var scrapInput = prompt('Total qty SCRAPPED so far for ' + (job.customer||job.wo||job.part) + ':', job.qtyScrap||0);
     if(scrapInput === null) return;
     var qtyScrap = parseFloat(scrapInput);
     if(isNaN(qtyScrap) || qtyScrap < 0){ if(window.showToast) showToast('red','Enter a valid number',''); return; }
     var db2 = window.fbDb, mods = window._fbModules;
     if(!db2 || !mods) return;
     mods.updateDoc(mods.doc(db2, 'hillScheduledJobs', id), {
-      qtyRan: qtyRan, qtyScrap: qtyScrap, updatedBy: window.currentUser || 'unknown', updatedAt: mods.serverTimestamp()
+      qtyScrap: qtyScrap, updatedBy: window.currentUser || 'unknown', updatedAt: mods.serverTimestamp()
     }).then(function(){
-      if(window.showToast) showToast('green','Progress updated', qtyRan + ' good / ' + qtyScrap + ' scrap');
+      if(window.showToast) showToast('green','Scrap logged', qtyScrap + ' total');
     }).catch(function(e){ if(window.showToast) showToast('red','Failed to update', e.message); });
   };
 
@@ -5923,11 +5968,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           + (canUse ? ('<div style="display:flex;gap:6px;margin-top:8px;">'
               + '<button onclick="window._updateJobProgress(\'' + j.id + '\')" style="flex:1;background:rgba(14,165,233,0.15);border:1px solid #0ea5e9;color:#7dd3fc;border-radius:6px;padding:7px;font-size:11px;letter-spacing:0.5px;cursor:pointer;">✏️ UPDATE QTY</button>'
               + '<button onclick="window._nextOperation(\'' + j.id + '\')" style="flex:1;background:rgba(168,85,247,0.15);border:1px solid #a855f7;color:#d8b4fe;border-radius:6px;padding:7px;font-size:11px;letter-spacing:0.5px;cursor:pointer;">⏭ NEXT OP</button>'
-              + '</div><div style="display:flex;gap:6px;margin-top:6px;">'
+              + '</div><div style="display:flex;gap:6px;margin-top:6px;align-items:center;">'
               + '<button onclick="window._editScheduledJob(\'' + j.id + '\')" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid #475569;color:#cbd5e1;border-radius:6px;padding:7px;font-size:11px;letter-spacing:0.5px;cursor:pointer;">⚙️ EDIT</button>'
               + '<button onclick="window._completeScheduledJob(\'' + j.id + '\')" style="flex:1;background:rgba(34,197,94,0.15);border:1px solid #22c55e;color:#4ade80;border-radius:6px;padding:7px;font-size:11px;letter-spacing:0.5px;cursor:pointer;">✓ COMPLETE</button>'
               + '<button onclick="window._deleteScheduledJob(\'' + j.id + '\')" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;border-radius:6px;padding:7px 10px;font-size:11px;cursor:pointer;">🗑</button>'
-              + '</div>') : '')
+              + '</div>'
+              + '<button onclick="window._logScrap(\'' + j.id + '\')" style="width:100%;margin-top:6px;background:none;border:none;color:#64748b;font-size:10px;text-decoration:underline;cursor:pointer;padding:2px;">+ Log Scrap</button>') : '')
           + '</div>';
       }).join('');
       return '<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;color:#f5c842;letter-spacing:1px;border-bottom:1px solid #2a5a8c;padding-bottom:4px;">' + window._escAttr(machine) + '</div>' + rows + '</div>';
@@ -6008,6 +6054,151 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         + (next ? '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #1e3a5c;font-size:11px;color:#64748b;">NEXT UP: ' + window._escAttr(next.customer||next.wo||next.part||'') + '</div>' : '')
         + '</div>';
     }).join('');
+  };
+
+  // ── PROSHOP TIME TRACKING IMPORT ──
+  // Parses a raw copy-paste of ProShop's Time Tracking table. Each row is
+  // one clock session (an employee, a WO/OP/machine, a Begin/End qty
+  // range for that session). Multiple sessions on the same WO+OP+Machine
+  // get merged into one job, taking the highest "End" qty as the current
+  // total — so several short sessions across the day still add up
+  // correctly. Never touches Firestore until you tap Apply.
+  var PROSHOP_CATEGORIES = ['Running','Set-up','Misc','Bottleneck','Inspection / 1st Art','Trouble Shoot',
+    'Break Down','Rework','Purchasing','Shipping Prep','Maintenance','Receiving','Kaizen','RFQ / Quoting',
+    'Training','Cleanup','Transportation','Accounting','Programming','PP Check','Manufacturing Planning'];
+
+  window._toggleProShopImport = function(){
+    var el = document.getElementById('proshopImportPanel');
+    if(!el) return;
+    el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+  };
+
+  function _parseProShopExport(text){
+    var lines = text.split('\n');
+    var jobs = {}; // key: wo|op|machine
+    lines.forEach(function(line){
+      var parts = line.split('\t');
+      if (parts.length < 12) return;
+      if (PROSHOP_CATEGORIES.indexOf(parts[1]) === -1) return;
+      if (!/^\d+-\d+$/.test(parts[2])) return; // WO# column must look like "26-1042"
+      var name = parts[0], wo = parts[2], op = parts[3], machine = parts[4], beginEnd = parts[5], targetHr = parts[8];
+      var note = parts[17] || '';
+      var key = wo + '|' + op + '|' + machine;
+      if (!jobs[key]) jobs[key] = { wo: wo, op: op, machine: machine, maxEnd: null, targetHr: null, employees: [], notes: [] };
+      var j = jobs[key];
+      if (j.employees.indexOf(name) === -1) j.employees.push(name);
+      var rate = parseFloat(targetHr);
+      if (!isNaN(rate) && rate > 0) j.targetHr = rate;
+      if (beginEnd && beginEnd.indexOf('/') !== -1) {
+        var endQty = parseFloat(beginEnd.split('/')[1]);
+        if (!isNaN(endQty) && (j.maxEnd === null || endQty > j.maxEnd)) j.maxEnd = endQty;
+      }
+      if (note.trim()) j.notes.push(name + ': ' + note.trim());
+    });
+    return Object.keys(jobs).map(function(k){ return jobs[k]; });
+  }
+
+  window._proshopImportParsed = [];
+  window._previewProShopImport = function(){
+    if(!_schCanUse()) return;
+    var text = document.getElementById('proshopPasteBox').value;
+    if(!text.trim()){ if(window.showToast) showToast('red','Paste the ProShop table first',''); return; }
+    var parsed = _parseProShopExport(text);
+    if(!parsed.length){ if(window.showToast) showToast('red','Nothing recognized in that paste','Make sure you copied the whole table, including the data rows.'); return; }
+    window._proshopImportParsed = parsed;
+
+    var existing = window._scheduledJobs || [];
+    var matched = [], newFound = [];
+    parsed.forEach(function(p){
+      var match = existing.find(function(j){ return j.wo === p.wo && j.op === p.op && j.machine === p.machine; });
+      if (match) matched.push({ parsed: p, existing: match });
+      else newFound.push(p);
+    });
+
+    var allNotes = [];
+    parsed.forEach(function(p){ p.notes.forEach(function(n){ allNotes.push({ wo: p.wo, op: p.op, machine: p.machine, note: n }); }); });
+
+    var html = '';
+    if (allNotes.length) {
+      html += '<div style="background:rgba(239,68,68,0.1);border:1px solid #ef4444;border-radius:8px;padding:10px;margin-bottom:10px;">'
+        + '<div style="font-size:11px;color:#fca5a5;font-weight:700;letter-spacing:1px;margin-bottom:6px;">⚠ NOTES FLAGGED FROM PROSHOP</div>'
+        + allNotes.map(function(n){ return '<div style="font-size:12px;color:#f0f4f8;margin-bottom:4px;">' + window._escAttr(n.machine) + ' (WO ' + window._escAttr(n.wo) + ' OP ' + window._escAttr(n.op) + '): ' + window._escAttr(n.note) + '</div>'; }).join('')
+        + '</div>';
+    }
+
+    if (matched.length) {
+      html += '<div style="font-size:11px;color:#4ade80;font-weight:700;letter-spacing:1px;margin-bottom:6px;">✅ WILL UPDATE ' + matched.length + ' EXISTING JOB(S)</div>';
+      html += matched.map(function(m, i){
+        var oldQty = m.existing.qtyRan || 0, newQty = m.parsed.maxEnd;
+        return '<div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 10px;margin-bottom:6px;font-size:12px;color:#cbd5e1;">'
+          + window._escAttr(m.parsed.machine) + ' — WO ' + window._escAttr(m.parsed.wo) + ' OP ' + window._escAttr(m.parsed.op)
+          + (newQty !== null ? ('<br>Qty: ' + oldQty + ' → <strong style="color:#4ade80;">' + newQty + '</strong>') : '<br><span style="color:#64748b;">No qty change found</span>')
+          + '</div>';
+      }).join('');
+    }
+
+    if (newFound.length) {
+      html += '<div style="font-size:11px;color:#7dd3fc;font-weight:700;letter-spacing:1px;margin:10px 0 6px;">🆕 ' + newFound.length + ' JOB(S) NOT YET IN SCHEDULER</div>';
+      html += '<div style="font-size:10px;color:#64748b;margin-bottom:6px;">Check any you want added — Customer, Due Date, and Qty Total aren\'t in this ProShop view, so add those afterward with ⚙️ Edit.</div>';
+      html += newFound.map(function(p, i){
+        return '<label style="display:flex;align-items:flex-start;gap:8px;background:rgba(255,255,255,0.03);border-radius:6px;padding:8px 10px;margin-bottom:6px;cursor:pointer;">'
+          + '<input type="checkbox" class="proshop-new-job-cb" data-idx="' + i + '" style="margin-top:2px;">'
+          + '<span style="font-size:12px;color:#cbd5e1;">' + window._escAttr(p.machine) + ' — WO ' + window._escAttr(p.wo) + ' OP ' + window._escAttr(p.op)
+          + (p.maxEnd !== null ? (' · qty so far: ' + p.maxEnd) : '') + (p.targetHr ? (' · ' + p.targetHr + '/hr') : '')
+          + ' · ' + window._escAttr(p.employees.join(', '))
+          + '</span></label>';
+      }).join('');
+    }
+
+    if (!matched.length && !newFound.length) {
+      html += '<div style="text-align:center;color:#475569;font-size:12px;padding:12px;">Nothing to import.</div>';
+    } else {
+      html += '<button type="button" onclick="window._applyProShopImport()" style="width:100%;margin-top:8px;background:#22c55e;border:none;color:#042f2e;border-radius:8px;padding:11px;font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;">APPLY IMPORT</button>';
+    }
+
+    document.getElementById('proshopImportPreview').innerHTML = html;
+  };
+
+  window._applyProShopImport = function(){
+    if(!_schCanUse()) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if(!db2 || !mods) return;
+    var parsed = window._proshopImportParsed || [];
+    var existing = window._scheduledJobs || [];
+    var writes = [];
+
+    parsed.forEach(function(p){
+      var match = existing.find(function(j){ return j.wo === p.wo && j.op === p.op && j.machine === p.machine; });
+      if (match && p.maxEnd !== null) {
+        var updates = { qtyRan: p.maxEnd, updatedBy: window.currentUser || 'unknown', updatedAt: mods.serverTimestamp() };
+        if (!match.partsPerHour && p.targetHr) updates.partsPerHour = p.targetHr;
+        writes.push(mods.updateDoc(mods.doc(db2, 'hillScheduledJobs', match.id), updates));
+      }
+    });
+
+    var checkboxes = document.querySelectorAll('.proshop-new-job-cb:checked');
+    checkboxes.forEach(function(cb){
+      var idx = parseInt(cb.getAttribute('data-idx'), 10);
+      var matchedExisting = parsed.filter(function(p){ return !existing.find(function(j){ return j.wo===p.wo && j.op===p.op && j.machine===p.machine; }); });
+      var p = matchedExisting[idx];
+      if (!p) return;
+      writes.push(mods.addDoc(mods.collection(db2, 'hillScheduledJobs'), {
+        machine: p.machine, customer: '', wo: p.wo, part: '', op: p.op,
+        partsPerHour: p.targetHr || 0, qtyRan: p.maxEnd || 0, qtyScrap: 0, qtyTotal: (p.maxEnd || 0) + 1, dueDate: null,
+        queueOrder: 0, createdBy: window.currentUser || 'unknown', createdAt: mods.serverTimestamp(), updatedAt: mods.serverTimestamp()
+      }));
+    });
+
+    if (!writes.length) { if(window.showToast) showToast('yellow','Nothing selected to import',''); return; }
+
+    Promise.all(writes).then(function(){
+      if(window.showToast) showToast('green','Import applied', writes.length + ' job(s) updated or added.');
+      document.getElementById('proshopPasteBox').value = '';
+      document.getElementById('proshopImportPreview').innerHTML = '';
+      window._proshopImportParsed = [];
+    }).catch(function(e){
+      if(window.showToast) showToast('red','Import failed', e.message);
+    });
   };
 
 
