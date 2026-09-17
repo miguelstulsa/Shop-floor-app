@@ -869,14 +869,9 @@
 
   /* FULL SCREEN LAYOUT */
   html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
-  /* Everything below this point was meant for mobile only — it was
-     missing its @media wrapper, so it was forcing the same
-     everything-crammed-into-one-screen-no-scroll layout onto desktop
-     too, clipping the bottom row with no way to scroll to it. */
-  @media (max-width: 900px) {
   .shop-page.active { display: block !important; height: calc(100vh - 82px) !important; max-height: calc(100vh - 82px) !important; overflow: hidden !important; }
-  .floor-section { overflow: hidden !important; height: calc(100dvh - 150px) !important; padding: 4px 6px !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; }
-  .floor-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; grid-template-rows: repeat(2, 1fr) auto !important; gap: 4px !important; padding: 4px !important; flex: 1 !important; min-height: 0 !important; overflow: hidden !important; align-items: stretch !important; }
+  .floor-section { overflow-y: auto !important; height: calc(100dvh - 150px) !important; padding: 4px 6px !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; }
+  .floor-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; grid-template-rows: repeat(2, 1fr) auto !important; gap: 4px !important; padding: 4px !important; flex: 1 !important; min-height: 0 !important; overflow: visible !important; align-items: stretch !important; }
   .cell { padding: 5px !important; border-radius: 7px !important; display: flex !important; flex-direction: column !important; min-height: 0 !important; }
   .machines { display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; gap: 3px !important; }
   .machine { flex: 1 !important; margin-bottom: 0 !important; border-radius: 6px !important; display: flex !important; flex-direction: column !important; min-height: 0 !important; }
@@ -902,7 +897,6 @@
   .perf-bar { height: 3px !important; flex-shrink: 0 !important; }
   .note-dot { width: 8px !important; height: 8px !important; }
   .machine-led { width: 8px !important; height: 8px !important; }
-  }
   .sidebar { position: fixed; bottom: 0; left: 0; right: 0; max-height: 80vh; overflow: hidden; z-index: 500; background: #0a1829; border-top: 2px solid #f59e0b; border-left: none; border-radius: 16px 16px 0 0; display: none; flex-direction: column; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); }
   .sidebar.open { display: flex !important; }
   .sidebar-header { cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; position: relative; flex-shrink: 0; min-height: 48px; }
