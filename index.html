@@ -2860,6 +2860,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
               '</div>'
             : '<div style="display:flex;gap:6px;margin-top:6px;">' +
               '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>' +
+              (strictAdmin && (n.type === 'blue' || n.type === 'yellow') ? '<button class="req-timer-btn" style="background:rgba(168,85,247,0.15);border:1px solid #a855f7;color:#d8b4fe;" onclick="window._markRequestFulfilled(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ MARK FULFILLED</button>' : '') +
               '</div>'
           )
         : '');
@@ -2937,6 +2938,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
                 ? '<div style="width:100%;font-size:9px;color:#d8b4fe;margin-bottom:3px;">📨 Forwarded to Inspection' + (n.forwardedBy ? ' by ' + n.forwardedBy.split(' ')[0] : '') + '</div>' +
                   '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>'
                 : '<button class="req-timer-btn req-start-btn" data-noteid="' + n.id + '" onclick="window.startRequest(\'' + n.id + '\',\'' + (n.hillReqId||n.id) + '\')">▶ START</button>')
+              + (strictAdmin2 && (n.type === 'blue' || n.type === 'yellow') ? '<button class="req-timer-btn" style="background:rgba(168,85,247,0.15);border:1px solid #a855f7;color:#d8b4fe;" onclick="window._markRequestFulfilled(\'' + n.id + '\',\'' + (n.hillReqId||'') + '\')">✓ MARK FULFILLED</button>' : '')
           ) +
           '</div>'
         : '');
@@ -3556,6 +3558,86 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       console.warn('finishRequest greenNote:', e.message);
       showToast('green', 'Request Closed ✓', elapsedStr !== 'unknown' ? 'Time: ' + elapsedStr : 'Resolved');
     }
+  };
+
+  // For requests you verified/handled yourself outside the normal
+  // Start→Finish flow — closes it out and (optionally) logs how long it
+  // actually took, so it still counts correctly in time reports instead
+  // of sitting there forever looking "open" when the work is done.
+  // Strictly admin-only.
+  window._markRequestFulfilled = async function(noteId, hillReqId) {
+    if (!window._isAdmin && window.currentUser !== 'hilladmin') return;
+    var db2  = window.fbDb || window._db;
+    var mods = window._fbModules;
+    if (!mods || !db2) { showToast('red','Error','Not connected'); return; }
+
+    var minsInput = prompt('Roughly how many minutes did this actually take? (Leave blank if unknown — it\'ll still close out, just without time logged.)', '');
+    if (minsInput === null) return; // cancelled
+    var elapsedMins = minsInput.trim() === '' ? null : parseFloat(minsInput);
+    if (elapsedMins !== null && (isNaN(elapsedMins) || elapsedMins < 0)) { showToast('red','Enter a valid number of minutes',''); return; }
+    var elapsedStr = elapsedMins == null ? 'not logged' : (elapsedMins >= 60 ? Math.floor(elapsedMins/60)+'h '+(elapsedMins%60)+'m' : elapsedMins+'m');
+
+    var noteData = null;
+    try {
+      var noteSnap = await mods.getDoc(mods.doc(db2, 'notes', noteId));
+      if (noteSnap && noteSnap.exists()) noteData = noteSnap.data();
+      await mods.deleteDoc(mods.doc(db2, 'notes', noteId));
+    } catch(e) { console.warn('_markRequestFulfilled getNote:', e.message); }
+    if (window._removeActiveJob) window._removeActiveJob(noteId);
+
+    // Same resolvePayload shape finishRequest uses, so this shows up
+    // consistently in every report that reads hillRequests — just
+    // without ever having gone through Start.
+    var isToolingRequest = noteData && (noteData.type === 'blue' || noteData.type === 'yellow');
+    var resolvePayload = {
+      resolved: true,
+      resolvedAt: mods.serverTimestamp(),
+      resolvedBy: window.currentUser || 'admin',
+      inProgress: false,
+      elapsedMins: elapsedMins,
+      elapsedStr: elapsedStr,
+      setupBy: window.currentUser || 'admin',
+      setupTime: elapsedStr,
+      setupDoneAt: mods.serverTimestamp(),
+      jobStatus: 'completed',
+      type: isToolingRequest ? 'green' : (noteData ? noteData.type : undefined),
+      completedAt: mods.serverTimestamp(),
+      fulfilledDirectly: true // marks this as closed via Mark Fulfilled, not a normal Start→Finish
+    };
+    try {
+      var hrId = (hillReqId && hillReqId !== noteId && hillReqId !== '') ? hillReqId : null;
+      if (hrId) {
+        await mods.updateDoc(mods.doc(db2, 'hillRequests', hrId), resolvePayload);
+      } else if (noteData && noteData.machine) {
+        var fallbackSnap = await mods.getDocs(mods.query(
+          mods.collection(db2, 'hillRequests'),
+          mods.where('machine', '==', noteData.machine),
+          mods.where('resolved', '==', false)
+        )).catch(function(){ return null; });
+        if (fallbackSnap && !fallbackSnap.empty) {
+          var updates = [];
+          fallbackSnap.forEach(function(d){
+            var data = d.data();
+            if (data.wo === noteData.wo) updates.push(mods.updateDoc(mods.doc(db2, 'hillRequests', d.id), resolvePayload));
+          });
+          await Promise.all(updates);
+        }
+      }
+    } catch(e) { console.warn('_markRequestFulfilled updateHR:', e.message); }
+
+    if (elapsedMins != null && noteData && (noteData.type === 'blue' || noteData.type === 'yellow')) {
+      try {
+        await mods.addDoc(mods.collection(db2, 'hillTimeLog'), {
+          person: window.currentUser || 'admin', role: 'setup',
+          machine: noteData.machine || '', wo: noteData.wo || '', op: noteData.op || '',
+          detail: noteData.detail || '', assignedTo: noteData.assignedTo || '',
+          finishedAt: mods.serverTimestamp(), elapsedMins: elapsedMins, elapsedStr: elapsedStr,
+          loggedAt: mods.serverTimestamp(), fulfilledDirectly: true
+        });
+      } catch(e) { console.warn('_markRequestFulfilled timeLog:', e.message); }
+    }
+
+    if (window.showToast) showToast('green', '✓ Marked fulfilled', elapsedMins != null ? 'Time logged: ' + elapsedStr : 'Closed out, no time logged');
   };
 
   // Strictly admin-only (not even managers) — sets which of the 3 QMI/DGP
@@ -18263,6 +18345,19 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var blueMins = filtered.filter(function(r){return r.type==='blue';}).reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
     var yellowMins = filtered.filter(function(r){return r.type==='yellow';}).reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
 
+    // Weeks spanned by the actual data (not the period filter's own
+    // start/end — "All Time" would otherwise measure from 1970 and make
+    // every average look like zero). Floors at 1 day so a single day of
+    // data doesn't divide by a near-zero span.
+    var reportTimestamps = filtered.map(function(r){
+      return r.resolvedAt ? r.resolvedAt.seconds*1000 : (r.createdAt ? r.createdAt.seconds*1000 : null);
+    }).filter(function(t){ return t != null; });
+    var weeksSpanned = 1/7;
+    if (reportTimestamps.length) {
+      var earliestTs = Math.min.apply(null, reportTimestamps), latestTs = Math.max.apply(null, reportTimestamps);
+      weeksSpanned = Math.max(1/7, (latestTs - earliestTs) / (7*24*60*60*1000));
+    }
+
     var byEmployee = {};
     filtered.forEach(function(r){
       var name = r.operator || 'Unassigned';
@@ -18271,7 +18366,10 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       byEmployee[name].count++;
     });
     var employeeRows = Object.entries(byEmployee).sort(function(a,b){ return b[1].mins - a[1].mins; })
-      .map(function(e){ return '<tr><td>'+e[0]+'</td><td>'+_timeReportFmt(e[1].mins)+'</td><td>'+e[1].count+'</td></tr>'; }).join('');
+      .map(function(e){
+        var avgHoursPerWeek = (e[1].mins/60) / weeksSpanned;
+        return '<tr><td>'+e[0]+'</td><td>'+_timeReportFmt(e[1].mins)+'</td><td>'+e[1].count+'</td><td>'+avgHoursPerWeek.toFixed(1)+' hrs/wk</td></tr>';
+      }).join('');
 
     var byMachine = {};
     filtered.forEach(function(r){
@@ -18297,7 +18395,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#1a2744;}h1{font-size:20px;margin-bottom:2px;}h2{font-size:15px;margin-top:28px;border-bottom:2px solid #1a2744;padding-bottom:4px;}table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}th{background:#1a2744;color:#fff;padding:7px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #e5e7eb;}tr:nth-child(even){background:#f9fafb;}p.meta{color:#555;font-size:12px;}.totals{display:flex;gap:16px;margin-top:12px;}.tbox{flex:1;border:2px solid #1a2744;border-radius:8px;padding:14px;text-align:center;}.tbox .n{font-size:26px;font-weight:900;color:#1a2744;}.tbox .l{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#555;margin-top:4px;}@media print{button{display:none!important;}}</style></head><body>'
       +'<button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨 Print / Save PDF</button>'
       +'<h1>Hill Manufacturing — Time Report</h1>'
-      +'<p class="meta">Period: '+(periodLabels[period]||period)+' &nbsp;|&nbsp; Generated: '+new Date().toLocaleString()+' &nbsp;|&nbsp; Pending WO + Machinist Req only</p>'
+      +'<p class="meta">Period: '+(periodLabels[period]||period)+' &nbsp;|&nbsp; Generated: '+new Date().toLocaleString()+' &nbsp;|&nbsp; Pending WO + Machinist Req only &nbsp;|&nbsp; Data spans '+weeksSpanned.toFixed(1)+' week(s)</p>'
       +'<div class="totals">'
         +'<div class="tbox"><div class="n">'+_timeReportFmt(totalMins)+'</div><div class="l">Total Time</div></div>'
         +'<div class="tbox"><div class="n">'+_timeReportFmt(blueMins)+'</div><div class="l">Pending WO</div></div>'
@@ -18305,7 +18403,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         +'<div class="tbox"><div class="n">'+filtered.length+'</div><div class="l">Requests Timed</div></div>'
       +'</div>'
       +'<h2>By Employee</h2>'
-      +'<table><thead><tr><th>Employee</th><th>Total Time</th><th>Requests</th></tr></thead><tbody>'+(employeeRows||'<tr><td colspan="3">No timed requests in this period.</td></tr>')+'</tbody></table>'
+      +'<table><thead><tr><th>Employee</th><th>Total Time</th><th>Requests</th><th>Avg Hours/Week</th></tr></thead><tbody>'+(employeeRows||'<tr><td colspan="4">No timed requests in this period.</td></tr>')+'</tbody></table>'
       +'<h2>By Machine</h2>'
       +'<table><thead><tr><th>Machine</th><th>Total Time</th><th>Requests</th></tr></thead><tbody>'+(machineRows||'<tr><td colspan="3">No timed requests in this period.</td></tr>')+'</tbody></table>'
       +'<h2>Detail</h2>'
