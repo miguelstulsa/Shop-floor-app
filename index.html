@@ -5317,6 +5317,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     'Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt',
     'Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'
   ];
+  window.TIME_STUDY_EMPLOYEES = TIME_STUDY_EMPLOYEES; // exposed so other script blocks (like the Time Report) can use the same roster
   window._timeStudyEntries = [];
   window._timeStudyView = 'log';
   window._tsAlertingInFlight = {}; // local guard against double-firing while a Firestore write is in progress
@@ -18308,6 +18309,29 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     return mins >= 60 ? Math.floor(mins/60)+'h '+Math.round(mins%60)+'m' : Math.round(mins)+'m';
   }
 
+  // Folds "Corey Bartmier" / "corey" / "COREY BARTMIER" into one person
+  // for reporting, using the real employee roster as the source of truth
+  // — instead of every different way someone typed their name in
+  // becoming its own separate row and quietly undercounting everyone's
+  // real hours.
+  function _timeReportTitleCase(s){
+    return s.replace(/\w\S*/g, function(t){ return t.charAt(0).toUpperCase() + t.substr(1).toLowerCase(); });
+  }
+  function _timeReportCanonicalName(rawName){
+    var trimmed = (rawName || 'Unassigned').trim();
+    if (!trimmed) return 'Unassigned';
+    var lower = trimmed.toLowerCase();
+    var roster = window.TIME_STUDY_EMPLOYEES || [];
+    for (var i = 0; i < roster.length; i++) {
+      if (roster[i].toLowerCase() === lower) return roster[i];
+    }
+    var firstNameMatches = roster.filter(function(full){
+      return full.toLowerCase().split(' ')[0] === lower;
+    });
+    if (firstNameMatches.length === 1) return firstNameMatches[0];
+    return _timeReportTitleCase(trimmed);
+  }
+
   window._generateTimeReport = async function(){
     var periodSel = document.getElementById('timeReportPeriod');
     var period = periodSel ? periodSel.value : 'week';
@@ -18360,7 +18384,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
     var byEmployee = {};
     filtered.forEach(function(r){
-      var name = r.operator || 'Unassigned';
+      var name = _timeReportCanonicalName(r.operator);
       if (!byEmployee[name]) byEmployee[name] = { mins:0, count:0 };
       byEmployee[name].mins += r.elapsedMins||0;
       byEmployee[name].count++;
