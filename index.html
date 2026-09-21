@@ -1128,15 +1128,26 @@
         Real time spent, tracked from Start to Finish — Pending WO and Machinist Req only. Nothing from Inspection, Running WO, or Datanomix gets counted here.
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-        <select id="timeReportPeriod" style="flex:1;min-width:140px;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;">
+        <select id="timeReportPeriod" onchange="window._toggleTimeReportCustomRange()" style="flex:1;min-width:140px;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;">
           <option value="today">Today</option>
           <option value="week" selected>This Week</option>
           <option value="lastweek">Last Week</option>
           <option value="month">This Month</option>
           <option value="lastmonth">Last Month</option>
           <option value="all">All Time</option>
+          <option value="custom">Custom Range — pick a start date</option>
         </select>
         <button onclick="window._generateTimeReport()" style="background:#3b82f6;border:none;color:#fff;border-radius:8px;padding:9px 18px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1px;cursor:pointer;white-space:nowrap;">📊 GENERATE REPORT</button>
+      </div>
+      <div id="timeReportCustomRangeWrap" style="display:none;gap:8px;margin-bottom:12px;">
+        <div style="flex:1;">
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">From (e.g. when you started tracking)</div>
+          <input type="date" id="timeReportFrom" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:10px;color:#94a3b8;margin-bottom:4px;">To</div>
+          <input type="date" id="timeReportTo" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;">
+        </div>
       </div>
       <div style="font-size:11px;color:#475569;line-height:1.6;">
         Opens a clean, printable summary — total time, broken down by employee and by machine — with a "Print / Save PDF" button, ready to hand to your boss.
@@ -3462,6 +3473,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       setupDoneAt: mods.serverTimestamp(),
       jobStatus: 'completed',
       type: isToolingRequest ? 'green' : noteForTypeCheck.type,  // Flip to green (Completed) for tooling requests
+      originalType: noteForTypeCheck.type, // preserved so reports can still tell this was a Pending WO/Machinist Req after the flip above
       completedAt: mods.serverTimestamp()
     };
     try {
@@ -3601,6 +3613,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       setupDoneAt: mods.serverTimestamp(),
       jobStatus: 'completed',
       type: isToolingRequest ? 'green' : (noteData ? noteData.type : undefined),
+      originalType: noteData ? noteData.type : undefined, // preserved so reports can still tell this was a Pending WO/Machinist Req after the flip above
       completedAt: mods.serverTimestamp(),
       fulfilledDirectly: true // marks this as closed via Mark Fulfilled, not a normal Start→Finish
     };
@@ -18300,9 +18313,22 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     else if (period === 'lastweek')  { start = new Date(now); start.setDate(start.getDate()-start.getDay()-7); start.setHours(0,0,0,0); end = new Date(now); end.setDate(end.getDate()-end.getDay()); end.setHours(0,0,0,0); }
     else if (period === 'month')     { start = new Date(now.getFullYear(), now.getMonth(), 1); }
     else if (period === 'lastmonth') { start = new Date(now.getFullYear(), now.getMonth()-1, 1); end = new Date(now.getFullYear(), now.getMonth(), 1); }
+    else if (period === 'custom') {
+      var fromVal = (document.getElementById('timeReportFrom')||{}).value;
+      var toVal = (document.getElementById('timeReportTo')||{}).value;
+      start = fromVal ? new Date(fromVal + 'T00:00:00') : new Date(0);
+      end = toVal ? new Date(toVal + 'T23:59:59') : now;
+    }
     else { start = new Date(0); }
     return { start: start, end: end };
   }
+
+  window._toggleTimeReportCustomRange = function(){
+    var periodSel = document.getElementById('timeReportPeriod');
+    var wrap = document.getElementById('timeReportCustomRangeWrap');
+    if (!periodSel || !wrap) return;
+    wrap.style.display = (periodSel.value === 'custom') ? 'flex' : 'none';
+  };
 
   function _timeReportFmt(mins){
     if (!mins && mins !== 0) return '—';
@@ -18337,6 +18363,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var period = periodSel ? periodSel.value : 'week';
     var periodLabels = {today:'Today', week:'This Week', lastweek:'Last Week', month:'This Month', lastmonth:'Last Month', all:'All Time'};
     var range = _timeReportRange(period);
+    if (period === 'custom') {
+      periodLabels.custom = 'Custom Range — ' + range.start.toLocaleDateString() + ' to ' + range.end.toLocaleDateString();
+    }
 
     var db2 = window.fbDb, mods = window._fbModules;
     if (!db2 || !mods) { if(window.showToast) showToast('red','Not connected',''); return; }
@@ -18357,8 +18386,15 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     // Straight time only — Pending WO (blue) and Machinist Req (yellow),
     // actually finished (resolved), with a real elapsed time recorded.
     // Nothing from Inspection, Running WO, or Datanomix ever enters this.
+    // Checks originalType first — finishRequest flips a completed Pending
+    // WO/Machinist Req's type to 'green' so it shows as a completed card
+    // on the shop floor, which would otherwise make it invisible here the
+    // moment it's actually finished. Falls back to type for any older
+    // record from before this field existed.
+    function _reqOriginalType(r){ return r.originalType || r.type; }
     var filtered = all.filter(function(r){
-      if (r.type !== 'blue' && r.type !== 'yellow') return false;
+      var ot = _reqOriginalType(r);
+      if (ot !== 'blue' && ot !== 'yellow') return false;
       if (!r.resolved || r.elapsedMins == null) return false;
       var ts = r.resolvedAt ? new Date(r.resolvedAt.seconds*1000) : (r.createdAt ? new Date(r.createdAt.seconds*1000) : null);
       if (!ts) return false;
@@ -18366,20 +18402,27 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     });
 
     var totalMins = filtered.reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
-    var blueMins = filtered.filter(function(r){return r.type==='blue';}).reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
-    var yellowMins = filtered.filter(function(r){return r.type==='yellow';}).reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
+    var blueMins = filtered.filter(function(r){return _reqOriginalType(r)==='blue';}).reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
+    var yellowMins = filtered.filter(function(r){return _reqOriginalType(r)==='yellow';}).reduce(function(s,r){ return s + (r.elapsedMins||0); }, 0);
 
-    // Weeks spanned by the actual data (not the period filter's own
-    // start/end — "All Time" would otherwise measure from 1970 and make
-    // every average look like zero). Floors at 1 day so a single day of
-    // data doesn't divide by a near-zero span.
-    var reportTimestamps = filtered.map(function(r){
-      return r.resolvedAt ? r.resolvedAt.seconds*1000 : (r.createdAt ? r.createdAt.seconds*1000 : null);
-    }).filter(function(t){ return t != null; });
+    // Weeks spanned. For Custom Range, use the actual dates you picked —
+    // that's the real window you're asking about (e.g. "since March"),
+    // not just wherever resolved timestamps happen to exist. For the
+    // preset periods, use the actual earliest-to-latest resolved data
+    // instead ("All Time" would otherwise measure from 1970 and make
+    // every average look like zero). Floors at 1 day either way so a
+    // single day of data doesn't divide by a near-zero span.
     var weeksSpanned = 1/7;
-    if (reportTimestamps.length) {
-      var earliestTs = Math.min.apply(null, reportTimestamps), latestTs = Math.max.apply(null, reportTimestamps);
-      weeksSpanned = Math.max(1/7, (latestTs - earliestTs) / (7*24*60*60*1000));
+    if (period === 'custom') {
+      weeksSpanned = Math.max(1/7, (range.end - range.start) / (7*24*60*60*1000));
+    } else {
+      var reportTimestamps = filtered.map(function(r){
+        return r.resolvedAt ? r.resolvedAt.seconds*1000 : (r.createdAt ? r.createdAt.seconds*1000 : null);
+      }).filter(function(t){ return t != null; });
+      if (reportTimestamps.length) {
+        var earliestTs = Math.min.apply(null, reportTimestamps), latestTs = Math.max.apply(null, reportTimestamps);
+        weeksSpanned = Math.max(1/7, (latestTs - earliestTs) / (7*24*60*60*1000));
+      }
     }
 
     var byEmployee = {};
@@ -18410,7 +18453,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       return bt - at;
     }).map(function(r){
       var ts = r.resolvedAt ? new Date(r.resolvedAt.seconds*1000) : null;
-      var typeLabel = r.type === 'blue' ? '🔵 Pending WO' : '🟡 Machinist Req';
+      var typeLabel = _reqOriginalType(r) === 'blue' ? '🔵 Pending WO' : '🟡 Machinist Req';
       return '<tr><td>'+(ts ? ts.toLocaleDateString() : '')+'</td><td>'+typeLabel+'</td><td>'+(r.operator||'')+'</td><td>'+(r.machine||'')+'</td><td>'+(r.wo||'')+'</td><td>'+_timeReportFmt(r.elapsedMins)+'</td></tr>';
     }).join('');
 
