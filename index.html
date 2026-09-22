@@ -1369,9 +1369,6 @@
       <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div>Machinist Req</div>
       <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Running WO</div>
     </div>
-    <div class="notif-bell" onclick="window._openShopDisplay()" style="background:rgba(14,165,233,0.12);border-color:rgba(14,165,233,0.4);">
-      <span>📺</span><span>Shop Activity</span>
-    </div>
     <div class="notif-bell" onclick="scrollToSidebar()">
       <span>🔔</span><span>Alerts</span>
       <span class="notif-count" id="notifCount">0</span>
@@ -8206,8 +8203,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       listenToUsers();
       var tsTabAdmin = document.getElementById('tab-timestudy');
       if (tsTabAdmin) tsTabAdmin.style.display = 'flex';
-      var jtTabAdmin = document.getElementById('tab-jobtracker');
-      if (jtTabAdmin) jtTabAdmin.style.display = 'flex';
+      // Scheduler tab — hidden for now per request (not deleted, just
+      // commented out — uncomment these 2 lines to bring it back).
+      // var jtTabAdmin = document.getElementById('tab-jobtracker');
+      // if (jtTabAdmin) jtTabAdmin.style.display = 'flex';
       // Production Log tab — hidden for now per request (not deleted,
       // just commented out — uncomment these 2 lines to bring it back).
       // var dashTab = document.getElementById('tab-dashboard');
@@ -12873,10 +12872,10 @@ window.plannerSetView = function(view) {
     {name:'5100-B',cell:'5100 Cell'},{name:'2500',cell:'5100 Cell'},{name:'PUMA-3',cell:'5100 Cell'},
     {name:'ST35',cell:'MPPI'},{name:'VF-3',cell:'MPPI'},{name:'VF-2',cell:'MPPI'},{name:'PUMA-2',cell:'MPPI'},
     {name:'403-A',cell:'403 Cell'},{name:'403-B',cell:'403 Cell'},{name:'403-C',cell:'403 Cell'},
-    {name:'5100-A',cell:'Mill/Lathe'},{name:'SHARP',cell:'Mill/Lathe'},{name:'SH403',cell:'Mill/Lathe'},{name:'5000',cell:'Mill/Lathe'},
+    {name:'5100-A',cell:'Mill/Lathe'},{name:'SH403',cell:'Mill/Lathe'},{name:'5000',cell:'Mill/Lathe'},
     {name:'3000-C',cell:'3000 Cell'},{name:'SYIL',cell:'3000 Cell'},{name:'3000-A',cell:'3000 Cell'},
     {name:'EMCO',cell:'Horizontal'},{name:'2G',cell:'Horizontal'},
-    {name:'PUMA-1',cell:'Automation'},{name:'303-B',cell:'Automation'},{name:'TWIN',cell:'Automation'},{name:'2500-Y',cell:'Automation'},{name:'YCM',cell:'Automation'},
+    {name:'PUMA-1',cell:'Automation'},{name:'TWIN',cell:'Automation'},{name:'2500-Y',cell:'Automation'},{name:'YCM',cell:'Automation'},
     {name:'SAW',cell:'Saws'}
   ];
   // Exposed so other script blocks (e.g. the Inspector equipment tab's
@@ -18862,7 +18861,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Machine search
-    var allMachines=['1050-B','7000','VF-6','5100-B','2500','PUMA-3','ST35','VF-3','VF-2','PUMA-2','403-A','403-B','403-C','5100-A','3000-C','3000-A','2G','PUMA-1','303-B','TWIN','2500-Y','YCM','SHARP','SH-403','5000','SYIL','EMCO','SAW'];
+    var allMachines=['1050-B','7000','VF-6','5100-B','2500','PUMA-3','ST35','VF-3','VF-2','PUMA-2','403-A','403-B','403-C','5100-A','3000-C','3000-A','2G','PUMA-1','TWIN','2500-Y','YCM','SH-403','5000','SYIL','EMCO','SAW'];
     var machineFound=null;
     allMachines.forEach(function(m){ if(msgLower.indexOf(m.toLowerCase())>=0) machineFound=m; });
     if(machineFound){
