@@ -1149,8 +1149,12 @@
           <input type="date" id="timeReportTo" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:9px 12px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;">
         </div>
       </div>
-      <div style="font-size:11px;color:#475569;line-height:1.6;">
+      <div style="font-size:11px;color:#475569;line-height:1.6;margin-bottom:12px;">
         Opens a clean, printable summary — total time, broken down by employee and by machine — with a "Print / Save PDF" button, ready to hand to your boss.
+      </div>
+      <button onclick="window._recoverHistoricalReportData()" style="width:100%;background:rgba(168,85,247,0.12);border:1px solid #a855f7;color:#d8b4fe;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">🔧 RECOVER HISTORICAL REPORT DATA (run once)</button>
+      <div style="font-size:10px;color:#475569;line-height:1.5;margin-top:6px;">
+        If old completed requests aren't showing up in reports, run this once — it restores missing data without touching anything else. Safe to re-run any time.
       </div>
     </div>
 
@@ -1498,10 +1502,10 @@
       <div class="cell" style="grid-column:3;grid-row:1;"><div class="cell-title"><span class="cell-title-text">MPPI</span></div><div class="machines"><div class="machine" onclick="openModal('ST35','MPPI')"><div class="perf-bar pending" id="perf-ST35" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">ST35</div></div><div class="machine-right"><div class="machine-led" id="light-ST35"></div></div></div><div class="machine-notes" id="notes-ST35"></div></div><div class="machine" onclick="openModal('VF-3','MPPI')"><div class="perf-bar pending" id="perf-VF-3" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-3</div></div><div class="machine-right"><div class="machine-led" id="light-VF-3"></div></div></div><div class="machine-notes" id="notes-VF-3"></div></div><div class="machine" onclick="openModal('VF-2','MPPI')"><div class="perf-bar pending" id="perf-VF-2" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">VF-2</div></div><div class="machine-right"><div class="machine-led" id="light-VF-2"></div></div></div><div class="machine-notes" id="notes-VF-2"></div></div><div class="machine" onclick="openModal('PUMA-2','MPPI')"><div class="perf-bar pending" id="perf-PUMA-2" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-2</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-2"></div></div></div><div class="machine-notes" id="notes-PUMA-2"></div></div></div></div>
       <div class="cell" style="grid-column:4;grid-row:1;"><div class="cell-title"><span class="cell-title-text">403 Cell</span></div><div class="machines"><div class="machine" onclick="openModal('403-A','403 Cell')"><div class="perf-bar pending" id="perf-403-A" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">403-A</div></div><div class="machine-right"><div class="machine-led" id="light-403-A"></div></div></div><div class="machine-notes" id="notes-403-A"></div></div><div class="machine" onclick="openModal('403-B','403 Cell')"><div class="perf-bar pending" id="perf-403-B" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">403-B</div></div><div class="machine-right"><div class="machine-led" id="light-403-B"></div></div></div><div class="machine-notes" id="notes-403-B"></div></div><div class="machine" onclick="openModal('403-C','403 Cell')"><div class="perf-bar pending" id="perf-403-C" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">403-C</div></div><div class="machine-right"><div class="machine-led" id="light-403-C"></div></div></div><div class="machine-notes" id="notes-403-C"></div></div></div></div>
 
-      <div class="cell" style="grid-column:1;grid-row:2;"><div class="cell-title"><span class="cell-title-text">Mill · Lathe</span></div><div class="machines"><div class="machine" onclick="openModal('5100-A','Mill/Lathe')"><div class="perf-bar pending" id="perf-5100-A" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">5100-A</div></div><div class="machine-right"><div class="machine-led" id="light-5100-A"></div></div></div><div class="machine-notes" id="notes-5100-A"></div></div><div class="machine" onclick="openModal('SHARP','Mill/Lathe')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SHARP</div></div><div class="machine-right"><div class="machine-led" id="light-SHARP"></div></div></div><div class="machine-notes" id="notes-SHARP"></div></div></div></div>
+      <div class="cell" style="grid-column:1;grid-row:2;"><div class="cell-title"><span class="cell-title-text">Mill · Lathe</span></div><div class="machines"><div class="machine" onclick="openModal('5100-A','Mill/Lathe')"><div class="perf-bar pending" id="perf-5100-A" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">5100-A</div></div><div class="machine-right"><div class="machine-led" id="light-5100-A"></div></div></div><div class="machine-notes" id="notes-5100-A"></div></div></div></div>
       <div class="cell" style="grid-column:2;grid-row:2;"><div class="cell-title"><span class="cell-title-text">3000 Cell</span></div><div class="machines"><div class="machine" onclick="openModal('3000-A','3000 Cell')"><div class="perf-bar pending" id="perf-3000-A" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">3000-A</div></div><div class="machine-right"><div class="machine-led" id="light-3000-A"></div></div></div><div class="machine-notes" id="notes-3000-A"></div></div><div class="machine" onclick="openModal('3000-C','3000 Cell')"><div class="perf-bar pending" id="perf-3000-C" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">3000-C</div></div><div class="machine-right"><div class="machine-led" id="light-3000-C"></div></div></div><div class="machine-notes" id="notes-3000-C"></div></div><div class="machine" onclick="openModal('SYIL','3000 Cell')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SYIL</div></div><div class="machine-right"><div class="machine-led" id="light-SYIL"></div></div></div><div class="machine-notes" id="notes-SYIL"></div></div></div></div>
       <div class="cell" style="grid-column:3;grid-row:2;"><div class="cell-title"><span class="cell-title-text">Horizontal</span></div><div class="machines"><div class="machine" onclick="openModal('2G','Horizontal')"><div class="perf-bar pending" id="perf-2G" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">2G</div></div><div class="machine-right"><div class="machine-led" id="light-2G"></div></div></div><div class="machine-notes" id="notes-2G"></div></div><div class="machine" onclick="openModal('SH-403','Horizontal')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SH-403</div></div><div class="machine-right"><div class="machine-led" id="light-SH-403"></div></div></div><div class="machine-notes" id="notes-SH-403"></div></div><div class="machine" onclick="openModal('EMCO','Horizontal')"><div class="machine-body"><div class="machine-left"><div class="machine-name">EMCO</div></div><div class="machine-right"><div class="machine-led" id="light-EMCO"></div></div></div><div class="machine-notes" id="notes-EMCO"></div></div><div class="machine" onclick="openModal('5000','Horizontal')"><div class="machine-body"><div class="machine-left"><div class="machine-name">5000</div></div><div class="machine-right"><div class="machine-led" id="light-5000"></div></div></div><div class="machine-notes" id="notes-5000"></div></div></div></div>
-      <div class="cell" style="grid-column:4;grid-row:2;"><div class="cell-title"><span class="cell-title-text">Automation Cell</span></div><div class="machines"><div class="machine" onclick="openModal('PUMA-1','Automation')"><div class="perf-bar pending" id="perf-PUMA-1" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-1</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-1"></div></div></div><div class="machine-notes" id="notes-PUMA-1"></div></div><div class="machine" onclick="openModal('303-B','Automation')"><div class="perf-bar pending" id="perf-303-B" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">303-B</div></div><div class="machine-right"><div class="machine-led" id="light-303-B"></div></div></div><div class="machine-notes" id="notes-303-B"></div></div><div class="machine" onclick="openModal('TWIN','Automation')"><div class="perf-bar pending" id="perf-TWIN" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">TWIN</div></div><div class="machine-right"><div class="machine-led" id="light-TWIN"></div></div></div><div class="machine-notes" id="notes-TWIN"></div></div><div class="machine" onclick="openModal('2500-Y','Automation')"><div class="perf-bar pending" id="perf-2500-Y" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">2500-Y</div></div><div class="machine-right"><div class="machine-led" id="light-2500-Y"></div></div></div><div class="machine-notes" id="notes-2500-Y"></div></div><div class="machine" onclick="openModal('YCM','Automation')"><div class="perf-bar pending" id="perf-YCM" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">YCM</div></div><div class="machine-right"><div class="machine-led" id="light-YCM"></div></div></div><div class="machine-notes" id="notes-YCM"></div></div></div></div>
+      <div class="cell" style="grid-column:4;grid-row:2;"><div class="cell-title"><span class="cell-title-text">Automation Cell</span></div><div class="machines"><div class="machine" onclick="openModal('PUMA-1','Automation')"><div class="perf-bar pending" id="perf-PUMA-1" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">PUMA-1</div></div><div class="machine-right"><div class="machine-led" id="light-PUMA-1"></div></div></div><div class="machine-notes" id="notes-PUMA-1"></div></div><div class="machine" onclick="openModal('TWIN','Automation')"><div class="perf-bar pending" id="perf-TWIN" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">TWIN</div></div><div class="machine-right"><div class="machine-led" id="light-TWIN"></div></div></div><div class="machine-notes" id="notes-TWIN"></div></div><div class="machine" onclick="openModal('2500-Y','Automation')"><div class="perf-bar pending" id="perf-2500-Y" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">2500-Y</div></div><div class="machine-right"><div class="machine-led" id="light-2500-Y"></div></div></div><div class="machine-notes" id="notes-2500-Y"></div></div><div class="machine" onclick="openModal('YCM','Automation')"><div class="perf-bar pending" id="perf-YCM" data-label="—"></div><div class="machine-body"><div class="machine-left"><div class="machine-name">YCM</div></div><div class="machine-right"><div class="machine-led" id="light-YCM"></div></div></div><div class="machine-notes" id="notes-YCM"></div></div></div></div>
 
       <!-- FABRICATION CELL -->
       <div class="cell cell-fab"><div class="cell-title"><span class="cell-title-text">Fabrication</span></div><div class="machines"><div class="machine" onclick="openModal('SAW','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">SAW</div></div><div class="machine-right"><div class="machine-led" id="light-SAW"></div></div></div><div class="machine-notes" id="notes-SAW"></div></div><div class="machine" onclick="openModal('MANUAL','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">MANUAL</div></div><div class="machine-right"><div class="machine-led" id="light-MANUAL"></div></div></div><div class="machine-notes" id="notes-MANUAL"></div></div><div class="machine" onclick="openModal('WELDERS','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">WELDERS</div></div><div class="machine-right"><div class="machine-led" id="light-WELDERS"></div></div></div><div class="machine-notes" id="notes-WELDERS"></div></div><div class="machine" onclick="openModal('QMI/DGP','Fabrication')"><div class="machine-body"><div class="machine-left"><div class="machine-name">QMI/DGP</div></div><div class="machine-right"><div class="machine-led" id="light-QMI/DGP"></div></div></div><div class="machine-notes" id="notes-QMI/DGP"></div></div></div></div>
@@ -18357,6 +18361,77 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if (firstNameMatches.length === 1) return firstNameMatches[0];
     return _timeReportTitleCase(trimmed);
   }
+
+  // ── ONE-TIME HISTORICAL RECOVERY ──
+  // Before originalType existed, finishing a Pending WO/Machinist Req
+  // flipped its type to 'green' with nothing left behind to say what it
+  // used to be — permanently hiding it from this report. But finishing
+  // ALSO posted a second, separate "completed" card that still has the
+  // real original type saved correctly (autoPosted:true, originalType
+  // set) — just without the raw elapsedMins number this report needs.
+  // This matches each broken main record back to its companion card by
+  // machine + WO# + OP# + how close in time they were created, and
+  // writes the recovered originalType back onto the real record. Not
+  // guaranteed for every record — some may have no companion card to
+  // match against — but it's a real shot at most of them.
+  window._recoverHistoricalReportData = async function(){
+    if (!(window._isAdmin || window.currentUser === 'hilladmin')) return;
+    if (!confirm('This does a one-time scan of every request ever logged and tries to restore missing type data. It only adds information, never deletes or changes times — safe to run. Continue?')) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if (!db2 || !mods) { if(window.showToast) showToast('red','Not connected',''); return; }
+    if (window.showToast) showToast('green','Scanning…','This may take a moment for a lot of history.');
+
+    var snap, archived;
+    try {
+      snap = await mods.getDocs(mods.collection(db2, 'hillRequests'));
+      archived = await _getArchivedRequests();
+    } catch(e) {
+      if (window.showToast) showToast('red','Failed to load data', e.message);
+      return;
+    }
+    var all = [];
+    snap.forEach(function(d){ all.push(Object.assign({id:d.id, _inArchive:false}, d.data())); });
+    archived.forEach(function(r){ all.push(Object.assign({_inArchive:true}, r)); });
+
+    // Companion "completed" cards — the ones with the real original type still intact.
+    var companions = all.filter(function(r){
+      return r.autoPosted === true && (r.originalType === 'blue' || r.originalType === 'yellow') && r.machine && r.wo;
+    });
+
+    // Candidates — main records that lost their original type in the flip.
+    var candidates = all.filter(function(r){
+      return r.resolved === true && r.type === 'green' && r.elapsedMins != null && !r.originalType && !r.autoPosted && r.machine && r.wo && !r._inArchive;
+      // Archived (deleted) records are skipped — updateDoc can't reach them, only live hillRequests docs.
+    });
+
+    var recovered = 0, unmatched = 0;
+    var writes = [];
+    candidates.forEach(function(c){
+      var cTime = c.resolvedAt ? c.resolvedAt.seconds : (c.completedAt ? c.completedAt.seconds : null);
+      if (cTime == null) { unmatched++; return; }
+      var matches = companions.filter(function(co){
+        if (co.machine !== c.machine || co.wo !== c.wo) return false;
+        if ((co.op || '') !== (c.op || '')) return false;
+        var coTime = co.createdAt ? co.createdAt.seconds : null;
+        if (coTime == null) return false;
+        return Math.abs(coTime - cTime) <= 120; // within 2 minutes of each other
+      });
+      if (matches.length === 1) {
+        writes.push(mods.updateDoc(mods.doc(db2, 'hillRequests', c.id), { originalType: matches[0].originalType }));
+        recovered++;
+      } else {
+        unmatched++;
+      }
+    });
+
+    try {
+      await Promise.all(writes);
+    } catch(e) {
+      if (window.showToast) showToast('red','Some writes failed', e.message);
+    }
+    if (window.showToast) showToast('green','Recovery complete', recovered + ' record(s) restored, ' + unmatched + ' had no confident match.');
+    alert('Historical recovery finished.\n\nRestored: ' + recovered + '\nNo confident match (unrecoverable): ' + unmatched + '\n\nRun the Time Report again — recovered records should now show up correctly.');
+  };
 
   window._generateTimeReport = async function(){
     var periodSel = document.getElementById('timeReportPeriod');
