@@ -19125,37 +19125,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     addFullReceipt(data, kind, msgDiv);
   };
 
+  // Same underlying report as _printAllReceipt (same data-receipt shape:
+  // {title, reqs}) — delegates instead of keeping a second copy of the
+  // print window's HTML, so a future update (like the charts) only ever
+  // needs to happen in one place instead of silently missing this path.
   window._printFullReceipt = function(btn){
-    var container=btn.closest('[data-receipt]');
-    if(!container) return;
-    var data=JSON.parse(container.getAttribute('data-receipt'));
-    var reqs=data.reqs||[];
-    var typeLabel={red:'Inspection',yellow:'Machinist Req',blue:'Pending WO',green:'Running WO',orange:'Floor Support',dnx:'Datanomix'};
-    var typeColor={red:'#c0392b',yellow:'#d68910',blue:'#1a5276',green:'#1d8348',orange:'#d35400',dnx:'#1a6899'};
-    var rows=reqs.map(function(r){
-      var ts=r.createdAt&&r.createdAt.seconds?new Date(r.createdAt.seconds*1000).toLocaleString():'';
-      var color=typeColor[r.type]||'#333'; var label=typeLabel[r.type]||r.type||'';
-      return '<tr>'+'<td>'+ts+'</td>'+'<td style="color:'+color+';font-weight:bold;">'+label+'</td>'
-        +'<td>'+(r.machine||'')+'</td>'+'<td>'+(r.wo||'')+(r.op?' OP'+r.op:'')+'</td>'
-        +'<td>'+(r.operator||'')+'</td>'+'<td>'+(r.assignedTo||'')+'</td>'+'<td>'+(r.detail||'')+'</td>'
-        +'<td>'+(r.elapsedStr||'—')+'</td>'
-        +'<td>'+(r.resolved?'✅ Done':r.onHold?'⏸ Hold':r.inProgress?'Running':'Open')+'</td>'+'</tr>';
-    }).join('');
-    var win=window.open('','_blank');
-    win.document.write('<!DOCTYPE html><html><head><title>'+data.title+' — Hill Manufacturing</title>'
-      +'<style>body{font-family:Arial,sans-serif;padding:24px;color:#222;}h1{font-size:20px;margin-bottom:4px;}h2{font-size:14px;color:#666;font-weight:normal;margin-bottom:16px;}table{width:100%;border-collapse:collapse;font-size:11px;}th{background:#1a2744;color:#fff;padding:7px 8px;text-align:left;}td{padding:6px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;}tr:nth-child(even){background:#f9fafb;}.stats{display:flex;gap:24px;margin-bottom:16px;padding:12px;background:#f3f4f6;border-radius:6px;}.stat{text-align:center;}.stat-num{font-size:20px;font-weight:bold;color:#1a2744;}.stat-lbl{font-size:11px;color:#666;}@media print{button{display:none!important;}}</style></head><body>'
-      +'<div style="margin-bottom:16px;"><button onclick="window.print()" style="padding:8px 20px;background:#1a2744;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;">🖨 Print / Save as PDF</button></div>'
-      +'<h1>Hill Manufacturing — '+data.title+'</h1>'
-      +'<h2>Generated: '+new Date().toLocaleString()+' | Total: '+reqs.length+' requests</h2>'
-      +'<div class="stats">'
-      +'<div class="stat"><div class="stat-num">'+reqs.length+'</div><div class="stat-lbl">Total</div></div>'
-      +'<div class="stat"><div class="stat-num">'+reqs.filter(function(r){return r.resolved;}).length+'</div><div class="stat-lbl">Completed</div></div>'
-      +'<div class="stat"><div class="stat-num">'+reqs.filter(function(r){return !r.resolved;}).length+'</div><div class="stat-lbl">Open</div></div>'
-      +'<div class="stat"><div class="stat-num">'+Math.round(reqs.reduce(function(s,r){return s+(r.elapsedMins||0);},0))+'m</div><div class="stat-lbl">Time Tracked</div></div>'
-      +'</div>'
-      +'<table><thead><tr><th>Date/Time</th><th>Type</th><th>Machine</th><th>WO/OP</th><th>Operator</th><th>Assigned To</th><th>Details</th><th>Time</th><th>Status</th></tr></thead>'
-      +'<tbody>'+rows+'</tbody></table></body></html>');
-    win.document.close();
+    window._printAllReceipt(btn);
   };
 
   // ── WO RECEIPT BUILDER ────────────────────────────────────
