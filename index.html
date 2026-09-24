@@ -19101,6 +19101,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     try {
       var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('type','==',type),mods.limit(limitN)));
       if(snap&&!snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
+      // Include archived/cleared history too — "Clear Request History"
+      // moves old completed requests out of the live collection, but they
+      // still genuinely happened and belong in this count.
+      var archived = (typeof _getArchivedRequests === 'function') ? await _getArchivedRequests() : [];
+      archived.filter(function(r){ return r.type === type; }).forEach(function(r){ requests.push(r); });
     } catch(e){ console.warn('Type receipt:',e.message); }
     return {type:type,requests:requests,query:originalMsg,limitN:limitN,hasMore:requests.length>=limitN};
   }
@@ -19114,6 +19119,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     try {
       var snap=await mods.getDocs(mods.query(mods.collection(db2,'hillRequests'),mods.where('machine','==',machine),mods.limit(limitN)));
       if(snap&&!snap.empty) snap.forEach(function(d){ var r=d.data(); r.id=d.id; requests.push(r); });
+      var archived = (typeof _getArchivedRequests === 'function') ? await _getArchivedRequests() : [];
+      archived.filter(function(r){ return r.machine === machine; }).forEach(function(r){ requests.push(r); });
     } catch(e){ console.warn('Machine receipt:',e.message); }
     return {machine:machine,requests:requests,limitN:limitN,hasMore:requests.length>=limitN};
   }
@@ -19415,6 +19422,17 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         if(!snap||snap.empty) return;
         if(snap.size>=limitN) hasMore=true;
         snap.forEach(function(d){ if(seen[d.id]) return; seen[d.id]=true; var r=d.data(); r.id=d.id; requests.push(r); });
+      });
+      // Include archived/cleared history too — same name-casing variants
+      // as the live queries above, since old archived records can have
+      // the same inconsistent capitalization.
+      var archived = (typeof _getArchivedRequests === 'function') ? await _getArchivedRequests() : [];
+      var nameVariants = [name, firstName, firstName.toLowerCase(), firstName.toUpperCase()];
+      archived.forEach(function(r){
+        if(seen[r.id]) return;
+        var op = (r.operator||'');
+        var matches = nameVariants.indexOf(op) !== -1 || r.assignedTo === name;
+        if(matches){ seen[r.id]=true; requests.push(r); }
       });
       requests.sort(function(a,b){
         var at=a.createdAt&&a.createdAt.seconds?a.createdAt.seconds:0;
