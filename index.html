@@ -1153,8 +1153,12 @@
         Opens a clean, printable summary — total time, broken down by employee and by machine — with a "Print / Save PDF" button, ready to hand to your boss.
       </div>
       <button onclick="window._recoverHistoricalReportData()" style="width:100%;background:rgba(168,85,247,0.12);border:1px solid #a855f7;color:#d8b4fe;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">🔧 RECOVER HISTORICAL REPORT DATA (run once)</button>
-      <div style="font-size:10px;color:#475569;line-height:1.5;margin-top:6px;">
+      <div style="font-size:10px;color:#475569;line-height:1.5;margin-top:6px;margin-bottom:10px;">
         If old completed requests aren't showing up in reports, run this once — it restores missing data without touching anything else. Safe to re-run any time.
+      </div>
+      <button onclick="window._findStuckOpenRequests()" style="width:100%;background:rgba(239,68,68,0.12);border:1px solid #ef4444;color:#fca5a5;border-radius:8px;padding:9px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;">🩹 FIND & FIX STUCK "OPEN" REQUESTS</button>
+      <div style="font-size:10px;color:#475569;line-height:1.5;margin-top:6px;">
+        If Finish still shows something as Open — checks every open request against the live Alerts feed. Anything whose card is already gone (really finished) gets marked resolved. Shows you exactly what it found before changing anything.
       </div>
     </div>
 
@@ -18430,6 +18434,84 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
     if (window.showToast) showToast('green','Recovery complete', recovered + ' record(s) restored, ' + unmatched + ' had no confident match.');
     alert('Historical recovery finished.\n\nRestored: ' + recovered + '\nNo confident match (unrecoverable): ' + unmatched + '\n\nRun the Time Report again — recovered records should now show up correctly.');
+  };
+
+  // ── STUCK-OPEN DIAGNOSTIC ──
+  // A request that's actually done (its card is gone from Alerts —
+  // Finished or Dismissed) but whose hillRequests record never got
+  // marked resolved shows up as "Open" forever in every report, even
+  // though there's nothing left to do. This happens when the link
+  // between a note and its hillRequests record breaks — the update on
+  // Finish silently fails to find the right record to update. This scans
+  // for exactly that: hillRequests marked unresolved whose matching note
+  // no longer exists anywhere in the live Alerts feed.
+  window._findStuckOpenRequests = async function(){
+    if (!(window._isAdmin || window.currentUser === 'hilladmin')) return;
+    var db2 = window.fbDb, mods = window._fbModules;
+    if (!db2 || !mods) { if(window.showToast) showToast('red','Not connected',''); return; }
+    if (window.showToast) showToast('green','Scanning…','Checking every open request against the live Alerts feed.');
+
+    var hrSnap, notesSnap;
+    try {
+      hrSnap = await mods.getDocs(mods.query(mods.collection(db2, 'hillRequests'), mods.where('resolved', '==', false)));
+      notesSnap = await mods.getDocs(mods.collection(db2, 'notes'));
+    } catch(e) {
+      if (window.showToast) showToast('red','Failed to load data', e.message);
+      return;
+    }
+
+    var liveHillReqIds = {};
+    var liveMachineWo = {}; // fallback match key: machine|wo|type
+    notesSnap.forEach(function(d){
+      var n = d.data();
+      if (n.hillReqId) liveHillReqIds[n.hillReqId] = true;
+      liveMachineWo[(n.machine||'') + '|' + (n.wo||'') + '|' + (n.type||'')] = true;
+    });
+
+    var stuck = [];
+    hrSnap.forEach(function(d){
+      var r = d.data();
+      var key = (r.machine||'') + '|' + (r.wo||'') + '|' + (r.type||'');
+      var stillLive = liveHillReqIds[d.id] || liveMachineWo[key];
+      if (!stillLive) {
+        stuck.push({ id: d.id, machine: r.machine||'', wo: r.wo||'', op: r.op||'', operator: r.operator||'', type: r.type||'',
+          createdAt: r.createdAt ? new Date(r.createdAt.seconds*1000) : null });
+      }
+    });
+
+    window._stuckOpenFound = stuck;
+    var typeLabel = {red:'Inspection',yellow:'Machinist Req',blue:'Pending WO',green:'Running WO',orange:'Floor Support',dnx:'Datanomix'};
+
+    if (!stuck.length) {
+      alert('Checked ' + hrSnap.size + ' open request(s) against the live Alerts feed.\n\nNone are stuck — every one marked "Open" genuinely still has an active card. Nothing to fix.');
+      return;
+    }
+
+    var preview = stuck.slice(0, 25).map(function(s){
+      return '• ' + (s.machine||'—') + (s.wo?' WO '+s.wo:'') + (s.op?' OP'+s.op:'') + ' — ' + (typeLabel[s.type]||s.type) + (s.operator?' ('+s.operator+')':'') + (s.createdAt ? ' — ' + s.createdAt.toLocaleDateString() : '');
+    }).join('\n');
+    var more = stuck.length > 25 ? '\n\n…and ' + (stuck.length - 25) + ' more.' : '';
+
+    var proceed = confirm(
+      'Found ' + stuck.length + ' request(s) stuck showing "Open" — their card is gone from Alerts (already finished or dismissed) but the underlying record was never marked resolved.\n\n'
+      + preview + more
+      + '\n\nMark all ' + stuck.length + ' as resolved now? Their exact time can\'t be recovered since the link was already broken, so elapsed time will show as unknown — but they\'ll stop showing as Open in every report.'
+    );
+    if (!proceed) return;
+
+    var writes = stuck.map(function(s){
+      return mods.updateDoc(mods.doc(db2, 'hillRequests', s.id), {
+        resolved: true, resolvedAt: mods.serverTimestamp(), resolvedBy: window.currentUser || 'admin',
+        inProgress: false, jobStatus: 'completed', fixedStuckOpen: true
+      });
+    });
+    try {
+      await Promise.all(writes);
+      if (window.showToast) showToast('green','Fixed', stuck.length + ' stuck request(s) marked resolved.');
+      alert('Done — ' + stuck.length + ' request(s) fixed. Run your report again to confirm they no longer show as Open.');
+    } catch(e) {
+      if (window.showToast) showToast('red','Some writes failed', e.message);
+    }
   };
 
   window._generateTimeReport = async function(){
