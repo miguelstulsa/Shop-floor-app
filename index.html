@@ -2315,12 +2315,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <option value="Corey Bartmier">Corey Bartmier</option>
         <option value="Dingo Mikles">Dingo Mikles</option>
         <option value="Hank Anglin">Hank Anglin</option>
-        <option value="Jason Cox">Jason Cox</option>
         <option value="Jimmy Pollard">Jimmy Pollard</option>
-        <option value="John McGuire">John McGuire</option>
         <option value="Keith Groden">Keith Groden</option>
         <option value="Ker Vang">Ker Vang</option>
-        <option value="Mario Cacoperdo">Mario Cacoperdo</option>
+        <option value="Kervin Muniz">Kervin Muniz</option>
         <option value="Miguel Sanchez">Miguel Sanchez</option>
         <option value="Mike Payne">Mike Payne</option>
         <option value="Rhett Dawson">Rhett Dawson</option>
@@ -2368,12 +2366,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           <option>Corey Bartmier</option>
           <option>Dingo Mikles</option>
           <option>Hank Anglin</option>
-          <option>Jason Cox</option>
           <option>Jimmy Pollard</option>
-          <option>John McGuire</option>
           <option>Keith Groden</option>
           <option>Ker Vang</option>
-          <option>Mario Cacoperdo</option>
+          <option>Kervin Muniz</option>
           <option>Miguel Sanchez</option>
           <option>Mike Payne</option>
           <option>Rhett Dawson</option>
@@ -5330,8 +5326,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // record, admin/manager only since it's individual performance data.
   var TIME_STUDY_EMPLOYEES = [
     'Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield',
-    'Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin','Jason Cox',
-    'Jimmy Pollard','John McGuire','Keith Groden','Ker Vang','Mario Cacoperdo',
+    'Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin',
+    'Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz',
     'Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt',
     'Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'
   ];
@@ -17932,7 +17928,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // DNX RESOLVE MODAL v2
   var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
-  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin','Jason Cox','Jimmy Pollard','John McGuire','Keith Groden','Ker Vang','Mario Cacoperdo','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
+  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
   window._dnxResolvePending=null;
   window._dnxSelectedInsight='';
   window._dnxSelectInsight=function(val){
@@ -19017,7 +19013,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Machinist name search
-    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin','Jason Cox','Jimmy Pollard','John McGuire','Keith Groden','Ker Vang','Mario Cacoperdo','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
+    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
     var foundMachinist=null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase())>=0) foundMachinist=name;
