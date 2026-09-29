@@ -2730,6 +2730,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     });
     window._renderQmiDgpTileSummary(notes);
     const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.type === 'orange' || n.inProgress);
+    // Active/pending requests stay pinned above completed ones. Within
+    // each group, order is untouched (Array.sort is stable) — so it's
+    // still newest-created-first exactly like before, just with the two
+    // groups separated instead of interleaved by completion time.
+    actionable.sort((a, b) => (a.autoCompleted ? 1 : 0) - (b.autoCompleted ? 1 : 0));
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
