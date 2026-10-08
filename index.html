@@ -2386,7 +2386,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       <!-- MACHINIST SUPPLY REQUEST — shown only for yellow type -->
       <div id="machinistSupplyField" style="display:none;margin-bottom:10px;">
         <div style="font-size:11px;color:#fbbf24;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">⚙️ Supply Item</div>
-        <select id="supplyItem" onchange="handleSupplyChange()" style="width:100%;background:#1a1000;border:1px solid #92400e;border-radius:8px;color:#fcd34d;padding:10px 14px;font-size:14px;margin-bottom:6px;font-family:'Barlow',sans-serif;">
+        <div id="supplyTiles" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;"></div>
+        <select id="supplyItem" onchange="handleSupplyChange()" style="display:none;width:100%;background:#1a1000;border:1px solid #92400e;border-radius:8px;color:#fcd34d;padding:10px 14px;font-size:14px;margin-bottom:6px;font-family:'Barlow',sans-serif;">
           <option value="">-- Select supply item --</option>
           <option value="120 Grit Orange Disc">120 Grit Orange Disc</option>
           <option value="80 Grit Orange Disc">80 Grit Orange Disc</option>
@@ -2486,6 +2487,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <div id="toolSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:50;background:#1a0d0d;border:1px solid #7f1d1d;border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;"></div>
         <!-- Staging area — tool picked but not yet added to the request -->
         <div id="toolStaging" style="display:none;margin-top:8px;background:rgba(251,191,36,0.08);border:1px solid #92400e;border-radius:8px;padding:10px;">
+          <div id="toolStagingPic" style="margin-bottom:6px;"></div>
           <div id="toolStagingName" style="font-size:13px;color:#fcd34d;font-weight:600;margin-bottom:8px;"></div>
           <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600;">Set To (Target Dimension)</div>
           <input type="text" id="toolStagingDim" placeholder="e.g. 2.505&quot;" style="width:100%;background:#1a1000;border:1px solid #92400e;border-radius:8px;color:#fcd34d;padding:9px 12px;font-size:14px;font-family:'Barlow',sans-serif;margin-bottom:8px;">
@@ -6402,7 +6404,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         var groupTag = groupName ? (t[1]+' - '+groupName) : t[1];
         return '<div data-idx="'+i+'" onmousedown="window._selectToolListTooling('+i+')" '
           + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-          + '<span>' + label + (groupTag ? ' <span style="color:#64748b;font-size:11px;">('+groupTag+')</span>' : '') + '</span>'
+          + (window._psThumb ? window._psThumb(t, 36, false) : '')
+          + '<span style="flex:1;">' + label + (groupTag ? ' <span style="color:#64748b;font-size:11px;">('+groupTag+')</span>' : '') + '</span>'
           + '<span style="background:#92400e;color:#fcd34d;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">'+t[0]+'</span>'
           + '</div>';
       } else {
@@ -6678,13 +6681,13 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       // more useful than the sparse size/thread data ProShop's own export
       // has for most tools ("no size on file" etc.)
       var primary = (loc && loc.name) ? loc.name + groupTag : _toolingDisplayLabel(t) + groupTag;
-      html += _invResultRow('proshop', primary, t[0], loc ? '📍 Cabinet ' + loc.cab : null);
+      html += _invResultRow('proshop', primary, t[0], loc ? '📍 Cabinet ' + loc.cab : null, window._psThumb ? window._psThumb(t, 44) : '');
     });
     zengersMatches.forEach(function(z){
       html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3], window._toolThumb ? window._toolThumb(z[0], z[2], 44) : '');
     });
     measuringMatches.forEach(function(mt){
-      html += _invResultRow('measuring', mt[0], '📏', null);
+      html += _invResultRow('measuring', mt[0], '📏', null, window._mtThumb ? window._mtThumb(mt[0], 44) : '');
     });
     results.innerHTML = html;
   };
@@ -6713,7 +6716,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var groupName = TOOLING_GROUPS[t[1]];
       var groupTag = groupName ? (' <span style="color:#64748b;">('+t[1]+' - '+groupName+')</span>') : '';
       var primary = (loc && loc.name) ? loc.name + groupTag : _toolingDisplayLabel(t) + groupTag;
-      html += _invResultRow('proshop', primary, t[0], '📍 Cabinet ' + loc.cab);
+      html += _invResultRow('proshop', primary, t[0], '📍 Cabinet ' + loc.cab, window._psThumb ? window._psThumb(t, 44) : '');
     });
     zengersMatches.forEach(function(z){
       html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3], window._toolThumb ? window._toolThumb(z[0], z[2], 44) : '');
@@ -7084,6 +7087,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     // Show supply dropdown only for Machinist Req (yellow)
     var supplyField = document.getElementById('machinistSupplyField');
     if(supplyField) supplyField.style.display = type === 'yellow' ? 'block' : 'none';
+    if(type === 'yellow' && window._buildSupplyTiles) window._buildSupplyTiles();
     if(type === 'yellow' && window._recallSupply) {
       var si2 = document.getElementById('supplyItem');
       if(si2 && !si2.value) { si2.value = window._recallSupply; handleSupplyChange(); }
@@ -7124,6 +7128,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   function handleSupplyChange() {
     var val = document.getElementById('supplyItem').value;
+    if (window._syncSupplyTiles) window._syncSupplyTiles();
     var gsf = document.getElementById('gloveSizeField');
     if (gsf) gsf.style.display = val === 'Nitrile Gloves' ? 'block' : 'none';
     if (val !== 'Nitrile Gloves') {
@@ -7210,11 +7215,44 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       var qtyPrefix = (s.qty && s.qty > 1) ? (s.qty + '× ') : '';
       var label = qtyPrefix + s.item + (s.gloveSize ? ' — Size ' + s.gloveSize : '') + (s.rollLength ? ' — ' + s.rollLength : '');
       return '<div style="background:rgba(251,191,36,0.1);border:1px solid #fbbf24;border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;">'
-        + '<span style="font-size:13px;color:#fcd34d;font-weight:600;">' + (i+1) + '. ⚙️ ' + label + '</span>'
+        + '<span style="display:flex;align-items:center;gap:8px;">' + (window._suThumb ? window._suThumb(s.item, 36) : '') + '<span style="font-size:13px;color:#fcd34d;font-weight:600;">' + (i+1) + '. ⚙️ ' + label + '</span></span>'
         + '<button type="button" onclick="window._removeSupplyItem(' + i + ')" style="background:none;border:none;color:#fbbf24;font-size:16px;cursor:pointer;padding:0 4px;">✕</button>'
         + '</div>';
     }).join('');
   };
+
+  // Picture tiles for Supply Items — built from the dropdown's own options,
+  // so adding an <option> to the list automatically adds a tile.
+  window._buildSupplyTiles = function(){
+    var box = document.getElementById('supplyTiles'), sel = document.getElementById('supplyItem');
+    if (!box || !sel) return;
+    var adm = !!(window._isAdmin || window.currentUser === 'hilladmin');
+    box.innerHTML = Array.prototype.slice.call(sel.options).filter(function(o){ return o.value; }).map(function(o){
+      var pic = o.value === 'other'
+        ? '<span style="width:52px;height:52px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;background:#0b1626;border:1px solid #1e3a5f;border-radius:6px;">✏️</span>'
+        : (window._suThumb ? window._suThumb(o.value, 52, adm) : '');
+      return '<button type="button" class="supply-tile" data-val="' + o.value.replace(/"/g,'&quot;') + '" onclick="window._pickSupplyTile(this)" '
+        + 'style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;background:rgba(255,255,255,0.04);border:1px solid #92400e;border-radius:9px;color:#fcd34d;font-size:11px;line-height:1.2;cursor:pointer;font-family:\'Barlow\',sans-serif;">'
+        + pic + '<span>' + (o.value === 'other' ? 'Other' : o.textContent) + '</span></button>';
+    }).join('');
+    window._syncSupplyTiles();
+  };
+  window._pickSupplyTile = function(btn){
+    var sel = document.getElementById('supplyItem'); if (!sel) return;
+    var v = btn.getAttribute('data-val');
+    sel.value = (sel.value === v) ? '' : v; // tap again to unselect
+    handleSupplyChange();
+  };
+  window._syncSupplyTiles = function(){
+    var sel = document.getElementById('supplyItem'); if (!sel) return;
+    document.querySelectorAll('.supply-tile').forEach(function(b){
+      var on = b.getAttribute('data-val') === sel.value;
+      b.style.background = on ? 'rgba(251,191,36,0.22)' : 'rgba(255,255,255,0.04)';
+      b.style.borderColor = on ? '#fbbf24' : '#92400e';
+      b.style.boxShadow = on ? '0 0 0 2px rgba(251,191,36,0.35)' : 'none';
+    });
+  };
+  (function waitTiles(){ if (window._suThumb && document.getElementById('supplyTiles')) window._buildSupplyTiles(); else setTimeout(waitTiles, 400); })();
 
   window._clearSupplyChecklist = function(){
     window._selectedSupplyItems = [];
@@ -7238,8 +7276,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     }
     box.innerHTML = matches.map(function(t, i){
       return '<div class="tool-search-result" data-idx="'+i+'" onclick="window._selectTool(this)" data-name="'+t[0].replace(/"/g,'&quot;')+'" data-needsdim="'+t[1]+'" '
-        + 'style="padding:9px 14px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);">'
-        + t[0]
+        + 'style="padding:9px 14px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;">'
+        + (window._mtThumb ? window._mtThumb(t[0], 40) : '')
+        + '<span style="flex:1;">' + t[0] + '</span>'
         + '</div>';
     }).join('');
     box.style.display = 'block';
@@ -7254,6 +7293,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     document.getElementById('toolSearchResults').style.display = 'none';
     document.getElementById('toolSearchResults').innerHTML = '';
     document.getElementById('toolStagingName').textContent = '📏 ' + name;
+    var _mpv = document.getElementById('toolStagingPic'); if(_mpv) _mpv.innerHTML = window._mtThumb ? window._mtThumb(name, 72) : '';
     document.getElementById('toolStagingDim').value = '';
     document.getElementById('toolStaging').style.display = 'block';
     document.getElementById('toolStagingDim').focus();
@@ -7406,7 +7446,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         var groupTag = groupName ? (t[1]+' - '+groupName) : t[1];
         return '<div class="tooling-search-result" data-idx="'+i+'" onclick="window._selectTooling('+i+',this)" '
           + 'style="padding:9px 14px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-          + '<span>' + label + (groupTag ? ' <span style="color:#64748b;font-size:11px;">('+groupTag+')</span>' : '') + '</span>'
+          + (window._psThumb ? window._psThumb(t, 40) : '')
+          + '<span style="flex:1;">' + label + (groupTag ? ' <span style="color:#64748b;font-size:11px;">('+groupTag+')</span>' : '') + '</span>'
           + '<span style="background:#92400e;color:#fcd34d;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:0.5px;white-space:nowrap;">'+t[0]+'</span>'
           + '</div>';
       } else {
@@ -7435,7 +7476,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       window._pendingTooling = { source:'proshop', toolNum: t[0], group: t[1], cutDia: t[2], sizeName: t[3], thread: t[4] };
       var label = _toolingDisplayLabel(t);
       document.getElementById('toolingStagingName').textContent = '🔧 Tool #' + t[0] + ' — ' + label;
-      var _pv0 = document.getElementById('toolingStagingPic'); if(_pv0) _pv0.innerHTML = '';
+      var _pv0 = document.getElementById('toolingStagingPic'); if(_pv0) _pv0.innerHTML = window._psThumb ? window._psThumb(t, 72) : '';
     } else {
       var z = m.z;
       window._pendingTooling = { source:'zengers', toolNum: z[0], partDisplay: z[1], desc: z[2], bins: z[3] };
@@ -19680,13 +19721,78 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 </script>
 <script>
 // ═══ ZENGERS TOOL PICTURES ═══
-// Every Zengers item can show a small picture next to it in the search lists.
+// Every Zengers item shows a picture next to it in the search lists.
 //  1. A real photo, if one was taken (admin taps the picture -> 📷 Add Photo).
 //     Saved in Firestore so everyone sees it on every device.
-//  2. Otherwise, for inserts with a standard ISO code (CNMG, TNMC, DCMT...),
-//     a shape drawing generated from the code — no setup needed.
+//  2. Otherwise a realistic drawing generated from the description:
+//     coded inserts (CNMG, TNMC, DCMT...) get their true ISO shape; drills,
+//     end mills, taps, discs, etc. get a shaded drawing of that tool type,
+//     tinted by coating (cobalt gold, TiAlN violet, carbide gray, HSS silver).
 (function(){
   window._toolPhotos = window._toolPhotos || {};
+
+  // ── Shared gradients / textures (defined once for the whole page) ──
+  var COATS = {
+    cobalt:  ['#5a3f12','#b98b3f','#f7e2b0','#a87a30','#4a3410'],
+    tialn:   ['#2c2440','#6e5f96','#d9cff5','#5d4f85','#231c35'],
+    ticn:    ['#1f2c3d','#5f7896','#d2e0f0','#4f6684','#18222f'],
+    tin:     ['#5c4708','#c9a227','#fff1b8','#b38e1c','#4a3905'],
+    carbide: ['#2b3138','#7f8b99','#eef2f6','#6c7785','#22272d'],
+    hss:     ['#4a525c','#b8c1cc','#ffffff','#a3adb8','#3d444c'],
+    steel:   ['#3a424b','#9aa4af','#f5f7fa','#8792a0','#2f363d'],
+    copper:  ['#4d250f','#c27a45','#ffd2a8','#a8693a','#3d1d0b'],
+    brass:   ['#4f3d0b','#c9a227','#fff0b0','#b08b1d','#3e3008']
+  };
+  var DISCS = { orange:'#e07a2e', maroon:'#7a2335', green:'#3f8f4f', gray:'#8a8f99', brown:'#8a6a4a' };
+  function _ensureDefs(){
+    if(document.getElementById('tpDefs')) return;
+    var g = '';
+    Object.keys(COATS).forEach(function(k){
+      var c = COATS[k];
+      // cylinder shading across the tool (tool axis = local x)
+      g += '<linearGradient id="tpc_'+k+'" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0" stop-color="'+c[4]+'"/><stop offset="0.18" stop-color="'+c[1]+'"/>'
+        + '<stop offset="0.32" stop-color="'+c[2]+'"/><stop offset="0.48" stop-color="'+c[3]+'"/>'
+        + '<stop offset="0.8" stop-color="'+c[0]+'"/><stop offset="1" stop-color="'+c[4]+'"/></linearGradient>';
+      // flat plate shading (inserts, spade blades)
+      g += '<linearGradient id="tpf_'+k+'" x1="0" y1="0" x2="1" y2="1">'
+        + '<stop offset="0" stop-color="'+c[2]+'"/><stop offset="0.35" stop-color="'+c[1]+'"/>'
+        + '<stop offset="0.7" stop-color="'+c[3]+'"/><stop offset="1" stop-color="'+c[0]+'"/></linearGradient>';
+      g += '<linearGradient id="tpe_'+k+'" x1="1" y1="1" x2="0" y2="0">'
+        + '<stop offset="0" stop-color="'+c[2]+'"/><stop offset="0.5" stop-color="'+c[3]+'"/><stop offset="1" stop-color="'+c[4]+'"/></linearGradient>';
+    });
+    Object.keys(DISCS).forEach(function(k){
+      g += '<radialGradient id="tpd_'+k+'" cx="0.4" cy="0.35" r="0.75">'
+        + '<stop offset="0" stop-color="'+DISCS[k]+'" stop-opacity="0.85"/><stop offset="0.75" stop-color="'+DISCS[k]+'"/>'
+        + '<stop offset="1" stop-color="#000" stop-opacity="0.9"/></radialGradient>';
+    });
+    g += '<linearGradient id="tpGroove" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05080d" stop-opacity="0.85"/><stop offset="0.5" stop-color="#1b2430" stop-opacity="0.75"/><stop offset="1" stop-color="#05080d" stop-opacity="0.9"/></linearGradient>';
+    g += '<radialGradient id="tpHole" cx="0.42" cy="0.4" r="0.6"><stop offset="0" stop-color="#000"/><stop offset="0.6" stop-color="#0b1626"/><stop offset="0.85" stop-color="#5b6675"/><stop offset="1" stop-color="#cfd6de"/></radialGradient>';
+    g += '<radialGradient id="tpHub" cx="0.4" cy="0.35" r="0.7"><stop offset="0" stop-color="#f1f5f9"/><stop offset="0.5" stop-color="#94a3b8"/><stop offset="1" stop-color="#334155"/></radialGradient>';
+    g += '<filter id="tpGrit" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.4 1.05" result="a"/><feComposite in="SourceGraphic" in2="a" operator="in"/></filter>';
+    g += '<filter id="tpShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="1.5" dy="2.5" stdDeviation="1.6" flood-color="#000" flood-opacity="0.55"/></filter>';
+    var holder = document.createElement('div');
+    holder.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;';
+    holder.innerHTML = '<svg id="tpDefs" width="0" height="0" style="position:absolute"><defs>'+g+'</defs></svg>';
+    (document.body || document.documentElement).appendChild(holder);
+  }
+
+  function _coatKey(d){
+    if(/TIALN|ALTIN|TIALNS/.test(d)) return {k:'tialn',n:'TiAlN'};
+    if(/TICN/.test(d)) return {k:'ticn',n:'TiCN'};
+    if(/\bTIN\b|TIN COATED/.test(d)) return {k:'tin',n:'TiN'};
+    if(/COBALT/.test(d)) return {k:'cobalt',n:'Cobalt'};
+    if(/CARBIDE|\bCB\b|DREAM DRILL|ATF\b/.test(d)) return {k:'carbide',n:'Carbide'};
+    if(/HSS|\bHS\b|M-42/.test(d)) return {k:'hss',n:'HSS'};
+    return {k:'steel',n:''};
+  }
+  function _discKey(d){
+    if(/ORANGE/.test(d)) return 'orange';
+    if(/MAROON/.test(d)) return 'maroon';
+    if(/GREEN/.test(d)) return 'green';
+    if(/NON-WOVEN|VORTEX/.test(d)) return 'gray';
+    return 'brown';
+  }
 
   // ── ISO insert shape from the description ──────────────────────
   var SHAPES = {
@@ -19697,7 +19803,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     B:{kind:'para',ang:82,name:'82° parallelogram'},
     T:{kind:'poly',n:3,name:'Triangle'}, S:{kind:'poly',n:4,name:'Square'},
     P:{kind:'poly',n:5,name:'Pentagon'}, H:{kind:'poly',n:6,name:'Hexagon'},
-    O:{kind:'poly',n:8,name:'Octagon'}, W:{kind:'trigon',name:'Trigon (80°)'},
+    O:{kind:'poly',n:8,name:'Octagon'}, W:{kind:'trigon',name:'Trigon 80°'},
     R:{kind:'round',name:'Round'}, L:{kind:'rect',name:'Rectangle'}
   };
   var HOLE_TYPES = 'ABGHJMQTUW'; // 4th ISO letter: these have a center/screw hole
@@ -19714,62 +19820,46 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       m = x; break;
     }
     if(!m || !SHAPES[m[1]]) return null;
+    // 4th letter M/G/R/T/H/U/J = has a chip-breaker groove on the face
     return { code: m[1]+m[2]+m[3]+(m[4]||''), shape: SHAPES[m[1]], letter: m[1],
-             hole: !!(m[4] && HOLE_TYPES.indexOf(m[4]) !== -1) };
+             hole: !!(m[4] && HOLE_TYPES.indexOf(m[4]) !== -1),
+             breaker: !!(m[4] && 'GMRTHUJ'.indexOf(m[4]) !== -1) };
   };
 
-  function pts(arr){ return arr.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' '); }
+  function P(arr){ return arr.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' '); }
+  function shapePath(s){
+    var R = 40;
+    if(s.kind === 'rhomb'){ var b = R*Math.tan(s.ang*Math.PI/360); return '<polygon points="'+P([[-R,0],[0,-b],[R,0],[0,b]])+'"/>'; }
+    if(s.kind === 'para'){ var h=26,w=58,o=h/Math.tan(s.ang*Math.PI/180); return '<polygon points="'+P([[-w/2-o/2,h],[w/2-o/2,h],[w/2+o/2,-h],[-w/2+o/2,-h]])+'"/>'; }
+    if(s.kind === 'poly'){ var p=[],st=s.n===4?-Math.PI/4:-Math.PI/2; for(var i=0;i<s.n;i++){var t=st+i*2*Math.PI/s.n;p.push([R*Math.cos(t),R*Math.sin(t)+(s.n===3?6:0)]);} return '<polygon points="'+P(p)+'"/>'; }
+    if(s.kind === 'trigon'){ var v=[]; for(var j=0;j<3;j++){var t2=-Math.PI/2+j*2*Math.PI/3; v.push([R*Math.cos(t2),R*Math.sin(t2)+6]);} var d='M'+v[0][0].toFixed(1)+','+v[0][1].toFixed(1); for(var k=1;k<=3;k++){var q=v[k%3]; d+=' A70,70 0 0 1 '+q[0].toFixed(1)+','+q[1].toFixed(1);} return '<path d="'+d+'Z"/>'; }
+    if(s.kind === 'round') return '<circle r="'+R+'"/>';
+    if(s.kind === 'rect') return '<rect x="-42" y="-22" width="84" height="44" rx="3"/>';
+    return '';
+  }
+  // Top view of a carbide insert: beveled edge, face, chip-breaker, countersunk hole
+  function insertArt(shape, hole, breaker, cy){
+    var sh = shapePath(shape), t = cy ? ' transform="translate(0,'+cy+')"' : '';
+    var out = '<g filter="url(#tpShadow)"'+t+'>'
+      + '<g fill="url(#tpe_carbide)" stroke="#11161c" stroke-width="1.5" stroke-linejoin="round">'+sh+'</g>'
+      + '<g transform="scale(0.86)" fill="url(#tpf_carbide)" stroke="rgba(255,255,255,0.55)" stroke-width="1" stroke-linejoin="round">'+sh+'</g>';
+    if(breaker) out += '<g transform="scale(0.7)" fill="none" stroke="rgba(10,14,20,0.55)" stroke-width="5" stroke-linejoin="round">'+sh+'</g>'
+                     + '<g transform="scale(0.62)" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-linejoin="round">'+sh+'</g>';
+    out += '<g transform="scale(0.86)" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.2" stroke-dasharray="14 400" stroke-linejoin="round">'+sh+'</g>';
+    if(hole) out += '<circle r="12" fill="url(#tpHole)"/><circle r="7" fill="#05080d"/>';
+    return out + '</g>';
+  }
+
   window._insertShapeSvg = function(desc, size){
     var info = window._insertShapeInfo(desc);
     if(!info) return '';
+    _ensureDefs();
     size = size || 40;
-    var s = info.shape, body = '', R = 40;
-    if(s.kind === 'rhomb'){
-      var a = R, b = R * Math.tan(s.ang * Math.PI/360);
-      body = '<polygon points="'+pts([[-a,0],[0,-b],[a,0],[0,b]])+'"/>';
-    } else if(s.kind === 'para'){
-      var h = 26, w = 58, off = h / Math.tan(s.ang*Math.PI/180);
-      body = '<polygon points="'+pts([[-w/2-off/2,h],[w/2-off/2,h],[w/2+off/2,-h],[-w/2+off/2,-h]])+'"/>';
-    } else if(s.kind === 'poly'){
-      var p = [], start = s.n === 4 ? -Math.PI/4 : -Math.PI/2;
-      for(var i=0;i<s.n;i++){ var t = start + i*2*Math.PI/s.n; p.push([R*Math.cos(t), R*Math.sin(t)+(s.n===3?6:0)]); }
-      body = '<polygon points="'+pts(p)+'"/>';
-    } else if(s.kind === 'trigon'){
-      var v = []; for(var j=0;j<3;j++){ var t2 = -Math.PI/2 + j*2*Math.PI/3; v.push([R*Math.cos(t2), R*Math.sin(t2)+6]); }
-      var path = 'M'+v[0][0].toFixed(1)+','+v[0][1].toFixed(1);
-      for(var k=1;k<=3;k++){ var q = v[k%3]; path += ' A70,70 0 0 1 '+q[0].toFixed(1)+','+q[1].toFixed(1); }
-      body = '<path d="'+path+'Z"/>';
-    } else if(s.kind === 'round'){
-      body = '<circle r="'+R+'"/>';
-    } else if(s.kind === 'rect'){
-      body = '<rect x="-42" y="-22" width="84" height="44" rx="2"/>';
-    }
-    var hole = info.hole ? '<circle r="8" fill="#0b1626" stroke="#64748b" stroke-width="2"/>' : '';
-    return '<svg width="'+size+'" height="'+size+'" viewBox="-50 -50 100 100" aria-label="'+s.name+' insert">'
-      + '<defs><linearGradient id="tpg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset="1" stop-color="#475569"/></linearGradient></defs>'
-      + '<g fill="url(#tpg)" stroke="#cbd5e1" stroke-width="2.5" stroke-linejoin="round">'+body+'</g>'+hole+'</svg>';
+    return '<svg width="'+size+'" height="'+size+'" viewBox="-50 -50 100 100" aria-label="'+info.shape.name+' insert">'
+      + insertArt(info.shape, info.hole, info.breaker) + '</svg>';
   };
 
-  // ── Tool-type drawings for everything that isn't a coded insert ──
-  // Reads the Zengers description (DRILL ... JOBBER, EM ... BALL, TAP ...,
-  // OVERLAP DISC ...) and draws that kind of tool, tinted by its coating.
-  function _coat(d){
-    if(/TIALN|ALTIN|TIALNS/.test(d)) return {c:'#7c6aa0',n:'TiAlN'};
-    if(/TICN/.test(d)) return {c:'#5f7896',n:'TiCN'};
-    if(/\bTIN\b|TIN COATED/.test(d)) return {c:'#c9a227',n:'TiN'};
-    if(/COBALT/.test(d)) return {c:'#b98b3f',n:'Cobalt'};
-    if(/CARBIDE|\bCB\b|DREAM DRILL|ATF\b/.test(d)) return {c:'#7f8b99',n:'Carbide'};
-    if(/HSS|\bHS\b|M-42/.test(d)) return {c:'#c3ccd6',n:'HSS'};
-    return {c:'#a3adb8',n:''};
-  }
-  function _discColor(d){
-    if(/ORANGE/.test(d)) return '#e07a2e';
-    if(/MAROON/.test(d)) return '#7a2335';
-    if(/GREEN/.test(d)) return '#3f8f4f';
-    if(/NON-WOVEN|VORTEX/.test(d)) return '#8a8f99';
-    return '#8a6a4a';
-  }
-
+  // ── Tool types from the description ─────────────────────────
   var KINDS = [
     // order matters — first match wins
     [/HYPERTHERM|\b2208\d\d|\b2209\d\d/, 'plasma', 'Plasma consumable'],
@@ -19805,105 +19895,176 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   ];
   window._toolKind = function(desc){
     var d = String(desc||'').toUpperCase();
-    for(var i=0;i<KINDS.length;i++) if(KINDS[i][0].test(d)) return {kind:KINDS[i][1], name:KINDS[i][2], coat:_coat(d), d:d};
-    return {kind:'generic', name:'Tool', coat:_coat(d), d:d};
+    for(var i=0;i<KINDS.length;i++) if(KINDS[i][0].test(d)) return {kind:KINDS[i][1], name:KINDS[i][2], coat:_coatKey(d), d:d};
+    return {kind:'generic', name:'Tool', coat:_coatKey(d), d:d};
   };
 
-  function hel(x0,x1,h,step,col){ var s=''; for(var x=x0+3;x<x1-3;x+=step) s+='<line x1="'+x+'" y1="'+(-h)+'" x2="'+(x+step*0.8)+'" y2="'+h+'" stroke="'+col+'" stroke-width="1.6"/>'; return s; }
-  function zig(x0,x1,h,step){ var p='M'+x0+','+(-h); for(var x=x0;x<x1;x+=step){ p+=' L'+(x+step/2)+','+(-h-3)+' L'+(x+step)+','+(-h); } p+=' L'+x1+','+h; for(var x2=x1;x2>x0;x2-=step){ p+=' L'+(x2-step/2)+','+(h+3)+' L'+(x2-step)+','+h; } return p+'Z'; }
-  var DK = 'rgba(15,23,42,0.55)', ST = '#e2e8f0';
+  // ── Side-view tools (drawn along x, then tilted) ─────────────
+  var _uidN = 0;
+  function cyl(k){ return 'url(#tpc_'+k+')'; }
+  // spiral flutes: dark curved grooves + bright margin edge on each
+  function flutes(x0, x1, h, pitch, lean){
+    var s = '';
+    for(var x = x0 - pitch; x < x1; x += pitch){
+      var a = Math.max(x, x0), w = pitch*0.42;
+      var d = 'M'+x+','+(-h)+' C'+(x+lean*0.3)+','+(-h*0.3)+' '+(x+lean*0.7)+','+(h*0.3)+' '+(x+lean)+','+h
+            + ' L'+(x+lean+w)+','+h+' C'+(x+w+lean*0.7)+','+(h*0.3)+' '+(x+w+lean*0.3)+','+(-h*0.3)+' '+(x+w)+','+(-h)+'Z';
+      s += '<path d="'+d+'" fill="url(#tpGroove)"/>';
+      s += '<path d="M'+(x+w)+','+(-h)+' C'+(x+w+lean*0.3)+','+(-h*0.3)+' '+(x+w+lean*0.7)+','+(h*0.3)+' '+(x+w+lean)+','+h+'" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="0.9"/>';
+    }
+    return '<g clip-path="url(#tpClip'+x0+'_'+x1+'_'+h+')">'+s+'</g>';
+  }
+  function clip(x0,x1,h,extra){ return '<clipPath id="tpClip'+x0+'_'+x1+'_'+h+'"><rect x="'+x0+'" y="'+(-h)+'" width="'+(x1-x0+(extra||0))+'" height="'+(2*h)+'"/></clipPath>'; }
+  function threads(x0,x1,h,step,taper){
+    var s='';
+    for(var x=x0;x<x1;x+=step){
+      var hh = taper ? h - (x-x0)*taper : h;
+      s += '<line x1="'+x+'" y1="'+(-hh-1.5)+'" x2="'+(x+step*0.6)+'" y2="'+(hh+1.5)+'" stroke="rgba(5,8,13,0.6)" stroke-width="1.3"/>'
+         + '<line x1="'+(x+1)+'" y1="'+(-hh-1.5)+'" x2="'+(x+1+step*0.6)+'" y2="'+(hh+1.5)+'" stroke="rgba(255,255,255,0.45)" stroke-width="0.6"/>';
+    }
+    return s;
+  }
+  function serr(x0,x1,h,step){ var p='M'+x0+','+(-h); for(var x=x0;x<x1;x+=step){ p+=' L'+(x+step/2)+','+(-h-2.5)+' L'+(x+step)+','+(-h); } p+=' L'+x1+','+h; for(var x2=x1;x2>x0;x2-=step){ p+=' L'+(x2-step/2)+','+(h+2.5)+' L'+(x2-step)+','+h; } return p+'Z'; }
 
-  function sideTool(k){
-    var c = k.coat.c, g = '';
-    function drill(fs, pointLen){
-      return '<rect x="-46" y="-6" width="'+(fs+46)+'" height="12" rx="1.5" fill="'+c+'"/>'
-        + '<polygon points="'+fs+',-6 38,-6 '+(38+pointLen)+',0 38,6 '+fs+',6" fill="'+c+'"/>'
-        + hel(fs,38,6,7,DK);
+  function sideTool(t){
+    var k = t.coat.k, C = cyl(k), g = '', defs = '';
+    function drill(fs, tipX){
+      defs += clip(fs, tipX, 6, 8);
+      return '<rect x="-46" y="-6" width="'+(fs+48)+'" height="12" rx="1.2" fill="'+C+'"/>'
+        + '<path d="M'+fs+',-6 L'+tipX+',-6 L'+(tipX+8)+',-0.6 L'+(tipX+8)+',0.6 L'+tipX+',6 L'+fs+',6 Q'+(fs-4)+',0 '+fs+',-6Z" fill="'+C+'"/>'
+        + flutes(fs, tipX+8, 6, 10, 7)
+        + '<path d="M'+tipX+',-6 L'+(tipX+8)+',-0.6" stroke="rgba(255,255,255,0.8)" stroke-width="0.9" fill="none"/>'
+        + '<path d="M'+(tipX+8)+',0.6 L'+tipX+',6" stroke="rgba(0,0,0,0.6)" stroke-width="0.9" fill="none"/>';
     }
-    function em(end){
-      var s = '<rect x="-46" y="-7" width="51" height="14" rx="1.5" fill="'+c+'"/>';
-      if(end==='ball') s += '<path d="M5,-7 L37,-7 A7,7 0 0 1 37,7 L5,7Z" fill="'+c+'"/>';
-      else if(end==='radius') s += '<path d="M5,-7 L41,-7 Q44,-7 44,-4 L44,4 Q44,7 41,7 L5,7Z" fill="'+c+'"/>';
-      else if(end==='chamfer') s += '<polygon points="5,-7 30,-7 42,0 30,7 5,7" fill="'+c+'"/>';
-      else if(end==='taper') s += '<polygon points="5,-7 44,-3 44,3 5,7" fill="'+c+'"/>';
-      else if(end==='rough') s += '<path d="'+zig(5,44,7,5)+'" fill="'+c+'"/>';
-      else s += '<rect x="5" y="-7" width="39" height="14" fill="'+c+'"/>';
-      return s + hel(5, end==='chamfer'?30:42, end==='taper'?5:7, 6, DK);
+    function em(end, x0){
+      x0 = x0 == null ? 4 : x0;
+      var h = 7, tip = 44, body;
+      if(end==='ball')        body = 'M'+x0+','+(-h)+' L37,'+(-h)+' A7,7 0 0 1 37,'+h+' L'+x0+','+h+'Z';
+      else if(end==='radius') body = 'M'+x0+','+(-h)+' L41,'+(-h)+' Q44,'+(-h)+' 44,-4 L44,4 Q44,'+h+' 41,'+h+' L'+x0+','+h+'Z';
+      else if(end==='chamfer')body = 'M'+x0+','+(-h)+' L30,'+(-h)+' L43,0 L30,'+h+' L'+x0+','+h+'Z';
+      else if(end==='taper')  body = 'M'+x0+','+(-h)+' L44,-3.5 L44,3.5 L'+x0+','+h+'Z';
+      else if(end==='rough')  body = serr(x0,44,h,4.5);
+      else                    body = 'M'+x0+','+(-h)+' L44,'+(-h)+' L44,'+h+' L'+x0+','+h+'Z';
+      defs += '<clipPath id="tpEm'+end+x0+'"><path d="'+body+'"/></clipPath>';
+      var fl = '', pitch = end==='rough'?7:8;
+      for(var x = x0-pitch; x < tip; x += pitch){
+        var w = pitch*0.45;
+        fl += '<path d="M'+x+','+(-h-3)+' L'+(x+9)+','+(h+3)+' L'+(x+9+w)+','+(h+3)+' L'+(x+w)+','+(-h-3)+'Z" fill="url(#tpGroove)"/>'
+            + '<line x1="'+(x+w)+'" y1="'+(-h-3)+'" x2="'+(x+9+w)+'" y2="'+(h+3)+'" stroke="rgba(255,255,255,0.6)" stroke-width="0.9"/>';
+      }
+      return '<rect x="-46" y="-7" width="'+(x0+48)+'" height="14" rx="1.2" fill="'+C+'"/>'
+        + '<line x1="-30" y1="-7" x2="-30" y2="7" stroke="rgba(0,0,0,0.35)" stroke-width="0.8"/>'
+        + '<path d="'+body+'" fill="'+C+'"/>'
+        + '<g clip-path="url(#tpEm'+end+x0+')">'+fl+'</g>'
+        + '<path d="'+body+'" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="0.6"/>';
     }
-    switch(k.kind){
-      case 'jobber': g = drill(-14, 7); break;
-      case 'stub': g = drill(10, 7); break;
-      case 'taperdrill': g = drill(-30, 7); break;
-      case 'cdrill': g = drill(0, 8); break;
-      case 'spot': g = '<rect x="-46" y="-7" width="62" height="14" rx="1.5" fill="'+c+'"/><polygon points="16,-7 34,-7 42,0 34,7 16,7" fill="'+c+'"/>'+hel(16,34,7,6,DK); break;
+    switch(t.kind){
+      case 'jobber': g = drill(-14, 36); break;
+      case 'stub': g = drill(10, 36); break;
+      case 'taperdrill': g = drill(-30, 36); break;
+      case 'cdrill': g = drill(0, 36); break;
+      case 'spot':
+        defs += clip(14,40,7,0);
+        g = '<rect x="-46" y="-7" width="62" height="14" rx="1.2" fill="'+C+'"/><path d="M14,-7 L33,-7 L41,0 L33,7 L14,7Z" fill="'+C+'"/>'
+          + flutes(14,40,7,10,6) + '<path d="M33,-7 L41,0" stroke="rgba(255,255,255,0.8)" stroke-width="1"/>'; break;
       case 'center':
-        g = '<rect x="-30" y="-8" width="60" height="16" rx="1.5" fill="'+c+'"/>'
-          + '<polygon points="30,-8 36,-3 44,-3 46,0 44,3 36,3 30,8" fill="'+c+'"/>'
-          + '<polygon points="-30,-8 -36,-3 -44,-3 -46,0 -44,3 -36,3 -30,8" fill="'+c+'"/>'; break;
+        g = '<rect x="-30" y="-8" width="60" height="16" rx="1.2" fill="'+C+'"/>'
+          + '<path d="M30,-8 L37,-2.5 L44,-2.5 L46,0 L44,2.5 L37,2.5 L30,8Z" fill="'+C+'"/>'
+          + '<path d="M-30,-8 L-37,-2.5 L-44,-2.5 L-46,0 L-44,2.5 L-37,2.5 L-30,8Z" fill="'+C+'"/>'
+          + '<path d="M38,-2.5 L44,2.5 M-38,-2.5 L-44,2.5" stroke="rgba(0,0,0,0.6)" stroke-width="1.2"/>'; break;
       case 'endmill': g = em('square'); break;
       case 'ball': g = em('ball'); break;
       case 'radius': g = em('radius'); break;
-      case 'chamfer': g = em('chamfer'); break;
+      case 'chamfer': g = em('chamfer', 8); break;
       case 'taperem': g = em('taper'); break;
       case 'rougher': g = em('rough'); break;
       case 'reamer':
-        g = '<rect x="-46" y="-5" width="42" height="10" rx="1.5" fill="'+c+'"/><polygon points="-4,-6 42,-6 46,-3 46,3 42,6 -4,6" fill="'+c+'"/>';
-        g += '<line x1="-2" y1="-2" x2="44" y2="-2" stroke="'+DK+'" stroke-width="1.4"/><line x1="-2" y1="2" x2="44" y2="2" stroke="'+DK+'" stroke-width="1.4"/>'; break;
+        g = '<rect x="-46" y="-5" width="44" height="10" rx="1.2" fill="'+C+'"/><path d="M-4,-6 L42,-6 L46,-3 L46,3 L42,6 L-4,6Z" fill="'+C+'"/>'
+          + '<path d="M-2,-3 L44,-3 M-2,1 L44,1" stroke="url(#tpGroove)" stroke-width="1.8"/><path d="M-2,-1.6 L44,-1.6 M-2,2.4 L44,2.4" stroke="rgba(255,255,255,0.55)" stroke-width="0.6"/>'; break;
       case 'tap': case 'pipetap':
-        g = '<rect x="-46" y="-6" width="8" height="12" fill="'+c+'"/><rect x="-38" y="-5" width="40" height="10" fill="'+c+'"/>'
-          + (k.kind==='pipetap' ? '<path d="M2,-9 L40,-6 L46,-3 L46,3 L40,6 L2,9Z" fill="'+c+'"/>' : '<path d="'+zig(2,40,7,4)+'" fill="'+c+'"/><polygon points="40,-7 46,-4 46,4 40,7" fill="'+c+'"/>')
-          + '<line x1="4" y1="0" x2="44" y2="0" stroke="'+DK+'" stroke-width="2"/>'; break;
+        var pipe = t.kind === 'pipetap';
+        defs += '<clipPath id="tpTap'+pipe+'"><path d="'+(pipe?'M2,-8.5 L40,-6 L46,-3 L46,3 L40,6 L2,8.5Z':'M2,-7 L40,-7 L46,-4 L46,4 L40,7 L2,7Z')+'"/></clipPath>';
+        g = '<rect x="-46" y="-5.5" width="9" height="11" fill="'+C+'" stroke="rgba(0,0,0,0.4)" stroke-width="0.6"/><rect x="-37" y="-5" width="41" height="10" fill="'+C+'"/>'
+          + '<path d="'+(pipe?'M2,-8.5 L40,-6 L46,-3 L46,3 L40,6 L2,8.5Z':'M2,-7 L40,-7 L46,-4 L46,4 L40,7 L2,7Z')+'" fill="'+C+'"/>'
+          + '<g clip-path="url(#tpTap'+pipe+')">'+threads(2,46,8,2.6,0)
+          + '<rect x="2" y="-1.6" width="44" height="3.2" fill="url(#tpGroove)"/></g>'; break;
       case 'threadmill':
-        g = '<rect x="-46" y="-6" width="68" height="12" rx="1.5" fill="'+c+'"/><path d="'+zig(22,44,6,4)+'" fill="'+c+'"/>'+hel(22,44,6,6,DK); break;
+        defs += '<clipPath id="tpTm"><rect x="22" y="-7" width="23" height="14"/></clipPath>';
+        g = '<rect x="-46" y="-6" width="70" height="12" rx="1.2" fill="'+C+'"/><rect x="22" y="-7" width="23" height="14" rx="1" fill="'+C+'"/>'
+          + '<g clip-path="url(#tpTm)">'+threads(22,46,7,2.6,0)+'<path d="M22,-7 L32,7 L35,7 L25,-7Z M32,-7 L42,7 L45,7 L35,-7Z" fill="url(#tpGroove)"/></g>'; break;
       case 'roll':
-        g = '<rect x="-30" y="-12" width="60" height="24" rx="3" fill="'+_discColor(k.d)+'"/><rect x="-46" y="-2" width="16" height="4" fill="#a3adb8"/>'
-          + hel(-30,30,12,8,'rgba(0,0,0,0.25)'); break;
+        var dk = _discKey(t.d);
+        g = '<rect x="-46" y="-1.8" width="20" height="3.6" fill="'+cyl('steel')+'"/>'
+          + '<rect x="-28" y="-12" width="66" height="24" rx="4" fill="url(#tpd_'+dk+')"/>'
+          + '<rect x="-28" y="-12" width="66" height="24" rx="4" fill="'+DISCS[dk]+'" filter="url(#tpGrit)" opacity="0.7"/>'
+          + '<path d="M-20,-12 Q-14,0 -20,12 M-6,-12 Q0,0 -6,12 M8,-12 Q14,0 8,12 M22,-12 Q28,0 22,12" stroke="rgba(0,0,0,0.35)" stroke-width="1.4" fill="none"/>'
+          + '<rect x="-28" y="-12" width="66" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>'; break;
       case 'deburr':
-        g = '<rect x="-46" y="-3" width="62" height="6" rx="2" fill="#c3ccd6"/><path d="M16,-3 Q40,-4 40,-16 L45,-16 Q46,4 16,3Z" fill="#c3ccd6"/>'; break;
+        g = '<rect x="-46" y="-3" width="62" height="6" rx="2.5" fill="'+cyl('hss')+'"/><path d="M16,-3 Q40,-4 40,-16 L45,-16 Q46,4 16,3Z" fill="'+cyl('hss')+'" stroke="rgba(0,0,0,0.4)" stroke-width="0.6"/><path d="M40,-16 L45,-16" stroke="#fff" stroke-width="1"/>'; break;
       case 'collet':
-        g = '<rect x="-40" y="-9" width="60" height="18" rx="1.5" fill="#b8c1cc"/><polygon points="20,-9 32,-12 44,-12 44,12 32,12 20,9" fill="#b8c1cc"/>'
-          + '<line x1="0" y1="-3" x2="44" y2="-3" stroke="'+DK+'" stroke-width="1.5"/><line x1="0" y1="3" x2="44" y2="3" stroke="'+DK+'" stroke-width="1.5"/>'; break;
+        g = '<rect x="-40" y="-9" width="60" height="18" rx="1.2" fill="'+cyl('steel')+'"/><path d="M20,-9 L32,-12 L44,-12 L44,12 L32,12 L20,9Z" fill="'+cyl('steel')+'"/>'
+          + '<path d="M0,-4 L44,-4 M0,4 L44,4" stroke="#05080d" stroke-width="1.6"/><path d="M-40,-2 L-14,-2" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>'; break;
       case 'plasma':
-        g = '<polygon points="-30,-16 10,-16 34,-6 46,-3 46,3 34,6 10,16 -30,16" fill="#c27a45"/><rect x="-46" y="-12" width="16" height="24" rx="2" fill="#a8693a"/><circle cx="46" cy="0" r="2" fill="#0b1626"/>'; break;
+        g = '<rect x="-46" y="-12" width="16" height="24" rx="2" fill="'+cyl('copper')+'"/>'
+          + '<path d="M-30,-16 L10,-16 L34,-6 L46,-3 L46,3 L34,6 L10,16 L-30,16Z" fill="'+cyl('copper')+'"/>'
+          + '<path d="M-30,-16 L-30,16 M10,-16 L10,16" stroke="rgba(0,0,0,0.3)" stroke-width="1"/>'; break;
       case 'pin':
-        g = '<rect x="-20" y="-4" width="56" height="8" rx="3" fill="#94a3b8"/><rect x="-30" y="-9" width="12" height="18" rx="2" fill="#94a3b8"/>'; break;
+        g = '<rect x="-20" y="-4" width="58" height="8" rx="3.5" fill="'+cyl('steel')+'"/><rect x="-30" y="-9" width="12" height="18" rx="2" fill="'+cyl('steel')+'"/>'; break;
       default: return '';
     }
-    return '<g transform="rotate(-35)" stroke="'+ST+'" stroke-width="1.2" stroke-linejoin="round">'+g+'</g>';
+    return '<defs>'+defs+'</defs><g transform="rotate(-35)" filter="url(#tpShadow)" stroke-linejoin="round">'+g+'</g>';
   }
 
-  function frontTool(k){
-    var col;
-    switch(k.kind){
+  // ── Front-view items ────────────────────────────────────────
+  function frontTool(t){
+    switch(t.kind){
       case 'disc':
-        col = _discColor(k.d);
-        return '<circle r="42" fill="'+col+'" stroke="'+ST+'" stroke-width="1.5"/><circle r="40" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="5" stroke-dasharray="1 3"/><circle r="9" fill="#334155" stroke="'+ST+'" stroke-width="1.5"/>';
+        var dk = _discKey(t.d);
+        return '<g filter="url(#tpShadow)"><circle r="42" fill="url(#tpd_'+dk+')"/>'
+          + '<circle r="42" fill="'+DISCS[dk]+'" filter="url(#tpGrit)" opacity="0.8"/>'
+          + '<circle r="41" fill="none" stroke="rgba(0,0,0,0.4)" stroke-width="2"/>'
+          + '<circle r="11" fill="url(#tpHub)"/><circle r="4" fill="#0b1626"/></g>';
       case 'flapdisc':
-        col = _discColor(k.d); var f = '';
-        for(var i=0;i<16;i++){ var a=i*Math.PI/8; f += '<line x1="'+(12*Math.cos(a)).toFixed(1)+'" y1="'+(12*Math.sin(a)).toFixed(1)+'" x2="'+(42*Math.cos(a+0.25)).toFixed(1)+'" y2="'+(42*Math.sin(a+0.25)).toFixed(1)+'" stroke="rgba(0,0,0,0.35)" stroke-width="2"/>'; }
-        return '<circle r="42" fill="'+col+'" stroke="'+ST+'" stroke-width="1.5"/>'+f+'<circle r="10" fill="#334155" stroke="'+ST+'" stroke-width="1.5"/>';
+        var fk = _discKey(t.d), f = '';
+        for(var i=0;i<20;i++){ f += '<path d="M10,-3 L42,-9 Q44,0 42,6 L10,3Z" transform="rotate('+(i*18)+')" fill="url(#tpd_'+fk+')" stroke="rgba(0,0,0,0.45)" stroke-width="0.8"/>'; }
+        return '<g filter="url(#tpShadow)"><circle r="42" fill="#1a1a1a"/>'+f
+          + '<circle r="42" fill="'+DISCS[fk]+'" filter="url(#tpGrit)" opacity="0.45"/>'
+          + '<circle r="11" fill="url(#tpHub)"/><circle r="4" fill="#0b1626"/></g>';
       case 'knurl':
-        var h = ''; for(var j=-40;j<=40;j+=7) h += '<line x1="'+j+'" y1="-40" x2="'+(j+20)+'" y2="40" stroke="rgba(0,0,0,0.35)" stroke-width="2"/>';
-        return '<defs><clipPath id="kc"><circle r="38"/></clipPath></defs><circle r="38" fill="#c9a227" stroke="'+ST+'" stroke-width="1.5"/><g clip-path="url(#kc)">'+h+'</g><circle r="9" fill="#0b1626" stroke="'+ST+'" stroke-width="1.5"/>';
+        var h = ''; for(var j=-44;j<=44;j+=5){ h += '<line x1="'+j+'" y1="-40" x2="'+(j+24)+'" y2="40" stroke="rgba(0,0,0,0.4)" stroke-width="1.2"/><line x1="'+j+'" y1="40" x2="'+(j+24)+'" y2="-40" stroke="rgba(255,255,255,0.25)" stroke-width="0.8"/>'; }
+        return '<defs><clipPath id="tpKn"><circle r="38"/></clipPath></defs><g filter="url(#tpShadow)"><circle r="38" fill="url(#tpf_tin)"/><g clip-path="url(#tpKn)">'+h+'</g>'
+          + '<circle r="38" fill="none" stroke="rgba(0,0,0,0.5)" stroke-width="1.5"/><circle r="11" fill="url(#tpHole)"/></g>';
       case 'spade':
-        return '<polygon points="-30,-36 30,-36 30,10 0,42 -30,10" fill="'+k.coat.c+'" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/>'
-          + '<rect x="-4" y="-36" width="8" height="18" fill="#0b1626"/><circle cx="-16" cy="-14" r="5" fill="#0b1626"/><circle cx="16" cy="-14" r="5" fill="#0b1626"/>'
-          + '<line x1="0" y1="2" x2="0" y2="40" stroke="'+DK+'" stroke-width="2"/>';
+        var k = t.coat.k === 'steel' ? 'tialn' : t.coat.k;
+        var blade = 'M-30,-36 L30,-36 L30,8 L0,42 L-30,8Z';
+        return '<g filter="url(#tpShadow)"><path d="'+blade+'" fill="url(#tpe_'+k+')" stroke="#11161c" stroke-width="1.2" stroke-linejoin="round"/>'
+          + '<path d="M-26,-32 L26,-32 L26,7 L0,36 L-26,7Z" fill="url(#tpf_'+k+')"/>'
+          + '<path d="M-26,7 L0,36 L26,7" fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="1.2"/>'
+          + '<path d="M-14,12 l3,4 M-7,20 l3,4 M14,12 l-3,4 M7,20 l-3,4" stroke="#05080d" stroke-width="2.2"/>'
+          + '<rect x="-4" y="-36" width="8" height="20" fill="#05080d"/>'
+          + '<circle cx="-16" cy="-14" r="5.5" fill="url(#tpHole)"/><circle cx="16" cy="-14" r="5.5" fill="url(#tpHole)"/>'
+          + '<line x1="0" y1="4" x2="0" y2="40" stroke="rgba(0,0,0,0.45)" stroke-width="1.5"/></g>';
       case 'shim':
-        return '<polygon points="-42,0 0,-22 42,0 0,22" fill="#475569" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/><circle r="8" fill="#0b1626" stroke="'+ST+'" stroke-width="1.5"/>';
+        return '<g filter="url(#tpShadow)"><polygon points="-42,0 0,-22 42,0 0,22" fill="url(#tpe_steel)" stroke="#11161c" stroke-width="1.2" stroke-linejoin="round"/>'
+          + '<polygon points="-36,0 0,-19 36,0 0,19" fill="url(#tpf_steel)" opacity="0.8"/><circle r="9" fill="url(#tpHole)"/></g>';
       case 'clamp':
-        return '<path d="M-36,-14 L28,-14 L36,-4 L36,10 L20,10 L20,2 L-36,2Z" fill="#64748b" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/><circle cx="-16" cy="-6" r="5" fill="#0b1626"/>';
+        return '<g filter="url(#tpShadow)"><path d="M-36,-14 L28,-14 L36,-4 L36,10 L20,10 L20,2 L-36,2Z" fill="url(#tpf_steel)" stroke="#11161c" stroke-width="1.2" stroke-linejoin="round"/>'
+          + '<path d="M-36,-14 L28,-14 L36,-4" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1"/><circle cx="-16" cy="-6" r="5" fill="url(#tpHole)"/></g>';
       case 'groove':
-        return '<polygon points="-44,-8 -32,-14 32,-14 44,-8 44,8 32,14 -32,14 -44,8" fill="url(#tpg)" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/><line x1="-26" y1="0" x2="26" y2="0" stroke="'+DK+'" stroke-width="2"/>';
+        var gp = 'M-44,-8 L-32,-14 L32,-14 L44,-8 L44,8 L32,14 L-32,14 L-44,8Z';
+        return '<g filter="url(#tpShadow)"><path d="'+gp+'" fill="url(#tpe_carbide)" stroke="#11161c" stroke-width="1.2" stroke-linejoin="round"/>'
+          + '<path d="M-40,-6 L-30,-11 L30,-11 L40,-6 L40,6 L30,11 L-30,11 L-40,6Z" fill="url(#tpf_carbide)"/>'
+          + '<path d="M-40,-4 L-40,4 M40,-4 L40,4" stroke="#fff" stroke-width="1.5"/><path d="M-22,0 L22,0" stroke="rgba(0,0,0,0.5)" stroke-width="3"/></g>';
       case 'thread':
-        return '<polygon points="0,-38 8,-30 30,8 38,24 26,26 -26,26 -38,24 -30,8 -8,-30" transform="translate(0,4)" fill="url(#tpg)" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/><circle cy="10" r="8" fill="#0b1626" stroke="#64748b" stroke-width="2"/>';
+        return insertArt({kind:'poly',n:3}, true, false, 2)
+          + '<g fill="#0b1626"><path d="M-6,-30 L0,-40 L6,-30Z" transform="translate(0,8)"/></g>';
       case 'insert':
-        var tri = /\bTPG\b|NA-111|\bTPXT\b/.test(k.d);
-        return (tri ? '<polygon points="0,-36 40,30 -40,30" fill="url(#tpg)" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/>'
-                    : '<rect x="-32" y="-32" width="64" height="64" rx="10" fill="url(#tpg)" stroke="'+ST+'" stroke-width="2"/>'
-                      + '<text y="10" text-anchor="middle" font-size="30" font-family="sans-serif" fill="#e2e8f0" opacity="0.7">?</text>');
+        if(/\bTPG\b|NA-111|\bTPXT\b/.test(t.d)) return insertArt({kind:'poly',n:3}, false, false);
+        return insertArt({kind:'poly',n:4}, false, false)
+          + '<text y="11" text-anchor="middle" font-size="30" font-weight="700" font-family="sans-serif" fill="#fff" opacity="0.55">?</text>';
       case 'generic':
-        return '<rect x="-34" y="-24" width="68" height="48" rx="6" fill="#475569" stroke="'+ST+'" stroke-width="2"/><text y="10" text-anchor="middle" font-size="28" font-family="sans-serif" fill="#e2e8f0" opacity="0.7">?</text>';
+        return '<g filter="url(#tpShadow)"><rect x="-34" y="-24" width="68" height="48" rx="6" fill="url(#tpf_steel)" stroke="#11161c" stroke-width="1.2"/>'
+          + '<text y="10" text-anchor="middle" font-size="28" font-weight="700" font-family="sans-serif" fill="#fff" opacity="0.6">?</text></g>';
     }
     return '';
   }
@@ -19912,51 +20073,260 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   window._toolPicSvg = function(desc, size){
     var ins = window._insertShapeSvg(desc, size);
     if(ins) return ins;
-    var k = window._toolKind(desc);
-    var body = sideTool(k) || frontTool(k);
+    _ensureDefs();
+    var t = window._toolKind(desc);
+    var body = sideTool(t) || frontTool(t);
     if(!body) return '';
+    // give clip-path ids a unique suffix per picture so hidden copies never break visible ones
+    var uid = '_' + (++_uidN);
+    body = body.replace(/(tp(?:Clip|Em|Tap|Tm|Kn)[^"\)]*)/g, '$1' + uid);
     size = size || 40;
-    return '<svg width="'+size+'" height="'+size+'" viewBox="-50 -50 100 100" aria-label="'+k.name+'">'
-      + '<defs><linearGradient id="tpg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset="1" stop-color="#475569"/></linearGradient></defs>'
-      + body + '</svg>';
+    return '<svg width="'+size+'" height="'+size+'" viewBox="-50 -50 100 100" aria-label="'+t.name+'">' + body + '</svg>';
   };
   window._toolPicLabel = function(desc){
     var info = window._insertShapeInfo(desc);
     if(info) return info.shape.name+' insert'+(info.hole?', with hole':'')+' ('+info.code+')';
-    var k = window._toolKind(desc);
-    if(k.kind === 'insert' && !/\bTPG\b|NA-111|\bTPXT\b/.test(k.d)) return 'Insert — shape not in the name, add a photo';
-    if(k.kind === 'generic') return 'Tool — add a photo';
-    return k.name + (k.coat.n ? ' ('+k.coat.n+')' : '');
+    var t = window._toolKind(desc);
+    if(t.kind === 'insert' && !/\bTPG\b|NA-111|\bTPXT\b/.test(t.d)) return 'Insert — shape not in the name, add a photo';
+    if(t.kind === 'generic') return 'Tool — add a photo';
+    return t.name + (t.coat.n ? ' ('+t.coat.n+')' : '');
   };
 
   function _isAdm(){ return !!(window._isAdmin || window.currentUser === 'hilladmin'); }
   function _esc(t){ return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
-  // Small picture for a list row. interactive=false for lists that select on mousedown.
-  window._toolThumb = function(code, desc, size, interactive){
-    size = size || 40;
-    var photo = window._toolPhotos[code];
-    var inner = photo
-      ? '<img src="'+photo+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:5px;">'
-      : window._toolPicSvg(desc, size-6);
+  // ── More drawings: ProShop holders/cutters + measuring equipment ──
+  function extraTool(t){
+    var C = cyl(t.coat ? t.coat.k : 'steel'), S = cyl('steel'), g = '';
+    var tilt = function(x){ return '<g transform="rotate(-35)" filter="url(#tpShadow)" stroke-linejoin="round">'+x+'</g>'; };
+    var flat = function(x){ return '<g filter="url(#tpShadow)" stroke-linejoin="round">'+x+'</g>'; };
+    var tipInsert = function(x,y,r){ return '<polygon points="'+P([[x,y-r],[x+r*1.15,y],[x,y+r],[x-r*0.6,y]])+'" fill="url(#tpf_carbide)" stroke="#11161c" stroke-width="0.8"/>'; };
+    switch(t.kind){
+      // ProShop cutters / holders
+      case 'holder':
+        return tilt('<rect x="-46" y="-8" width="72" height="16" rx="1" fill="url(#tpf_steel)" stroke="#11161c" stroke-width="0.8"/>'
+          + '<path d="M26,-8 L40,-12 L46,-6 L46,8 L26,8Z" fill="url(#tpf_steel)" stroke="#11161c" stroke-width="0.8"/>'
+          + tipInsert(42,-5,6) + '<circle cx="36" cy="-1" r="2" fill="#05080d"/>'
+          + '<path d="M-46,-8 L26,-8" stroke="rgba(255,255,255,0.6)" stroke-width="1"/>');
+      case 'boringbar':
+        return tilt('<rect x="-46" y="-6" width="84" height="12" rx="1.5" fill="'+S+'"/>'
+          + '<path d="M38,-6 L46,-9 L46,4 L38,6Z" fill="'+S+'"/>' + tipInsert(44,-6,5)
+          + '<rect x="-46" y="-6" width="30" height="12" fill="rgba(0,0,0,0.12)"/>');
+      case 'indexdrill':
+        return '<defs>'+clip(0,40,8,0)+'</defs>'+tilt('<rect x="-46" y="-8" width="20" height="16" rx="1" fill="'+S+'"/><rect x="-26" y="-6" width="26" height="12" fill="'+S+'"/>'
+          + '<rect x="0" y="-8" width="40" height="16" fill="'+S+'"/>' + flutes(0,40,8,14,10)
+          + tipInsert(41,-4,5) + tipInsert(41,4,5));
+      case 'spadebody':
+        return tilt('<rect x="-46" y="-8" width="62" height="16" rx="1.2" fill="'+S+'"/>'
+          + '<path d="M16,-9 L44,-9 L44,-2 L22,-2 L22,2 L44,2 L44,9 L16,9Z" fill="'+S+'"/>'
+          + '<rect x="22" y="-2" width="22" height="4" fill="#05080d"/><circle cx="32" cy="-6" r="1.6" fill="#05080d"/>');
+      case 'tslot':
+        return tilt('<rect x="-46" y="-6" width="80" height="12" rx="1.2" fill="'+C+'"/>'
+          + '<path d="'+serr(34,44,18,3)+'" fill="'+C+'"/><path d="M34,-18 L44,-18" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>');
+      case 'broach':
+        var tb = ''; for(var x=-30;x<44;x+=5) tb += '<path d="M'+x+',-7 L'+(x+4)+',-11 L'+(x+5)+',-7" fill="'+C+'" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>';
+        return tilt('<rect x="-46" y="-7" width="90" height="14" fill="url(#tpf_hss)" stroke="#11161c" stroke-width="0.8"/>'+tb);
+      case 'stylus':
+        return tilt('<rect x="-46" y="-6" width="16" height="12" rx="2" fill="'+S+'"/><rect x="-30" y="-2" width="62" height="4" fill="url(#tpc_carbide)"/>'
+          + '<circle cx="38" cy="0" r="7" fill="#b3122e"/><circle cx="36" cy="-2.5" r="2.5" fill="#ff8aa0" opacity="0.8"/>');
+      case 'screw':
+        return tilt('<rect x="-30" y="-12" width="18" height="24" rx="5" fill="'+S+'"/><path d="'+serr(-12,30,6,3)+'" fill="'+S+'"/>'
+          + threads(-12,30,6,3,0) + '<path d="M-30,-4 L-26,0 L-30,4" stroke="#05080d" stroke-width="2" fill="none"/>');
+      case 'arbor':
+        return tilt('<rect x="-46" y="-9" width="30" height="18" rx="1.5" fill="'+S+'"/><rect x="-16" y="-14" width="10" height="28" rx="1" fill="'+S+'"/><rect x="-6" y="-5" width="50" height="10" fill="'+S+'"/>');
+      case 'saw':
+        var teeth = ''; for(var i=0;i<36;i++) teeth += '<path d="M0,-38 L3,-44 L6,-38Z" transform="rotate('+(i*10)+')" fill="url(#tpf_hss)"/>';
+        return flat(teeth+'<circle r="39" fill="url(#tpf_hss)" stroke="rgba(0,0,0,0.4)" stroke-width="1"/><circle r="30" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"/><circle r="10" fill="url(#tpHole)"/>');
+      case 'facemill':
+        var ins = ''; for(var j=0;j<6;j++) ins += '<g transform="rotate('+(j*60)+') translate(0,-33)"><polygon points="-7,-7 7,-7 7,7 -7,7" fill="url(#tpf_carbide)" stroke="#11161c" stroke-width="0.8"/><circle r="2" fill="#05080d"/></g>';
+        return flat('<circle r="42" fill="url(#tpe_steel)"/><circle r="38" fill="url(#tpf_steel)"/>'+ins+'<circle r="14" fill="url(#tpHub)"/><circle r="6" fill="#05080d"/>');
+
+      // Supply items
+      case 'pad':
+        return flat('<rect x="-30" y="-40" width="60" height="80" rx="6" fill="url(#tpd_maroon)"/>'
+          + '<rect x="-30" y="-40" width="60" height="80" rx="6" fill="#7a2335" filter="url(#tpGrit)" opacity="0.9"/>'
+          + '<rect x="-30" y="-40" width="60" height="80" rx="6" fill="none" stroke="rgba(0,0,0,0.45)" stroke-width="1.5"/>'
+          + '<path d="M-26,-30 Q0,-24 26,-30 M-26,-10 Q0,-4 26,-10 M-26,10 Q0,16 26,10 M-26,30 Q0,36 26,30" stroke="rgba(255,255,255,0.12)" stroke-width="2" fill="none"/>');
+      case 'gloves':
+        var glove = 'M-14,40 L-16,6 L-26,-4 Q-30,-10 -24,-12 L-14,-4 L-16,-34 Q-15,-40 -10,-38 L-6,-12 L-5,-42 Q0,-46 3,-42 L3,-12 L8,-40 Q12,-44 15,-39 L11,-10 L18,-32 Q22,-36 24,-31 L18,0 L16,40Z';
+        return flat('<g transform="translate(8,4) rotate(10)"><path d="'+glove+'" fill="#1d4ed8" opacity="0.75"/></g>'
+          + '<path d="'+glove+'" fill="#3b82f6" stroke="#1e3a8a" stroke-width="1.2" stroke-linejoin="round"/>'
+          + '<path d="M-12,-30 L-8,0 M-1,-36 L0,-4 M10,-34 L7,-2" stroke="rgba(255,255,255,0.35)" stroke-width="2.5" stroke-linecap="round" fill="none"/>'
+          + '<rect x="-15" y="32" width="31" height="8" fill="#2563eb"/>');
+      case 'clothroll':
+        return flat('<path d="M-6,-20 L40,-20 L40,4 L-6,4Z" fill="#8a6a4a"/><path d="M-6,-20 L40,-20 L40,4 L-6,4Z" fill="#6b4f33" filter="url(#tpGrit)"/>'
+          + '<circle cx="-14" cy="-8" r="26" fill="#8a6a4a"/><circle cx="-14" cy="-8" r="26" fill="#5c432b" filter="url(#tpGrit)" opacity="0.9"/>'
+          + '<circle cx="-14" cy="-8" r="20" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1"/><circle cx="-14" cy="-8" r="14" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>'
+          + '<circle cx="-14" cy="-8" r="8" fill="#d6c3a5" stroke="rgba(0,0,0,0.4)" stroke-width="1"/><circle cx="-14" cy="-8" r="4" fill="#0b1626"/>');
+
+      // Measuring equipment
+      case 'odmic': case 'blademic':
+        var blade = t.kind === 'blademic', H = cyl('hss');
+        return flat('<path d="M-40,-14 L-28,-14 L-28,0 Q-28,14 -12,14 L4,14 L4,-14 L16,-14 L16,26 L-12,26 Q-40,26 -40,0Z" fill="#4f6b8a" stroke="#1e2d3d" stroke-width="1"/>'
+          + '<path d="M-37,-2 Q-37,22 -12,23 L13,23" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2"/>'
+          + (blade ? '<rect x="-28" y="-16" width="8" height="3" fill="'+H+'"/><rect x="-10" y="-16" width="14" height="3" fill="'+H+'"/>'
+                   : '<rect x="-28" y="-19" width="8" height="8" fill="'+H+'"/><rect x="-10" y="-18" width="14" height="6" fill="'+H+'"/>')
+          + '<rect x="16" y="-20" width="14" height="10" fill="'+H+'"/><path d="M17,-15 L30,-15 M19,-20 L19,-15 M22,-20 L22,-17 M25,-20 L25,-15 M28,-20 L28,-17" stroke="#111" stroke-width="0.6"/>'
+          + '<rect x="30" y="-22" width="12" height="14" rx="1" fill="'+H+'"/><path d="M32,-22 L32,-8 M35,-22 L35,-8 M38,-22 L38,-8" stroke="rgba(0,0,0,0.35)" stroke-width="0.8"/>'
+          + '<rect x="42" y="-19" width="5" height="8" rx="1.5" fill="'+cyl('steel')+'"/>');
+      case 'depthmic':
+        return flat('<rect x="-44" y="4" width="88" height="10" rx="1" fill="url(#tpf_hss)" stroke="#11161c" stroke-width="0.8"/>'
+          + '<rect x="-6" y="-24" width="12" height="28" fill="url(#tpf_hss)"/>'
+          + '<rect x="-9" y="-40" width="18" height="16" fill="url(#tpf_hss)" stroke="rgba(0,0,0,0.4)" stroke-width="0.6"/><path d="M-9,-36 L9,-36 M-9,-32 L9,-32 M-9,-28 L9,-28" stroke="rgba(0,0,0,0.45)" stroke-width="0.8"/>'
+          + '<rect x="-2" y="14" width="4" height="26" fill="url(#tpf_hss)"/>');
+      case 'trimic':
+        return tilt('<rect x="-46" y="-6" width="12" height="12" rx="2" fill="'+cyl('steel')+'"/><rect x="-34" y="-8" width="26" height="16" rx="1" fill="'+cyl('hss')+'"/>'
+          + '<path d="M-32,-8 L-32,8 M-28,-8 L-28,8 M-24,-8 L-24,8 M-20,-8 L-20,8 M-16,-8 L-16,8" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>'
+          + '<rect x="-8" y="-5" width="34" height="10" fill="'+cyl('hss')+'"/><path d="M-6,-1 L24,-1" stroke="#111" stroke-width="0.6"/>'
+          + '<rect x="26" y="-11" width="16" height="22" rx="3" fill="'+cyl('carbide')+'"/>'
+          + '<rect x="42" y="-3" width="4" height="6" fill="#e2e8f0"/><rect x="31" y="-15" width="6" height="4" fill="#e2e8f0"/><rect x="31" y="11" width="6" height="4" fill="#e2e8f0"/>');
+      case 'caliper':
+        return flat('<rect x="-46" y="-10" width="92" height="9" fill="url(#tpf_hss)" stroke="#11161c" stroke-width="0.8"/>'
+          + '<path d="M-46,-10 L-46,30 L-38,30 L-34,-1" fill="url(#tpf_hss)" stroke="#11161c" stroke-width="0.8"/>'
+          + '<path d="M-46,-10 L-46,-22 L-40,-22 L-38,-10" fill="url(#tpf_hss)" stroke="#11161c" stroke-width="0.8"/>'
+          + '<path d="M-30,-14 L4,-14 L4,6 L-24,6 L-22,30 L-28,30 L-30,6Z" fill="url(#tpf_steel)" stroke="#11161c" stroke-width="0.8"/>'
+          + '<path d="M-30,-14 L-30,-22 L-26,-22 L-24,-14" fill="url(#tpf_steel)" stroke="#11161c" stroke-width="0.8"/>'
+          + '<rect x="-20" y="-11" width="20" height="9" rx="1" fill="#9fb59a" stroke="#1a1a1a" stroke-width="1"/><text x="-10" y="-4" text-anchor="middle" font-size="7" font-family="monospace" fill="#1a2a1a">0.500</text>'
+          + '<path d="M6,-8 L44,-8" stroke="rgba(0,0,0,0.5)" stroke-width="2" stroke-dasharray="0.6 2.4"/>');
+      case 'indicator':
+        var tk = ''; for(var a=0;a<40;a++){ var an=a*9*Math.PI/180, r1 = a%5===0?22:25; tk += '<line x1="'+(r1*Math.sin(an)).toFixed(1)+'" y1="'+(-4-r1*Math.cos(an)).toFixed(1)+'" x2="'+(28*Math.sin(an)).toFixed(1)+'" y2="'+(-4-28*Math.cos(an)).toFixed(1)+'" stroke="#111" stroke-width="'+(a%5===0?1.2:0.6)+'"/>'; }
+        return flat('<rect x="-3" y="28" width="6" height="12" fill="'+cyl('hss')+'"/><rect x="-1.2" y="40" width="2.4" height="8" fill="#94a3b8"/>'
+          + '<circle cy="-4" r="34" fill="url(#tpHub)"/><circle cy="-4" r="29" fill="#f8fafc"/>' + tk
+          + '<line x1="0" y1="-4" x2="14" y2="-24" stroke="#c1121f" stroke-width="1.8"/><circle cy="-4" r="3" fill="#111"/>');
+      case 'boregage':
+        return tilt('<rect x="-30" y="-3" width="66" height="6" fill="'+cyl('hss')+'"/><rect x="-18" y="-6" width="30" height="12" rx="5" fill="#2b2b2b"/>'
+          + '<rect x="36" y="-8" width="10" height="16" rx="2" fill="'+cyl('steel')+'"/>'
+          + '<circle cx="-36" cy="0" r="12" fill="url(#tpHub)"/><circle cx="-36" cy="0" r="9" fill="#f8fafc"/><line x1="-36" y1="0" x2="-30" y2="-6" stroke="#c1121f" stroke-width="1.4"/>');
+      case 'pluggage':
+        var nog = /NO ?-?GO/.test(t.d) && !/GO\s*\/\s*NO|GO\/NO|GO-NO|GO & NO/.test(t.d), go = /\bGO\b/.test(t.d) && !/NO ?-?GO/.test(t.d);
+        var thr = !/\bPIN\b/.test(t.d);
+        var end = function(x0,x1,col){ return '<rect x="'+x0+'" y="-8" width="'+(x1-x0)+'" height="16" fill="'+cyl('hss')+'"/>'+(thr?threads(x0,x1,8,2.4,0):'')+'<rect x="'+x0+'" y="-9" width="3" height="18" fill="'+col+'"/>'; };
+        return tilt('<rect x="-20" y="-7" width="40" height="14" rx="2" fill="#1f2937"/><path d="M-16,-7 L-16,7 M-10,-7 L-10,7 M-4,-7 L-4,7 M2,-7 L2,7 M8,-7 L8,7 M14,-7 L14,7" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>'
+          + (nog ? '' : end(20,44,'#16a34a')) + (go ? '' : end(-44,-20,'#dc2626')));
+      case 'ringgage':
+        var nogo = /NO ?-?GO/.test(t.d), col = nogo ? '#dc2626' : (/\bGO\b/.test(t.d) ? '#16a34a' : '#94a3b8');
+        var thread = !/SET RING|SETTING RING/.test(t.d);
+        var kn = ''; for(var q=0;q<48;q++) kn += '<line x1="0" y1="-40" x2="0" y2="-36" transform="rotate('+(q*7.5)+')" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>';
+        var th = ''; if(thread) for(var w=0;w<5;w++) th += '<circle r="'+(16-w*2.2)+'" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="0.8"/>';
+        return flat('<circle r="40" fill="url(#tpf_hss)"/>'+kn+'<circle r="33" fill="url(#tpe_hss)"/><circle r="30" fill="none" stroke="'+col+'" stroke-width="4"/>'
+          + '<circle r="17" fill="url(#tpHole)"/>'+th);
+      case 'standard':
+        return tilt('<rect x="-46" y="-4" width="92" height="8" rx="3" fill="'+cyl('hss')+'"/><rect x="-26" y="-7" width="14" height="14" rx="2" fill="#1f2937"/><rect x="12" y="-7" width="14" height="14" rx="2" fill="#1f2937"/>');
+    }
+    return '';
+  }
+
+  // Which drawing to use for a ProShop tool [Tool#, Group, CutDia, Size, Thread]
+  var PS_KIND = { A:'endmill', B:'ball', C:'taperem', CG:'spadebody', D:'jobber', E:'center', F:'reamer',
+    H:'saw', I:'facemill', J:'tslot', K:'radius', L:'chamfer', N:'threadmill', O:'spot', P:'broach', Q:'arbor',
+    R:'tap', S:'stylus', T:'screw', TA:'boringbar', TB:'holder', TC:'indexdrill', TD:'boringbar', TE:'boringbar',
+    TF:'holder', TG:'holder', TH:'holder', TI:'boringbar', TJ:'holder', TK:'holder', TL:'insert', TM:'thread', TN:'thread',
+    TO:'insert', TP:'groove', TQ:'groove', TR:'groove', TS:'groove', TT:'insert', TU:'knurl', CSG:'pluggage' };
+  var PS_NAME = { holder:'Tool holder', boringbar:'Boring bar', indexdrill:'Indexable drill', spadebody:'Spade drill body',
+    tslot:'T-slot cutter', broach:'Broach', stylus:'CMM stylus', screw:'Insert screw / hardware', arbor:'Arbor', saw:'Saw', facemill:'Insert mill' };
+  function _psInfo(t){
+    var loc = (window.PROSHOP_LOCATIONS || {})[t[0]] || null;
+    var name = loc && loc.name ? loc.name : '';
+    var group = (window.TOOLING_GROUPS || {})[t[1]] || t[1];
+    var up = (name + ' ' + group).toUpperCase();
+    // a real name off the drawer label beats the group guess (e.g. "CNMG 432 WITH WIPER")
+    if(name && window._insertShapeInfo(name + ' INSERT') && /^(G|TL|TO|TT|M)$/.test(t[1])) return { iso: name + ' INSERT' };
+    if(name){ var k0 = window._toolKind(name); if(k0.kind !== 'generic' && k0.kind !== 'insert') return { t: k0 }; }
+    var kind = PS_KIND[t[1]] || 'generic';
+    if(t[1] === 'D' && /CARBIDE/.test(up)) kind = 'cdrill';
+    return { t: { kind: kind, name: PS_NAME[kind] || group, coat: _coatKey(up + (t[1]==='D' ? '' : ' CARBIDE')), d: up } };
+  }
+  function _mtKind(name){
+    var d = String(name||'').toUpperCase();
+    var k = /TRI-?MIC/.test(d) ? 'trimic'
+      : /BLADE MIC/.test(d) ? 'blademic'
+      : /DEPTH/.test(d) ? 'depthmic'
+      : /STANDARD/.test(d) ? 'standard'
+      : /BORE|I\.?D\.? GAGE|ID GAGE/.test(d) ? 'boregage'
+      : /CALIPER/.test(d) ? 'caliper'
+      : /INDICATOR/.test(d) ? 'indicator'
+      : /\bMIC\b|MICROMETER|MIC\./.test(d) ? 'odmic'
+      : /RING/.test(d) ? 'ringgage'
+      : /2A\b|-2A|UNC-2A|UNF-2A/.test(d) ? 'ringgage'
+      : 'pluggage';
+    var names = { trimic:'Tri-Mic (3-point bore mic)', blademic:'Blade micrometer', depthmic:'Depth micrometer', standard:'Mic standard',
+      boregage:'Bore gage', caliper:'Caliper', indicator:'Dial indicator', odmic:'O.D. micrometer', ringgage:/SET RING|SETTING RING/.test(d)?'Setting ring':'Thread ring gage', pluggage:'Plug gage' };
+    return { kind:k, name:names[k], coat:{k:'hss',n:''}, d:d };
+  }
+
+  function _svgWrap(body, size, label){
+    if(!body) return '';
+    var uid = '_' + (++_uidN);
+    body = body.replace(/(tp(?:Clip|Em|Tap|Tm|Kn)[^"\)]*)/g, '$1' + uid);
+    return '<svg width="'+size+'" height="'+size+'" viewBox="-50 -50 100 100" aria-label="'+label+'">' + body + '</svg>';
+  }
+  window._kindSvg = function(t, size){ _ensureDefs(); return _svgWrap(sideTool(t) || frontTool(t) || extraTool(t), size||40, t.name); };
+
+  // ── One registry for every picture-able item ───────────────
+  // key: Zengers code (kept as-is so earlier photos still match),
+  //      'PS:'+ProShop tool #, or 'MT:'+measuring tool name.
+  var _reg = [], _regIdx = {};
+  function _register(key, title, sub, drawFn, label){
+    var i = _regIdx[key];
+    if(i == null){ i = _regIdx[key] = _reg.length; _reg.push(null); }
+    _reg[i] = { key:key, title:title, sub:sub, draw:drawFn, label:label };
+    return i;
+  }
+  function _zItem(code){
+    var z = null, list = window.ZENGERS_INVENTORY || [];
+    for(var i=0;i<list.length;i++) if(list[i][0] === code){ z = list[i]; break; }
+    if(!z) return -1;
+    return _register(code, z[2], 'Zengers '+z[0]+' · Bin '+z[3], function(sz){ return window._toolPicSvg(z[2], sz); }, window._toolPicLabel(z[2]));
+  }
+  function _psItem(t){
+    var loc = (window.PROSHOP_LOCATIONS || {})[t[0]] || null, info = _psInfo(t);
+    var group = (window.TOOLING_GROUPS || {})[t[1]] || t[1];
+    var bits = []; if(t[2]) bits.push(t[2]+'"'); if(t[3]) bits.push(t[3]); if(t[4]) bits.push(t[4]);
+    var title = (loc && loc.name) ? loc.name : (group + (bits.length ? ' — ' + bits.join(' — ') : ''));
+    var sub = 'ProShop Tool #'+t[0]+' · '+group+(loc ? ' · Cabinet '+loc.cab : '');
+    var draw = info.iso ? function(sz){ return window._insertShapeSvg(info.iso, sz); } : function(sz){ return window._kindSvg(info.t, sz); };
+    var label = info.iso ? window._toolPicLabel(info.iso) : (info.t.kind === 'generic' ? group+' — add a photo' : (info.t.kind==='insert' ? 'Insert — add a photo' : info.t.name));
+    return _register('PS:'+t[0], title, sub, draw, label);
+  }
+  function _mtItem(name){
+    var k = _mtKind(name);
+    return _register('MT:'+name, name, 'Measuring equipment', function(sz){ return window._kindSvg(k, sz); }, k.name);
+  }
+
+  function _thumbHtml(idx, size, interactive){
+    if(idx < 0) return '';
+    var it = _reg[idx], photo = window._toolPhotos[it.key];
+    var inner = photo ? '<img src="'+photo+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:5px;">' : it.draw(size-6);
     if(!inner){
       if(!(interactive !== false && _isAdm())) return '';
       inner = '<span style="font-size:15px;opacity:0.45;">📷</span>';
     }
     var click = interactive === false ? '' :
-      ' onmousedown="event.stopPropagation();" onclick="event.stopPropagation();window._openToolPic(\''+_esc(code)+'\')" title="Tap to view'+(_isAdm()?' / add photo':'')+'"';
+      ' onmousedown="event.stopPropagation();" onclick="event.stopPropagation();window._openToolPic('+idx+')" title="Tap to view'+(_isAdm()?' / add photo':'')+'"';
     return '<span class="tool-thumb"'+click+' style="width:'+size+'px;height:'+size+'px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;background:#0b1626;border:1px solid #1e3a5f;border-radius:6px;cursor:'+(click?'pointer':'default')+';vertical-align:middle;overflow:hidden;">'+inner+'</span>';
+  }
+  // Public thumb helpers for each source
+  window._toolThumb = function(code, desc, size, interactive){ return _thumbHtml(_zItem(code), size||40, interactive); };
+  window._psThumb   = function(t, size, interactive){ return t ? _thumbHtml(_psItem(t), size||40, interactive) : ''; };
+  window._mtThumb   = function(name, size, interactive){ return name ? _thumbHtml(_mtItem(name), size||40, interactive) : ''; };
+  function _suKind(name){
+    var d = String(name||'').toUpperCase(), c = {k:'steel',n:''};
+    if(/GLOVE/.test(d)) return {kind:'gloves', name:'Nitrile gloves', coat:c, d:d};
+    if(/ROLL/.test(d)) return {kind:'clothroll', name:'Abrasive roll', coat:c, d:d};
+    if(/PAD/.test(d)) return {kind:'pad', name:'Maroon hand pad', coat:c, d:d};
+    if(/WHEEL|DISC/.test(d)) return {kind:'disc', name:(/MAROON/.test(d)?'Maroon surface conditioning disc':'Abrasive disc'), coat:{k:'steel',n:''}, d:d};
+    return {kind:'generic', name:'Supply item', coat:{k:'steel',n:''}, d:d};
+  }
+  window._suThumb = function(name, size, interactive){
+    if(!name) return '';
+    var k = _suKind(name);
+    return _thumbHtml(_register('SU:'+name, name, 'Supply item', function(sz){ return window._kindSvg(k, sz); }, k.name), size||40, interactive);
   };
 
-  function _findZ(code){
-    var list = window.ZENGERS_INVENTORY || [];
-    for(var i=0;i<list.length;i++) if(list[i][0] === code) return list[i];
-    return null;
-  }
-
   // ── Big viewer ──────────────────────────────────────────────
-  window._openToolPic = function(code){
-    var z = _findZ(code); if(!z) return;
+  window._openToolPic = function(idx){
+    if(typeof idx === 'string'){ idx = _regIdx[idx] != null ? _regIdx[idx] : _zItem(idx); }
+    var it = _reg[idx]; if(!it) return;
     var ov = document.getElementById('toolPicOverlay');
     if(!ov){
       ov = document.createElement('div'); ov.id = 'toolPicOverlay';
@@ -19964,24 +20334,23 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       ov.onclick = function(e){ if(e.target === ov) ov.style.display = 'none'; };
       document.body.appendChild(ov);
     }
-    var photo = window._toolPhotos[code];
-    var info = !!window._toolPicSvg(z[2], 10);
+    var photo = window._toolPhotos[it.key], art = photo ? '' : it.draw(180);
     var pic = photo
       ? '<img src="'+photo+'" alt="" style="max-width:100%;max-height:50vh;border-radius:8px;display:block;margin:0 auto;">'
-      : (info ? '<div style="display:flex;justify-content:center;">'+window._toolPicSvg(z[2], 180)+'</div>'
-              : '<div style="text-align:center;color:#64748b;font-size:13px;padding:30px 0;">No picture yet</div>');
-    var shapeLine = info ? '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">'+(photo?'':'Drawing · ')+window._toolPicLabel(z[2])+'</div>' : '';
+      : (art ? '<div style="display:flex;justify-content:center;">'+art+'</div>'
+             : '<div style="text-align:center;color:#64748b;font-size:13px;padding:30px 0;">No picture yet</div>');
+    var labelLine = (!photo && art && it.label) ? '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">Drawing · '+_esc(it.label)+'</div>' : '';
     var btns = '';
     if(_isAdm()){
       btns = '<label style="flex:1;text-align:center;background:#0c4a6e;color:#7dd3fc;border-radius:8px;padding:10px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">📷 '+(photo?'Replace':'Add')+' Photo'
-        + '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window._saveToolPhoto(\''+_esc(code)+'\', this)"></label>'
-        + (photo ? '<button onclick="window._removeToolPhoto(\''+_esc(code)+'\')" style="background:#3f1d1d;color:#fca5a5;border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Remove</button>' : '');
+        + '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window._saveToolPhoto('+idx+', this)"></label>'
+        + (photo ? '<button onclick="window._removeToolPhoto('+idx+')" style="background:#3f1d1d;color:#fca5a5;border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Remove</button>' : '');
     }
     ov.innerHTML = '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:12px;padding:16px;width:100%;max-width:420px;max-height:90vh;overflow:auto;">'
       + pic
-      + '<div style="margin-top:12px;font-size:14px;color:#f0f4f8;font-weight:600;">'+_esc(z[2])+'</div>'
-      + '<div style="font-size:12px;color:#7dd3fc;margin-top:2px;">Zengers '+_esc(z[0])+' · Bin '+_esc(z[3])+'</div>'
-      + shapeLine
+      + '<div style="margin-top:12px;font-size:14px;color:#f0f4f8;font-weight:600;">'+_esc(it.title)+'</div>'
+      + '<div style="font-size:12px;color:#7dd3fc;margin-top:2px;">'+_esc(it.sub)+'</div>'
+      + labelLine
       + '<div id="toolPicStatus" style="font-size:12px;color:#fcd34d;margin-top:8px;"></div>'
       + '<div style="display:flex;gap:8px;margin-top:12px;">'+btns
       + '<button onclick="document.getElementById(\'toolPicOverlay\').style.display=\'none\'" style="flex:'+(btns?'0 0 auto':'1')+';background:#1e293b;color:#cbd5e1;border:1px solid #334155;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Close</button></div>'
@@ -20012,39 +20381,42 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     });
   }
 
-  function _docId(code){ return String(code).replace(/[\/.#$\[\]]/g,'_'); }
+  function _docId(key){ return String(key).replace(/[\/.#$\[\]\s"']/g,'_'); }
 
-  window._saveToolPhoto = function(code, input){
+  window._saveToolPhoto = function(idx, input){
+    var it = _reg[idx]; if(!it) return;
     var file = input && input.files && input.files[0]; if(!file) return;
     var db = window.fbDb || window._db, m = window._fbModules;
     if(!db || !m){ _status('Not connected yet — try again in a moment.'); return; }
     _status('Saving photo…');
     _shrink(file).then(function(data){
-      var rec = { code: code, photo: data, by: window.currentUser || 'admin', updatedAt: m.serverTimestamp() };
-      return m.setDoc(m.doc(db, 'hillToolPhotos', _docId(code)), rec).catch(function(){
+      var rec = { code: it.key, photo: data, by: window.currentUser || 'admin', updatedAt: m.serverTimestamp() };
+      return m.setDoc(m.doc(db, 'hillToolPhotos', _docId(it.key)), rec).catch(function(){
         // Fallback for databases whose security rules only allow known collections
-        return m.setDoc(m.doc(db, 'hillSettings', 'toolPhoto_'+_docId(code)), rec);
+        return m.setDoc(m.doc(db, 'hillSettings', 'toolPhoto_'+_docId(it.key)), rec);
       }).then(function(){
-        window._toolPhotos[code] = data;
-        window._openToolPic(code);
+        window._toolPhotos[it.key] = data;
+        window._openToolPic(idx);
         _status('Saved ✓');
         _rerenderLists();
       });
     }).catch(function(e){ _status('Could not save photo: '+(e && e.message || e)); });
   };
 
-  window._removeToolPhoto = function(code){
+  window._removeToolPhoto = function(idx){
+    var it = _reg[idx]; if(!it) return;
     var db = window.fbDb || window._db, m = window._fbModules; if(!db||!m) return;
-    var id = _docId(code);
+    var id = _docId(it.key);
     Promise.all([
       m.deleteDoc(m.doc(db,'hillToolPhotos',id)).catch(function(){}),
       m.deleteDoc(m.doc(db,'hillSettings','toolPhoto_'+id)).catch(function(){})
-    ]).then(function(){ delete window._toolPhotos[code]; window._openToolPic(code); _rerenderLists(); });
+    ]).then(function(){ delete window._toolPhotos[it.key]; window._openToolPic(idx); _rerenderLists(); });
   };
 
   function _rerenderLists(){
     try{ var a = document.getElementById('invSearchInput'); if(a && a.value.trim().length >= 2 && window._renderInventorySearch) window._renderInventorySearch(); }catch(e){}
     try{ var b = document.getElementById('invBinInput'); if(b && b.value.trim() && window._renderInventoryByBin) window._renderInventoryByBin(); }catch(e){}
+    try{ if(window._buildSupplyTiles) window._buildSupplyTiles(); if(window._renderSupplyChecklist) window._renderSupplyChecklist(); }catch(e){}
   }
 
   // ── Live-load saved photos ─────────────────────────────────
