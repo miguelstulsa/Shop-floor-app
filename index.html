@@ -2314,6 +2314,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <option value="Cody Wilson">Cody Wilson</option>
         <option value="Corey Bartmier">Corey Bartmier</option>
         <option value="Dingo Mikles">Dingo Mikles</option>
+        <option value="Eric Jones">Eric Jones</option>
         <option value="Hank Anglin">Hank Anglin</option>
         <option value="Jimmy Pollard">Jimmy Pollard</option>
         <option value="Keith Groden">Keith Groden</option>
@@ -2365,6 +2366,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           <option>Cody Wilson</option>
           <option>Corey Bartmier</option>
           <option>Dingo Mikles</option>
+          <option>Eric Jones</option>
           <option>Hank Anglin</option>
           <option>Jimmy Pollard</option>
           <option>Keith Groden</option>
@@ -2440,6 +2442,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <div id="toolingSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:50;background:#1a1000;border:1px solid #92400e;border-top:none;border-radius:0 0 8px 8px;max-height:260px;overflow-y:auto;"></div>
         <!-- Staging area — tool picked but not yet added to the request, quantity set here -->
         <div id="toolingStaging" style="display:none;margin-top:8px;background:rgba(251,191,36,0.08);border:1px solid #92400e;border-radius:8px;padding:10px;">
+          <div id="toolingStagingPic" style="margin-bottom:6px;"></div>
           <div id="toolingStagingName" style="font-size:13px;color:#fcd34d;font-weight:600;margin-bottom:8px;"></div>
           <div style="font-size:10px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;font-weight:600;">Reason</div>
           <div style="display:flex;gap:6px;margin-bottom:8px;">
@@ -5331,7 +5334,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // record, admin/manager only since it's individual performance data.
   var TIME_STUDY_EMPLOYEES = [
     'Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield',
-    'Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin',
+    'Cody Wilson','Corey Bartmier','Dingo Mikles','Eric Jones','Hank Anglin',
     'Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz',
     'Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt',
     'Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'
@@ -6406,7 +6409,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         var z = m.z;
         return '<div data-idx="'+i+'" onmousedown="window._selectToolListTooling('+i+')" '
           + 'style="padding:9px 12px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-          + '<span>' + z[2] + ' <span style="color:#7dd3fc;font-size:11px;">(Bin ' + z[3] + ')</span></span>'
+          + (window._toolThumb ? window._toolThumb(z[0], z[2], 36, false) : '')
+          + '<span style="flex:1;">' + z[2] + ' <span style="color:#7dd3fc;font-size:11px;">(Bin ' + z[3] + ')</span></span>'
           + '<span style="background:#0c4a6e;color:#7dd3fc;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;">'+z[0]+'</span>'
           + '</div>';
       }
@@ -6639,14 +6643,14 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     window._renderInventoryByBin();
   };
 
-  function _invResultRow(source, primaryHtml, codeOrTag, locHtml){
+  function _invResultRow(source, primaryHtml, codeOrTag, locHtml, thumbHtml){
     var colors = {
       proshop:  { bg:'rgba(251,191,36,0.08)',  border:'#92400e', tagBg:'#92400e', tagColor:'#fcd34d' },
       zengers:  { bg:'rgba(14,116,144,0.1)',    border:'#0c4a6e', tagBg:'#0c4a6e', tagColor:'#7dd3fc' },
       measuring:{ bg:'rgba(22,101,52,0.12)',    border:'#166534', tagBg:'#166534', tagColor:'#86efac' }
     }[source];
     return '<div style="background:'+colors.bg+';border:1px solid '+colors.border+';border-radius:7px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-      + '<div><div style="font-size:13px;color:#f0f4f8;">' + primaryHtml + '</div>' + (locHtml ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + locHtml + '</div>' : '') + '</div>'
+      + (thumbHtml || '') + '<div style="flex:1;min-width:0;"><div style="font-size:13px;color:#f0f4f8;">' + primaryHtml + '</div>' + (locHtml ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + locHtml + '</div>' : '') + '</div>'
       + '<span style="background:'+colors.tagBg+';color:'+colors.tagColor+';border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;flex-shrink:0;">'+codeOrTag+'</span>'
       + '</div>';
   }
@@ -6677,7 +6681,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       html += _invResultRow('proshop', primary, t[0], loc ? '📍 Cabinet ' + loc.cab : null);
     });
     zengersMatches.forEach(function(z){
-      html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3]);
+      html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3], window._toolThumb ? window._toolThumb(z[0], z[2], 44) : '');
     });
     measuringMatches.forEach(function(mt){
       html += _invResultRow('measuring', mt[0], '📏', null);
@@ -6712,7 +6716,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       html += _invResultRow('proshop', primary, t[0], '📍 Cabinet ' + loc.cab);
     });
     zengersMatches.forEach(function(z){
-      html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3]);
+      html += _invResultRow('zengers', z[2], z[0], '📍 Bin ' + z[3], window._toolThumb ? window._toolThumb(z[0], z[2], 44) : '');
     });
     results.innerHTML = html;
   };
@@ -7409,7 +7413,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         var z = m.z; // [code, partDisplay, desc, bins]
         return '<div class="tooling-search-result" data-idx="'+i+'" onclick="window._selectTooling('+i+',this)" '
           + 'style="padding:9px 14px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;">'
-          + '<span>' + z[2] + ' <span style="color:#7dd3fc;font-size:11px;">(Bin ' + z[3] + ')</span></span>'
+          + (window._toolThumb ? window._toolThumb(z[0], z[2], 40) : '')
+          + '<span style="flex:1;">' + z[2] + ' <span style="color:#7dd3fc;font-size:11px;">(Bin ' + z[3] + ')</span></span>'
           + '<span style="background:#0c4a6e;color:#7dd3fc;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:0.5px;white-space:nowrap;">'+z[0]+'</span>'
           + '</div>';
       }
@@ -7430,10 +7435,12 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       window._pendingTooling = { source:'proshop', toolNum: t[0], group: t[1], cutDia: t[2], sizeName: t[3], thread: t[4] };
       var label = _toolingDisplayLabel(t);
       document.getElementById('toolingStagingName').textContent = '🔧 Tool #' + t[0] + ' — ' + label;
+      var _pv0 = document.getElementById('toolingStagingPic'); if(_pv0) _pv0.innerHTML = '';
     } else {
       var z = m.z;
       window._pendingTooling = { source:'zengers', toolNum: z[0], partDisplay: z[1], desc: z[2], bins: z[3] };
       document.getElementById('toolingStagingName').textContent = '🔷 Zengers ' + z[0] + ' — ' + z[2] + ' (Bin ' + z[3] + ')';
+      var _pv = document.getElementById('toolingStagingPic'); if(_pv) _pv.innerHTML = window._toolThumb ? window._toolThumb(z[0], z[2], 72) : '';
     }
     window._selectedToolingQty = 1;
     window._selectedToolingReason = '';
@@ -17550,7 +17557,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!detail) return '';
     var items = detail.split('\n').map(function(line){
       return line.replace(/^\s*\d+\.\s*/, '')
-                 .replace(/[⚙️📏🔍]/g, '')
+                 .replace(/🔷|🔧|📏|🔍|⚙️|⚙/g, '')
+                 // Zengers items: drop the bin list ("(Bin 11A-02, 15A-11, ...)") —
+                 // the vending machine finds it by code, so Sparky only says the
+                 // code + description. Also drop the 🔷/🔧 icons so they aren't read.
+                 .replace(/\s*\(Bin[^)]*\)/gi, '')
+                 .replace(/\s+—\s+/g, ', ')
                  .trim()
                  .replace(/^(\d+)×\s*/, 'Qty $1, ') // "3× Item" -> "Qty 3, Item" so TTS doesn't say "three times item"
                  .trim();
@@ -17933,7 +17945,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // DNX RESOLVE MODAL v2
   var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
-  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
+  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Eric Jones','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
   window._dnxResolvePending=null;
   window._dnxSelectedInsight='';
   window._dnxSelectInsight=function(val){
@@ -19018,7 +19030,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Machinist name search
-    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
+    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Eric Jones','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
     var foundMachinist=null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase())>=0) foundMachinist=name;
@@ -19665,6 +19677,391 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     // re-fit after anything that might resize the grid.
     window._fitMachineNames = fitMachineNames;
   })();
+</script>
+<script>
+// ═══ ZENGERS TOOL PICTURES ═══
+// Every Zengers item can show a small picture next to it in the search lists.
+//  1. A real photo, if one was taken (admin taps the picture -> 📷 Add Photo).
+//     Saved in Firestore so everyone sees it on every device.
+//  2. Otherwise, for inserts with a standard ISO code (CNMG, TNMC, DCMT...),
+//     a shape drawing generated from the code — no setup needed.
+(function(){
+  window._toolPhotos = window._toolPhotos || {};
+
+  // ── ISO insert shape from the description ──────────────────────
+  var SHAPES = {
+    C:{kind:'rhomb',ang:80,name:'80° diamond'}, D:{kind:'rhomb',ang:55,name:'55° diamond'},
+    V:{kind:'rhomb',ang:35,name:'35° diamond'}, E:{kind:'rhomb',ang:75,name:'75° diamond'},
+    M:{kind:'rhomb',ang:86,name:'86° diamond'},
+    K:{kind:'para',ang:55,name:'55° parallelogram'}, A:{kind:'para',ang:85,name:'85° parallelogram'},
+    B:{kind:'para',ang:82,name:'82° parallelogram'},
+    T:{kind:'poly',n:3,name:'Triangle'}, S:{kind:'poly',n:4,name:'Square'},
+    P:{kind:'poly',n:5,name:'Pentagon'}, H:{kind:'poly',n:6,name:'Hexagon'},
+    O:{kind:'poly',n:8,name:'Octagon'}, W:{kind:'trigon',name:'Trigon (80°)'},
+    R:{kind:'round',name:'Round'}, L:{kind:'rect',name:'Rectangle'}
+  };
+  var HOLE_TYPES = 'ABGHJMQTUW'; // 4th ISO letter: these have a center/screw hole
+  var ISO_RE = /(?:^|[^A-Z])([CDVEMKABTWSRLPHO])([ABCDEFGNOP])([ACEFGHJKLMNUQ])([ABCFGHJMNQRTUWX])?[\s-]?\d/g;
+
+  window._insertShapeInfo = function(desc){
+    var d = String(desc||'').toUpperCase();
+    if(d.indexOf('SHIM') !== -1) return null;
+    var says = d.indexOf('INSERT') !== -1, m = null, x;
+    ISO_RE.lastIndex = 0;
+    while((x = ISO_RE.exec(d))){
+      if(x[1]+x[2]+x[3] === 'TFL') continue;       // Tool-Flo part number, not a shape code
+      if(!says && !x[4] && x[1]+x[2]+x[3] !== 'TPG') continue; // no "INSERT" word -> need the full 4-letter code
+      m = x; break;
+    }
+    if(!m || !SHAPES[m[1]]) return null;
+    return { code: m[1]+m[2]+m[3]+(m[4]||''), shape: SHAPES[m[1]], letter: m[1],
+             hole: !!(m[4] && HOLE_TYPES.indexOf(m[4]) !== -1) };
+  };
+
+  function pts(arr){ return arr.map(function(p){ return p[0].toFixed(1)+','+p[1].toFixed(1); }).join(' '); }
+  window._insertShapeSvg = function(desc, size){
+    var info = window._insertShapeInfo(desc);
+    if(!info) return '';
+    size = size || 40;
+    var s = info.shape, body = '', R = 40;
+    if(s.kind === 'rhomb'){
+      var a = R, b = R * Math.tan(s.ang * Math.PI/360);
+      body = '<polygon points="'+pts([[-a,0],[0,-b],[a,0],[0,b]])+'"/>';
+    } else if(s.kind === 'para'){
+      var h = 26, w = 58, off = h / Math.tan(s.ang*Math.PI/180);
+      body = '<polygon points="'+pts([[-w/2-off/2,h],[w/2-off/2,h],[w/2+off/2,-h],[-w/2+off/2,-h]])+'"/>';
+    } else if(s.kind === 'poly'){
+      var p = [], start = s.n === 4 ? -Math.PI/4 : -Math.PI/2;
+      for(var i=0;i<s.n;i++){ var t = start + i*2*Math.PI/s.n; p.push([R*Math.cos(t), R*Math.sin(t)+(s.n===3?6:0)]); }
+      body = '<polygon points="'+pts(p)+'"/>';
+    } else if(s.kind === 'trigon'){
+      var v = []; for(var j=0;j<3;j++){ var t2 = -Math.PI/2 + j*2*Math.PI/3; v.push([R*Math.cos(t2), R*Math.sin(t2)+6]); }
+      var path = 'M'+v[0][0].toFixed(1)+','+v[0][1].toFixed(1);
+      for(var k=1;k<=3;k++){ var q = v[k%3]; path += ' A70,70 0 0 1 '+q[0].toFixed(1)+','+q[1].toFixed(1); }
+      body = '<path d="'+path+'Z"/>';
+    } else if(s.kind === 'round'){
+      body = '<circle r="'+R+'"/>';
+    } else if(s.kind === 'rect'){
+      body = '<rect x="-42" y="-22" width="84" height="44" rx="2"/>';
+    }
+    var hole = info.hole ? '<circle r="8" fill="#0b1626" stroke="#64748b" stroke-width="2"/>' : '';
+    return '<svg width="'+size+'" height="'+size+'" viewBox="-50 -50 100 100" aria-label="'+s.name+' insert">'
+      + '<defs><linearGradient id="tpg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset="1" stop-color="#475569"/></linearGradient></defs>'
+      + '<g fill="url(#tpg)" stroke="#cbd5e1" stroke-width="2.5" stroke-linejoin="round">'+body+'</g>'+hole+'</svg>';
+  };
+
+  // ── Tool-type drawings for everything that isn't a coded insert ──
+  // Reads the Zengers description (DRILL ... JOBBER, EM ... BALL, TAP ...,
+  // OVERLAP DISC ...) and draws that kind of tool, tinted by its coating.
+  function _coat(d){
+    if(/TIALN|ALTIN|TIALNS/.test(d)) return {c:'#7c6aa0',n:'TiAlN'};
+    if(/TICN/.test(d)) return {c:'#5f7896',n:'TiCN'};
+    if(/\bTIN\b|TIN COATED/.test(d)) return {c:'#c9a227',n:'TiN'};
+    if(/COBALT/.test(d)) return {c:'#b98b3f',n:'Cobalt'};
+    if(/CARBIDE|\bCB\b|DREAM DRILL|ATF\b/.test(d)) return {c:'#7f8b99',n:'Carbide'};
+    if(/HSS|\bHS\b|M-42/.test(d)) return {c:'#c3ccd6',n:'HSS'};
+    return {c:'#a3adb8',n:''};
+  }
+  function _discColor(d){
+    if(/ORANGE/.test(d)) return '#e07a2e';
+    if(/MAROON/.test(d)) return '#7a2335';
+    if(/GREEN/.test(d)) return '#3f8f4f';
+    if(/NON-WOVEN|VORTEX/.test(d)) return '#8a8f99';
+    return '#8a6a4a';
+  }
+
+  var KINDS = [
+    // order matters — first match wins
+    [/HYPERTHERM|\b2208\d\d|\b2209\d\d/, 'plasma', 'Plasma consumable'],
+    [/COLLET/, 'collet', 'Collet'],
+    [/KNURL/, 'knurl', 'Knurl wheel'],
+    [/DEBURR/, 'deburr', 'Deburring blade'],
+    [/CARTRIDGE ROLL/, 'roll', 'Cartridge roll'],
+    [/OVERLAP DISC/, 'flapdisc', 'Overlap (flap) disc'],
+    [/DISC|WHEEL/, 'disc', 'Abrasive disc'],
+    [/SHIM SEAT/, 'shim', 'Shim seat'],
+    [/CLAMP/, 'clamp', 'Insert clamp'],
+    [/LOCK PIN/, 'pin', 'Lock pin'],
+    [/THREAD MILL|TREAD MILL/, 'threadmill', 'Thread mill'],
+    [/PIPE TAP|NPT.*TAP|TAP.*NPT/, 'pipetap', 'Pipe tap'],
+    [/\bTAP\b|FLAT BOTTOM 2B|GUN TAP/, 'tap', 'Tap'],
+    [/REAMER/, 'reamer', 'Reamer'],
+    [/CENTER DRILL/, 'center', 'Center drill'],
+    [/SPOT DRILL/, 'spot', 'Spot drill'],
+    [/SPADE|SM POINT/, 'spade', 'Spade drill blade'],
+    [/CHAMFER MILL|DRILL MILL|EM 3\/8 60DEG|90DEG|90-DEG/, 'chamfer', 'Chamfer / drill mill'],
+    [/ROUGHING/, 'rougher', 'Roughing end mill'],
+    [/BALL/, 'ball', 'Ball end mill'],
+    [/TAPER\b.*END MILL|DEG TAPER/, 'taperem', 'Tapered end mill'],
+    [/CORNER RADIUS|\(R\.0|R\.0\d\d/, 'radius', 'Corner radius end mill'],
+    [/\bEM\b|END ?MILL|ENDMILL|3200SD|3200XL|\bRH SE\b/, 'endmill', 'End mill'],
+    [/TAPER LENGTH/, 'taperdrill', 'Taper length drill'],
+    [/STUB|S&D|SCREW MACHINE/, 'stub', 'Stub drill'],
+    [/JOBBER/, 'jobber', 'Jobber drill'],
+    [/DRILL|ATF\b/, 'cdrill', 'Drill'],
+    [/GY2M|\bTAG\b|\bDGN\b|WIDTH|FULL NOSE/, 'groove', 'Grooving insert'],
+    [/\b16 ?[EIN]R\b|THREADING/, 'thread', 'Threading insert'],
+    [/INSERT|GRADE|NA-111|TOOL FLO|MITSUBISHI \d|SECO \d|\bTPG\b|\bTPXT\b|CXMG/, 'insert', 'Insert']
+  ];
+  window._toolKind = function(desc){
+    var d = String(desc||'').toUpperCase();
+    for(var i=0;i<KINDS.length;i++) if(KINDS[i][0].test(d)) return {kind:KINDS[i][1], name:KINDS[i][2], coat:_coat(d), d:d};
+    return {kind:'generic', name:'Tool', coat:_coat(d), d:d};
+  };
+
+  function hel(x0,x1,h,step,col){ var s=''; for(var x=x0+3;x<x1-3;x+=step) s+='<line x1="'+x+'" y1="'+(-h)+'" x2="'+(x+step*0.8)+'" y2="'+h+'" stroke="'+col+'" stroke-width="1.6"/>'; return s; }
+  function zig(x0,x1,h,step){ var p='M'+x0+','+(-h); for(var x=x0;x<x1;x+=step){ p+=' L'+(x+step/2)+','+(-h-3)+' L'+(x+step)+','+(-h); } p+=' L'+x1+','+h; for(var x2=x1;x2>x0;x2-=step){ p+=' L'+(x2-step/2)+','+(h+3)+' L'+(x2-step)+','+h; } return p+'Z'; }
+  var DK = 'rgba(15,23,42,0.55)', ST = '#e2e8f0';
+
+  function sideTool(k){
+    var c = k.coat.c, g = '';
+    function drill(fs, pointLen){
+      return '<rect x="-46" y="-6" width="'+(fs+46)+'" height="12" rx="1.5" fill="'+c+'"/>'
+        + '<polygon points="'+fs+',-6 38,-6 '+(38+pointLen)+',0 38,6 '+fs+',6" fill="'+c+'"/>'
+        + hel(fs,38,6,7,DK);
+    }
+    function em(end){
+      var s = '<rect x="-46" y="-7" width="51" height="14" rx="1.5" fill="'+c+'"/>';
+      if(end==='ball') s += '<path d="M5,-7 L37,-7 A7,7 0 0 1 37,7 L5,7Z" fill="'+c+'"/>';
+      else if(end==='radius') s += '<path d="M5,-7 L41,-7 Q44,-7 44,-4 L44,4 Q44,7 41,7 L5,7Z" fill="'+c+'"/>';
+      else if(end==='chamfer') s += '<polygon points="5,-7 30,-7 42,0 30,7 5,7" fill="'+c+'"/>';
+      else if(end==='taper') s += '<polygon points="5,-7 44,-3 44,3 5,7" fill="'+c+'"/>';
+      else if(end==='rough') s += '<path d="'+zig(5,44,7,5)+'" fill="'+c+'"/>';
+      else s += '<rect x="5" y="-7" width="39" height="14" fill="'+c+'"/>';
+      return s + hel(5, end==='chamfer'?30:42, end==='taper'?5:7, 6, DK);
+    }
+    switch(k.kind){
+      case 'jobber': g = drill(-14, 7); break;
+      case 'stub': g = drill(10, 7); break;
+      case 'taperdrill': g = drill(-30, 7); break;
+      case 'cdrill': g = drill(0, 8); break;
+      case 'spot': g = '<rect x="-46" y="-7" width="62" height="14" rx="1.5" fill="'+c+'"/><polygon points="16,-7 34,-7 42,0 34,7 16,7" fill="'+c+'"/>'+hel(16,34,7,6,DK); break;
+      case 'center':
+        g = '<rect x="-30" y="-8" width="60" height="16" rx="1.5" fill="'+c+'"/>'
+          + '<polygon points="30,-8 36,-3 44,-3 46,0 44,3 36,3 30,8" fill="'+c+'"/>'
+          + '<polygon points="-30,-8 -36,-3 -44,-3 -46,0 -44,3 -36,3 -30,8" fill="'+c+'"/>'; break;
+      case 'endmill': g = em('square'); break;
+      case 'ball': g = em('ball'); break;
+      case 'radius': g = em('radius'); break;
+      case 'chamfer': g = em('chamfer'); break;
+      case 'taperem': g = em('taper'); break;
+      case 'rougher': g = em('rough'); break;
+      case 'reamer':
+        g = '<rect x="-46" y="-5" width="42" height="10" rx="1.5" fill="'+c+'"/><polygon points="-4,-6 42,-6 46,-3 46,3 42,6 -4,6" fill="'+c+'"/>';
+        g += '<line x1="-2" y1="-2" x2="44" y2="-2" stroke="'+DK+'" stroke-width="1.4"/><line x1="-2" y1="2" x2="44" y2="2" stroke="'+DK+'" stroke-width="1.4"/>'; break;
+      case 'tap': case 'pipetap':
+        g = '<rect x="-46" y="-6" width="8" height="12" fill="'+c+'"/><rect x="-38" y="-5" width="40" height="10" fill="'+c+'"/>'
+          + (k.kind==='pipetap' ? '<path d="M2,-9 L40,-6 L46,-3 L46,3 L40,6 L2,9Z" fill="'+c+'"/>' : '<path d="'+zig(2,40,7,4)+'" fill="'+c+'"/><polygon points="40,-7 46,-4 46,4 40,7" fill="'+c+'"/>')
+          + '<line x1="4" y1="0" x2="44" y2="0" stroke="'+DK+'" stroke-width="2"/>'; break;
+      case 'threadmill':
+        g = '<rect x="-46" y="-6" width="68" height="12" rx="1.5" fill="'+c+'"/><path d="'+zig(22,44,6,4)+'" fill="'+c+'"/>'+hel(22,44,6,6,DK); break;
+      case 'roll':
+        g = '<rect x="-30" y="-12" width="60" height="24" rx="3" fill="'+_discColor(k.d)+'"/><rect x="-46" y="-2" width="16" height="4" fill="#a3adb8"/>'
+          + hel(-30,30,12,8,'rgba(0,0,0,0.25)'); break;
+      case 'deburr':
+        g = '<rect x="-46" y="-3" width="62" height="6" rx="2" fill="#c3ccd6"/><path d="M16,-3 Q40,-4 40,-16 L45,-16 Q46,4 16,3Z" fill="#c3ccd6"/>'; break;
+      case 'collet':
+        g = '<rect x="-40" y="-9" width="60" height="18" rx="1.5" fill="#b8c1cc"/><polygon points="20,-9 32,-12 44,-12 44,12 32,12 20,9" fill="#b8c1cc"/>'
+          + '<line x1="0" y1="-3" x2="44" y2="-3" stroke="'+DK+'" stroke-width="1.5"/><line x1="0" y1="3" x2="44" y2="3" stroke="'+DK+'" stroke-width="1.5"/>'; break;
+      case 'plasma':
+        g = '<polygon points="-30,-16 10,-16 34,-6 46,-3 46,3 34,6 10,16 -30,16" fill="#c27a45"/><rect x="-46" y="-12" width="16" height="24" rx="2" fill="#a8693a"/><circle cx="46" cy="0" r="2" fill="#0b1626"/>'; break;
+      case 'pin':
+        g = '<rect x="-20" y="-4" width="56" height="8" rx="3" fill="#94a3b8"/><rect x="-30" y="-9" width="12" height="18" rx="2" fill="#94a3b8"/>'; break;
+      default: return '';
+    }
+    return '<g transform="rotate(-35)" stroke="'+ST+'" stroke-width="1.2" stroke-linejoin="round">'+g+'</g>';
+  }
+
+  function frontTool(k){
+    var col;
+    switch(k.kind){
+      case 'disc':
+        col = _discColor(k.d);
+        return '<circle r="42" fill="'+col+'" stroke="'+ST+'" stroke-width="1.5"/><circle r="40" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="5" stroke-dasharray="1 3"/><circle r="9" fill="#334155" stroke="'+ST+'" stroke-width="1.5"/>';
+      case 'flapdisc':
+        col = _discColor(k.d); var f = '';
+        for(var i=0;i<16;i++){ var a=i*Math.PI/8; f += '<line x1="'+(12*Math.cos(a)).toFixed(1)+'" y1="'+(12*Math.sin(a)).toFixed(1)+'" x2="'+(42*Math.cos(a+0.25)).toFixed(1)+'" y2="'+(42*Math.sin(a+0.25)).toFixed(1)+'" stroke="rgba(0,0,0,0.35)" stroke-width="2"/>'; }
+        return '<circle r="42" fill="'+col+'" stroke="'+ST+'" stroke-width="1.5"/>'+f+'<circle r="10" fill="#334155" stroke="'+ST+'" stroke-width="1.5"/>';
+      case 'knurl':
+        var h = ''; for(var j=-40;j<=40;j+=7) h += '<line x1="'+j+'" y1="-40" x2="'+(j+20)+'" y2="40" stroke="rgba(0,0,0,0.35)" stroke-width="2"/>';
+        return '<defs><clipPath id="kc"><circle r="38"/></clipPath></defs><circle r="38" fill="#c9a227" stroke="'+ST+'" stroke-width="1.5"/><g clip-path="url(#kc)">'+h+'</g><circle r="9" fill="#0b1626" stroke="'+ST+'" stroke-width="1.5"/>';
+      case 'spade':
+        return '<polygon points="-30,-36 30,-36 30,10 0,42 -30,10" fill="'+k.coat.c+'" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/>'
+          + '<rect x="-4" y="-36" width="8" height="18" fill="#0b1626"/><circle cx="-16" cy="-14" r="5" fill="#0b1626"/><circle cx="16" cy="-14" r="5" fill="#0b1626"/>'
+          + '<line x1="0" y1="2" x2="0" y2="40" stroke="'+DK+'" stroke-width="2"/>';
+      case 'shim':
+        return '<polygon points="-42,0 0,-22 42,0 0,22" fill="#475569" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/><circle r="8" fill="#0b1626" stroke="'+ST+'" stroke-width="1.5"/>';
+      case 'clamp':
+        return '<path d="M-36,-14 L28,-14 L36,-4 L36,10 L20,10 L20,2 L-36,2Z" fill="#64748b" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/><circle cx="-16" cy="-6" r="5" fill="#0b1626"/>';
+      case 'groove':
+        return '<polygon points="-44,-8 -32,-14 32,-14 44,-8 44,8 32,14 -32,14 -44,8" fill="url(#tpg)" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/><line x1="-26" y1="0" x2="26" y2="0" stroke="'+DK+'" stroke-width="2"/>';
+      case 'thread':
+        return '<polygon points="0,-38 8,-30 30,8 38,24 26,26 -26,26 -38,24 -30,8 -8,-30" transform="translate(0,4)" fill="url(#tpg)" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/><circle cy="10" r="8" fill="#0b1626" stroke="#64748b" stroke-width="2"/>';
+      case 'insert':
+        var tri = /\bTPG\b|NA-111|\bTPXT\b/.test(k.d);
+        return (tri ? '<polygon points="0,-36 40,30 -40,30" fill="url(#tpg)" stroke="'+ST+'" stroke-width="2" stroke-linejoin="round"/>'
+                    : '<rect x="-32" y="-32" width="64" height="64" rx="10" fill="url(#tpg)" stroke="'+ST+'" stroke-width="2"/>'
+                      + '<text y="10" text-anchor="middle" font-size="30" font-family="sans-serif" fill="#e2e8f0" opacity="0.7">?</text>');
+      case 'generic':
+        return '<rect x="-34" y="-24" width="68" height="48" rx="6" fill="#475569" stroke="'+ST+'" stroke-width="2"/><text y="10" text-anchor="middle" font-size="28" font-family="sans-serif" fill="#e2e8f0" opacity="0.7">?</text>';
+    }
+    return '';
+  }
+
+  // Best picture we can draw for any Zengers description.
+  window._toolPicSvg = function(desc, size){
+    var ins = window._insertShapeSvg(desc, size);
+    if(ins) return ins;
+    var k = window._toolKind(desc);
+    var body = sideTool(k) || frontTool(k);
+    if(!body) return '';
+    size = size || 40;
+    return '<svg width="'+size+'" height="'+size+'" viewBox="-50 -50 100 100" aria-label="'+k.name+'">'
+      + '<defs><linearGradient id="tpg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset="1" stop-color="#475569"/></linearGradient></defs>'
+      + body + '</svg>';
+  };
+  window._toolPicLabel = function(desc){
+    var info = window._insertShapeInfo(desc);
+    if(info) return info.shape.name+' insert'+(info.hole?', with hole':'')+' ('+info.code+')';
+    var k = window._toolKind(desc);
+    if(k.kind === 'insert' && !/\bTPG\b|NA-111|\bTPXT\b/.test(k.d)) return 'Insert — shape not in the name, add a photo';
+    if(k.kind === 'generic') return 'Tool — add a photo';
+    return k.name + (k.coat.n ? ' ('+k.coat.n+')' : '');
+  };
+
+  function _isAdm(){ return !!(window._isAdmin || window.currentUser === 'hilladmin'); }
+  function _esc(t){ return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  // Small picture for a list row. interactive=false for lists that select on mousedown.
+  window._toolThumb = function(code, desc, size, interactive){
+    size = size || 40;
+    var photo = window._toolPhotos[code];
+    var inner = photo
+      ? '<img src="'+photo+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:5px;">'
+      : window._toolPicSvg(desc, size-6);
+    if(!inner){
+      if(!(interactive !== false && _isAdm())) return '';
+      inner = '<span style="font-size:15px;opacity:0.45;">📷</span>';
+    }
+    var click = interactive === false ? '' :
+      ' onmousedown="event.stopPropagation();" onclick="event.stopPropagation();window._openToolPic(\''+_esc(code)+'\')" title="Tap to view'+(_isAdm()?' / add photo':'')+'"';
+    return '<span class="tool-thumb"'+click+' style="width:'+size+'px;height:'+size+'px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;background:#0b1626;border:1px solid #1e3a5f;border-radius:6px;cursor:'+(click?'pointer':'default')+';vertical-align:middle;overflow:hidden;">'+inner+'</span>';
+  };
+
+  function _findZ(code){
+    var list = window.ZENGERS_INVENTORY || [];
+    for(var i=0;i<list.length;i++) if(list[i][0] === code) return list[i];
+    return null;
+  }
+
+  // ── Big viewer ──────────────────────────────────────────────
+  window._openToolPic = function(code){
+    var z = _findZ(code); if(!z) return;
+    var ov = document.getElementById('toolPicOverlay');
+    if(!ov){
+      ov = document.createElement('div'); ov.id = 'toolPicOverlay';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
+      ov.onclick = function(e){ if(e.target === ov) ov.style.display = 'none'; };
+      document.body.appendChild(ov);
+    }
+    var photo = window._toolPhotos[code];
+    var info = !!window._toolPicSvg(z[2], 10);
+    var pic = photo
+      ? '<img src="'+photo+'" alt="" style="max-width:100%;max-height:50vh;border-radius:8px;display:block;margin:0 auto;">'
+      : (info ? '<div style="display:flex;justify-content:center;">'+window._toolPicSvg(z[2], 180)+'</div>'
+              : '<div style="text-align:center;color:#64748b;font-size:13px;padding:30px 0;">No picture yet</div>');
+    var shapeLine = info ? '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">'+(photo?'':'Drawing · ')+window._toolPicLabel(z[2])+'</div>' : '';
+    var btns = '';
+    if(_isAdm()){
+      btns = '<label style="flex:1;text-align:center;background:#0c4a6e;color:#7dd3fc;border-radius:8px;padding:10px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">📷 '+(photo?'Replace':'Add')+' Photo'
+        + '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window._saveToolPhoto(\''+_esc(code)+'\', this)"></label>'
+        + (photo ? '<button onclick="window._removeToolPhoto(\''+_esc(code)+'\')" style="background:#3f1d1d;color:#fca5a5;border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Remove</button>' : '');
+    }
+    ov.innerHTML = '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:12px;padding:16px;width:100%;max-width:420px;max-height:90vh;overflow:auto;">'
+      + pic
+      + '<div style="margin-top:12px;font-size:14px;color:#f0f4f8;font-weight:600;">'+_esc(z[2])+'</div>'
+      + '<div style="font-size:12px;color:#7dd3fc;margin-top:2px;">Zengers '+_esc(z[0])+' · Bin '+_esc(z[3])+'</div>'
+      + shapeLine
+      + '<div id="toolPicStatus" style="font-size:12px;color:#fcd34d;margin-top:8px;"></div>'
+      + '<div style="display:flex;gap:8px;margin-top:12px;">'+btns
+      + '<button onclick="document.getElementById(\'toolPicOverlay\').style.display=\'none\'" style="flex:'+(btns?'0 0 auto':'1')+';background:#1e293b;color:#cbd5e1;border:1px solid #334155;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Close</button></div>'
+      + '</div>';
+    ov.style.display = 'flex';
+  };
+
+  function _status(t){ var el = document.getElementById('toolPicStatus'); if(el) el.textContent = t; }
+
+  function _shrink(file){
+    return new Promise(function(resolve, reject){
+      var r = new FileReader();
+      r.onerror = reject;
+      r.onload = function(){
+        var img = new Image();
+        img.onerror = reject;
+        img.onload = function(){
+          var max = 600, w = img.width, h = img.height, sc = Math.min(1, max/Math.max(w,h));
+          var c = document.createElement('canvas'); c.width = Math.round(w*sc); c.height = Math.round(h*sc);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          var out = c.toDataURL('image/jpeg', 0.72);
+          if(out.length > 700000) out = c.toDataURL('image/jpeg', 0.45);
+          resolve(out);
+        };
+        img.src = r.result;
+      };
+      r.readAsDataURL(file);
+    });
+  }
+
+  function _docId(code){ return String(code).replace(/[\/.#$\[\]]/g,'_'); }
+
+  window._saveToolPhoto = function(code, input){
+    var file = input && input.files && input.files[0]; if(!file) return;
+    var db = window.fbDb || window._db, m = window._fbModules;
+    if(!db || !m){ _status('Not connected yet — try again in a moment.'); return; }
+    _status('Saving photo…');
+    _shrink(file).then(function(data){
+      var rec = { code: code, photo: data, by: window.currentUser || 'admin', updatedAt: m.serverTimestamp() };
+      return m.setDoc(m.doc(db, 'hillToolPhotos', _docId(code)), rec).catch(function(){
+        // Fallback for databases whose security rules only allow known collections
+        return m.setDoc(m.doc(db, 'hillSettings', 'toolPhoto_'+_docId(code)), rec);
+      }).then(function(){
+        window._toolPhotos[code] = data;
+        window._openToolPic(code);
+        _status('Saved ✓');
+        _rerenderLists();
+      });
+    }).catch(function(e){ _status('Could not save photo: '+(e && e.message || e)); });
+  };
+
+  window._removeToolPhoto = function(code){
+    var db = window.fbDb || window._db, m = window._fbModules; if(!db||!m) return;
+    var id = _docId(code);
+    Promise.all([
+      m.deleteDoc(m.doc(db,'hillToolPhotos',id)).catch(function(){}),
+      m.deleteDoc(m.doc(db,'hillSettings','toolPhoto_'+id)).catch(function(){})
+    ]).then(function(){ delete window._toolPhotos[code]; window._openToolPic(code); _rerenderLists(); });
+  };
+
+  function _rerenderLists(){
+    try{ var a = document.getElementById('invSearchInput'); if(a && a.value.trim().length >= 2 && window._renderInventorySearch) window._renderInventorySearch(); }catch(e){}
+    try{ var b = document.getElementById('invBinInput'); if(b && b.value.trim() && window._renderInventoryByBin) window._renderInventoryByBin(); }catch(e){}
+  }
+
+  // ── Live-load saved photos ─────────────────────────────────
+  var _wait = setInterval(function(){
+    var db = window.fbDb || window._db, m = window._fbModules;
+    if(!db || !m) return;
+    clearInterval(_wait);
+    var fromMain = {}, fromSettings = {};
+    function merge(){ window._toolPhotos = Object.assign({}, fromSettings, fromMain); _rerenderLists(); }
+    m.onSnapshot(m.collection(db,'hillToolPhotos'), function(snap){
+      fromMain = {}; snap.forEach(function(d){ var r = d.data(); if(r && r.code && r.photo) fromMain[r.code] = r.photo; }); merge();
+    }, function(e){ console.warn('tool photos:', e.message); });
+    m.onSnapshot(m.collection(db,'hillSettings'), function(snap){
+      fromSettings = {}; snap.forEach(function(d){ if(d.id.indexOf('toolPhoto_') !== 0) return; var r = d.data(); if(r && r.code && r.photo) fromSettings[r.code] = r.photo; }); merge();
+    }, function(){});
+  }, 1000);
+})();
 </script>
 </body>
 </html>
