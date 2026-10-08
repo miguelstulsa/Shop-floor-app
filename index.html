@@ -2265,7 +2265,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     <div id="invSearchPane">
       <input type="text" id="invSearchInput" placeholder="Search by name, code, size, thread..." oninput="window._renderInventorySearch()" style="width:100%;background:#0d1f35;border:1px solid #1e3a5c;border-radius:7px;color:#f0f4f8;padding:10px 12px;font-size:14px;font-family:'Barlow',sans-serif;margin-bottom:10px;">
-      <div style="font-size:10px;color:#64748b;margin-bottom:10px;">Type at least 2 characters. <span style="color:#fcd34d;">🔧 amber = ProShop</span> · <span style="color:#7dd3fc;">🔷 blue = Zengers</span> · <span style="color:#86efac;">📏 green = Measuring</span></div>
+      <div style="font-size:10px;color:#64748b;margin-bottom:10px;">Browse below or type to search. <span style="color:#fcd34d;">🔧 amber = ProShop</span> · <span style="color:#7dd3fc;">🔷 blue = Zengers</span> · <span style="color:#86efac;">📏 green = Measuring</span></div>
       <div id="invSearchResults" style="display:flex;flex-direction:column;gap:6px;max-height:420px;overflow-y:auto;"></div>
     </div>
 
@@ -2438,7 +2438,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <div style="font-size:11px;color:#fbbf24;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">🔧 Search Tooling — <span style="color:#fcd34d;">ProShop</span> &amp; <span style="color:#7dd3fc;">Zengers</span></div>
         <input type="text" id="toolingSearchInput" placeholder="Type to search — e.g. '3/8 drill', '.512', 'insert'..." autocomplete="off"
           oninput="window._filterTooling(this.value)" onfocus="window._filterTooling(this.value)"
-          onblur="setTimeout(function(){ var b=document.getElementById('toolingSearchResults'); if(b) b.style.display='none'; }, 200)"
+          onblur="setTimeout(function(){ if(window._browseHold) return; var b=document.getElementById('toolingSearchResults'); if(b) b.style.display='none'; }, 200)"
           style="width:100%;background:#1a1000;border:1px solid #92400e;border-radius:8px;color:#fcd34d;padding:10px 14px;font-size:14px;font-family:'Barlow',sans-serif;">
         <div id="toolingSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:50;background:#1a1000;border:1px solid #92400e;border-top:none;border-radius:0 0 8px 8px;max-height:260px;overflow-y:auto;"></div>
         <!-- Staging area — tool picked but not yet added to the request, quantity set here -->
@@ -2482,7 +2482,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <div style="font-size:11px;color:#f87171;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;font-weight:700;">📏 Measuring Equipment</div>
         <input type="text" id="toolSearchInput" placeholder="Type to search — e.g. 'caliper', 'tri-mic', '3/4 plug'..." autocomplete="off"
           oninput="window._filterTools(this.value)" onfocus="window._filterTools(this.value)"
-          onblur="setTimeout(function(){ var b=document.getElementById('toolSearchResults'); if(b) b.style.display='none'; }, 200)"
+          onblur="setTimeout(function(){ if(window._browseHold) return; var b=document.getElementById('toolSearchResults'); if(b) b.style.display='none'; }, 200)"
           style="width:100%;background:#1a0d0d;border:1px solid #7f1d1d;border-radius:8px;color:#fca5a5;padding:10px 14px;font-size:14px;font-family:'Barlow',sans-serif;">
         <div id="toolSearchResults" style="display:none;position:absolute;left:0;right:0;top:100%;z-index:50;background:#1a0d0d;border:1px solid #7f1d1d;border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;"></div>
         <!-- Staging area — tool picked but not yet added to the request -->
@@ -6616,6 +6616,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var inactive = { background:'rgba(255,255,255,0.05)', border:'#1e3a5c', color:'#94a3b8' };
     if(tab === 'search'){
       searchPane.style.display = 'block'; binPane.style.display = 'none';
+      if(window._renderInventorySearch) setTimeout(window._renderInventorySearch, 0);
       searchBtn.style.background = active.background; searchBtn.style.borderColor = active.border; searchBtn.style.color = active.color;
       binBtn.style.background = inactive.background; binBtn.style.borderColor = inactive.border; binBtn.style.color = inactive.color;
     } else {
@@ -6661,7 +6662,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   window._renderInventorySearch = function(){
     var results = document.getElementById('invSearchResults');
     var q = (document.getElementById('invSearchInput').value||'').trim();
-    if(q.length < 2){ results.innerHTML = ''; return; }
+    if(q.length < 2){ if(window._browseRender){ window._browseRender('inv'); } else { results.innerHTML = ''; } return; }
     var qWords = _toolingTokenize(q);
     if(!qWords.length){ results.innerHTML = ''; return; }
 
@@ -7267,7 +7268,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var box = document.getElementById('toolSearchResults');
     if(!box) return;
     var q = (query||'').trim().toLowerCase();
-    if(!q){ box.style.display='none'; box.innerHTML=''; return; }
+    if(!q){ if(window._browseRender){ window._browseRender('tools'); } else { box.style.display='none'; box.innerHTML=''; } return; }
     var matches = MEASURING_TOOLS.filter(function(t){ return t[0].toLowerCase().indexOf(q) >= 0; }).slice(0, 25);
     if(!matches.length){
       box.innerHTML = '<div style="padding:10px 14px;font-size:13px;color:#64748b;">No matches — type more or add details below</div>';
@@ -7419,7 +7420,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var box = document.getElementById('toolingSearchResults');
     if(!box) return;
     var q = (query||'').trim().toLowerCase();
-    if(!q){ box.style.display='none'; box.innerHTML=''; return; }
+    if(!q){ if(window._browseRender){ window._browseRender('tooling'); } else { box.style.display='none'; box.innerHTML=''; } return; }
     var qWords = _toolingTokenize(q);
     if(!qWords.length){ box.style.display='none'; box.innerHTML=''; return; }
 
@@ -20302,8 +20303,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       inner = '<span style="font-size:15px;opacity:0.45;">📷</span>';
     }
     var click = interactive === false ? '' :
-      ' onmousedown="event.stopPropagation();" onclick="event.stopPropagation();window._openToolPic('+idx+')" title="Tap to view'+(_isAdm()?' / add photo':'')+'"';
-    return '<span class="tool-thumb"'+click+' style="width:'+size+'px;height:'+size+'px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;background:#0b1626;border:1px solid #1e3a5f;border-radius:6px;cursor:'+(click?'pointer':'default')+';vertical-align:middle;overflow:hidden;">'+inner+'</span>';
+      ' onmousedown="event.stopPropagation();" onclick="event.stopPropagation();window._openToolPic('+idx+')" title="Tap to enlarge'+(_isAdm()?' / add photo':'')+'"';
+    return '<span class="tool-thumb"'+click+' style="width:'+size+'px;height:'+size+'px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;background:#0b1626;border:1px solid #1e3a5f;border-radius:6px;cursor:'+(click?'zoom-in':'default')+';vertical-align:middle;overflow:hidden;">'+inner+'</span>';
   }
   // Public thumb helpers for each source
   window._toolThumb = function(code, desc, size, interactive){ return _thumbHtml(_zItem(code), size||40, interactive); };
@@ -20317,6 +20318,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(/WHEEL|DISC/.test(d)) return {kind:'disc', name:(/MAROON/.test(d)?'Maroon surface conditioning disc':'Abrasive disc'), coat:{k:'steel',n:''}, d:d};
     return {kind:'generic', name:'Supply item', coat:{k:'steel',n:''}, d:d};
   }
+  window._mtKind = _mtKind;
   window._suThumb = function(name, size, interactive){
     if(!name) return '';
     var k = _suKind(name);
@@ -20331,14 +20333,17 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(!ov){
       ov = document.createElement('div'); ov.id = 'toolPicOverlay';
       ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100000;display:flex;align-items:center;justify-content:center;padding:16px;';
-      ov.onclick = function(e){ if(e.target === ov) ov.style.display = 'none'; };
+      ov.onclick = function(e){ if(e.target === ov) window._closeToolPic(); };
       document.body.appendChild(ov);
     }
-    var photo = window._toolPhotos[it.key], art = photo ? '' : it.draw(180);
+    var photo = window._toolPhotos[it.key], art = photo ? '' : it.draw(280);
+    // Tapping the big picture shrinks it back (closes the zoom)
+    var shrink = ' onclick="window._closeToolPic()" title="Tap to shrink" style="cursor:zoom-out;';
     var pic = photo
-      ? '<img src="'+photo+'" alt="" style="max-width:100%;max-height:50vh;border-radius:8px;display:block;margin:0 auto;">'
-      : (art ? '<div style="display:flex;justify-content:center;">'+art+'</div>'
+      ? '<img src="'+photo+'" alt=""'+shrink+'width:100%;max-height:65vh;object-fit:contain;border-radius:8px;display:block;margin:0 auto;">'
+      : (art ? '<div'+shrink+'display:flex;justify-content:center;">'+art+'</div>'
              : '<div style="text-align:center;color:#64748b;font-size:13px;padding:30px 0;">No picture yet</div>');
+    if(photo || art) pic += '<div style="text-align:center;font-size:10px;color:#475569;margin-top:4px;">Tap picture to shrink</div>';
     var labelLine = (!photo && art && it.label) ? '<div style="font-size:11px;color:#94a3b8;margin-top:4px;">Drawing · '+_esc(it.label)+'</div>' : '';
     var btns = '';
     if(_isAdm()){
@@ -20346,16 +20351,24 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         + '<input type="file" accept="image/*" capture="environment" style="display:none;" onchange="window._saveToolPhoto('+idx+', this)"></label>'
         + (photo ? '<button onclick="window._removeToolPhoto('+idx+')" style="background:#3f1d1d;color:#fca5a5;border:1px solid #7f1d1d;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Remove</button>' : '');
     }
-    ov.innerHTML = '<div style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:12px;padding:16px;width:100%;max-width:420px;max-height:90vh;overflow:auto;">'
+    ov.innerHTML = '<div id="toolPicCard" style="background:#0d1f35;border:1px solid #1e3a5f;border-radius:12px;padding:16px;width:100%;max-width:520px;max-height:92vh;overflow:auto;transform:scale(0.6);opacity:0;transition:transform .18s ease-out,opacity .18s ease-out;">'
       + pic
       + '<div style="margin-top:12px;font-size:14px;color:#f0f4f8;font-weight:600;">'+_esc(it.title)+'</div>'
       + '<div style="font-size:12px;color:#7dd3fc;margin-top:2px;">'+_esc(it.sub)+'</div>'
       + labelLine
       + '<div id="toolPicStatus" style="font-size:12px;color:#fcd34d;margin-top:8px;"></div>'
       + '<div style="display:flex;gap:8px;margin-top:12px;">'+btns
-      + '<button onclick="document.getElementById(\'toolPicOverlay\').style.display=\'none\'" style="flex:'+(btns?'0 0 auto':'1')+';background:#1e293b;color:#cbd5e1;border:1px solid #334155;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Close</button></div>'
+      + '<button onclick="window._closeToolPic()" style="flex:'+(btns?'0 0 auto':'1')+';background:#1e293b;color:#cbd5e1;border:1px solid #334155;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Close</button></div>'
       + '</div>';
     ov.style.display = 'flex';
+    var card = document.getElementById('toolPicCard');
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ if(card){ card.style.transform = 'scale(1)'; card.style.opacity = '1'; } }); });
+  };
+  window._closeToolPic = function(){
+    var ov = document.getElementById('toolPicOverlay'), card = document.getElementById('toolPicCard');
+    if(!ov) return;
+    if(card){ card.style.transform = 'scale(0.6)'; card.style.opacity = '0'; }
+    setTimeout(function(){ ov.style.display = 'none'; }, 170);
   };
 
   function _status(t){ var el = document.getElementById('toolPicStatus'); if(el) el.textContent = t; }
@@ -20385,6 +20398,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._saveToolPhoto = function(idx, input){
     var it = _reg[idx]; if(!it) return;
+    if(!_isAdm()){ _status('Only admins can add or replace photos.'); if(input) input.value = ''; return; }
     var file = input && input.files && input.files[0]; if(!file) return;
     var db = window.fbDb || window._db, m = window._fbModules;
     if(!db || !m){ _status('Not connected yet — try again in a moment.'); return; }
@@ -20405,6 +20419,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   window._removeToolPhoto = function(idx){
     var it = _reg[idx]; if(!it) return;
+    if(!_isAdm()){ _status('Only admins can remove photos.'); return; }
     var db = window.fbDb || window._db, m = window._fbModules; if(!db||!m) return;
     var id = _docId(it.key);
     Promise.all([
@@ -20435,5 +20450,165 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   }, 1000);
 })();
 </script>
+<script>
+// ═══ BROWSE LISTS WITH PICTURES ═══
+// When a tooling / equipment search box is empty, show the whole catalog as
+// a picture list with category filter buttons, instead of a blank box.
+// Typing still searches exactly like before.
+(function(){
+  var TOOL_CATS = [['all','All'],['drill','Drills'],['endmill','End Mills'],['tap','Taps & Threading'],['insert','Inserts'],
+    ['spade','Spade'],['bore','Ream & Bore'],['holder','Holders & Hardware'],['supply','Abrasives & Supplies'],['other','Other']];
+  var MEAS_CATS = [['all','All'],['mic','Mics'],['trimic','Tri-Mics'],['bore','Bore Gages'],['caliper','Calipers'],
+    ['indicator','Indicators'],['plug','Plug Gages'],['ring','Ring Gages'],['std','Standards']];
+  var KCAT = { jobber:'drill', stub:'drill', taperdrill:'drill', cdrill:'drill', center:'drill', spot:'drill', indexdrill:'drill',
+    endmill:'endmill', ball:'endmill', radius:'endmill', chamfer:'endmill', taperem:'endmill', rougher:'endmill', tslot:'endmill', facemill:'endmill',
+    tap:'tap', pipetap:'tap', threadmill:'tap', thread:'insert', insert:'insert', groove:'insert', spade:'spade', spadebody:'spade',
+    reamer:'bore', boringbar:'bore', disc:'supply', flapdisc:'supply', roll:'supply', deburr:'supply', knurl:'supply', plasma:'supply',
+    collet:'holder', shim:'holder', clamp:'holder', pin:'holder', holder:'holder', screw:'holder', arbor:'holder' };
+  var PSCAT = { D:'drill', E:'drill', O:'drill', TC:'drill', A:'endmill', B:'endmill', C:'endmill', K:'endmill', L:'endmill', J:'endmill', I:'endmill',
+    R:'tap', N:'tap', TA:'tap', TB:'tap', G:'insert', TL:'insert', TM:'insert', TN:'insert', TO:'insert', TP:'insert', TQ:'insert', TR:'insert',
+    TS:'insert', TT:'insert', TU:'insert', CG:'spade', F:'bore', TD:'bore', TE:'bore', TI:'bore',
+    TF:'holder', TG:'holder', TH:'holder', TJ:'holder', TK:'holder', T:'holder', Q:'holder' };
+  var MCAT = { odmic:'mic', blademic:'mic', depthmic:'mic', trimic:'trimic', boregage:'bore', caliper:'caliper', indicator:'indicator',
+    pluggage:'plug', ringgage:'ring', standard:'std' };
+  var CAT_ORDER = {}; TOOL_CATS.forEach(function(c,i){ CAT_ORDER[c[0]] = i; }); MEAS_CATS.forEach(function(c,i){ CAT_ORDER['m'+c[0]] = i; });
+
+  function psLabel(t){
+    var loc = (window.PROSHOP_LOCATIONS||{})[t[0]];
+    if(loc && loc.name) return loc.name;
+    var bits = []; if(t[2]) bits.push(t[2]+'"'); if(t[3]) bits.push(t[3]); if(t[4]) bits.push(t[4]);
+    return ((window.TOOLING_GROUPS||{})[t[1]] || t[1]) + (bits.length ? ' — ' + bits.join(' — ') : '');
+  }
+  function num(s){ var n = parseFloat(String(s||'').replace(/[^0-9.]/g,'')); return isNaN(n) ? 999 : n; }
+
+  var _toolList = null, _measList = null;
+  function toolList(){
+    if(_toolList) return _toolList;
+    var out = [];
+    (window.ZENGERS_INVENTORY||[]).forEach(function(z){
+      var cat = window._insertShapeInfo && window._insertShapeInfo(z[2]) ? 'insert' : (KCAT[(window._toolKind ? window._toolKind(z[2]).kind : '')] || 'other');
+      out.push({ m:{source:'zengers', z:z}, cat:cat, label:z[2], sort:z[2].toUpperCase() });
+    });
+    (window.TOOLING_INVENTORY||[]).forEach(function(t){
+      var lab = psLabel(t);
+      out.push({ m:{source:'proshop', t:t}, cat:PSCAT[t[1]] || 'other', label:lab, sort:(t[2] ? ('0000'+num(t[2]).toFixed(4)).slice(-9) : 'zz') + lab.toUpperCase() });
+    });
+    out.sort(function(a,b){ return (CAT_ORDER[a.cat]-CAT_ORDER[b.cat]) || (a.sort < b.sort ? -1 : a.sort > b.sort ? 1 : 0); });
+    return (_toolList = out);
+  }
+  function measList(){
+    if(_measList) return _measList;
+    var out = (window.MEASURING_TOOLS||[]).map(function(mt){
+      var k = window._mtKind ? window._mtKind(mt[0]).kind : 'pluggage';
+      return { mt:mt, cat:MCAT[k] || 'plug', label:mt[0] };
+    });
+    out.sort(function(a,b){ return (CAT_ORDER['m'+a.cat]-CAT_ORDER['m'+b.cat]) || a.label.localeCompare(b.label, undefined, {numeric:true}); });
+    return (_measList = out);
+  }
+
+  var STATE = { inv:{cat:'all',limit:40}, tooling:{cat:'all',limit:40}, tools:{cat:'all',limit:40} };
+  var BOX = { inv:'invSearchResults', tooling:'toolingSearchResults', tools:'toolSearchResults' };
+
+  function chips(ctx, cats, counts){
+    var st = STATE[ctx];
+    return '<div style="position:sticky;top:0;z-index:2;flex-shrink:0;border-radius:7px;padding:8px 8px 6px;display:flex;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;border-bottom:1px solid rgba(255,255,255,0.08);background:#0b1626;">'
+      + cats.filter(function(c){ return c[0]==='all' || counts[c[0]]; }).map(function(c){
+          var on = st.cat === c[0];
+          return '<button type="button" onmousedown="event.preventDefault()" onclick="event.stopPropagation();window._browseCat(\''+ctx+'\',\''+c[0]+'\')" '
+            + 'style="flex-shrink:0;white-space:nowrap;padding:5px 10px;border-radius:14px;font-size:11px;font-weight:600;cursor:pointer;font-family:\'Barlow\',sans-serif;'
+            + (on ? 'background:#fbbf24;border:1px solid #fbbf24;color:#1a1000;' : 'background:rgba(255,255,255,0.05);border:1px solid #334155;color:#cbd5e1;')+'">'
+            + c[1] + ' <span style="opacity:0.65;">' + (c[0]==='all' ? counts._all : counts[c[0]]) + '</span></button>';
+        }).join('') + '</div>';
+  }
+  function moreBtn(ctx, shown, total){
+    if(shown >= total) return '<div style="text-align:center;color:#475569;font-size:11px;padding:8px;">All ' + total + ' shown · type above to search</div>';
+    return '<button type="button" onmousedown="event.preventDefault()" onclick="event.stopPropagation();window._browseMore(\''+ctx+'\')" '
+      + 'style="display:block;width:calc(100% - 16px);margin:8px;padding:9px;background:rgba(255,255,255,0.06);border:1px solid #334155;border-radius:8px;color:#cbd5e1;font-size:12px;font-weight:600;cursor:pointer;">'
+      + 'Show more (' + shown + ' of ' + total + ')</button>';
+  }
+  function count(list){ var c = {_all:list.length}; list.forEach(function(x){ c[x.cat] = (c[x.cat]||0) + 1; }); return c; }
+
+  // Row builders — same look & behavior as the existing search results
+  function toolingRow(m, i, mode){
+    var handler = mode === 'log' ? 'onmousedown="window._selectToolListTooling('+i+')"' : 'onclick="window._selectTooling('+i+',this)"';
+    var base = 'style="padding:9px 14px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;gap:10px;"';
+    if(m.source === 'proshop'){
+      var t = m.t, g = (window.TOOLING_GROUPS||{})[t[1]];
+      return '<div class="tooling-search-result" data-idx="'+i+'" '+handler+' '+base+'>' + (window._psThumb ? window._psThumb(t, 40) : '')
+        + '<span style="flex:1;">' + psLabel(t) + (g ? ' <span style="color:#64748b;font-size:11px;">('+t[1]+' - '+g+')</span>' : '') + '</span>'
+        + '<span style="background:#92400e;color:#fcd34d;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:0.5px;white-space:nowrap;">'+t[0]+'</span></div>';
+    }
+    var z = m.z;
+    return '<div class="tooling-search-result" data-idx="'+i+'" '+handler+' '+base+'>' + (window._toolThumb ? window._toolThumb(z[0], z[2], 40) : '')
+      + '<span style="flex:1;">' + z[2] + ' <span style="color:#7dd3fc;font-size:11px;">(Bin ' + z[3] + ')</span></span>'
+      + '<span style="background:#0c4a6e;color:#7dd3fc;border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:13px;letter-spacing:0.5px;white-space:nowrap;">'+z[0]+'</span></div>';
+  }
+  function invRow(source, primary, tag, loc, thumb){
+    var c = { proshop:['rgba(251,191,36,0.08)','#92400e','#92400e','#fcd34d'], zengers:['rgba(14,116,144,0.1)','#0c4a6e','#0c4a6e','#7dd3fc'], measuring:['rgba(22,101,52,0.12)','#166534','#166534','#86efac'] }[source];
+    return '<div style="background:'+c[0]+';border:1px solid '+c[1]+';border-radius:7px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+      + (thumb||'') + '<div style="flex:1;min-width:0;"><div style="font-size:13px;color:#f0f4f8;">' + primary + '</div>' + (loc ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + loc + '</div>' : '') + '</div>'
+      + '<span style="background:'+c[2]+';color:'+c[3]+';border-radius:5px;padding:2px 8px;font-family:\'Bebas Neue\',sans-serif;font-size:12px;white-space:nowrap;flex-shrink:0;">'+tag+'</span></div>';
+  }
+
+  window._browseRender = function(ctx){
+    var box = document.getElementById(BOX[ctx]); if(!box) return;
+    var st = STATE[ctx], html = '';
+    if(ctx === 'tools'){
+      var ml = measList(), mc = count(ml), mf = ml.filter(function(x){ return st.cat==='all' || x.cat===st.cat; }), ms = mf.slice(0, st.limit);
+      html = chips(ctx, MEAS_CATS, mc) + ms.map(function(x, i){
+        var t = x.mt;
+        return '<div class="tool-search-result" data-idx="'+i+'" onclick="window._selectTool(this)" data-name="'+t[0].replace(/"/g,'&quot;')+'" data-needsdim="'+t[1]+'" '
+          + 'style="padding:9px 14px;font-size:13px;color:#f0f4f8;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;">'
+          + (window._mtThumb ? window._mtThumb(t[0], 40) : '') + '<span style="flex:1;">' + t[0] + '</span></div>';
+      }).join('') + moreBtn(ctx, ms.length, mf.length);
+      box.innerHTML = html; box.style.display = 'block'; box.style.maxHeight = '55vh';
+      return;
+    }
+    if(ctx === 'tooling'){
+      var tl = toolList(), tc = count(tl), tf = tl.filter(function(x){ return st.cat==='all' || x.cat===st.cat; }), ts = tf.slice(0, st.limit);
+      var matches = ts.map(function(x){ return x.m; });
+      box.innerHTML = chips(ctx, TOOL_CATS, tc) + matches.map(function(m,i){ return toolingRow(m, i); }).join('') + moreBtn(ctx, ts.length, tf.length);
+      box.setAttribute('data-matches', JSON.stringify(matches));
+      box.style.display = 'block'; box.style.maxHeight = '55vh';
+      return;
+    }
+    // Inventory browser: tooling + measuring together
+    var all = toolList().map(function(x){ return {kind:'t', x:x, cat:x.cat}; })
+      .concat(measList().map(function(x){ return {kind:'m', x:x, cat:'meas'}; }));
+    var ic = count(all), cats = TOOL_CATS.concat([['meas','Measuring Equipment']]);
+    var f = all.filter(function(a){ return st.cat==='all' || a.cat===st.cat; }), sl = f.slice(0, st.limit);
+    box.innerHTML = chips(ctx, cats, ic) + sl.map(function(a){
+      if(a.kind === 'm') return invRow('measuring', a.x.label, '📏', null, window._mtThumb ? window._mtThumb(a.x.label, 44) : '');
+      var m = a.x.m;
+      if(m.source === 'zengers') return invRow('zengers', m.z[2], m.z[0], '📍 Bin ' + m.z[3], window._toolThumb ? window._toolThumb(m.z[0], m.z[2], 44) : '');
+      var t = m.t, loc = (window.PROSHOP_LOCATIONS||{})[t[0]], g = (window.TOOLING_GROUPS||{})[t[1]];
+      return invRow('proshop', psLabel(t) + (g ? ' <span style="color:#64748b;">('+t[1]+' - '+g+')</span>' : ''), t[0], loc ? '📍 Cabinet ' + loc.cab : null, window._psThumb ? window._psThumb(t, 44) : '');
+    }).join('') + moreBtn(ctx, sl.length, f.length);
+  };
+  window._browseCat = function(ctx, cat){ STATE[ctx].cat = cat; STATE[ctx].limit = 40; window._browseRender(ctx); var b = document.getElementById(BOX[ctx]); if(b) b.scrollTop = 0; };
+  window._browseMore = function(ctx){
+    var b = document.getElementById(BOX[ctx]), y = b ? b.scrollTop : 0;
+    STATE[ctx].limit += 40; window._browseRender(ctx);
+    if(b) b.scrollTop = y;
+  };
+
+  // Keep the dropdown lists open while browsing; close on a tap outside the field.
+  window._browseHold = false;
+  ['toolingSearchResults','toolSearchResults'].forEach(function(id){
+    var wait = setInterval(function(){
+      var b = document.getElementById(id); if(!b) return; clearInterval(wait);
+      var hold = function(){ window._browseHold = true; setTimeout(function(){ window._browseHold = false; }, 700); };
+      b.addEventListener('touchstart', hold, {passive:true}); b.addEventListener('mousedown', hold);
+    }, 500);
+  });
+  document.addEventListener('click', function(e){
+    [['machinistToolingField','toolingSearchResults'],['inspectionToolField','toolSearchResults']].forEach(function(p){
+      var f = document.getElementById(p[0]), b = document.getElementById(p[1]);
+      if(f && b && b.style.display !== 'none' && !f.contains(e.target)) b.style.display = 'none';
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
