@@ -2314,6 +2314,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         <option value="Cody Wilson">Cody Wilson</option>
         <option value="Corey Bartmier">Corey Bartmier</option>
         <option value="Dingo Mikles">Dingo Mikles</option>
+        <option value="Donovan Lightfoot">Donovan Lightfoot</option>
         <option value="Eric Jones">Eric Jones</option>
         <option value="Hank Anglin">Hank Anglin</option>
         <option value="Jimmy Pollard">Jimmy Pollard</option>
@@ -2366,6 +2367,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           <option>Cody Wilson</option>
           <option>Corey Bartmier</option>
           <option>Dingo Mikles</option>
+          <option>Donovan Lightfoot</option>
           <option>Eric Jones</option>
           <option>Hank Anglin</option>
           <option>Jimmy Pollard</option>
@@ -5336,7 +5338,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
   // record, admin/manager only since it's individual performance data.
   var TIME_STUDY_EMPLOYEES = [
     'Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield',
-    'Cody Wilson','Corey Bartmier','Dingo Mikles','Eric Jones','Hank Anglin',
+    'Cody Wilson','Corey Bartmier','Dingo Mikles','Donovan Lightfoot','Eric Jones','Hank Anglin',
     'Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz',
     'Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt',
     'Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'
@@ -18023,7 +18025,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // DNX RESOLVE MODAL v2
   var DNX_INSIGHTS=['1st Piece Inspection','At Lunch','Bar Change','In Process Inspection','In Setup','Machine Down','No Fixturing','No Material','No Operator','Program Issues','Tool Break','Tool Change','Training','Waiting on Tooling'];
-  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Eric Jones','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
+  var DNX_EMPLOYEES=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Donovan Lightfoot','Eric Jones','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
   window._dnxResolvePending=null;
   window._dnxSelectedInsight='';
   window._dnxSelectInsight=function(val){
@@ -19108,7 +19110,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     }
 
     // Machinist name search
-    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Eric Jones','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
+    var machinists=['Brett Thompson','Bryan Sturman','Caleb Dooley','Chris Simmons','Chuck Whitfield','Cody Wilson','Corey Bartmier','Dingo Mikles','Donovan Lightfoot','Eric Jones','Hank Anglin','Jimmy Pollard','Keith Groden','Ker Vang','Kervin Muniz','Miguel Sanchez','Mike Payne','Rhett Dawson','Scott Smith','Sean Surratt','Steven Riggs','Tony Lang','Tyler Stockham','Will Garcia'];
     var foundMachinist=null;
     machinists.forEach(function(name){
       if(msgLower.indexOf(name.toLowerCase())>=0) foundMachinist=name;
@@ -19819,8 +19821,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     if(/TICN/.test(d)) return {k:'ticn',n:'TiCN'};
     if(/\bTIN\b|TIN COATED/.test(d)) return {k:'tin',n:'TiN'};
     if(/COBALT/.test(d)) return {k:'cobalt',n:'Cobalt'};
-    if(/CARBIDE|\bCB\b|DREAM DRILL|ATF\b/.test(d)) return {k:'carbide',n:'Carbide'};
-    if(/HSS|\bHS\b|M-42/.test(d)) return {k:'hss',n:'HSS'};
+    if(/\bM35\b|\bM-?42\b/.test(d)) return {k:'cobalt',n:'Cobalt'};
+    if(/CARBIDE|\bCARB\b|\bCB\b|DREAM DRILL|ATF\b/.test(d)) return {k:'carbide',n:'Carbide'};
+    if(/HSS|\bHS\b|POWDER METAL/.test(d)) return {k:'hss',n:'HSS'};
     return {k:'steel',n:''};
   }
   function _discKey(d){
@@ -19898,42 +19901,66 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── Tool types from the description ─────────────────────────
   var KINDS = [
-    // order matters — first match wins
+    // order matters — first match wins. Covers Zengers wording and the
+    // ProShop descriptions from the tooling spreadsheet (DRL, FEM, BEM...).
     [/HYPERTHERM|\b2208\d\d|\b2209\d\d/, 'plasma', 'Plasma consumable'],
-    [/COLLET/, 'collet', 'Collet'],
+    [/COLLET(?! KEY)/, 'collet', 'Collet'],
     [/KNURL/, 'knurl', 'Knurl wheel'],
     [/DEBURR/, 'deburr', 'Deburring blade'],
     [/CARTRIDGE ROLL/, 'roll', 'Cartridge roll'],
     [/OVERLAP DISC/, 'flapdisc', 'Overlap (flap) disc'],
+    [/KEY CUTTER|T-? ?SLOT|SLOT MILL|WHEEL CUTTER/, 'tslot', 'Key / T-slot cutter'],
+    [/DOVE ?TAIL/, 'dovetail', 'Dovetail cutter'],
     [/DISC|WHEEL/, 'disc', 'Abrasive disc'],
-    [/SHIM SEAT/, 'shim', 'Shim seat'],
+    [/STYLUS/, 'stylus', 'CMM stylus'],
+    [/SLITTING SAW|\bSAW\b/, 'saw', 'Slitting saw'],
+    [/BROACH/, 'broach', 'Broach'],
+    [/SHIM SEAT|\bSEAT\b/, 'shim', 'Shim seat'],
+    [/TORX|ANVIL SCREW|INSERT SCREW|CLAMP SCREW|\bSCREWS?\b(?! ?MACH)|HARDWARE/, 'screw', 'Screw / hardware'],
     [/CLAMP/, 'clamp', 'Insert clamp'],
     [/LOCK PIN/, 'pin', 'Lock pin'],
+    [/THREADING BAR|BORING BAR|BORE BAR|BORING HEAD|DEVIBE|GROOVE BAR|ROMICRON/, 'boringbar', 'Boring bar'],
     [/THREAD MILL|TREAD MILL/, 'threadmill', 'Thread mill'],
     [/PIPE TAP|NPT.*TAP|TAP.*NPT/, 'pipetap', 'Pipe tap'],
+    [/TAP EXTENSION|ARBOR|COLLET EXTENSION/, 'arbor', 'Arbor / extension'],
     [/\bTAP\b|FLAT BOTTOM 2B|GUN TAP/, 'tap', 'Tap'],
-    [/REAMER/, 'reamer', 'Reamer'],
+    [/REAM/, 'reamer', 'Reamer'],
     [/CENTER DRILL/, 'center', 'Center drill'],
-    [/SPOT DRILL/, 'spot', 'Spot drill'],
+    [/SPOT DRILL|SPOTTING|\bSPOT\b/, 'spot', 'Spot drill'],
+    [/DRILL INSERT|DRILL TIP|OUTBOARD INSERT|INBOARD INSERT|INSERTS? FOR .*INSERT DRILL/, 'spade', 'Drill insert / blade'],
+    [/SPADE DRILL BODY/, 'spadebody', 'Spade drill body'],
     [/SPADE|SM POINT/, 'spade', 'Spade drill blade'],
-    [/CHAMFER MILL|DRILL MILL|EM 3\/8 60DEG|90DEG|90-DEG/, 'chamfer', 'Chamfer / drill mill'],
+    [/INSERT DRILL|SUMO ?CHAM|DRILL BODY|\bDCN\b/, 'indexdrill', 'Insert drill'],
+    [/GROOVE BLADE|PART OFF BLADE|\bBLADE\b/, 'blade', 'Groove / part-off blade'],
+    [/TURNING TOOL|TURN TOOL|FACING TOOL|KENCLAM|THREAD TOOL|GROOVE TOOL|GROOVER(?! INSERT)|PART OFF TOOL|TOOL HOLDER|\bHOLDER\b|PORT TOOL/, 'holder', 'Tool holder'],
+    [/HIGH FEED MILL(?! INSERT)|FACE MILL|\bIEM\b|DODEKA|INSERTED (CHAMFER|BALLNOSE)/, 'facemill', 'Insert mill'],
+    [/COUNTERSINK|CHAMFER MILL|CHAMFER TOOL|DRILL MILL|\d+ ?DEG(REE)? (X |CARBIDE )?(CHAMFER|COUNTERSINK)|EM 3\/8 60DEG|90DEG|90-DEG|\bCHAMFER\b/, 'chamfer', 'Chamfer / countersink'],
     [/ROUGHING/, 'rougher', 'Roughing end mill'],
-    [/BALL/, 'ball', 'Ball end mill'],
-    [/TAPER\b.*END MILL|DEG TAPER/, 'taperem', 'Tapered end mill'],
-    [/CORNER RADIUS|\(R\.0|R\.0\d\d/, 'radius', 'Corner radius end mill'],
-    [/\bEM\b|END ?MILL|ENDMILL|3200SD|3200XL|\bRH SE\b/, 'endmill', 'End mill'],
-    [/TAPER LENGTH/, 'taperdrill', 'Taper length drill'],
-    [/STUB|S&D|SCREW MACHINE/, 'stub', 'Stub drill'],
+    [/BALL|\bBEM\b|\bBN\b/, 'ball', 'Ball end mill'],
+    [/TAPER\b.*END MILL|DEG TAPER|\bTEM\b/, 'taperem', 'Tapered end mill'],
+    [/CORNER RADIUS|BULL ?NOSE|BULLBOSE|\bCR\b|\bCREM\b|CORNER ROUND|\(R\.0|R\.0\d\d/, 'radius', 'Corner radius end mill'],
+    [/\bEM\b|\bFEM\b|END ?MILL|ENDMILL|FINISH MILL|3200SD|3200XL|\bRH SE\b/, 'endmill', 'End mill'],
+    [/TAPER LENGTH|X-?LONG|EXTRA LONG|AIRCRAFT/, 'taperdrill', 'Extra-long drill'],
+    [/STUB|\bS ?& ?D\b|SCREW ?MACH/, 'stub', 'Screw machine (stub) drill'],
     [/JOBBER/, 'jobber', 'Jobber drill'],
-    [/DRILL|ATF\b/, 'cdrill', 'Drill'],
-    [/GY2M|\bTAG\b|\bDGN\b|WIDTH|FULL NOSE/, 'groove', 'Grooving insert'],
-    [/\b16 ?[EIN]R\b|THREADING/, 'thread', 'Threading insert'],
+    [/DRILL|\bDRL\b|ATF\b/, 'cdrill', 'Drill'],
+    [/GY2M|\bTAG\b|\bDGN\b|WIDTH|FULL NOSE|GROOV(E|ING|ER) INSERT/, 'groove', 'Grooving insert'],
+    [/\b\d\d ?[EIN][RL]\b|THREADING INSERT|THREADING/, 'thread', 'Threading insert'],
     [/INSERT|GRADE|NA-111|TOOL FLO|MITSUBISHI \d|SECO \d|\bTPG\b|\bTPXT\b|CXMG/, 'insert', 'Insert']
   ];
   window._toolKind = function(desc){
     var d = String(desc||'').toUpperCase();
-    for(var i=0;i<KINDS.length;i++) if(KINDS[i][0].test(d)) return {kind:KINDS[i][1], name:KINDS[i][2], coat:_coatKey(d), d:d};
-    return {kind:'generic', name:'Tool', coat:_coatKey(d), d:d};
+    var dm = d.match(/^\s*(\d*\.\d+)/) || d.match(/\((\.\d+)\)/) || d.match(/(\d*\.\d+)\s*(DIA|\")/), dia = dm ? parseFloat(dm[1]) : 0;
+    if(!dia){ var fr = d.match(/^\s*(\d+)\/(\d+)\b/); if(fr) dia = (+fr[1])/(+fr[2]); }
+    if(!dia){ var mmm = d.match(/^\s*(\d+(\.\d+)?)\s*MM\b/); if(mmm) dia = parseFloat(mmm[1])/25.4; }
+    var fm = d.match(/(\d)\s*-?\s*(FLT|FL\b|FLUTE)/), extra = {
+      dia: dia > 0 && dia < 6 ? dia : 0,
+      flutes: fm ? +fm[1] : 0,
+      lh: /LEFT[ -]?HAND|\bLH\b|\bL\.H\./.test(d),
+      tapStyle: /FORM TAP|\bFORM\b.*TAP/.test(d) ? 'form' : (/SPIRAL/.test(d) ? 'spiral' : 'straight')
+    };
+    for(var i=0;i<KINDS.length;i++) if(KINDS[i][0].test(d)) return Object.assign({kind:KINDS[i][1], name:KINDS[i][2], coat:_coatKey(d), d:d}, extra);
+    return Object.assign({kind:'generic', name:'Tool', coat:_coatKey(d), d:d}, extra);
   };
 
   // ── Side-view tools (drawn along x, then tilted) ─────────────
@@ -19966,12 +19993,14 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   function sideTool(t){
     var k = t.coat.k, C = cyl(k), g = '', defs = '';
     function drill(fs, tipX){
-      defs += clip(fs, tipX, 6, 8);
-      return '<rect x="-46" y="-6" width="'+(fs+48)+'" height="12" rx="1.2" fill="'+C+'"/>'
-        + '<path d="M'+fs+',-6 L'+tipX+',-6 L'+(tipX+8)+',-0.6 L'+(tipX+8)+',0.6 L'+tipX+',6 L'+fs+',6 Q'+(fs-4)+',0 '+fs+',-6Z" fill="'+C+'"/>'
-        + flutes(fs, tipX+8, 6, 10, 7)
-        + '<path d="M'+tipX+',-6 L'+(tipX+8)+',-0.6" stroke="rgba(255,255,255,0.8)" stroke-width="0.9" fill="none"/>'
-        + '<path d="M'+(tipX+8)+',0.6 L'+tipX+',6" stroke="rgba(0,0,0,0.6)" stroke-width="0.9" fill="none"/>';
+      // thin for tiny drills, fat for big ones (1/16" ≈ 3.5, 1" and up ≈ 9)
+      var h = t.dia ? Math.round(Math.max(3.5, Math.min(9, 3.2 + t.dia * 6)) * 2) / 2 : 6, pt = h * 1.3;
+      defs += clip(fs, tipX, h, pt);
+      return '<rect x="-46" y="'+(-Math.min(h,6))+'" width="'+(fs+48)+'" height="'+(2*Math.min(h,6))+'" rx="1.2" fill="'+C+'"/>'
+        + '<path d="M'+fs+','+(-h)+' L'+tipX+','+(-h)+' L'+(tipX+pt)+',-0.6 L'+(tipX+pt)+',0.6 L'+tipX+','+h+' L'+fs+','+h+' Q'+(fs-4)+',0 '+fs+','+(-h)+'Z" fill="'+C+'"/>'
+        + flutes(fs, tipX+pt, h, t.flutes >= 4 ? 6.5 : (t.flutes === 3 ? 8 : 10), t.lh ? -h*1.15 : h*1.15)
+        + '<path d="M'+tipX+','+(-h)+' L'+(tipX+pt)+',-0.6" stroke="rgba(255,255,255,0.8)" stroke-width="0.9" fill="none"/>'
+        + '<path d="M'+(tipX+pt)+',0.6 L'+tipX+','+h+'" stroke="rgba(0,0,0,0.6)" stroke-width="0.9" fill="none"/>';
     }
     function em(end, x0){
       x0 = x0 == null ? 4 : x0;
@@ -19983,11 +20012,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       else if(end==='rough')  body = serr(x0,44,h,4.5);
       else                    body = 'M'+x0+','+(-h)+' L44,'+(-h)+' L44,'+h+' L'+x0+','+h+'Z';
       defs += '<clipPath id="tpEm'+end+x0+'"><path d="'+body+'"/></clipPath>';
-      var fl = '', pitch = end==='rough'?7:8;
-      for(var x = x0-pitch; x < tip; x += pitch){
+      var nf = t.flutes || 0, pitch = end==='rough' ? 7 : (nf >= 5 ? 5.5 : nf === 4 ? 7 : nf === 3 ? 8.5 : nf === 2 ? 10.5 : 8);
+      var L = t.lh ? -9 : 9, fl = '';
+      for(var x = x0-pitch-12; x < tip+12; x += pitch){
         var w = pitch*0.45;
-        fl += '<path d="M'+x+','+(-h-3)+' L'+(x+9)+','+(h+3)+' L'+(x+9+w)+','+(h+3)+' L'+(x+w)+','+(-h-3)+'Z" fill="url(#tpGroove)"/>'
-            + '<line x1="'+(x+w)+'" y1="'+(-h-3)+'" x2="'+(x+9+w)+'" y2="'+(h+3)+'" stroke="rgba(255,255,255,0.6)" stroke-width="0.9"/>';
+        fl += '<path d="M'+x+','+(-h-3)+' L'+(x+L)+','+(h+3)+' L'+(x+L+w)+','+(h+3)+' L'+(x+w)+','+(-h-3)+'Z" fill="url(#tpGroove)"/>'
+            + '<line x1="'+(x+w)+'" y1="'+(-h-3)+'" x2="'+(x+L+w)+'" y2="'+(h+3)+'" stroke="rgba(255,255,255,0.6)" stroke-width="0.9"/>';
       }
       return '<rect x="-46" y="-7" width="'+(x0+48)+'" height="14" rx="1.2" fill="'+C+'"/>'
         + '<line x1="-30" y1="-7" x2="-30" y2="7" stroke="rgba(0,0,0,0.35)" stroke-width="0.8"/>'
@@ -20024,7 +20054,11 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         g = '<rect x="-46" y="-5.5" width="9" height="11" fill="'+C+'" stroke="rgba(0,0,0,0.4)" stroke-width="0.6"/><rect x="-37" y="-5" width="41" height="10" fill="'+C+'"/>'
           + '<path d="'+(pipe?'M2,-8.5 L40,-6 L46,-3 L46,3 L40,6 L2,8.5Z':'M2,-7 L40,-7 L46,-4 L46,4 L40,7 L2,7Z')+'" fill="'+C+'"/>'
           + '<g clip-path="url(#tpTap'+pipe+')">'+threads(2,46,8,2.6,0)
-          + '<rect x="2" y="-1.6" width="44" height="3.2" fill="url(#tpGroove)"/></g>'; break;
+          + (t.tapStyle === 'form' ? ''
+             : t.tapStyle === 'spiral'
+               ? (function(){ var sp=''; for(var x=-6;x<46;x+=9){ sp += '<path d="M'+x+',-9 Q'+(x+5)+',0 '+(x+10)+',9 L'+(x+13)+',9 Q'+(x+8)+',0 '+(x+3)+',-9Z" fill="url(#tpGroove)"/>'; } return sp; })()
+               : '<rect x="2" y="-1.6" width="44" height="3.2" fill="url(#tpGroove)"/>')
+          + '</g>'; break;
       case 'threadmill':
         defs += '<clipPath id="tpTm"><rect x="22" y="-7" width="23" height="14"/></clipPath>';
         g = '<rect x="-46" y="-6" width="70" height="12" rx="1.2" fill="'+C+'"/><rect x="22" y="-7" width="23" height="14" rx="1" fill="'+C+'"/>'
@@ -20120,13 +20154,22 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     size = size || 40;
     return '<svg width="'+size+'" height="'+size+'" viewBox="-50 -50 100 100" aria-label="'+t.name+'">' + body + '</svg>';
   };
+  window._kindLabel = function(t){
+    var bits = [t.name];
+    if(t.coat && t.coat.n) bits.push(t.coat.n);
+    if(t.dia) bits.push('⌀ ' + (+t.dia.toFixed(4)).toString().replace(/^0\./, '.') + '"');
+    if(t.flutes) bits.push(t.flutes + ' flute');
+    if(t.lh) bits.push('Left hand');
+    if(/tap/.test(t.kind) && t.tapStyle !== 'straight') bits.push(t.tapStyle === 'form' ? 'Form (no flutes)' : 'Spiral flute');
+    return bits.join(' · ');
+  };
   window._toolPicLabel = function(desc){
     var info = window._insertShapeInfo(desc);
     if(info) return info.shape.name+' insert'+(info.hole?', with hole':'')+' ('+info.code+')';
     var t = window._toolKind(desc);
     if(t.kind === 'insert' && !/\bTPG\b|NA-111|\bTPXT\b/.test(t.d)) return 'Insert — shape not in the name, add a photo';
     if(t.kind === 'generic') return 'Tool — add a photo';
-    return t.name + (t.coat.n ? ' ('+t.coat.n+')' : '');
+    return window._kindLabel(t);
   };
 
   function _isAdm(){ return !!(window._isAdmin || window.currentUser === 'hilladmin'); }
@@ -20160,6 +20203,16 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       case 'tslot':
         return tilt('<rect x="-46" y="-6" width="80" height="12" rx="1.2" fill="'+C+'"/>'
           + '<path d="'+serr(34,44,18,3)+'" fill="'+C+'"/><path d="M34,-18 L44,-18" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>');
+      case 'blade':
+        return flat('<path d="M-46,-9 L40,-9 L46,-4 L46,4 L40,9 L-46,9 Z" fill="url(#tpf_steel)" stroke="#11161c" stroke-width="1"/>'
+          + '<path d="M-46,-9 L40,-9" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>'
+          + '<path d="M-44,-5 L36,-5 M-44,5 L36,5" stroke="rgba(0,0,0,0.3)" stroke-width="1.2"/>'
+          + '<polygon points="38,-4 46,-3 46,3 38,4" fill="url(#tpf_carbide)" stroke="#11161c" stroke-width="0.6"/>');
+      case 'dovetail':
+        return tilt('<rect x="-46" y="-6" width="74" height="12" rx="1.2" fill="'+C+'"/>'
+          + '<path d="M28,-8 L36,-16 L44,-16 L44,16 L36,16 L28,8Z" fill="'+C+'"/>'
+          + '<path d="M36,-16 L28,-8 M36,16 L28,8" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>'
+          + '<path d="M38,-16 L38,16 M41,-16 L41,16" stroke="url(#tpGroove)" stroke-width="1.6"/>');
       case 'broach':
         var tb = ''; for(var x=-30;x<44;x+=5) tb += '<path d="M'+x+',-7 L'+(x+4)+',-11 L'+(x+5)+',-7" fill="'+C+'" stroke="rgba(0,0,0,0.5)" stroke-width="0.5"/>';
         return tilt('<rect x="-46" y="-7" width="90" height="14" fill="url(#tpf_hss)" stroke="#11161c" stroke-width="0.8"/>'+tb);
@@ -20241,7 +20294,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
         return tilt('<rect x="-20" y="-7" width="40" height="14" rx="2" fill="#1f2937"/><path d="M-16,-7 L-16,7 M-10,-7 L-10,7 M-4,-7 L-4,7 M2,-7 L2,7 M8,-7 L8,7 M14,-7 L14,7" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>'
           + (nog ? '' : end(20,44,'#16a34a')) + (go ? '' : end(-44,-20,'#dc2626')));
       case 'ringgage':
-        var nogo = /NO ?-?GO/.test(t.d), col = nogo ? '#dc2626' : (/\bGO\b/.test(t.d) ? '#16a34a' : '#94a3b8');
+        var both = /GO\s*(&|AND|\/)\s*NO ?-?GO/.test(t.d), nogo = !both && /NO ?-?GO/.test(t.d), col = both ? '#94a3b8' : nogo ? '#dc2626' : (/\bGO\b/.test(t.d) ? '#16a34a' : '#94a3b8');
         var thread = !/SET RING|SETTING RING/.test(t.d);
         var kn = ''; for(var q=0;q<48;q++) kn += '<line x1="0" y1="-40" x2="0" y2="-36" transform="rotate('+(q*7.5)+')" stroke="rgba(0,0,0,0.35)" stroke-width="1"/>';
         var th = ''; if(thread) for(var w=0;w<5;w++) th += '<circle r="'+(16-w*2.2)+'" fill="none" stroke="rgba(0,0,0,0.35)" stroke-width="0.8"/>';
@@ -20267,11 +20320,20 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var group = (window.TOOLING_GROUPS || {})[t[1]] || t[1];
     var up = (name + ' ' + group).toUpperCase();
     // a real name off the drawer label beats the group guess (e.g. "CNMG 432 WITH WIPER")
-    if(name && window._insertShapeInfo(name + ' INSERT') && /^(G|TL|TO|TT|M)$/.test(t[1])) return { iso: name + ' INSERT' };
-    if(name){ var k0 = window._toolKind(name); if(k0.kind !== 'generic' && k0.kind !== 'insert') return { t: k0 }; }
+    var desc = loc && loc.desc ? loc.desc : '';
+    var text = (name + ' ' + desc).trim();
+    if(text && window._insertShapeInfo(text + ' INSERT') && /^(G|TL|TO|TT|TM|TN|TP|TQ|TR|TS|M|T|\?)$/.test(t[1]) && !/HOLDER|BORING|BAR\b|TOOL\b/.test(text.toUpperCase())) return { iso: text + ' INSERT' };
+    if(t[1] === 'CG' || t[1] === 'CSG'){
+      var gu = text.toUpperCase();
+      var ring = /RING|\d-?2A\b|\b2A\b/.test(gu);
+      return { t: { kind: ring ? 'ringgage' : 'pluggage', name: ring ? 'Thread ring gage' : 'Thread plug gage', coat:{k:'hss',n:''}, d: gu } };
+    }
+    if(text){ var k0 = window._toolKind(text); if(!k0.dia && parseFloat(t[2]) > 0) k0.dia = parseFloat(t[2]); if(k0.kind !== 'generic' && k0.kind !== 'insert') return { t: k0 }; }
     var kind = PS_KIND[t[1]] || 'generic';
     if(t[1] === 'D' && /CARBIDE/.test(up)) kind = 'cdrill';
-    return { t: { kind: kind, name: PS_NAME[kind] || group, coat: _coatKey(up + (t[1]==='D' ? '' : ' CARBIDE')), d: up } };
+    var base = window._toolKind(text);   // still pick up coating / flutes / hand from the description
+    if(!base.dia && parseFloat(t[2]) > 0) base.dia = parseFloat(t[2]);
+    return { t: Object.assign({}, base, { kind: kind, name: PS_NAME[kind] || group, coat: base.coat.n ? base.coat : _coatKey(up + (t[1]==='D' ? '' : ' CARBIDE')), d: up }) };
   }
   function _mtKind(name){
     var d = String(name||'').toUpperCase();
@@ -20322,7 +20384,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     var title = (loc && loc.name) ? loc.name : (group + (bits.length ? ' — ' + bits.join(' — ') : ''));
     var sub = 'ProShop Tool #'+t[0]+' · '+group+(loc && window._psLocText(loc) ? ' · 📍 '+window._psLocText(loc) : '');
     var draw = info.iso ? function(sz){ return window._insertShapeSvg(info.iso, sz); } : function(sz){ return window._kindSvg(info.t, sz); };
-    var label = info.iso ? window._toolPicLabel(info.iso) : (info.t.kind === 'generic' ? group+' — add a photo' : (info.t.kind==='insert' ? 'Insert — add a photo' : info.t.name));
+    var label = info.iso ? window._toolPicLabel(info.iso) : (info.t.kind === 'generic' ? group+' — add a photo' : (info.t.kind==='insert' ? 'Insert — add a photo' : window._kindLabel(info.t)));
     return _register('PS:'+t[0], title, sub, draw, label);
   }
   function _mtItem(name){
@@ -20500,7 +20562,8 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
     endmill:'endmill', ball:'endmill', radius:'endmill', chamfer:'endmill', taperem:'endmill', rougher:'endmill', tslot:'endmill', facemill:'endmill',
     tap:'tap', pipetap:'tap', threadmill:'tap', thread:'insert', insert:'insert', groove:'insert', spade:'spade', spadebody:'spade',
     reamer:'bore', boringbar:'bore', disc:'supply', flapdisc:'supply', roll:'supply', deburr:'supply', knurl:'supply', plasma:'supply',
-    collet:'holder', shim:'holder', clamp:'holder', pin:'holder', holder:'holder', screw:'holder', arbor:'holder' };
+    collet:'holder', shim:'holder', clamp:'holder', pin:'holder', holder:'holder', screw:'holder', arbor:'holder',
+    blade:'holder', dovetail:'endmill' };
   var PSCAT = { D:'drill', E:'drill', O:'drill', TC:'drill', A:'endmill', B:'endmill', C:'endmill', K:'endmill', L:'endmill', J:'endmill', I:'endmill',
     R:'tap', N:'tap', TA:'tap', TB:'tap', G:'insert', TL:'insert', TM:'insert', TN:'insert', TO:'insert', TP:'insert', TQ:'insert', TR:'insert',
     TS:'insert', TT:'insert', TU:'insert', CG:'spade', F:'bore', TD:'bore', TE:'bore', TI:'bore',
