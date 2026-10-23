@@ -1256,6 +1256,18 @@
         <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires on every 🟠 <strong style="color:#f0f4f8;">Floor Support</strong> request (material, hopper, supplies, etc). Prefilled with the key you already hard-wired in — you can update it here going forward.</div>
       </div>
 
+      <!-- Purchaser — Tooling Reorder notification key -->
+      <div style="margin-bottom:14px;padding:12px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.3);border-radius:10px;">
+        <label style="font-size:11px;color:#c084fc;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">🛒 Purchaser (Cody Wilson) — Tooling Reorder Key</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input id="purchaser-pushover-key" type="password" placeholder="Cody's Pushover User Key..."
+            style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(168,85,247,0.35);border-radius:8px;padding:9px 14px;color:#f0f4f8;font-family:'Barlow',sans-serif;font-size:13px;outline:none;"
+            oninput="localStorage.setItem('hillPurchaserPushoverKey',this.value.trim()); window._syncSecretToCloud('purchaserPushoverKey',this.value.trim())" />
+          <button onclick="window._testPurchaserPushover()" style="background:#a855f7;border:none;color:#fff;border-radius:8px;padding:9px 14px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;">TEST</button>
+        </div>
+        <div style="font-size:11px;color:#64748b;line-height:1.6;">Fires every time you send a <strong style="color:#f0f4f8;">🛒 Tooling Reorder</strong>. When Cody marks it Ordered, the alert comes back to <strong style="color:#f0f4f8;">your personal key</strong> above.</div>
+      </div>
+
       <div style="margin-bottom:10px;">
         <label style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">Group Key (notifies ALL managers)</label>
         <div style="display:flex;gap:8px;">
@@ -4393,7 +4405,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     elevenLabsKey:       'jimKey',
     qmiDgpPushoverKey:   'hillQmiDgpPushoverKey',
     justinPushoverKey:   'hillJustinPushoverKey',
-    floorSupportPushoverKey: 'hillFloorSupportPushoverKey'
+    floorSupportPushoverKey: 'hillFloorSupportPushoverKey',
+    purchaserPushoverKey:    'hillPurchaserPushoverKey'
   };
 
   function _refreshSecretInputsFromLocalStorage(){
@@ -4405,7 +4418,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       ['eleven-key-input','jimKey'],
       ['qmidgp-pushover-key','hillQmiDgpPushoverKey'],
       ['justin-pushover-key','hillJustinPushoverKey'],
-      ['will-pushover-key','hillFloorSupportPushoverKey']
+      ['will-pushover-key','hillFloorSupportPushoverKey'],
+      ['purchaser-pushover-key','hillPurchaserPushoverKey']
     ];
     pairs.forEach(function(p){
       var el = document.getElementById(p[0]);
@@ -8279,7 +8293,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     // Show role badge next to name
     const greetingName = document.getElementById('greetingName');
-    const roleMap = { admin: '👑', manager: '💼', machinist: '🔧' };
+    const roleMap = { admin: '👑', manager: '💼', machinist: '🔧', purchaser: '🛒' };
+    window._userRole = user.role || 'machinist';
+    window._userDisplayName = user.name || '';
+    window._isPurchaser = user.role === 'purchaser';
+    setTimeout(function(){ if (window._reordersOnLogin) window._reordersOnLogin(user); }, 0);
     const roleEmoji = roleMap[user.role] || '🔧';
     greetingName.innerHTML = roleEmoji + ' <strong>' + escHtml(user.name) + '</strong>';
 
@@ -8362,6 +8380,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   function doLogout() {
     currentUser = null;
+    if (window._reordersOnLogout) window._reordersOnLogout();
     localStorage.removeItem('hillUser');
     sessionStorage.removeItem('hillUser');
     document.getElementById('authOverlay').classList.remove('hidden');
@@ -8460,8 +8479,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     const approved = users.filter(u => u.status === 'approved');
     const rejected = users.filter(u => u.status === 'rejected');
 
-    const roleColors = { admin: '#f59e0b', manager: '#3b82f6', machinist: '#22c55e' };
-    const roleLabels = { admin: '👑 Admin', manager: '💼 Manager', machinist: '🔧 Machinist' };
+    const roleColors = { admin: '#f59e0b', manager: '#3b82f6', machinist: '#22c55e', purchaser: '#a855f7' };
+    const roleLabels = { admin: '👑 Admin', manager: '💼 Manager', machinist: '🔧 Machinist', purchaser: '🛒 Purchaser' };
 
     const renderSection = (list, containerId, showApprove, showReject) => {
       const el = document.getElementById(containerId);
@@ -8508,6 +8527,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
             (userRole !== 'manager'
               ? '<button class="admin-role-btn" onclick="setUserRole(\'' + u.id + '\',\'manager\',this)" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.5);color:#60a5fa;">💼 Manager</button>'
               : '<button class="admin-role-btn" disabled style="background:rgba(59,130,246,0.3);border:1px solid #3b82f6;color:#60a5fa;opacity:0.6;cursor:default;">💼 Current</button>') +
+            (userRole !== 'purchaser'
+              ? '<button class="admin-role-btn" onclick="setUserRole(\'' + u.id + '\',\'purchaser\',this)" style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.5);color:#c084fc;">🛒 Purchaser</button>'
+              : '<button class="admin-role-btn" disabled style="background:rgba(168,85,247,0.3);border:1px solid #a855f7;color:#c084fc;opacity:0.6;cursor:default;">🛒 Current</button>') +
           '</div>';
           rolesBox.appendChild(row);
         });
@@ -10470,6 +10492,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var r=((u&&u.role)||'machinist').toLowerCase();
     if(r==='admin'||(u&&u.username==='hilladmin')) return {label:'Admin',    border:'#f59e0b',bg:'linear-gradient(135deg,#7c5a00,#f59e0b)'};
     if(r==='manager'||(u&&u.isManager===true))     return {label:'Manager',  border:'#3b82f6',bg:'linear-gradient(135deg,#1e3a8a,#3b82f6)'};
+    if(r==='purchaser')                             return {label:'Purchaser',border:'#a855f7',bg:'linear-gradient(135deg,#3b0764,#a855f7)'};
     return                                                 {label:'Machinist',border:'#22c55e',bg:'linear-gradient(135deg,#0a3320,#22c55e)'};
   }
 
@@ -10651,7 +10674,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     if (!window._db || !window._fbModules) {
       showToast('red', 'Firebase not ready', 'Wait 2 seconds and try again.');
-      if (btnEl) { btnEl.disabled = false; btnEl.textContent = role === 'manager' ? '💼 Manager' : '🔧 Machinist'; }
+      if (btnEl) { btnEl.disabled = false; btnEl.textContent = role === 'manager' ? '💼 Manager' : role === 'purchaser' ? '🛒 Purchaser' : '🔧 Machinist'; }
       return;
     }
 
@@ -10663,7 +10686,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       isManager: role === 'manager'
     }).then(function() {
       showToast(role === 'manager' ? 'blue' : 'green',
-        role === 'manager' ? '💼 Manager assigned!' : '🔧 Set to Machinist', 'Saved ✓');
+        role === 'manager' ? '💼 Manager assigned!' : role === 'purchaser' ? '🛒 Purchaser assigned!' : '🔧 Set to Machinist', 'Saved ✓');
       mods.getDocs(mods.collection(db, 'hillUsers')).then(function(snap) {
         var users = [];
         snap.forEach(function(d) { var obj = d.data(); obj.id = d.id; users.push(obj); });
@@ -10679,7 +10702,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
         showToast('red', 'Save failed', msg.slice(0,80));
       }
       console.error('setUserRole error:', err);
-      if (btnEl) { btnEl.disabled = false; btnEl.textContent = role === 'manager' ? '💼 Manager' : '🔧 Machinist'; }
+      if (btnEl) { btnEl.disabled = false; btnEl.textContent = role === 'manager' ? '💼 Manager' : role === 'purchaser' ? '🛒 Purchaser' : '🔧 Machinist'; }
     });
   }
   window.setUserRole = setUserRole;
@@ -20454,6 +20477,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
       + '<div style="margin-top:12px;font-size:14px;color:#f0f4f8;font-weight:600;">'+_esc(it.title)+'</div>'
       + '<div style="font-size:12px;color:#7dd3fc;margin-top:2px;">'+_esc(it.sub)+'</div>'
       + labelLine
+      + (window._reorderViewerHtml ? window._reorderViewerHtml(it) : '')
       + '<div id="toolPicStatus" style="font-size:12px;color:#fcd34d;margin-top:8px;"></div>'
       + '<div style="display:flex;gap:8px;margin-top:12px;">'+btns
       + '<button onclick="window._closeToolPic()" style="flex:'+(btns?'0 0 auto':'1')+';background:#1e293b;color:#cbd5e1;border:1px solid #334155;border-radius:8px;padding:10px 14px;font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:1px;cursor:pointer;">Close</button></div>'
@@ -20709,5 +20733,660 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 })();
 </script>
 
+<style>
+/* ═══ TOOLING REORDERS ═══ */
+#reorderOverlay { position:fixed; inset:0; z-index:9000; background:#08121f; display:none; flex-direction:column; color:#e2e8f0; font-family:'Barlow',sans-serif; }
+#reorderOverlay.open { display:flex; }
+.ro-top { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid #1e3a5f; background:linear-gradient(180deg,#0d1f35,#0a1828); flex-shrink:0; }
+.ro-title { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:3px; color:#f5d050; }
+.ro-sub { font-size:11px; color:#64748b; letter-spacing:1px; }
+.ro-x { margin-left:auto; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:8px; padding:8px 14px; font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1px; cursor:pointer; }
+.ro-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid #132b45; flex-shrink:0; }
+.ro-new { background:linear-gradient(135deg,#7e22ce,#a855f7); border:none; color:#fff; border-radius:9px; padding:10px 16px; font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:1.5px; cursor:pointer; box-shadow:0 4px 14px rgba(168,85,247,0.35); }
+.ro-search { flex:1; min-width:180px; background:#0d1f35; border:1px solid #1e3a5c; border-radius:8px; color:#f0f4f8; padding:10px 12px; font-size:14px; font-family:'Barlow',sans-serif; }
+.ro-chips { display:flex; gap:6px; flex-wrap:wrap; width:100%; }
+.ro-chip { padding:5px 11px; border-radius:15px; border:1px solid #334155; background:rgba(255,255,255,0.04); color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer; }
+.ro-chip.on { background:#fbbf24; border-color:#fbbf24; color:#1a1000; }
+.ro-list { flex:1; overflow-y:auto; padding:12px 16px 40px; display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:10px; align-content:start; }
+.ro-card { background:linear-gradient(160deg,#122a45,#0e2136); border:1px solid #1e3a5f; border-left:4px solid #64748b; border-radius:10px; padding:11px 13px; cursor:pointer; }
+.ro-card:hover { border-color:#3b5f8a; }
+.ro-card.s-sent { border-left-color:#a855f7; } .ro-card.s-ordered { border-left-color:#3b82f6; } .ro-card.s-received { border-left-color:#22c55e; } .ro-card.s-canceled { border-left-color:#475569; opacity:0.65; }
+.ro-row1 { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.ro-num { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1.5px; color:#f5d050; white-space:nowrap; flex-shrink:0; }
+.ro-pill { font-size:10px; font-weight:800; letter-spacing:1px; padding:3px 8px; border-radius:6px; text-transform:uppercase; }
+.ro-pill.sent { background:rgba(168,85,247,0.2); color:#d8b4fe; border:1px solid rgba(168,85,247,0.5); }
+.ro-pill.ordered { background:rgba(59,130,246,0.2); color:#93c5fd; border:1px solid rgba(59,130,246,0.5); }
+.ro-pill.received { background:rgba(34,197,94,0.18); color:#86efac; border:1px solid rgba(34,197,94,0.5); }
+.ro-pill.canceled { background:rgba(100,116,139,0.2); color:#94a3b8; border:1px solid #475569; }
+.ro-pill.late { background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.6); }
+.ro-date { margin-left:auto; font-size:11px; color:#64748b; }
+.ro-range { display:flex; align-items:center; gap:6px; font-size:11px; color:#94a3b8; flex-wrap:wrap; }
+.ro-range input { background:#0d1f35; border:1px solid #1e3a5c; color:#e2e8f0; border-radius:7px; padding:6px 8px; font-size:12px; }
+.ro-stamps { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:6px; font-size:11px; color:#cbd5e1; }
+.ro-stamps b { color:#f8fafc; font-weight:600; }
+.ro-timeline { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
+.ro-timeline > div { background:rgba(255,255,255,0.03); border:1px solid #1e3a5f; border-radius:8px; padding:7px 9px; }
+.ro-timeline span { display:block; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#64748b; }
+.ro-timeline b { font-size:13px; color:#f8fafc; } .ro-timeline i { display:block; font-style:normal; font-size:11px; color:#94a3b8; }
+.ro-items { font-size:13px; color:#f0f4f8; line-height:1.45; }
+.ro-items .q { color:#fbbf24; font-weight:700; }
+.ro-meta { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:7px; font-size:11px; color:#94a3b8; }
+.ro-meta b { color:#cbd5e1; font-weight:600; }
+.ro-empty { grid-column:1/-1; text-align:center; color:#475569; padding:40px 10px; font-size:14px; }
+
+.ro-modal { position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,0.75); display:none; align-items:flex-start; justify-content:center; overflow-y:auto; padding:16px; }
+.ro-modal.open { display:flex; }
+.ro-sheet { width:100%; max-width:860px; background:#0d1f35; border:1px solid #1e3a5f; border-radius:14px; padding:16px; margin:auto 0; }
+.ro-h { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:#f5d050; display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.ro-grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:10px; }
+.ro-f label { display:block; font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#94a3b8; margin-bottom:4px; }
+.ro-f label .req { color:#f87171; }
+.ro-in { width:100%; box-sizing:border-box; background:#0a1828; border:1px solid #2a4a6c; border-radius:7px; color:#f0f4f8; padding:9px 10px; font-size:14px; font-family:'Barlow',sans-serif; }
+.ro-in:focus { outline:none; border-color:#a855f7; }
+textarea.ro-in { min-height:64px; resize:vertical; }
+.ro-sec { font-family:'Bebas Neue',sans-serif; letter-spacing:2px; font-size:15px; color:#7dd3fc; margin:14px 0 6px; display:flex; align-items:center; gap:8px; }
+.ro-pick { position:relative; margin-bottom:8px; }
+.ro-pick-res { position:absolute; left:0; right:0; top:100%; z-index:5; background:#0a1828; border:1px solid #2a4a6c; border-top:none; border-radius:0 0 8px 8px; max-height:300px; overflow-y:auto; display:none; }
+.ro-pick-row { display:flex; align-items:center; gap:9px; padding:7px 10px; border-bottom:1px solid rgba(255,255,255,0.05); cursor:pointer; font-size:13px; }
+.ro-pick-row:hover { background:rgba(168,85,247,0.12); }
+.ro-pick-row .src { margin-left:auto; font-family:'Bebas Neue',sans-serif; font-size:12px; padding:2px 7px; border-radius:5px; white-space:nowrap; }
+.ro-line { display:grid; grid-template-columns:26px 70px 1fr 1fr auto 30px; gap:6px; align-items:start; padding:7px; border:1px solid #1e3a5f; border-radius:9px; margin-bottom:6px; background:rgba(255,255,255,0.02); }
+.ro-line .n { font-family:'Bebas Neue',sans-serif; font-size:18px; color:#64748b; text-align:center; padding-top:7px; }
+.ro-line .ref { grid-column:3 / span 3; font-size:11px; color:#7dd3fc; display:flex; align-items:center; gap:6px; }
+.ro-ship { display:flex; gap:4px; }
+.ro-ship button { background:rgba(255,255,255,0.04); border:1px solid #334155; color:#94a3b8; border-radius:7px; padding:8px 8px; font-size:11px; font-weight:800; cursor:pointer; white-space:nowrap; }
+.ro-ship button.on.nda { background:rgba(239,68,68,0.2); border-color:#ef4444; color:#fecaca; }
+.ro-ship button.on.gnd { background:rgba(34,197,94,0.18); border-color:#22c55e; color:#bbf7d0; }
+.ro-del { background:none; border:none; color:#f87171; font-size:17px; cursor:pointer; padding-top:6px; }
+.ro-add { background:rgba(255,255,255,0.05); border:1px dashed #3b5f8a; color:#93c5fd; border-radius:8px; padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer; }
+.ro-err { color:#fca5a5; font-size:13px; font-weight:600; min-height:18px; margin-top:8px; }
+.ro-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.ro-btn { border-radius:9px; padding:11px 16px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1.5px; cursor:pointer; border:1px solid #334155; background:#1e293b; color:#cbd5e1; }
+.ro-btn.go { background:linear-gradient(135deg,#7e22ce,#a855f7); border:none; color:#fff; flex:1; }
+.ro-btn.blue { background:linear-gradient(135deg,#1d4ed8,#3b82f6); border:none; color:#fff; flex:1; }
+.ro-btn.green { background:linear-gradient(135deg,#15803d,#22c55e); border:none; color:#04210f; flex:1; }
+.ro-btn.red { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.5); color:#fca5a5; }
+.ro-box { background:rgba(255,255,255,0.03); border:1px solid #1e3a5f; border-radius:10px; padding:12px; margin-top:10px; }
+.ro-kv { display:grid; grid-template-columns:repeat(3,1fr); gap:8px 14px; }
+.ro-kv div span { display:block; font-size:10px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:#64748b; }
+.ro-kv div b { font-size:14px; color:#f0f4f8; font-weight:600; word-break:break-word; }
+.ro-tbl { width:100%; border-collapse:collapse; font-size:13px; }
+.ro-tbl th { text-align:left; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#64748b; padding:6px; border-bottom:1px solid #1e3a5f; }
+.ro-tbl td { padding:7px 6px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:top; }
+.ro-tbl td .sub { font-size:11px; color:#7dd3fc; margin-top:2px; }
+.ro-hist { font-size:12px; color:#94a3b8; line-height:1.7; }
+.ro-hist b { color:#cbd5e1; }
+.ro-purch { background:rgba(59,130,246,0.07); border:1px solid rgba(59,130,246,0.35); }
+.ro-tool-hist { margin-top:10px; padding:10px; border-radius:8px; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.3); font-size:12px; color:#d8b4fe; line-height:1.6; }
+@media (max-width: 640px) {
+  .ro-list { grid-template-columns:1fr; padding:10px; }
+  .ro-grid3, .ro-kv { grid-template-columns:1fr 1fr; }
+  .ro-line { grid-template-columns:22px 58px 1fr 30px; }
+  .ro-line .part { grid-column:2 / span 2; }
+  .ro-line .ro-ship { grid-column:2 / span 3; }
+  .ro-line .ref { grid-column:2 / span 3; }
+  .ro-title { font-size:20px; }
+  .ro-tbl .hide-sm { display:none; }
+}
+</style>
+<script>
+// ═══ TOOLING REORDERS ═══
+// Tooling (admin) sends reorder requests to the Purchaser (Cody). Every
+// request is kept in Firestore (hillReorders) as a permanent, searchable log:
+// Sent → Ordered (purchaser adds Ordered By / PO # / Date Ordered) → Received.
+// Fields mirror the paper "Tooling Reorder Request" form (Rev 8).
+(function(){
+  var COL = 'hillReorders';
+  var LIST = [], LOADED = false, UNSUB = null;
+  var FILTER = 'open', SEARCH = '';
+  var EDIT = null;          // working copy while the new/edit form is open
+  var OPEN_ID = null;       // request shown in the detail view
+  var STATUS_LABEL = { sent:'Sent to Purchasing', ordered:'Ordered', received:'Received', canceled:'Canceled' };
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function db(){ return window.fbDb || window._db; }
+  function M(){ return window._fbModules; }
+  function isAdmin(){ return !!(window._isAdmin || window.currentUser === 'hilladmin'); }
+  function isPurch(){ return window._userRole === 'purchaser'; }
+  function isMgr(){ return !!(window._isManager || window._userRole === 'manager'); }
+  // Tooling (admin) and managers can send, edit, cancel and receive reorders.
+  function canSend(){ return isAdmin() || isMgr(); }
+  function me(){ return window._userDisplayName || window.currentUser || 'Admin'; }
+  function today(){ var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0,10); }
+  function fmtDate(iso){ if(!iso) return ''; var p = String(iso).split('-'); return p.length === 3 ? (+p[1]) + '/' + (+p[2]) + '/' + p[0].slice(2) : iso; }
+  function ts(r){ var c = r.createdAt; return c && c.seconds ? c.seconds * 1000 : (c && c.toMillis ? c.toMillis() : 0); }
+  function isLate(r){ return (r.status === 'sent' || r.status === 'ordered') && r.dateNeeded && r.dateNeeded < today(); }
+  function toast(c,a,b){ if(window.showToast) window.showToast(c,a,b||''); }
+
+  // ── Page skeleton (tab + overlay + modals) ───────────────────
+  function build(){
+    if(document.getElementById('reorderOverlay')) return;
+    var after = document.getElementById('tab-inventory') || document.getElementById('tab-toollist');
+    if(after && !document.getElementById('tab-reorders')){
+      var tab = document.createElement('div');
+      tab.className = 'nav-tab'; tab.id = 'tab-reorders'; tab.style.display = 'none';
+      tab.innerHTML = '🛒 Reorders <span class="tab-badge" id="reorderBadge" style="display:none">0</span>';
+      tab.onclick = function(){ window._openReorders(); };
+      after.parentNode.insertBefore(tab, after.nextSibling);
+    }
+    var ov = document.createElement('div'); ov.id = 'reorderOverlay';
+    ov.innerHTML =
+      '<div class="ro-top"><div><div class="ro-title">🛒 Tooling Reorders</div><div class="ro-sub" id="roSub"></div></div>'
+      + '<button class="ro-x" onclick="window._closeReorders()">✕ Close</button></div>'
+      + '<div class="ro-bar">'
+      +   '<button class="ro-new" id="roNewBtn" onclick="window._roNew()">＋ New Reorder</button>'
+      +   '<input class="ro-search" id="roSearch" placeholder="Search anything — tool, part #, WO, PO, vendor, name, RO #, date (10/23, Oct)..." oninput="window._roSearch(this.value)">'
+      +   '<div class="ro-range"><span>Sent from</span><input type="date" id="roFrom" onchange="window._roRange()"><span>to</span><input type="date" id="roTo" onchange="window._roRange()">'
+      +     '<button class="ro-btn" style="padding:6px 10px;font-size:12px;" onclick="document.getElementById(\'roFrom\').value=\'\';document.getElementById(\'roTo\').value=\'\';window._roRange()">Clear</button></div>'
+      +   '<button class="ro-btn" id="roExportBtn" onclick="window._roExport()" title="Download what\'s showing as a spreadsheet">⬇ Export</button>'
+      +   '<div class="ro-chips" id="roChips"></div>'
+      + '</div>'
+      + '<div class="ro-list" id="roList"></div>';
+    document.body.appendChild(ov);
+    ['roEdit','roDetail'].forEach(function(id){
+      var m = document.createElement('div'); m.className = 'ro-modal'; m.id = id;
+      m.onclick = function(e){ if(e.target === m) m.classList.remove('open'); };
+      document.body.appendChild(m);
+    });
+  }
+
+  // ── Login / logout ───────────────────────────────────────────
+  window._reordersOnLogin = function(user){
+    build();
+    var allowed = canSend() || (user && user.role === 'purchaser');
+    var tab = document.getElementById('tab-reorders');
+    if(tab) tab.style.display = allowed ? 'flex' : 'none';
+    if(allowed) listen();
+    // Deep link from a Pushover alert (…?reorder=RO-0012)
+    var m = /[?&]reorder=([^&#]+)/.exec(location.search);
+    if(allowed && m){ window._openReorders(); window._roPendingOpen = decodeURIComponent(m[1]); }
+  };
+  window._reordersOnLogout = function(){
+    if(UNSUB){ try{ UNSUB(); }catch(e){} UNSUB = null; }
+    LIST = []; LOADED = false;
+    var tab = document.getElementById('tab-reorders'); if(tab) tab.style.display = 'none';
+    window._closeReorders();
+  };
+
+  function listen(){
+    if(UNSUB) return;
+    if(!db() || !M()){ setTimeout(listen, 800); return; }
+    var m = M();
+    UNSUB = m.onSnapshot(m.query(m.collection(db(), COL), m.orderBy('createdAt','desc')), function(snap){
+      LIST = []; snap.forEach(function(d){ var r = d.data(); r.id = d.id; LIST.push(r); });
+      LOADED = true; render(); badge();
+      if(OPEN_ID && document.getElementById('roDetail').classList.contains('open')) window._roOpen(OPEN_ID);
+      if(window._roPendingOpen){ var hit = LIST.filter(function(r){ return r.num === window._roPendingOpen; })[0]; window._roPendingOpen = null; if(hit) window._roOpen(hit.id); }
+    }, function(e){ console.warn('reorders:', e.message); var l = document.getElementById('roList'); if(l) l.innerHTML = '<div class="ro-empty">Couldn\'t load reorders: ' + esc(e.message) + '</div>'; });
+  }
+
+  function badge(){
+    var b = document.getElementById('reorderBadge'); if(!b) return;
+    var n = LIST.filter(function(r){ return isPurch() ? r.status === 'sent' : (r.status === 'sent' || r.status === 'ordered'); }).length;
+    b.textContent = n; b.style.display = n ? 'inline-flex' : 'none';
+  }
+
+  window._openReorders = function(){
+    build();
+    document.getElementById('reorderOverlay').classList.add('open');
+    document.getElementById('roNewBtn').style.display = canSend() ? '' : 'none';
+    document.getElementById('roSub').textContent = isPurch() ? 'Requests from Tooling — enter Ordered By, PO # and Date Ordered when you order' : 'Send reorder requests to Purchasing · every request is saved here';
+    if(isPurch() && FILTER === 'open') FILTER = 'sent';
+    listen(); render();
+  };
+  window._closeReorders = function(){
+    var o = document.getElementById('reorderOverlay'); if(o) o.classList.remove('open');
+    ['roEdit','roDetail'].forEach(function(id){ var m = document.getElementById(id); if(m) m.classList.remove('open'); });
+  };
+  window._roSearch = function(v){ SEARCH = (v||'').toLowerCase().trim(); render(); };
+  window._roFilter = function(f){ FILTER = f; render(); };
+
+  // When each step happened (date + time), from the request's history
+  function evMs(r, action){
+    var h = (r.history || []).filter(function(x){ return x.action === action; });
+    if(h.length){ var t = Date.parse(h[h.length - 1].at); if(!isNaN(t)) return t; }
+    return action === 'sent' ? ts(r) : 0;
+  }
+  function fmtDT(ms){
+    if(!ms) return '';
+    var d = new Date(ms), h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM';
+    return (d.getMonth()+1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(2) + ' ' + ((h % 12) || 12) + ':' + ('0' + d.getMinutes()).slice(-2) + ' ' + ap;
+  }
+  var MONTHS = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+  function dateWords(v){                // every way someone might type this date
+    if(!v) return '';
+    var d = typeof v === 'number' ? new Date(v) : new Date(String(v).length === 10 ? v + 'T12:00:00' : v);
+    if(isNaN(d)) return String(v);
+    var m = d.getMonth()+1, dd = d.getDate(), y = d.getFullYear(), mn = MONTHS[d.getMonth()];
+    return [m+'/'+dd, m+'/'+dd+'/'+String(y).slice(2), m+'/'+dd+'/'+y, ('0'+m).slice(-2)+'/'+('0'+dd).slice(-2), y+'-'+('0'+m).slice(-2)+'-'+('0'+dd).slice(-2),
+            y+'-'+('0'+m).slice(-2), mn, mn.slice(0,3), String(y)].join(' ');
+  }
+  function searchText(r){
+    return [r.num, r.requestedBy, r.wo, r.machine, r.vendor, r.notes, r.quoteNum, r.po, r.orderedBy, r.orderNote, r.receivedBy, r.receiveNote, STATUS_LABEL[r.status],
+            dateWords(r.dateRequested), dateWords(r.dateNeeded), dateWords(r.dateOrdered), dateWords(r.dateReceived),
+            dateWords(evMs(r,'sent')), dateWords(evMs(r,'ordered')), dateWords(evMs(r,'received'))]
+      .concat((r.history||[]).map(function(h){ return [h.by, h.action, h.text].join(' '); }))
+      .concat((r.items||[]).map(function(i){ return [i.name, i.part, i.toolRef, i.location, i.ship === 'nda' ? 'next day air nda' : 'ground'].join(' '); })).join(' ').toLowerCase();
+  }
+  var RANGE_FROM = '', RANGE_TO = '', LAST_ROWS = [];
+  window._roRange = function(){
+    RANGE_FROM = (document.getElementById('roFrom') || {}).value || '';
+    RANGE_TO = (document.getElementById('roTo') || {}).value || '';
+    render();
+  };
+  function inRange(r){
+    if(!RANGE_FROM && !RANGE_TO) return true;
+    var t = evMs(r,'sent'), d = t ? new Date(t) : null;
+    var day = d ? d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2) : (r.dateRequested || '');
+    if(RANGE_FROM && day < RANGE_FROM) return false;
+    if(RANGE_TO && day > RANGE_TO) return false;
+    return true;
+  }
+
+  // ── Log list ─────────────────────────────────────────────────
+  function render(){
+    var list = document.getElementById('roList'); if(!list) return;
+    var counts = { open:0, sent:0, ordered:0, received:0, canceled:0, all:LIST.length, late:0 };
+    LIST.forEach(function(r){ counts[r.status] = (counts[r.status]||0) + 1; if(r.status === 'sent' || r.status === 'ordered') counts.open++; if(isLate(r)) counts.late++; });
+    var chips = [['open','Open'],['sent','Sent'],['ordered','Ordered'],['received','Received'],['late','Past due'],['canceled','Canceled'],['all','All']];
+    document.getElementById('roChips').innerHTML = chips.filter(function(c){ return c[0] !== 'late' || counts.late; }).map(function(c){
+      return '<span class="ro-chip' + (FILTER === c[0] ? ' on' : '') + '" onclick="window._roFilter(\'' + c[0] + '\')">' + c[1] + ' ' + (counts[c[0]]||0) + '</span>';
+    }).join('');
+    if(!LOADED){ list.innerHTML = '<div class="ro-empty">Loading…</div>'; return; }
+    var words = SEARCH ? SEARCH.split(/\s+/) : [];
+    var rows = LIST.filter(function(r){
+      // Typing a search looks through every request (old POs included);
+      // the Open / Sent default only applies while the search box is empty.
+      var fAll = (words.length || RANGE_FROM || RANGE_TO) && (FILTER === 'open' || FILTER === 'sent') ? 'all' : FILTER;
+      if(!inRange(r)) return false;
+      if(fAll === 'open' && !(r.status === 'sent' || r.status === 'ordered')) return false;
+      if(fAll === 'late' && !isLate(r)) return false;
+      if(['sent','ordered','received','canceled'].indexOf(fAll) !== -1 && r.status !== fAll) return false;
+      if(words.length){ var t = searchText(r); return words.every(function(w){ return t.indexOf(w) !== -1; }); }
+      return true;
+    });
+    LAST_ROWS = rows;
+    var eb = document.getElementById('roExportBtn'); if(eb) eb.textContent = '⬇ Export ' + rows.length;
+    if(!rows.length){
+      list.innerHTML = '<div class="ro-empty">' + (LIST.length ? 'Nothing matches.' : (canSend() ? 'No reorders yet — tap ＋ New Reorder to send your first one to Purchasing.' : 'No reorder requests yet.')) + '</div>';
+      return;
+    }
+    list.innerHTML = rows.map(function(r){
+      var items = r.items || [];
+      var lines = items.slice(0,3).map(function(i){ return '<div><span class="q">' + esc(i.qty) + '×</span> ' + esc(i.name) + (i.part ? ' <span style="color:#7dd3fc;">· ' + esc(i.part) + '</span>' : '') + '</div>'; }).join('')
+        + (items.length > 3 ? '<div style="color:#64748b;">+ ' + (items.length - 3) + ' more</div>' : '');
+      var nda = items.some(function(i){ return i.ship === 'nda'; });
+      return '<div class="ro-card s-' + r.status + '" onclick="window._roOpen(\'' + r.id + '\')">'
+        + '<div class="ro-row1"><span class="ro-num">' + esc(r.num || 'RO') + '</span><span class="ro-pill ' + r.status + '">' + esc(STATUS_LABEL[r.status] || r.status) + '</span>'
+        + (isLate(r) ? '<span class="ro-pill late">Past due</span>' : '') + (nda && r.status === 'sent' ? '<span class="ro-pill late" style="background:rgba(239,68,68,0.12);">Next Day Air</span>' : '')
+        + '<span class="ro-date">' + esc(fmtDT(evMs(r,'sent')) || fmtDate(r.dateRequested)) + '</span></div>'
+        + '<div class="ro-items">' + lines + '</div>'
+        + '<div class="ro-meta">'
+        + (r.wo ? '<span>WO <b>' + esc(r.wo) + '</b></span>' : '') + (r.machine ? '<span>🏭 <b>' + esc(r.machine) + '</b></span>' : '')
+        + (r.dateNeeded ? '<span>Need by <b>' + esc(fmtDate(r.dateNeeded)) + '</b></span>' : '') + (r.vendor ? '<span>Vendor <b>' + esc(r.vendor) + '</b></span>' : '')
+        + (r.po ? '<span>PO <b>' + esc(r.po) + '</b></span>' : '') + (r.requestedBy ? '<span>By <b>' + esc(r.requestedBy) + '</b></span>' : '')
+        + '</div>'
+        + '<div class="ro-stamps">'
+        + '<span>📨 Sent <b>' + esc(fmtDT(evMs(r,'sent')) || fmtDate(r.dateRequested)) + '</b></span>'
+        + (evMs(r,'ordered') ? '<span>✅ Ordered <b>' + esc(fmtDT(evMs(r,'ordered'))) + '</b></span>' : '')
+        + (evMs(r,'received') ? '<span>📦 Received <b>' + esc(fmtDT(evMs(r,'received'))) + '</b></span>' : '')
+        + (r.status === 'canceled' && evMs(r,'canceled') ? '<span>✕ Canceled <b>' + esc(fmtDT(evMs(r,'canceled'))) + '</b></span>' : '')
+        + '</div></div>';
+    }).join('');
+  }
+
+  // ── Export what's showing (one row per tool line) ────────────
+  window._roExport = function(){
+    var rows = LAST_ROWS || [];
+    if(!rows.length){ toast('yellow','Nothing to export','Search or pick a filter first.'); return; }
+    var head = ['RO #','Status','Sent (date/time)','Requested By','Date Requested','Date Needed By','Job / WO #','Machine / Work Center','Vendor',
+      'Line #','Qty','Tool Name / Model','Part # / Link','Shipping','Tool # / Location','Notes / Reason','Has Quote','Quote #',
+      'Ordered By','PO #','Date Ordered','Ordered (date/time)','Order Note','Received By','Received (date/time)','Receive Note','Canceled (date/time)'];
+    var q = function(v){ v = v == null ? '' : String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; };
+    var out = [head.map(q).join(',')];
+    rows.forEach(function(r){
+      var items = (r.items && r.items.length) ? r.items : [{}];
+      items.forEach(function(i, n){
+        out.push([r.num, STATUS_LABEL[r.status] || r.status, fmtDT(evMs(r,'sent')), r.requestedBy, fmtDate(r.dateRequested), fmtDate(r.dateNeeded), r.wo, r.machine, r.vendor,
+          n + 1, i.qty, i.name, i.part, i.ship === 'nda' ? 'Next Day Air' : (i.ship ? 'Ground' : ''), [i.toolRef, i.location].filter(Boolean).join(' · '), r.notes,
+          r.hasQuote ? 'Yes' : 'No', r.quoteNum, r.orderedBy, r.po, fmtDate(r.dateOrdered), fmtDT(evMs(r,'ordered')), r.orderNote,
+          r.receivedBy, fmtDT(evMs(r,'received')), r.receiveNote, r.status === 'canceled' ? fmtDT(evMs(r,'canceled')) : ''].map(q).join(','));
+      });
+    });
+    var blob = new Blob(['\ufeff' + out.join('\r\n')], { type:'text/csv;charset=utf-8' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'Tooling_Reorders_' + today() + '.csv';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    toast('green','⬇ Exported ' + rows.length + ' request' + (rows.length === 1 ? '' : 's'), 'Opens in Excel');
+  };
+
+  // ── Tool picker (ProShop + Zengers) ─────────────────────────
+  function psName(t){ var l = (window.PROSHOP_LOCATIONS||{})[t[0]]; if(l && l.name) return l.name; var g = (window.TOOLING_GROUPS||{})[t[1]] || t[1]; return g + (t[2] ? ' ' + t[2] + '"' : '') + (t[3] ? ' ' + t[3] : '') + (t[4] ? ' ' + t[4] : ''); }
+  function toolFromKey(key){
+    if(!key) return null;
+    if(key.indexOf('PS:') === 0){
+      var id = key.slice(3), t = (window.TOOLING_INVENTORY||[]).filter(function(x){ return x[0] === id; })[0]; if(!t) return null;
+      var l = (window.PROSHOP_LOCATIONS||{})[t[0]];
+      return { name: psName(t), part: '', toolKey: key, toolRef: 'ProShop Tool #' + t[0], location: l && window._psLocText ? window._psLocText(l) : '' };
+    }
+    var z = (window.ZENGERS_INVENTORY||[]).filter(function(x){ return x[0] === key; })[0]; if(!z) return null;
+    return { name: z[2], part: z[1] || z[0], toolKey: key, toolRef: 'Zengers ' + z[0], location: 'Zengers bin ' + z[3] };
+  }
+  window._roPick = function(q){
+    var box = document.getElementById('roPickRes'); if(!box) return;
+    var words = (q||'').toLowerCase().trim().split(/\s+/).filter(Boolean);
+    if(!words.length){ box.style.display = 'none'; box.innerHTML = ''; return; }
+    var hits = [];
+    (window.ZENGERS_INVENTORY||[]).forEach(function(z){ var t = (z[0]+' '+z[1]+' '+z[2]).toLowerCase(); if(words.every(function(w){ return t.indexOf(w) !== -1; })) hits.push({key:z[0], label:z[2], ref:'Zengers ' + z[0], src:'z'}); });
+    (window.TOOLING_INVENTORY||[]).forEach(function(t){ var l = (window.PROSHOP_LOCATIONS||{})[t[0]]; var s = (t.join(' ') + ' ' + psName(t) + ' ' + (l && l.desc || '')).toLowerCase(); if(words.every(function(w){ return s.indexOf(w) !== -1; })) hits.push({key:'PS:'+t[0], label:psName(t), ref:'ProShop #' + t[0], src:'p', t:t}); });
+    hits = hits.slice(0, 30);
+    box.innerHTML = hits.length ? hits.map(function(h){
+      var th = h.src === 'z' ? (window._toolThumb ? window._toolThumb(h.key, h.label, 34, false) : '') : (window._psThumb ? window._psThumb(h.t, 34, false) : '');
+      return '<div class="ro-pick-row" onmousedown="event.preventDefault()" onclick="window._roAddTool(\'' + esc(h.key) + '\')">' + th + '<span>' + esc(h.label) + '</span>'
+        + '<span class="src" style="' + (h.src === 'z' ? 'background:#0c4a6e;color:#7dd3fc;' : 'background:#92400e;color:#fcd34d;') + '">' + esc(h.ref) + '</span></div>';
+    }).join('') : '<div style="padding:10px;color:#64748b;font-size:13px;">No tools match — type it in a blank line instead.</div>';
+    box.style.display = 'block';
+  };
+  window._roAddTool = function(key){
+    var t = toolFromKey(key); if(!t || !EDIT) return;
+    readForm();
+    if(EDIT.items.length >= 15){ setErr('The form holds 15 lines — send this one and start another.'); return; }
+    var blank = EDIT.items.filter(function(i){ return !i.name && !i.part; })[0];
+    var line = Object.assign({ qty:1, ship:'' }, t);
+    if(blank) Object.assign(blank, line); else EDIT.items.push(line);
+    var s = document.getElementById('roPickIn'); if(s) s.value = '';
+    var b = document.getElementById('roPickRes'); if(b){ b.style.display = 'none'; b.innerHTML = ''; }
+    drawLines();
+  };
+
+  // ── New / edit form ─────────────────────────────────────────
+  function blankReq(){ return { requestedBy: me(), dateRequested: today(), dateNeeded:'', wo:'', machine:'', vendor:'', items:[{qty:'',name:'',part:'',ship:''}], notes:'', hasQuote:false, quoteNum:'' }; }
+  function machineList(){
+    var seen = {}, out = [];
+    document.querySelectorAll('.machine .machine-name').forEach(function(el){ var t = el.textContent.trim(); if(t && !seen[t]){ seen[t] = 1; out.push(t); } });
+    return out;
+  }
+  window._roNew = function(prefillKey){
+    if(!canSend()) return;
+    EDIT = blankReq(); EDIT._id = null;
+    if(prefillKey){ var t = toolFromKey(prefillKey); if(t) EDIT.items = [Object.assign({qty:1, ship:''}, t)]; }
+    drawEdit();
+  };
+  window._roEditExisting = function(id){
+    var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r || !canSend()) return;
+    EDIT = JSON.parse(JSON.stringify({ requestedBy:r.requestedBy, dateRequested:r.dateRequested, dateNeeded:r.dateNeeded, wo:r.wo, machine:r.machine, vendor:r.vendor, items:r.items||[], notes:r.notes, hasQuote:!!r.hasQuote, quoteNum:r.quoteNum||'' }));
+    EDIT._id = id; EDIT._num = r.num;
+    document.getElementById('roDetail').classList.remove('open');
+    drawEdit();
+  };
+  function fld(id, label, val, req, type, extra){
+    return '<div class="ro-f"><label>' + label + (req ? ' <span class="req">*</span>' : '') + '</label><input class="ro-in" id="' + id + '" type="' + (type||'text') + '" value="' + esc(val) + '"' + (extra||'') + '></div>';
+  }
+  function drawEdit(){
+    var m = document.getElementById('roEdit');
+    m.innerHTML = '<div class="ro-sheet">'
+      + '<div class="ro-h">🛒 ' + (EDIT._id ? 'Edit ' + esc(EDIT._num) : 'New Tooling Reorder') + '<span style="margin-left:auto;font-family:Barlow,sans-serif;font-size:11px;color:#64748b;letter-spacing:0;">Same fields as the Rev 8 paper form</span></div>'
+      + '<div class="ro-grid3">' + fld('roReqBy','Requested By',EDIT.requestedBy,true) + fld('roDateReq','Date Requested',EDIT.dateRequested,true,'date') + fld('roDateNeed','Date Needed By',EDIT.dateNeeded,false,'date') + '</div>'
+      + '<div class="ro-grid3">' + fld('roWo','Job / WO #',EDIT.wo) + fld('roMachine','Machine / Work Center',EDIT.machine,false,'text',' list="roMachines"') + fld('roVendor','Vendor (if known)',EDIT.vendor) + '</div>'
+      + '<datalist id="roMachines">' + machineList().map(function(n){ return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>'
+      + '<div class="ro-sec">Tools to order <span style="font-family:Barlow,sans-serif;font-size:11px;color:#64748b;letter-spacing:0;">— Qty, Name/Model, Part # and ONE shipping method required on every line</span></div>'
+      + '<div class="ro-pick"><input class="ro-in" id="roPickIn" placeholder="🔍 Add from your tool list — type a tool, size, code or part #..." autocomplete="off" oninput="window._roPick(this.value)" onblur="setTimeout(function(){var b=document.getElementById(\'roPickRes\'); if(b) b.style.display=\'none\';},200)"><div class="ro-pick-res" id="roPickRes"></div></div>'
+      + '<div id="roLines"></div>'
+      + '<button class="ro-add" onclick="window._roAddLine()">＋ Add a blank line</button>'
+      + '<div class="ro-sec">Notes / Reason for Reorder</div><textarea class="ro-in" id="roNotes" placeholder="Why it\'s needed, what it\'s for, anything Purchasing should know...">' + esc(EDIT.notes) + '</textarea>'
+      + '<div class="ro-sec">Vendor Quote</div>'
+      + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" id="roHasQuote"' + (EDIT.hasQuote ? ' checked' : '') + ' style="width:18px;height:18px;"> I have a quote — I\'ll email the PDF to Purchasing</label>'
+      + '<input class="ro-in" id="roQuote" placeholder="Quote #" value="' + esc(EDIT.quoteNum) + '" style="max-width:220px;"></div>'
+      + '<div class="ro-err" id="roErr"></div>'
+      + '<div class="ro-actions"><button class="ro-btn" onclick="document.getElementById(\'roEdit\').classList.remove(\'open\')">Cancel</button>'
+      + '<button class="ro-btn go" id="roSendBtn" onclick="window._roSave()">' + (EDIT._id ? '💾 Save Changes' : '📨 Send to Purchasing') + '</button></div>'
+      + '</div>';
+    m.classList.add('open');
+    drawLines();
+  }
+  function drawLines(){
+    var box = document.getElementById('roLines'); if(!box) return;
+    box.innerHTML = EDIT.items.map(function(i, n){
+      var thumb = i.toolKey ? (i.toolKey.indexOf('PS:') === 0
+          ? (window._psThumb ? window._psThumb((window.TOOLING_INVENTORY||[]).filter(function(x){ return 'PS:'+x[0] === i.toolKey; })[0], 26, false) : '')
+          : (window._toolThumb ? window._toolThumb(i.toolKey, i.name, 26, false) : '')) : '';
+      return '<div class="ro-line">'
+        + '<div class="n">' + (n+1) + '</div>'
+        + '<input class="ro-in" data-k="qty" data-i="' + n + '" type="number" min="1" inputmode="numeric" placeholder="Qty" value="' + esc(i.qty) + '">'
+        + '<input class="ro-in" data-k="name" data-i="' + n + '" placeholder="Complete tool name / model" value="' + esc(i.name) + '">'
+        + '<input class="ro-in part" data-k="part" data-i="' + n + '" placeholder="Part # / link" value="' + esc(i.part) + '">'
+        + '<div class="ro-ship"><button type="button" class="nda' + (i.ship === 'nda' ? ' on' : '') + '" onclick="window._roShip(' + n + ',\'nda\')">NEXT DAY AIR</button><button type="button" class="gnd' + (i.ship === 'ground' ? ' on' : '') + '" onclick="window._roShip(' + n + ',\'ground\')">GROUND</button></div>'
+        + '<button class="ro-del" title="Remove line" onclick="window._roDelLine(' + n + ')">✕</button>'
+        + ((i.toolRef || i.location) ? '<div class="ref">' + thumb + esc([i.toolRef, i.location ? '📍 ' + i.location : ''].filter(Boolean).join(' · ')) + '</div>' : '')
+        + '</div>';
+    }).join('');
+  }
+  function readForm(){
+    if(!EDIT) return;
+    function v(id){ var e = document.getElementById(id); return e ? e.value.trim() : ''; }
+    EDIT.requestedBy = v('roReqBy'); EDIT.dateRequested = v('roDateReq'); EDIT.dateNeeded = v('roDateNeed');
+    EDIT.wo = v('roWo'); EDIT.machine = v('roMachine'); EDIT.vendor = v('roVendor'); EDIT.notes = v('roNotes'); EDIT.quoteNum = v('roQuote');
+    var hq = document.getElementById('roHasQuote'); EDIT.hasQuote = !!(hq && hq.checked);
+    document.querySelectorAll('#roLines [data-k]').forEach(function(el){ var it = EDIT.items[+el.getAttribute('data-i')]; if(it) it[el.getAttribute('data-k')] = el.value.trim(); });
+  }
+  window._roShip = function(n, s){ readForm(); EDIT.items[n].ship = EDIT.items[n].ship === s ? '' : s; drawLines(); };
+  window._roAddLine = function(){ readForm(); if(EDIT.items.length >= 15){ setErr('The form holds 15 lines — send this one and start another.'); return; } EDIT.items.push({qty:'',name:'',part:'',ship:''}); drawLines(); };
+  window._roDelLine = function(n){ readForm(); EDIT.items.splice(n,1); if(!EDIT.items.length) EDIT.items.push({qty:'',name:'',part:'',ship:''}); drawLines(); };
+  function setErr(t){ var e = document.getElementById('roErr'); if(e) e.textContent = t || ''; }
+
+  window._roSave = function(){
+    if(!canSend()) return;
+    readForm();
+    var items = EDIT.items.filter(function(i){ return i.qty || i.name || i.part || i.ship; });
+    if(!EDIT.requestedBy) return setErr('Fill in Requested By.');
+    if(!items.length) return setErr('Add at least one tool.');
+    for(var k = 0; k < items.length; k++){
+      var i = items[k], n = EDIT.items.indexOf(i) + 1;
+      if(!(+i.qty > 0)) return setErr('Line ' + n + ': enter a quantity.');
+      if(!i.name) return setErr('Line ' + n + ': enter the complete tool name / model.');
+      if(!i.part) return setErr('Line ' + n + ': enter a part # or link.');
+      if(!i.ship) return setErr('Line ' + n + ': pick Next Day Air or Ground.');
+    }
+    if(!db() || !M()) return setErr('Not connected yet — try again in a moment.');
+    var m = M(), clean = items.map(function(i){ return { qty:+i.qty, name:i.name, part:i.part, ship:i.ship, toolKey:i.toolKey||'', toolRef:i.toolRef||'', location:i.location||'' }; });
+    var data = { requestedBy:EDIT.requestedBy, dateRequested:EDIT.dateRequested || today(), dateNeeded:EDIT.dateNeeded, wo:EDIT.wo, machine:EDIT.machine,
+      vendor:EDIT.vendor, items:clean, notes:EDIT.notes, hasQuote:EDIT.hasQuote, quoteNum:EDIT.quoteNum, updatedAt:m.serverTimestamp() };
+    var btn = document.getElementById('roSendBtn'); if(btn){ btn.disabled = true; btn.textContent = 'Sending…'; }
+    var done = function(){ document.getElementById('roEdit').classList.remove('open'); };
+    if(EDIT._id){
+      data.history = m.arrayUnion({ at:new Date().toISOString(), by:me(), action:'edited' });
+      m.updateDoc(m.doc(db(), COL, EDIT._id), data).then(function(){ toast('green','💾 Saved', EDIT._num); done(); })
+        .catch(function(e){ setErr('Couldn\'t save: ' + e.message); if(btn){ btn.disabled = false; btn.textContent = '💾 Save Changes'; } });
+      return;
+    }
+    var seq = LIST.reduce(function(mx, r){ return Math.max(mx, r.seq || 0); }, 0) + 1;
+    data.seq = seq; data.num = 'RO-' + ('000' + seq).slice(-4); data.status = 'sent';
+    data.createdAt = m.serverTimestamp(); data.createdBy = window.currentUser || 'admin';
+    data.history = [{ at:new Date().toISOString(), by:me(), action:'sent' }];
+    m.addDoc(m.collection(db(), COL), data).then(function(){
+      toast('green','📨 Sent to Purchasing', data.num);
+      notifyPurchaser(data);
+      done();
+    }).catch(function(e){ setErr('Couldn\'t send: ' + e.message); if(btn){ btn.disabled = false; btn.textContent = '📨 Send to Purchasing'; } });
+  };
+
+  // ── Detail view + status changes ────────────────────────────
+  window._roOpen = function(id){
+    var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r) return;
+    OPEN_ID = id;
+    var items = r.items || [];
+    var kv = function(k, v){ return '<div><span>' + k + '</span><b>' + (v ? esc(v) : '<span style="color:#475569;">—</span>') + '</b></div>'; };
+    var html = '<div class="ro-sheet">'
+      + '<div class="ro-h">' + esc(r.num) + ' <span class="ro-pill ' + r.status + '">' + esc(STATUS_LABEL[r.status]) + '</span>' + (isLate(r) ? '<span class="ro-pill late">Past due</span>' : '')
+      + '<button class="ro-x" style="margin-left:auto;" onclick="document.getElementById(\'roDetail\').classList.remove(\'open\')">✕</button></div>'
+      + '<div class="ro-box"><div class="ro-timeline">'
+      +   '<div><span>📨 Sent</span><b>' + esc(fmtDT(evMs(r,'sent')) || fmtDate(r.dateRequested)) + '</b><i>' + esc(r.requestedBy || '') + '</i></div>'
+      +   '<div><span>✅ Ordered</span><b>' + (evMs(r,'ordered') ? esc(fmtDT(evMs(r,'ordered'))) : '<span style="color:#475569;">—</span>') + '</b><i>' + esc(r.orderedBy ? r.orderedBy + (r.po ? ' · PO ' + r.po : '') : '') + '</i></div>'
+      +   '<div><span>📦 Received</span><b>' + (evMs(r,'received') ? esc(fmtDT(evMs(r,'received'))) : '<span style="color:#475569;">—</span>') + '</b><i>' + esc(r.receivedBy || '') + '</i></div>'
+      +   (r.status === 'canceled' ? '<div><span>✕ Canceled</span><b>' + esc(fmtDT(evMs(r,'canceled'))) + '</b></div>' : '')
+      + '</div></div>'
+      + '<div class="ro-box"><div class="ro-kv">' + kv('Requested By', r.requestedBy) + kv('Date Requested', fmtDate(r.dateRequested)) + kv('Date Needed By', fmtDate(r.dateNeeded))
+      + kv('Job / WO #', r.wo) + kv('Machine / Work Center', r.machine) + kv('Vendor', r.vendor) + '</div></div>'
+      + '<div class="ro-box"><table class="ro-tbl"><thead><tr><th>#</th><th>Qty</th><th>Tool name / model</th><th>Part # / link</th><th>Ship</th></tr></thead><tbody>'
+      + items.map(function(i, n){
+          var part = /^https?:\/\//i.test(i.part) ? '<a href="' + esc(i.part) + '" target="_blank" rel="noopener" style="color:#93c5fd;word-break:break-all;">' + esc(i.part) + '</a>' : esc(i.part);
+          return '<tr><td>' + (n+1) + '</td><td><b style="color:#fbbf24;">' + esc(i.qty) + '</b></td><td>' + esc(i.name)
+            + ((i.toolRef || i.location) ? '<div class="sub">' + esc([i.toolRef, i.location ? '📍 ' + i.location : ''].filter(Boolean).join(' · ')) + '</div>' : '') + '</td><td>' + part + '</td>'
+            + '<td>' + (i.ship === 'nda' ? '<span class="ro-pill late">Next Day Air</span>' : '<span class="ro-pill received">Ground</span>') + '</td></tr>';
+        }).join('') + '</tbody></table></div>'
+      + (r.notes ? '<div class="ro-box"><div class="ro-kv" style="grid-template-columns:1fr;">' + kv('Notes / Reason', r.notes) + '</div></div>' : '')
+      + '<div class="ro-box"><div class="ro-kv">' + kv('Vendor quote', r.hasQuote ? 'Yes — PDF emailed' : 'No') + kv('Quote #', r.quoteNum) + '</div></div>';
+
+    // Purchasing box — the "Purchasing use only" section of the paper form
+    var canOrder = (isPurch() || isAdmin()) && r.status === 'sent';
+    html += '<div class="ro-box ro-purch"><div class="ro-sec" style="margin-top:0;color:#93c5fd;">Purchasing</div>';
+    if(canOrder){
+      html += '<div class="ro-grid3">' + fld('roOrdBy','Ordered By', r.orderedBy || (isPurch() ? me() : ''), true) + fld('roPo','PO #', r.po || '', true) + fld('roOrdDate','Date Ordered', r.dateOrdered || today(), true, 'date') + '</div>'
+        + '<input class="ro-in" id="roOrdNote" placeholder="Note back to Tooling (optional) — e.g. ETA, backorder, substitute">'
+        + '<div class="ro-err" id="roOrdErr"></div>'
+        + '<div class="ro-actions"><button class="ro-btn blue" onclick="window._roMarkOrdered(\'' + r.id + '\')">✅ Mark Ordered</button></div>';
+    } else {
+      html += '<div class="ro-kv">' + kv('Ordered By', r.orderedBy) + kv('PO #', r.po) + kv('Date Ordered', fmtDate(r.dateOrdered)) + '</div>'
+        + (r.orderNote ? '<div style="margin-top:8px;font-size:13px;color:#cbd5e1;">💬 ' + esc(r.orderNote) + '</div>' : '');
+    }
+    html += '</div>';
+    if(r.status === 'received'){
+      html += '<div class="ro-box" style="border-color:rgba(34,197,94,0.4);"><div class="ro-kv">' + kv('Received By', r.receivedBy) + kv('Date Received', fmtDate(r.dateReceived)) + kv('Note', r.receiveNote) + '</div></div>';
+    }
+    // History
+    var hist = (r.history || []).map(function(h){
+      var d = h.at ? new Date(h.at) : null;
+      return '<div>• <b>' + esc(h.action) + '</b> by ' + esc(h.by) + (d ? ' — ' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}) : '') + (h.text ? ' · ' + esc(h.text) : '') + '</div>';
+    }).join('');
+    if(hist) html += '<div class="ro-box"><div class="ro-sec" style="margin-top:0;">History</div><div class="ro-hist">' + hist + '</div></div>';
+
+    // Actions
+    html += '<div class="ro-actions">';
+    if(canSend() && r.status === 'ordered'){
+      html += '<input class="ro-in" id="roRecNote" placeholder="Receiving note (optional) — e.g. short 1, wrong size" style="flex:1 1 100%;">'
+        + '<button class="ro-btn green" onclick="window._roMarkReceived(\'' + r.id + '\')">📦 Mark Received</button>';
+    }
+    html += '<button class="ro-btn" onclick="window._roPrint(\'' + r.id + '\')">🖨 Print / PDF</button>';
+    if(canSend() && r.status === 'sent') html += '<button class="ro-btn" onclick="window._roEditExisting(\'' + r.id + '\')">✏️ Edit</button>';
+    if(canSend() && (r.status === 'sent' || r.status === 'ordered')) html += '<button class="ro-btn red" id="roCancelBtn" onclick="window._roCancel(\'' + r.id + '\', this)">Cancel request</button>';
+    if(canSend() && r.status === 'canceled') html += '<button class="ro-btn" onclick="window._roReopen(\'' + r.id + '\')">↩ Reopen</button>';
+    html += '</div></div>';
+    var m = document.getElementById('roDetail'); m.innerHTML = html; m.classList.add('open');
+  };
+
+  window._roMarkOrdered = function(id){
+    var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r) return;
+    var g = function(i){ var e = document.getElementById(i); return e ? e.value.trim() : ''; };
+    var by = g('roOrdBy'), po = g('roPo'), dt = g('roOrdDate'), note = g('roOrdNote'), err = document.getElementById('roOrdErr');
+    if(!by || !po || !dt){ if(err) err.textContent = 'Ordered By, PO # and Date Ordered are all required.'; return; }
+    var m = M();
+    m.updateDoc(m.doc(db(), COL, id), { status:'ordered', orderedBy:by, po:po, dateOrdered:dt, orderNote:note, updatedAt:m.serverTimestamp(),
+      history: m.arrayUnion({ at:new Date().toISOString(), by:me(), action:'ordered', text:'PO ' + po + (note ? ' — ' + note : '') }) })
+      .then(function(){
+        toast('blue','✅ Marked Ordered', r.num + ' · PO ' + po);
+        if(window.adminPushover) window.adminPushover('✅ Ordered ' + r.num + ' · PO ' + po,
+          by + ' ordered it on ' + fmtDate(dt) + '.\n' + (r.items||[]).map(function(i){ return i.qty + '× ' + i.name; }).join('\n') + (note ? '\n💬 ' + note : ''), 'cashregister', 0);
+      }).catch(function(e){ if(err) err.textContent = 'Couldn\'t save: ' + e.message; });
+  };
+  window._roMarkReceived = function(id){
+    var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r || !canSend()) return;
+    var n = document.getElementById('roRecNote'), note = n ? n.value.trim() : '', m = M();
+    m.updateDoc(m.doc(db(), COL, id), { status:'received', receivedBy:me(), dateReceived:today(), receiveNote:note, updatedAt:m.serverTimestamp(),
+      history: m.arrayUnion({ at:new Date().toISOString(), by:me(), action:'received', text:note }) })
+      .then(function(){ toast('green','📦 Received', r.num); }).catch(function(e){ toast('red','Couldn\'t save', e.message); });
+  };
+  window._roCancel = function(id, btn){
+    if(!canSend()) return;
+    if(btn && !btn.dataset.armed){ btn.dataset.armed = '1'; btn.textContent = 'Tap again to cancel'; setTimeout(function(){ if(btn){ btn.dataset.armed = ''; btn.textContent = 'Cancel request'; } }, 3000); return; }
+    var m = M();
+    m.updateDoc(m.doc(db(), COL, id), { status:'canceled', updatedAt:m.serverTimestamp(), history: m.arrayUnion({ at:new Date().toISOString(), by:me(), action:'canceled' }) })
+      .then(function(){ toast('yellow','Request canceled',''); }).catch(function(e){ toast('red','Couldn\'t save', e.message); });
+  };
+  window._roReopen = function(id){
+    var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r || !canSend()) return;
+    var m = M(), back = r.po ? 'ordered' : 'sent';
+    m.updateDoc(m.doc(db(), COL, id), { status:back, updatedAt:m.serverTimestamp(), history: m.arrayUnion({ at:new Date().toISOString(), by:me(), action:'reopened' }) });
+  };
+
+  // ── Phone alerts ────────────────────────────────────────────
+  function pushTo(key, title, msg, sound, priority, extra){
+    if(!key) return false;
+    var fd = new FormData();
+    fd.append('token', (typeof PUSHOVER_TOKEN !== 'undefined' && PUSHOVER_TOKEN) || 'a3fz1eugorhyxgrjk5svuw9ym2nwy6');
+    fd.append('user', key); fd.append('title', title); fd.append('message', msg);
+    fd.append('sound', sound || 'pushover'); fd.append('priority', String(priority || 0));
+    if(extra) Object.keys(extra).forEach(function(k){ fd.append(k, extra[k]); });
+    fetch('https://api.pushover.net/1/messages.json', { method:'POST', mode:'no-cors', body:fd }).catch(function(e){ console.warn('Purchaser Pushover:', e.message); });
+    return true;
+  }
+  function notifyPurchaser(r){
+    var key = localStorage.getItem('hillPurchaserPushoverKey') || '';
+    var nda = (r.items||[]).some(function(i){ return i.ship === 'nda'; });
+    var msg = 'From ' + r.requestedBy + (r.dateNeeded ? ' · Need by ' + fmtDate(r.dateNeeded) : '') + (r.wo ? ' · WO ' + r.wo : '') + '\n'
+      + (r.items||[]).map(function(i){ return i.qty + '× ' + i.name + ' — ' + i.part + (i.ship === 'nda' ? ' (NEXT DAY AIR)' : ' (Ground)'); }).join('\n')
+      + (r.notes ? '\n💬 ' + r.notes : '');
+    var url = location.origin + location.pathname + '?reorder=' + encodeURIComponent(r.num);
+    var sent = pushTo(key, '🛒 Tooling Reorder ' + r.num + (nda ? ' — NEXT DAY AIR' : ''), msg.slice(0, 1000), 'cashregister', nda ? 1 : 0, { url:url, url_title:'Open ' + r.num });
+    if(!sent) toast('yellow','Saved — but no purchaser alert sent', 'Add Cody\'s Pushover key in Admin → Pushover.');
+  }
+  window._testPurchaserPushover = function(){
+    var el = document.getElementById('purchaser-pushover-key'), key = el ? el.value.trim() : '';
+    if(!key){ toast('yellow','Enter a key first','Paste Cody\'s Pushover User Key above.'); return; }
+    localStorage.setItem('hillPurchaserPushoverKey', key);
+    pushTo(key, '🛒 TEST — Tooling Reorders', 'This is a test. You\'ll get an alert like this whenever Tooling sends a reorder request.', 'cashregister', 0);
+    toast('green','Test sent!','Check Cody\'s Pushover app.');
+  };
+
+  // ── Printable copy (Rev 8 layout) ───────────────────────────
+  window._roPrint = function(id){
+    var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r) return;
+    var logo = (document.querySelector('.header-logo-img') || {}).src || '';
+    var rows = '', items = r.items || [];
+    for(var n = 0; n < 15; n++){
+      var i = items[n] || {};
+      rows += '<tr><td class="c">' + (n+1) + '</td><td class="c">' + esc(i.qty||'') + '</td><td>' + esc(i.name||'') + (i.toolRef ? '<div class="s">' + esc(i.toolRef) + '</div>' : '') + '</td><td>' + esc(i.part||'') + '</td>'
+        + '<td class="c">' + (i.name ? (i.ship === 'nda' ? '☒' : '☐') : '☐') + '</td><td class="c">' + (i.name ? (i.ship === 'ground' ? '☒' : '☐') : '☐') + '</td></tr>';
+    }
+    var box = function(l, v){ return '<div class="f"><div class="l">' + l + '</div><div class="v">' + esc(v||'') + '</div></div>'; };
+    var html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(r.num) + ' — Tooling Reorder Request</title><style>'
+      + 'body{font-family:Arial,Helvetica,sans-serif;color:#1f2937;margin:28px;font-size:12px}h1{color:#1e3a5f;font-size:24px;margin:0}.hd{display:flex;align-items:center;gap:14px;border-bottom:3px solid #1e3a5f;padding-bottom:8px;margin-bottom:12px}'
+      + '.hd img{height:46px}.rev{margin-left:auto;text-align:right;color:#1e3a5f;font-weight:700}.rev small{display:block;color:#6b7280;font-weight:400}'
+      + '.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;margin-bottom:10px}.l{font-weight:700;color:#1e3a5f;font-size:11px;margin-bottom:2px}.v{border:1px solid #9fb3c8;min-height:20px;padding:3px 6px}'
+      + 'table{width:100%;border-collapse:collapse;margin-top:6px}th{background:#e8eef5;color:#1e3a5f;font-size:10px;padding:6px;border:1px solid #9fb3c8}td{border:1px solid #9fb3c8;padding:5px 6px;height:18px}.c{text-align:center}.s{font-size:9px;color:#6b7280}'
+      + '.n{border:1px solid #9fb3c8;min-height:44px;padding:6px}.ft{margin-top:16px;background:#e8eef5;text-align:center;padding:8px;color:#1e3a5f;font-weight:700}.tag{font-size:10px;color:#6b7280;text-align:right;margin-top:6px}'
+      + '@media print{body{margin:12mm}}</style></head><body>'
+      + '<div class="hd">' + (logo ? '<img src="' + logo + '">' : '') + '<div><h1>TOOLING REORDER REQUEST</h1><div>Hill Manufacturing · ' + esc(r.num) + '</div></div><div class="rev">Rev 8<small>Revised 10/22/2026</small></div></div>'
+      + '<div class="g">' + box('Requested By', r.requestedBy) + box('Date Requested', fmtDate(r.dateRequested)) + box('Date Needed By', fmtDate(r.dateNeeded))
+      + box('Job / WO #', r.wo) + box('Machine / Work Center', r.machine) + box('Vendor (if known)', r.vendor) + '</div>'
+      + '<table><thead><tr><th>#</th><th>QTY NEEDED</th><th>COMPLETE TOOL NAME / MODEL</th><th>PART # / LINK</th><th>NEXT DAY AIR</th><th>GROUND</th></tr></thead><tbody>' + rows + '</tbody></table>'
+      + '<div class="l" style="margin-top:12px;">Notes / Reason for Reorder</div><div class="n">' + esc(r.notes||'') + '</div>'
+      + '<div style="margin-top:10px;"><span class="l">Vendor Quote</span> ' + (r.hasQuote ? '☒' : '☐') + ' I have a quote — I will attach it to the email &nbsp;&nbsp; <b>Quote #</b> ' + esc(r.quoteNum||'') + '</div>'
+      + '<div style="margin-top:12px;font-size:10px;color:#6b7280;font-style:italic;">PURCHASING USE ONLY</div><div class="g">' + box('Ordered By', r.orderedBy) + box('PO #', r.po) + box('Date Ordered', fmtDate(r.dateOrdered)) + '</div>'
+      + '<div class="ft">SAVE &amp; EMAIL COMPLETED FORM TO: Tony Lang &amp; Cody Wilson</div><div class="tag">Tooling Reorder Form - Rev 8 (10/22/2026) · printed from the Hill Shop Floor app</div>'
+      + '<script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>';
+    var w = window.open('', '_blank');
+    if(!w){ toast('yellow','Allow pop-ups to print',''); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+  };
+
+  // ── Tie-in: tool picture viewer shows reorder history + "Reorder this tool" ──
+  window._reorderViewerHtml = function(it){
+    if(!it || !(canSend() || isPurch())) return '';
+    var key = it.key, hits = LIST.filter(function(r){ return (r.items||[]).some(function(i){ return i.toolKey === key; }); });
+    var html = '<div class="ro-tool-hist">';
+    if(hits.length){
+      html += '<b>🛒 Reorder history</b>' + hits.slice(0,4).map(function(r){
+        var line = (r.items||[]).filter(function(i){ return i.toolKey === key; })[0] || {};
+        return '<div style="cursor:pointer;" onclick="window._closeToolPic && window._closeToolPic(); window._openReorders(); window._roOpen(\'' + r.id + '\')">'
+          + esc(r.num) + ' · ' + esc(line.qty) + '× · ' + esc(fmtDate(r.dateRequested)) + ' · ' + esc(STATUS_LABEL[r.status]) + (r.po ? ' · PO ' + esc(r.po) : '') + '</div>';
+      }).join('');
+    } else html += '<span style="color:#94a3b8;">Never reordered through the app yet.</span>';
+    if(canSend() && toolFromKey(key)) html += '<button class="ro-btn go" style="width:100%;margin-top:8px;" onclick="window._closeToolPic && window._closeToolPic(); window._openReorders(); window._roNew(\'' + esc(key) + '\')">🛒 Reorder this tool</button>';
+    return html + '</div>';
+  };
+
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build); else build();
+})();
+</script>
 </body>
 </html>
