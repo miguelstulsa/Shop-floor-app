@@ -21801,6 +21801,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var sub = document.getElementById('lnSub');
     var stampEl = document.getElementById('lnPtStamp'); if(stampEl) stampEl.innerHTML = window._ptStamp ? window._ptStamp() : '';
     var syncBtn = document.getElementById('lnPtBtn'); if(syncBtn) syncBtn.style.display = canOrder() ? '' : 'none';
+    var hardBtn = document.getElementById('lnHardBtn'); if(hardBtn) hardBtn.style.display = (window._isAdmin || window.currentUser === 'hilladmin') ? '' : 'none';
     if(sub) sub.textContent = totalPend + ' pending job' + (totalPend === 1 ? '' : 's') + ' across ' + busy + ' machine' + (busy === 1 ? '' : 's') + (canOrder() ? ' · drag jobs (or ▲ ▼ ⇄) to change the order or move them to another machine' : '');
   };
   window._lnFilter = function(f){ FILTER = f; window._lnRender(); };
@@ -21953,6 +21954,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
       + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
       + '<div class="ln-bar" style="padding-bottom:4px;"><div id="lnCells" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>'
+      +   '<button class="ln-btn" id="lnHardBtn" style="display:none;" title="Admin: reload the app fresh — newest version from GitHub + latest ProShop sync" onclick="window._hardRefresh()">🔄 Refresh</button>'
       +   '<button class="ln-btn" style="background:#f5c842;border-color:#f5c842;color:#1a1300;" onclick="window._jobReview && window._jobReview()">🔍 Job Review</button>'
       +   '<button class="ln-btn" style="background:#10b981;border-color:#10b981;color:#03241a;" onclick="window._woOpen && window._woOpen()">📋 Work Orders</button>'
       +   '<button class="ln-btn" id="lnPtBtn" style="display:none;" onclick="window._ptOpen && window._ptOpen()">⏱ ProShop Sync</button>'
@@ -21970,6 +21972,32 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     document.getElementById('linesOverlay').classList.add('open');
     window._lnRender();
   };
+  // Admin hard refresh: skip the browser cache so the newest index.html from GitHub loads, reopen the Scheduler,
+  // and re-read everything (floor, Scheduler, ProShop sync) fresh from the database.
+  window._hardRefresh = function(){
+    if(!(window._isAdmin || window.currentUser === 'hilladmin')) return;
+    try{ sessionStorage.setItem('hillReopenLines', '1'); }catch(e){}
+    var u = new URL(location.href); u.searchParams.set('r', Date.now().toString(36));
+    var go = function(){ location.replace(u.toString()); };
+    try{
+      if(window.caches && caches.keys) caches.keys().then(function(ks){ return Promise.all(ks.map(function(k){ return caches.delete(k); })); }).then(go, go);
+      else go();
+    }catch(e){ go(); }
+  };
+  (function reopen(){
+    var want = false; try{ want = sessionStorage.getItem('hillReopenLines') === '1'; }catch(e){}
+    if(!want) return;
+    var t = setInterval(function(){
+      var auth = document.getElementById('authOverlay');
+      if(!window.currentUser || (auth && !auth.classList.contains('hidden')) || !document.querySelector('.floor-grid .machine')) return;
+      clearInterval(t); try{ sessionStorage.removeItem('hillReopenLines'); }catch(e){}
+      setTimeout(function(){
+        window._openLines();
+        try{ var u = new URL(location.href); u.searchParams.delete('r'); history.replaceState(null, '', u.toString()); }catch(e){}
+        if(window.showToast) window.showToast('green', '🔄 Refreshed', 'Newest app version + latest ProShop sync loaded');
+      }, 1200);
+    }, 500);
+  })();
   window._lnClose = function(){ var o = document.getElementById('linesOverlay'); if(o) o.classList.remove('open'); };
 
   // Turn the Scheduler tab on for everyone, pointing at Machine Lines
@@ -22210,7 +22238,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     // Everyone lands on the Shop Floor. Only a ?monitor=CELL link opens the shop monitor by itself.
     var m = /[?&]monitor=([^&#]+)/.exec(location.search);
     var target = m ? decodeURIComponent(m[1]).replace(/\+/g,' ') : null;
-    if(!target){
+    var reopening = false; try{ reopening = sessionStorage.getItem('hillReopenLines') === '1'; }catch(e){}
+    if(!target && !reopening){
       ['linesOverlay','woBoard','lnTv'].forEach(function(id){ var el = document.getElementById(id); if(el) el.classList.remove('open'); });
       if(!/[?&]ptsync=1/.test(location.search) && window.switchTab) try{ window.switchTab('shop'); }catch(e){}
     }
@@ -22269,6 +22298,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 .pt-det b { color:#fff; } .pt-det i { font-style:normal; color:#475569; }
 .wo-eta { font-size:11px; color:#cbd5e1; margin:3px 0 2px; padding:3px 7px; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); }
 .wo-eta b { color:#fff; } .wo-eta.soon { background:rgba(34,197,94,0.14); border-color:rgba(34,197,94,0.6); color:#bbf7d0; font-weight:700; }
+.wo-eta.miss { background:rgba(239,68,68,0.14); border-color:rgba(239,68,68,0.6); color:#fecaca; font-weight:700; }
 .wo-eta.done { background:rgba(100,116,139,0.2); border-color:#64748b; color:#e2e8f0; font-weight:700; } .wo-eta.setup { border-color:rgba(167,139,250,0.5); color:#ddd6fe; }
 .pt-soon { margin:4px 16px 8px; padding:8px 10px; border-radius:10px; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.5); }
 .pt-soon-h { font-family:'Bebas Neue',sans-serif; letter-spacing:1.5px; font-size:17px; color:#86efac; } .pt-soon-h span { font-family:'Barlow',sans-serif; font-size:11px; letter-spacing:0; color:#64748b; } .pt-soon-h a { color:#7dd3fc; }
@@ -22522,6 +22552,66 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   };
   function fmtN(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits:2 }); }
 
+  // ── Hill shop hours: estimates only count time the shop is actually working ──
+  // Mon–Fri 6:00 AM–4:45 PM · Sat 6:00 AM–11:00 AM · Sun closed
+  // Breaks: 8:00–8:10, lunch 11:00–11:45, 1:00–1:10
+  var SHIFT = {
+    days: { 1:['6:00','16:45'], 2:['6:00','16:45'], 3:['6:00','16:45'], 4:['6:00','16:45'], 5:['6:00','16:45'], 6:['6:00','11:00'] },
+    breaks: [['8:00','8:10'], ['11:00','11:45'], ['13:00','13:10']],
+    closed: []      // holidays / shutdown days ('YYYY-MM-DD') — admin edits these in the Scheduler (📅 Days off)
+  };
+  function isoDay(d){ return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2); }
+  function hmMin(t){ var p = t.split(':'); return (+p[0]) * 60 + (+p[1]); }
+  // Working stretches for one calendar day, as [startMs, endMs] pairs with the breaks cut out
+  function dayWindows(day){
+    if(SHIFT.closed.indexOf(isoDay(day)) !== -1) return [];
+    var d = SHIFT.days[day.getDay()]; if(!d) return [];
+    var base = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+    var segs = [[hmMin(d[0]), hmMin(d[1])]];
+    SHIFT.breaks.forEach(function(b){
+      var bs = hmMin(b[0]), be = hmMin(b[1]), next = [];
+      segs.forEach(function(sg){
+        if(be <= sg[0] || bs >= sg[1]){ next.push(sg); return; }
+        if(bs > sg[0]) next.push([sg[0], bs]);
+        if(be < sg[1]) next.push([be, sg[1]]);
+      });
+      segs = next;
+    });
+    return segs.map(function(sg){ return [base + sg[0] * 60000, base + sg[1] * 60000]; });
+  }
+  // Add working hours to a start time, skipping nights, breaks, lunch, Sundays
+  function addWorkHours(fromMs, hours){
+    var left = hours * 3600000, day = new Date(fromMs);
+    for(var i = 0; i < 400 && left > 0; i++){
+      var wins = dayWindows(day);
+      for(var k = 0; k < wins.length; k++){
+        var a = Math.max(wins[k][0], fromMs), b = wins[k][1];
+        if(b <= a) continue;
+        if(b - a >= left) return a + left;
+        left -= (b - a);
+      }
+      day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+    }
+    return fromMs + hours * 3600000;
+  }
+  // Working hours between two times (used for "can it make the due date")
+  function workHoursBetween(fromMs, toMs){
+    var tot = 0, day = new Date(fromMs);
+    for(var i = 0; i < 400; i++){
+      var wins = dayWindows(day), dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate()).getTime();
+      if(dayStart > toMs) break;
+      wins.forEach(function(w){ var a = Math.max(w[0], fromMs), b = Math.min(w[1], toMs); if(b > a) tot += b - a; });
+      day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1);
+    }
+    return tot / 3600000;
+  }
+  function endOfShiftOn(iso){
+    var d = new Date(iso + 'T12:00:00'); if(isNaN(d)) return 0;
+    var w = dayWindows(d); return w.length ? w[w.length - 1][1] : new Date(d.getFullYear(), d.getMonth(), d.getDate(), 16, 45).getTime();
+  }
+  window._shiftAddHours = addWorkHours; window._shiftHoursBetween = workHoursBetween;
+  window._shiftNow = function(){ var n = Date.now(); return dayWindows(new Date(n)).some(function(w){ return n >= w[0] && n < w[1]; }); };
+
   // ── Time left on the machine (ETA) ──────────────────────────
   function hrsOf(v){
     if(v == null || v === '') return null;
@@ -22548,9 +22638,16 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     o.remaining = Math.max(0, total - done);
     if(o.remaining === 0){ o.finished = true; return o; }
     if(!rate || rate <= 0) return o;
-    o.hoursLeft = o.remaining / rate;
-    o.etaMs = (CLOCK.syncedAt || Date.now()) + o.hoursLeft * 3600000;
-    o.soon = o.hoursLeft <= warnHrs();
+    o.hoursLeft = o.remaining / rate;                         // shop (working) hours of running left
+    var from = CLOCK.syncedAt || Date.now();                    // qty is as of the last sync
+    o.etaMs = addWorkHours(from, o.hoursLeft);
+    // how many working hours are actually left from now until it's done
+    o.workLeft = workHoursBetween(Date.now(), o.etaMs);
+    o.soon = o.etaMs <= addWorkHours(Date.now(), warnHrs());
+    if(w && w.dueISO){
+      var dueEnd = endOfShiftOn(w.dueISO);
+      if(dueEnd){ o.slack = workHoursBetween(Date.now(), dueEnd) - o.workLeft; if(o.etaMs > dueEnd) o.missDue = w.dueISO; }   // slack < 0 = behind
+    }
     return o;
   };
   function etaWhen(ms){
@@ -22564,7 +22661,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(!e) return '';
     if(e.finished) return '<div class="wo-eta done">✅ Qty complete — ' + esc(fmtN(e.done)) + ' / ' + esc(fmtN(e.total)) + '</div>';
     if(e.phase === 'setup') return '<div class="wo-eta setup">🔧 In setup' + (e.total != null ? ' · ' + esc(fmtN(e.total)) + ' pcs to run' : '') + (e.rate ? ' · ≈ ' + hLeft(e.total / e.rate) + ' once running' : '') + '</div>';
-    if(e.etaMs) return '<div class="wo-eta' + (e.soon ? ' soon' : '') + '">🏁 Done ≈ <b>' + esc(etaWhen(e.etaMs)) + '</b> · ' + hLeft(e.hoursLeft) + ' left · ' + esc(fmtN(e.remaining)) + ' pcs @ ' + esc(fmtN(Math.round(e.rate * 10) / 10)) + '/hr</div>';
+    if(e.etaMs) return '<div class="wo-eta' + (e.soon ? ' soon' : '') + '">🏁 Done ≈ <b>' + esc(etaWhen(e.etaMs)) + '</b> · ' + hLeft(e.workLeft != null ? e.workLeft : e.hoursLeft) + ' of shop time left · ' + esc(fmtN(e.remaining)) + ' pcs @ ' + esc(fmtN(Math.round(e.rate * 10) / 10)) + '/hr</div>'
+      + (e.missDue ? '<div class="wo-eta miss">⚠ Won\'t make the due date (' + esc(e.missDue.slice(5).replace('-','/')) + ') at this rate · ' + hLeft(-e.slack) + ' behind</div>'
+        : e.slack != null ? '<div class="wo-eta" style="color:#86efac;">✔ ' + hLeft(e.slack) + ' of shop time to spare before due</div>' : '');
     if(e.remaining != null) return '<div class="wo-eta">' + esc(fmtN(e.remaining)) + ' pcs left · no rate from ProShop yet</div>';
     return '';
   };
@@ -22605,13 +22704,22 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var m = window._ln.machines().filter(function(x){ return x.id === e.machine; })[0]; return m && m.cell === cell;
     });
     if(!list.length) return '';
-    return '<div class="pt-soon"><div class="pt-soon-h">🏁 Finishing soon — get the next job ready <span>(within ' + warnHrs() + ' h · <a href="#" onclick="event.preventDefault();window._ptWarnSet()">change</a>)</span></div>'
+    return '<div class="pt-soon"><div class="pt-soon-h">🏁 Finishing soon — get the next job ready <span>(within ' + warnHrs() + ' shop hours · <a href="#" onclick="event.preventDefault();window._ptWarnSet()">change</a>' + ((window._isAdmin || window.currentUser === 'hilladmin') ? ' · <a href="#" onclick="event.preventDefault();window._ptDaysOff()">📅 days off</a>' : '') + ')</span></div>'
       + list.map(function(e){
         var mn = e.machine || '—';
         return '<div class="pt-soon-r"><b class="m">' + esc(mn) + '</b><span>WO ' + esc(e.wo) + (e.op ? ' OP ' + esc(e.op) : '') + '</span>'
-          + '<span class="t">' + (e.finished ? '✅ qty complete' : '≈ ' + esc(etaWhen(e.etaMs)) + ' · ' + hLeft(e.hoursLeft) + ' left') + '</span>'
+          + '<span class="t">' + (e.finished ? '✅ qty complete' : '≈ ' + esc(etaWhen(e.etaMs)) + ' · ' + hLeft(e.workLeft != null ? e.workLeft : e.hoursLeft) + ' left') + '</span>'
           + '<span class="n">' + (e.next ? 'Next: <b>WO ' + esc(e.next.wo || '—') + '</b>' + (e.next.inProgress ? ' · 🔧 building' : e.next.type === 'blue' && !e.next.inProgress ? ' · <span style="color:#fbbf24;">not started</span>' : '') : '<span style="color:#f87171;">Nothing in line</span>') + '</span></div>';
       }).join('') + '</div>';
+  };
+  window._ptDaysOff = function(){
+    if(!(window._isAdmin || window.currentUser === 'hilladmin')) return;
+    var v = prompt('Shop closed days (holidays / shutdowns) — dates separated by commas, like 2026-11-26, 2026-11-27, 2026-12-25:', SHIFT.closed.join(', '));
+    if(v == null) return;
+    var list = v.split(/[,\s]+/).map(function(x){ var iso = dueISO(x); return iso; }).filter(Boolean);
+    var m = M(); if(!m || !db()) return;
+    m.setDoc(m.doc(db(), 'hillSettings', 'shopCalendar'), { closed:list, updatedBy:window._userDisplayName || window.currentUser || '' }, { merge:true })
+      .then(function(){ if(window.showToast) window.showToast('green','📅 Days off saved', list.length ? list.join(', ') : 'none'); });
   };
   window._ptWarnSet = function(){
     var v = prompt('Warn me when a job has this many hours (or less) left on the machine:', String(warnHrs()));
@@ -22633,7 +22741,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       m.setDoc(m.doc(db(), 'hillSettings', 'etaAlerts'), upd, { merge:true }).catch(function(){});
       var nx = e.next ? 'Next up: WO ' + (e.next.wo || '—') + (e.next.inProgress ? ' (building now)' : ' — not started yet') : 'Nothing in line for this machine!';
       window.adminPushover('🏁 ' + (e.machine || 'Machine') + ' finishing ' + (e.finished ? 'now' : '≈ ' + etaWhen(e.etaMs)),
-        'WO ' + e.wo + (e.op ? ' OP ' + e.op : '') + (e.finished ? ' — qty complete.' : ' — ' + e.remaining + ' pcs left (' + hLeft(e.hoursLeft) + ').') + '\n' + nx, 'magic', 0);
+        'WO ' + e.wo + (e.op ? ' OP ' + e.op : '') + (e.finished ? ' — qty complete.' : ' — ' + e.remaining + ' pcs left (' + hLeft(e.workLeft != null ? e.workLeft : e.hoursLeft) + ' of shop time).') + '\n' + nx, 'magic', 0);
       if(window.showToast) window.showToast('green', '🏁 ' + (e.machine || '') + ' finishing soon', 'WO ' + e.wo + ' · ' + nx);
     });
   }
@@ -22737,6 +22845,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var d = s && s.exists && s.exists() ? s.data() : null;
       CLOCK = d ? { rows:d.rows || [], workOrders:d.workOrders || [], syncedAt:d.syncedAtMs || 0, syncedBy:d.syncedBy || '' } : { rows:[], workOrders:[], syncedAt:0, syncedBy:'' };
       refresh();
+    }, function(){});
+    m.onSnapshot(m.doc(db(), 'hillSettings', 'shopCalendar'), function(s){
+      var d = s && s.exists && s.exists() ? s.data() : null; SHIFT.closed = (d && d.closed) || []; refresh();
     }, function(){});
     m.onSnapshot(m.doc(db(), 'hillSettings', 'etaAlerts'), function(s){
       var d = s && s.exists && s.exists() ? s.data() : {}; var cut = Date.now() - 3 * 86400000;
