@@ -22142,6 +22142,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 .pt-tbl td { padding:5px 6px; border-bottom:1px solid rgba(255,255,255,0.05); }
 .pt-tbl select { background:#08121f; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:4px; font-size:12px; }
 .pt-miss { color:#fbbf24; font-weight:700; }
+.pt-look { background:#08121f; border:1px solid #1e3a5c; border-radius:10px; padding:8px 10px; margin-bottom:10px; }
+.pt-look-h { display:flex; align-items:center; gap:6px; font-weight:700; font-size:13px; color:#7dd3fc; }
+#ptLookList { margin:0; max-height:180px; overflow:auto; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; color:#e2e8f0; white-space:pre-wrap; }
 .pt-msg { font-size:12px; margin-top:8px; min-height:16px; }
 .pt-clock { margin:2px 0 6px; }
 .pt-who { display:flex; align-items:center; gap:6px; font-size:11px; color:#d1fae5; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:7px; padding:4px 7px; margin-bottom:4px; }
@@ -22368,7 +22371,11 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(done && !raw) raw = 'Complete';
     if(!raw && cls === 'run') raw = 'Running';
     var late = d && d.days < 0 && cls !== 'done' && !done;
-    return { cls: late ? 'late' : cls, label: late ? 'LATE' + (raw ? ' · ' + raw : '') : raw, late: !!late, rawCls: cls, done: done || cls === 'done' };
+    var pct = w.qtyTotal ? (w.qtyDone || 0) / w.qtyTotal : null;
+    // Behind: due within 2 days and less done than the days left allow (today <75%, tomorrow <50%, 2 days <25%)
+    var risk = !late && d && d.days >= 0 && d.days <= 2 && cls !== 'done' && !done && pct != null && pct < [0.75, 0.5, 0.25][d.days];
+    return { cls: late ? 'late' : risk ? 'hold' : cls, label: late ? 'LATE' + (raw ? ' · ' + raw : '') : risk ? 'BEHIND' + (raw ? ' · ' + raw : '') : raw,
+      late: !!late, risk: !!risk, rawCls: cls, done: done || cls === 'done' };
   };
   window._ptProgHtml = function(w, opt){
     if(!w) return '';
@@ -22410,7 +22417,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   }
   function inFilter(r, f){
     var st = window._ptStatus(r) || {}, d = dueBits(r.dueISO);
-    if(f === 'late') return st.late;
+    if(f === 'late') return st.late || st.risk;
     if(f === 'week') return d && d.days >= 0 && d.days <= 7 && !st.done;
     if(f === 'hold') return st.rawCls === 'hold';
     if(f === 'run') return st.rawCls === 'run' || st.rawCls === 'setup' || (r.onClock && r.onClock.length) || r.app.some(function(n){ return n.type === 'green'; });
@@ -22421,7 +22428,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._woRender = function(){
     var box = document.getElementById('wbList'); if(!box) return;
     var rows = boardRows();
-    var F = [['open','Open'],['late','🔴 Late'],['week','📅 Due in 7 days'],['run','🟢 Running'],['hold','🟠 On hold'],['done','✔ Complete'],['all','All']];
+    var F = [['open','Open'],['late','🔴 Late / behind'],['week','📅 Due in 7 days'],['run','🟢 Running'],['hold','🟠 On hold'],['done','✔ Complete'],['all','All']];
     document.getElementById('wbChips').innerHTML = F.map(function(f){
       return '<span class="wb-chip' + (WB.filter === f[0] ? ' on' : '') + '" onclick="window._woFilter(\'' + f[0] + '\')">' + f[1] + '<b>' + rows.filter(function(r){ return inFilter(r, f[0]); }).length + '</b></span>';
     }).join('');
@@ -22496,6 +22503,10 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + '<div class="pt-note">Paste who\'s clocked in from ProShop\'s Time Tracker — copy the table straight off the page, or a JSON list from Claude: '
       + '<code>[{"employee":"Hank Anglin","wo":"26-0868","op":"60","part":"10041418","workCenter":"1050-B","start":"6:02 AM"}]</code>. '
       + 'Saving <b>replaces</b> the last sync, so paste everyone who\'s clocked in right now.</div>'
+      + '<div class="pt-look"><div class="pt-look-h">🔎 Look these up in ProShop <span id="ptLookN"></span>'
+      +   '<button class="pt-btn" style="margin-left:auto;padding:5px 10px;" onclick="window._ptCopyLook()">📋 Copy list</button></div>'
+      +   '<div class="pt-note" style="margin:2px 0 6px;">Every work order in the Scheduler (running, in line, or clocked in). For each one get <b>due date, qty complete, qty required and status</b> from ProShop and include it in <code>workOrders</code>.</div>'
+      +   '<pre id="ptLookList"></pre></div>'
       + '<textarea id="ptSyncInput" placeholder="Paste the ProShop Time Tracker table or JSON here..." oninput="window._ptPreview()"></textarea>'
       + '<div id="ptPrev"></div><div class="pt-msg" id="ptMsg"></div>'
       + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"><button class="pt-btn go" id="ptSyncSave" onclick="window._ptSave()">💾 Save to Scheduler</button>'
@@ -22506,7 +22517,24 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(!canSync()){ if(window.showToast) window.showToast('yellow','Admin / Corey only',''); return; }
     build(); document.getElementById('ptSync').classList.add('open');
     document.getElementById('ptLast').innerHTML = window._ptStamp();
+    var look = window._ptLookups();
+    document.getElementById('ptLookN').textContent = '(' + look.length + ')';
+    document.getElementById('ptLookList').textContent = look.map(function(x){ return 'WO ' + x.wo + (x.op ? '  OP ' + x.op : '') + (x.part ? '  Part ' + x.part : '') + '  — ' + x.where; }).join('\n') || 'No work orders in the Scheduler right now.';
     window._ptPreview();
+  };
+  // The work orders the hourly sync should look up: everything in the Scheduler + everyone clocked in
+  window._ptLookups = function(){
+    var seen = {}, out = [];
+    function add(wo, op, part, where){ if(!wo) return; var k = norm(wo) + '|' + norm(op); if(seen[k]) return; seen[k] = 1; out.push({ wo:String(wo), op:String(op || ''), part:String(part || ''), where:where }); }
+    Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){
+      if(n && !n.resolved && (n.type === 'green' || n.type === 'blue')) add(n.wo, n.op, n.part, (n.type === 'green' ? 'running on ' : 'in line on ') + n.machine);
+    }); });
+    (CLOCK.rows || []).forEach(function(r){ add(r.wo, r.op, r.part, 'clocked in: ' + r.employee); });
+    return out;
+  };
+  window._ptCopyLook = function(){
+    var t = document.getElementById('ptLookList').textContent;
+    try{ navigator.clipboard.writeText(t).then(function(){ if(window.showToast) window.showToast('green','List copied',''); }); }catch(e){}
   };
   window._ptClose = function(){ var o = document.getElementById('ptSync'); if(o) o.classList.remove('open'); };
   window._ptPreview = function(){
