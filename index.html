@@ -21471,6 +21471,21 @@ textarea.ro-in { min-height:64px; resize:vertical; }
 .ln-mv { width:30px; height:22px; border-radius:5px; border:1px solid #334155; background:rgba(255,255,255,0.05); color:#cbd5e1; font-size:12px; cursor:pointer; padding:0; }
 .ln-mv:disabled { opacity:0.25; cursor:default; }
 .ln-none { font-size:12px; color:#475569; padding:4px 2px; }
+.ln-job.drag { cursor:grab; } .ln-job.dragging { opacity:0.35; }
+.ln-card.ln-drop-on, .ln-pill.ln-drop-on { border-color:#38bdf8 !important; box-shadow:0 0 0 2px rgba(56,189,248,0.5); }
+.ln-gap { height:6px; border-radius:3px; background:#38bdf8; margin:2px 0 6px; box-shadow:0 0 10px rgba(56,189,248,0.7); }
+.ln-others { grid-column:1/-1; background:rgba(255,255,255,0.02); border:1px dashed #1e3a5f; border-radius:12px; padding:10px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.ln-others .ln-sec { width:100%; }
+.ln-pill { padding:7px 12px; border-radius:16px; border:1px solid #334155; background:#0d1f35; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; color:#f5d050; }
+.ln-pill i { font-style:normal; font-family:'Barlow',sans-serif; font-size:10px; color:#64748b; letter-spacing:0; }
+body.ln-dragging .ln-card.empty { opacity:1; }
+.ln-mv.ln-to { color:#7dd3fc; }
+.ln-menu { position:fixed; z-index:9600; width:260px; max-height:70vh; overflow-y:auto; background:#0b1a2c; border:1px solid #1e3a5f; border-radius:12px; padding:10px; box-shadow:0 12px 40px rgba(0,0,0,0.6); }
+.ln-menu button { display:flex; justify-content:space-between; width:100%; background:rgba(255,255,255,0.04); border:1px solid #1e3a5f; color:#f5d050; border-radius:8px; padding:8px 10px; margin-bottom:4px; font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:1px; cursor:pointer; text-align:left; }
+.ln-menu button span { font-family:'Barlow',sans-serif; font-size:11px; color:#94a3b8; letter-spacing:0; align-self:center; }
+.ln-menu button:disabled { opacity:0.4; cursor:default; }
+.ln-menu-cell { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#64748b; margin:8px 0 4px; }
+.ln-menu .ln-menu-x { justify-content:center; color:#fca5a5; border-color:rgba(239,68,68,0.4); margin-top:6px; }
 @media (max-width:640px){ .ln-grid { grid-template-columns:1fr; padding:10px; } .ln-title { font-size:21px; } }
 </style>
 <script>
@@ -21483,7 +21498,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
 // (field "queuePos"), so it's the same on every device. Tapping READY
 // moves a job to Running; finishing it drops it off — the line moves up.
 (function(){
-  var FILTER = 'busy', SEARCH = '';
+  var FILTER = 'busy', SEARCH = '', CELL = 'all';
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function canOrder(){
     if(window._isAdmin || window.currentUser === 'hilladmin') return true;
@@ -21510,7 +21525,9 @@ textarea.ro-in { min-height:64px; resize:vertical; }
         var nm = el.querySelector('.machine-name'); var name = nm ? nm.textContent.trim() : '';
         var notes = el.querySelector('.machine-notes');
         var id = notes && notes.id ? notes.id.replace(/^notes-/, '') : name;
-        if(id && !seen[id]){ seen[id] = 1; out.push({ id:id, name:name || id, cell:cellName, el:el }); }
+        var om = /openModal\('([^']*)'\s*,\s*'([^']*)'\)/.exec(el.getAttribute('onclick') || '');
+        if(id === 'QMI/DGP') return;   // outside processing, not a machine line
+        if(id && !seen[id]){ seen[id] = 1; out.push({ id:id, name:name || id, cell:cellName, reqCell: om ? om[2] : cellName, el:el }); }
       });
     });
     return out;
@@ -21552,42 +21569,163 @@ textarea.ro-in { min-height:64px; resize:vertical; }
         + '<button class="ln-mv" title="Move up" ' + (pos === 0 ? 'disabled' : '') + ' onclick="event.stopPropagation();window._lnMove(\'' + esc(mid) + '\',\'' + esc(n.id) + '\',-1)">▲</button>'
         + '<button class="ln-mv" title="Move down" ' + (pos === total-1 ? 'disabled' : '') + ' onclick="event.stopPropagation();window._lnMove(\'' + esc(mid) + '\',\'' + esc(n.id) + '\',1)">▼</button></div>';
     }
-    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + '">'
+    var drag = kind !== 'run' && canOrder();
+    if(drag) moves = (moves ? moves.replace('<div class="ln-moves">', '<div class="ln-moves">') : '<div class="ln-moves">')
+      .replace(/<\/div>$/, '') + '<button class="ln-mv ln-to" title="Move to another machine" onclick="event.stopPropagation();window._lnMoveMenu(\'' + esc(n.id) + '\', this)">⇄</button></div>';
+    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + (drag ? ' drag' : '') + '"'
+      + (drag ? ' draggable="true" data-id="' + esc(n.id) + '" data-mid="' + esc(mid) + '" ondragstart="window._lnDragStart(event)" ondragend="window._lnDragEnd(event)"' : '') + '>'
       + '<div class="ln-pos">' + (kind === 'run' ? 'RUN' : '#' + (pos+1)) + '</div>'
       + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
       + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '') + '</div>'
       + moves + '</div>';
   }
 
+  var DRAGGING = null, REDRAW_LATER = false;
   window._lnRender = function(){
+    if(DRAGGING){ REDRAW_LATER = true; return; }
     var grid = document.getElementById('lnGrid'); if(!grid) return;
     var words = SEARCH ? SEARCH.split(/\s+/) : [];
     var ms = machines(), totalPend = 0, busy = 0;
     var cards = ms.map(function(m){
       var run = runningFor(m.id), pend = pendingFor(m.id);
       totalPend += pend.length; if(run.length || pend.length) busy++;
-      if(FILTER === 'busy' && !run.length && !pend.length) return '';
+      if(CELL !== 'all' && m.cell !== CELL) return '';
+      if(FILTER === 'busy' && !run.length && !pend.length && CELL === 'all') return '';
       if(FILTER === 'queued' && !pend.length) return '';
       if(words.length){
         var hay = (m.name + ' ' + m.cell + ' ' + run.concat(pend).map(function(n){ return [n.wo, n.op, n.part, n.assignedTo, n.operator].join(' '); }).join(' ')).toLowerCase();
         if(!words.every(function(w){ return hay.indexOf(w) !== -1; })) return '';
       }
-      return '<div class="ln-card' + (!run.length && !pend.length ? ' empty' : '') + '">'
+      return '<div class="ln-card' + (!run.length && !pend.length ? ' empty' : '') + '" data-drop="' + esc(m.id) + '" ondragover="window._lnDragOver(event)" ondragleave="window._lnDragLeave(event)" ondrop="window._lnDrop(event)">'
         + '<div class="ln-mh"><span class="ln-mname" onclick="window._lnOpenMachine(\'' + esc(m.id) + '\')" title="Open this machine">' + esc(m.name) + '</span><span class="ln-cell">' + esc(m.cell) + '</span>'
         + '<span class="ln-count">' + (pend.length ? pend.length + ' in line' : '') + '</span></div>'
         + '<div class="ln-sec">Running</div>' + (run.length ? run.map(function(n){ return jobHtml(n, 'run', 0, 0, m.id); }).join('') : '<div class="ln-none">Nothing running</div>')
         + '<div class="ln-sec">Up next</div>' + (pend.length ? pend.map(function(n, i){ return jobHtml(n, 'pend', i, pend.length, m.id); }).join('') : '<div class="ln-none">Nothing queued</div>')
         + '</div>';
     }).join('');
-    grid.innerHTML = cards || '<div class="ln-none" style="grid-column:1/-1;text-align:center;padding:30px;">' + (words.length ? 'Nothing matches.' : 'No machines have jobs right now.') + '</div>';
+    var shown = {}; (cards.match(/data-drop="([^"]*)"/g) || []).forEach(function(x){ shown[x.slice(11,-1).replace(/&amp;/g,'&')] = 1; });
+    var others = canOrder() ? ms.filter(function(m){ return !shown[m.id]; }) : [];
+    grid.innerHTML = (cards || '<div class="ln-none" style="grid-column:1/-1;text-align:center;padding:30px;">' + (words.length ? 'Nothing matches.' : 'No machines have jobs right now.') + '</div>')
+      + (others.length ? '<div class="ln-others" id="lnOthers"><div class="ln-sec" style="margin-top:0;">Drag a job onto any machine</div>'
+          + others.map(function(m){ return '<span class="ln-pill" data-drop="' + esc(m.id) + '" ondragover="window._lnDragOver(event)" ondragleave="window._lnDragLeave(event)" ondrop="window._lnDrop(event)">' + esc(m.name) + ' <i>' + esc(m.cell) + '</i></span>'; }).join('')
+          + '</div>' : '');
+    var cc = document.getElementById('lnCells');
+    if(cc){
+      var cells = window._lnCells();
+      cc.innerHTML = '<span class="ln-chip' + (CELL === 'all' ? ' on' : '') + '" onclick="window._lnCell(\'all\')">All cells</span>'
+        + cells.map(function(c){
+            var n = 0; c.machines.forEach(function(m){ n += pendingFor(m.id).length; });
+            return '<span class="ln-chip' + (CELL === c.name ? ' on' : '') + '" onclick="window._lnCell(' + esc(JSON.stringify(c.name)).replace(/&quot;/g,'&quot;') + ')">' + esc(c.name) + (n ? ' <b style="color:#93c5fd;">' + n + '</b>' : '') + '</span>';
+          }).join('');
+    }
     var chips = document.getElementById('lnChips');
     if(chips) chips.innerHTML = [['busy','With jobs'],['queued','Has a line'],['all','All machines']].map(function(c){
       return '<span class="ln-chip' + (FILTER === c[0] ? ' on' : '') + '" onclick="window._lnFilter(\'' + c[0] + '\')">' + c[1] + '</span>';
     }).join('');
     var sub = document.getElementById('lnSub');
-    if(sub) sub.textContent = totalPend + ' pending job' + (totalPend === 1 ? '' : 's') + ' across ' + busy + ' machine' + (busy === 1 ? '' : 's') + (canOrder() ? ' · use ▲ ▼ to change the order' : '');
+    if(sub) sub.textContent = totalPend + ' pending job' + (totalPend === 1 ? '' : 's') + ' across ' + busy + ' machine' + (busy === 1 ? '' : 's') + (canOrder() ? ' · drag jobs (or ▲ ▼ ⇄) to change the order or move them to another machine' : '');
   };
   window._lnFilter = function(f){ FILTER = f; window._lnRender(); };
+
+  // ── Moving jobs between machines (admin + Corey) ─────────────
+  // Rewrites positions 1..n on the target machine; if the machine changed,
+  // the request itself moves (machine + cell), and the request log follows.
+  function moveJob(id, toMid, index){
+    if(!canOrder()) return;
+    var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n) return;
+    var fromMid = n.machine, target = machines().filter(function(m){ return m.id === toMid; })[0]; if(!target) return;
+    var list = pendingFor(toMid).filter(function(x){ return x.id !== id; });
+    if(index == null || index > list.length) index = list.length;
+    list.splice(index, 0, n);
+    var db = window.fbDb || window._db, M = window._fbModules; if(!db || !M) return;
+    var writes = list.map(function(x, k){
+      var upd = { queuePos: k + 1 };
+      if(x.id === id && fromMid !== toMid){
+        upd.machine = toMid; upd.cell = target.reqCell || target.cell;
+        upd.movedFrom = fromMid; upd.movedBy = window._userDisplayName || window.currentUser || ''; upd.movedAt = M.serverTimestamp ? M.serverTimestamp() : new Date().toISOString();
+      }
+      x.queuePos = k + 1; if(upd.machine){ x.machine = toMid; x.cell = upd.cell; }
+      return M.updateDoc(M.doc(db, 'notes', x.id), upd);
+    });
+    if(fromMid !== toMid && n.hillReqId) writes.push(M.updateDoc(M.doc(db, 'hillRequests', n.hillReqId), { machine: toMid, cell: target.reqCell || target.cell }).catch(function(){}));
+    // keep the old machine's line numbered 1..n with no gap
+    if(fromMid !== toMid) pendingFor(fromMid).filter(function(x){ return x.id !== id; }).forEach(function(x, k){ x.queuePos = k + 1; writes.push(M.updateDoc(M.doc(db, 'notes', x.id), { queuePos: k + 1 })); });
+    Promise.all(writes).then(function(){
+      if(fromMid !== toMid && window.showToast) window.showToast('blue','⇄ Moved WO ' + (n.wo || ''), fromMid + ' → ' + toMid + ' · #' + (index + 1) + ' in line');
+    }).catch(function(e){ if(window.showToast) window.showToast('red','Couldn\'t move the job', e.message); });
+    window._lnRender();
+  }
+  window._lnMoveJob = moveJob;
+  window._lnDragStart = function(e){
+    var el = e.currentTarget; DRAGGING = { id: el.getAttribute('data-id'), from: el.getAttribute('data-mid') };
+    try{ e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', DRAGGING.id); }catch(x){}
+    setTimeout(function(){ el.classList.add('dragging'); document.body.classList.add('ln-dragging'); }, 0);
+  };
+  window._lnDragEnd = function(e){
+    if(e && e.currentTarget) e.currentTarget.classList.remove('dragging');
+    document.body.classList.remove('ln-dragging');
+    document.querySelectorAll('.ln-drop-on').forEach(function(x){ x.classList.remove('ln-drop-on'); });
+    document.querySelectorAll('.ln-gap').forEach(function(x){ x.remove(); });
+    DRAGGING = null;
+    if(REDRAW_LATER){ REDRAW_LATER = false; window._lnRender(); }
+  };
+  function dropIndex(card, y){
+    var rows = Array.prototype.slice.call(card.querySelectorAll('.ln-job.drag')).filter(function(r){ return !DRAGGING || r.getAttribute('data-id') !== DRAGGING.id; });
+    for(var i = 0; i < rows.length; i++){ var b = rows[i].getBoundingClientRect(); if(y < b.top + b.height / 2) return { i:i, before:rows[i] }; }
+    return { i:rows.length, before:null };
+  }
+  window._lnDragOver = function(e){
+    if(!DRAGGING) return;
+    e.preventDefault(); try{ e.dataTransfer.dropEffect = 'move'; }catch(x){}
+    var card = e.currentTarget; card.classList.add('ln-drop-on');
+    if(!card.classList.contains('ln-card')) return;
+    var at = dropIndex(card, e.clientY), gap = card.querySelector('.ln-gap');
+    if(!gap){ gap = document.createElement('div'); gap.className = 'ln-gap'; }
+    var secs = card.querySelectorAll('.ln-sec'), upNext = secs[secs.length - 1];
+    if(at.before) at.before.parentNode.insertBefore(gap, at.before);
+    else { var last = card.querySelectorAll('.ln-job.drag'); var anchor = last.length ? last[last.length - 1] : (upNext ? upNext.nextSibling : null);
+      if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(gap, anchor.nextSibling); else card.appendChild(gap); }
+  };
+  window._lnDragLeave = function(e){
+    var card = e.currentTarget; if(card.contains(e.relatedTarget)) return;
+    card.classList.remove('ln-drop-on'); var g = card.querySelector('.ln-gap'); if(g) g.remove();
+  };
+  window._lnDrop = function(e){
+    e.preventDefault(); if(!DRAGGING) return;
+    var card = e.currentTarget, to = card.getAttribute('data-drop');
+    var idx = card.classList.contains('ln-card') ? dropIndex(card, e.clientY).i : null;
+    var job = DRAGGING; window._lnDragEnd({});
+    moveJob(job.id, to, idx);
+  };
+  // Phones / tablets: ⇄ opens a machine picker
+  window._lnMoveMenu = function(id, btn){
+    var old = document.getElementById('lnMoveMenu'); if(old) old.remove();
+    var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n) return;
+    var menu = document.createElement('div'); menu.id = 'lnMoveMenu'; menu.className = 'ln-menu';
+    menu.innerHTML = '<div class="ln-sec" style="margin:0 0 6px;">Move WO ' + esc(n.wo || '') + ' to…</div>'
+      + window._lnCells().map(function(c){
+          return '<div class="ln-menu-cell">' + esc(c.name) + '</div>' + c.machines.map(function(m){
+            var cnt = pendingFor(m.id).filter(function(x){ return x.id !== id; }).length;
+            return '<button ' + (m.id === n.machine ? 'disabled' : '') + ' onclick="window._lnMoveJob(\'' + esc(id) + '\',\'' + esc(m.id) + '\'); document.getElementById(\'lnMoveMenu\').remove();">'
+              + esc(m.name) + '<span>' + (m.id === n.machine ? 'here now' : cnt ? 'goes to #' + (cnt + 1) : 'goes to #1') + '</span></button>';
+          }).join('');
+        }).join('')
+      + '<button class="ln-menu-x" onclick="document.getElementById(\'lnMoveMenu\').remove()">Cancel</button>';
+    document.body.appendChild(menu);
+    var r = btn.getBoundingClientRect();
+    menu.style.top = Math.max(8, Math.min(window.innerHeight - menu.offsetHeight - 8, r.bottom + 4)) + 'px';
+    menu.style.left = Math.max(8, Math.min(window.innerWidth - menu.offsetWidth - 8, r.right - menu.offsetWidth)) + 'px';
+  };
+  window._lnCell = function(c){ CELL = c; window._lnRender(); };
+  window._lnCurrentCell = function(){ return CELL; };
+  // Work cells in Shop Floor order, each with its machines
+  window._lnCells = function(){
+    var by = {}, order = [];
+    machines().forEach(function(m){ if(!by[m.cell]){ by[m.cell] = { name:m.cell, machines:[] }; order.push(by[m.cell]); } by[m.cell].machines.push(m); });
+    return order;
+  };
+  // Shared helpers for the shop-monitor display
+  window._ln = { machines:machines, pendingFor:pendingFor, runningFor:runningFor, when:when, age:age, esc:esc };
   window._lnSearch = function(v){ SEARCH = (v||'').toLowerCase().trim(); window._lnRender(); };
   window._lnOpenMachine = function(mid){
     var m = machines().filter(function(x){ return x.id === mid; })[0];
@@ -21636,6 +21774,8 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     var ov = document.createElement('div'); ov.id = 'linesOverlay';
     ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
       + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
+      + '<div class="ln-bar" style="padding-bottom:4px;"><div id="lnCells" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>'
+      +   '<button class="ln-btn" style="background:#0ea5e9;border-color:#0ea5e9;color:#04121f;" onclick="window._lnTV(window._lnCurrentCell() === \'all\' ? \'rotate\' : window._lnCurrentCell())">📺 Shop monitor</button></div>'
       + '<div class="ln-bar"><input class="ln-search" placeholder="Search machine, WO, part, OP, machinist..." oninput="window._lnSearch(this.value)">'
       + '<div id="lnChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>'
       + '<button class="ln-btn" id="lnOldBtn" style="display:none;" onclick="window._lnClose(); window._openScheduler && window._openScheduler();">📋 Daily floor-walk tracker</button></div>'
@@ -21677,6 +21817,203 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     };
   }, 400);
   setInterval(function(){ var o = document.getElementById('linesOverlay'); if(o && o.classList.contains('open')) window._lnRender(); }, 60000);   // ages tick up
+})();
+</script>
+<style>
+/* ═══ SCHEDULER — SHOP MONITOR ═══ */
+#lnTv { position:fixed; inset:0; z-index:9500; background:radial-gradient(ellipse at top,#0f2540 0%,#060d18 70%); display:none; flex-direction:column; color:#e2e8f0; font-family:'Barlow',sans-serif; overflow:hidden; }
+#lnTv.open { display:flex; }
+.tv-head { display:flex; align-items:flex-end; gap:18px; padding:18px 28px 10px; border-bottom:2px solid rgba(125,211,252,0.25); }
+.tv-cell { font-family:'Bebas Neue',sans-serif; font-size:clamp(34px,4.4vw,72px); letter-spacing:4px; color:#f5d050; line-height:0.9; text-shadow:0 0 18px rgba(245,208,80,0.35); }
+.tv-kicker { font-family:'Bebas Neue',sans-serif; font-size:clamp(14px,1.3vw,22px); letter-spacing:4px; color:#7dd3fc; }
+.tv-stats { display:flex; gap:20px; margin-left:auto; align-items:flex-end; }
+.tv-stat { text-align:right; } .tv-stat b { display:block; font-family:'Bebas Neue',sans-serif; font-size:clamp(26px,2.6vw,44px); line-height:1; color:#f8fafc; }
+.tv-stat span { font-size:clamp(10px,0.8vw,13px); letter-spacing:2px; text-transform:uppercase; color:#64748b; }
+.tv-clock { font-family:'Bebas Neue',sans-serif; font-size:clamp(26px,2.6vw,44px); color:#94a3b8; line-height:1; }
+.tv-grid { flex:1; display:grid; gap:16px; padding:16px 22px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); align-content:stretch; overflow:hidden; }
+.tv-m { background:linear-gradient(170deg,#123052,#0b1c31); border:2px solid #1e3a5f; border-radius:16px; padding:14px 16px; display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+.tv-mname { font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,3.2vw,56px); letter-spacing:3px; color:#f5d050; line-height:1; margin-bottom:10px; }
+.tv-lbl { font-family:'Bebas Neue',sans-serif; font-size:clamp(13px,1.1vw,18px); letter-spacing:3px; color:#64748b; margin:6px 0 6px; }
+.tv-run { background:rgba(34,197,94,0.12); border:2px solid rgba(34,197,94,0.6); border-radius:12px; padding:10px 12px; }
+.tv-row { display:flex; align-items:center; gap:12px; padding:8px 10px; border-radius:10px; margin-bottom:7px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.07); }
+.tv-row.first { background:rgba(59,130,246,0.16); border:2px solid rgba(59,130,246,0.75); }
+.tv-n { flex-shrink:0; width:clamp(34px,2.8vw,48px); height:clamp(34px,2.8vw,48px); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:clamp(18px,1.6vw,28px); background:#1e3a5f; color:#bfdbfe; }
+.tv-row.first .tv-n { background:#3b82f6; color:#fff; }
+.tv-wo { font-size:clamp(17px,1.5vw,26px); font-weight:800; color:#f8fafc; line-height:1.1; }
+.tv-sub { font-size:clamp(12px,1vw,17px); color:#9fb3c8; margin-top:2px; }
+.tv-sub b { color:#e2e8f0; }
+.tv-empty { font-size:clamp(14px,1.2vw,20px); color:#475569; padding:6px 2px; }
+.tv-more { font-size:clamp(12px,1vw,16px); color:#7dd3fc; padding:2px 4px; }
+.tv-foot { display:flex; align-items:center; gap:10px; padding:8px 22px 14px; }
+.tv-dots { display:flex; gap:7px; flex-wrap:wrap; }
+.tv-dot { padding:3px 10px; border-radius:12px; font-size:12px; letter-spacing:1px; color:#64748b; border:1px solid #1e3a5f; }
+.tv-dot.on { color:#04121f; background:#7dd3fc; border-color:#7dd3fc; font-weight:700; }
+.tv-prog { position:absolute; left:0; bottom:0; height:4px; background:#0ea5e9; width:0; }
+.tv-ctrl { position:absolute; top:10px; right:12px; display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; opacity:0; transition:opacity .3s; background:rgba(4,10,20,0.85); padding:8px; border-radius:12px; border:1px solid #1e3a5f; max-width:92vw; }
+#lnTv.showctrl .tv-ctrl, .tv-ctrl:hover { opacity:1; }
+.tv-ctrl select, .tv-ctrl button { background:#0d1f35; border:1px solid #334155; color:#e2e8f0; border-radius:8px; padding:7px 10px; font-size:13px; cursor:pointer; }
+.tv-ctrl button.pin.on { background:#16a34a; border-color:#16a34a; color:#fff; }
+.tv-ctrl button.x { background:rgba(239,68,68,0.2); border-color:rgba(239,68,68,0.5); color:#fca5a5; }
+@media (max-width:700px){ .tv-head { flex-wrap:wrap; padding:12px 14px 8px; } .tv-stats { margin-left:0; } .tv-grid { padding:10px; overflow-y:auto; } }
+</style>
+<script>
+// ═══ SCHEDULER — SHOP MONITOR ═══
+// Full-screen display for the computer in each work cell:
+//  • "Rotate" shuffles through every work cell (skips cells with no jobs)
+//  • pick one cell to keep that cell up
+//  • 📌 Keep on this screen remembers the choice on THIS computer, so after
+//    a refresh / login it comes straight back up on its own.
+// Updates live as requests change. No edit buttons — it's for viewing.
+(function(){
+  var PIN_KEY = 'hillShopMonitor';
+  var TARGET = 'rotate', SEC = 20, IDX = 0, TIMER = null, CLOCK = null, CTRL_T = null, WAKE = null, STARTED = 0;
+  function L(){ return window._ln; }
+  function pin(){ try{ return JSON.parse(localStorage.getItem(PIN_KEY) || 'null'); }catch(e){ return null; } }
+  function setPin(v){ try{ if(v) localStorage.setItem(PIN_KEY, JSON.stringify(v)); else localStorage.removeItem(PIN_KEY); }catch(e){} }
+  function cellLoad(c){ var p = 0, r = 0; c.machines.forEach(function(m){ p += L().pendingFor(m.id).length; r += L().runningFor(m.id).length; }); return { pend:p, run:r }; }
+  function rotation(){
+    var cells = window._lnCells(), busy = cells.filter(function(c){ var x = cellLoad(c); return x.pend || x.run; });
+    return busy.length ? busy : cells;
+  }
+  function currentCell(){
+    var cells = window._lnCells();
+    if(TARGET !== 'rotate') return cells.filter(function(c){ return c.name === TARGET; })[0] || cells[0];
+    var rot = rotation(); if(!rot.length) return null;
+    IDX = IDX % rot.length; return rot[IDX];
+  }
+
+  function draw(){
+    var ov = document.getElementById('lnTv'); if(!ov || !L()) return;
+    var esc = L().esc, c = currentCell();
+    if(!c){ ov.querySelector('.tv-grid').innerHTML = '<div class="tv-empty">No work cells found.</div>'; return; }
+    var load = cellLoad(c);
+    ov.querySelector('.tv-cell').textContent = c.name;
+    ov.querySelector('.tv-kicker').textContent = TARGET === 'rotate' ? 'WORK CELL SCHEDULE · ROTATING' : 'WORK CELL SCHEDULE';
+    ov.querySelector('#tvRun').textContent = load.run;
+    ov.querySelector('#tvPend').textContent = load.pend;
+    var maxNext = c.machines.length > 4 ? 3 : 5;
+    ov.querySelector('.tv-grid').innerHTML = c.machines.map(function(m){
+      var run = L().runningFor(m.id), pend = L().pendingFor(m.id);
+      var line = function(n){ return [n.op ? 'OP <b>' + esc(n.op) + '</b>' : '', n.part ? 'Part <b>' + esc(n.part) + '</b>' : '', n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : ''].filter(Boolean).join(' · '); };
+      return '<div class="tv-m"><div class="tv-mname">' + esc(m.name) + '</div>'
+        + '<div class="tv-lbl">RUNNING</div>'
+        + (run.length ? run.map(function(n){ return '<div class="tv-run"><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div><div class="tv-sub">' + line(n) + '</div></div>'; }).join('')
+                      : '<div class="tv-empty">Nothing running</div>')
+        + '<div class="tv-lbl">UP NEXT</div>'
+        + (pend.length ? pend.slice(0, maxNext).map(function(n, i){
+              return '<div class="tv-row' + (i === 0 ? ' first' : '') + '"><div class="tv-n">' + (i+1) + '</div><div><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div>'
+                + '<div class="tv-sub">' + line(n) + (L().age(n) ? ' · waiting <b>' + esc(L().age(n)) + '</b>' : '') + '</div></div></div>';
+            }).join('') + (pend.length > maxNext ? '<div class="tv-more">+ ' + (pend.length - maxNext) + ' more in line</div>' : '')
+          : '<div class="tv-empty">Nothing queued</div>')
+        + '</div>';
+    }).join('');
+    // footer: which cell we're on
+    var dots = ov.querySelector('.tv-dots');
+    if(TARGET === 'rotate'){
+      var rot = rotation();
+      dots.innerHTML = rot.map(function(x, i){ return '<span class="tv-dot' + (i === IDX ? ' on' : '') + '">' + esc(x.name) + '</span>'; }).join('');
+    } else dots.innerHTML = '<span class="tv-dot on">📌 ' + esc(c.name) + '</span>';
+    // control panel state
+    var sel = ov.querySelector('#tvSel'); if(sel){
+      sel.innerHTML = '<option value="rotate">🔄 Rotate all cells</option>' + window._lnCells().map(function(x){ return '<option value="' + esc(x.name) + '">' + esc(x.name) + '</option>'; }).join('');
+      sel.value = TARGET;
+    }
+    var p = pin(), pb = ov.querySelector('#tvPin');
+    if(pb){ var on = !!(p && p.target === TARGET); pb.classList.toggle('on', on); pb.textContent = on ? '📌 Kept on this screen' : '📌 Keep on this screen'; }
+    var sp = ov.querySelector('#tvSpeed'); if(sp){ sp.value = String(SEC); sp.style.display = TARGET === 'rotate' ? '' : 'none'; }
+  }
+
+  function progress(){
+    var bar = document.querySelector('#lnTv .tv-prog'); if(!bar) return;
+    if(TARGET !== 'rotate'){ bar.style.transition = 'none'; bar.style.width = '0'; return; }
+    bar.style.transition = 'none'; bar.style.width = '0'; void bar.offsetWidth;
+    bar.style.transition = 'width ' + SEC + 's linear'; bar.style.width = '100%';
+  }
+  function schedule(){
+    clearInterval(TIMER); TIMER = null;
+    if(TARGET === 'rotate') TIMER = setInterval(function(){ IDX++; draw(); progress(); }, SEC * 1000);
+    progress();
+  }
+  function tick(){
+    var el = document.getElementById('tvClock'); if(!el) return;
+    var d = new Date(), h = d.getHours();
+    el.textContent = ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h >= 12 ? ' PM' : ' AM');
+  }
+  function build(){
+    if(document.getElementById('lnTv')) return;
+    var ov = document.createElement('div'); ov.id = 'lnTv';
+    ov.innerHTML = '<div class="tv-head"><div><div class="tv-kicker"></div><div class="tv-cell"></div></div>'
+      + '<div class="tv-stats"><div class="tv-stat"><b id="tvRun">0</b><span>Running</span></div><div class="tv-stat"><b id="tvPend">0</b><span>In line</span></div><div class="tv-clock" id="tvClock"></div></div></div>'
+      + '<div class="tv-grid"></div>'
+      + '<div class="tv-foot"><div class="tv-dots"></div></div>'
+      + '<div class="tv-prog"></div>'
+      + '<div class="tv-ctrl"><select id="tvSel" onchange="window._lnTVSet(this.value)"></select>'
+      +   '<select id="tvSpeed" onchange="window._lnTVSpeed(this.value)"><option value="10">Every 10 sec</option><option value="20">Every 20 sec</option><option value="30">Every 30 sec</option><option value="60">Every 1 min</option></select>'
+      +   '<button id="tvPin" class="pin" onclick="window._lnTVPin()">📌 Keep on this screen</button>'
+      +   '<button onclick="window._lnTVFull()">⛶ Full screen</button>'
+      +   '<button class="x" onclick="window._lnTVExit()">✕ Exit</button></div>';
+    document.body.appendChild(ov);
+    var show = function(){ ov.classList.add('showctrl'); clearTimeout(CTRL_T); CTRL_T = setTimeout(function(){ ov.classList.remove('showctrl'); }, 4000); };
+    ov.addEventListener('mousemove', show); ov.addEventListener('touchstart', show, {passive:true}); ov.addEventListener('click', show);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && ov.classList.contains('open')) window._lnTVExit(); });
+  }
+  function keepAwake(){ try{ if(navigator.wakeLock && !WAKE) navigator.wakeLock.request('screen').then(function(w){ WAKE = w; w.addEventListener('release', function(){ WAKE = null; }); }).catch(function(){}); }catch(e){} }
+
+  window._lnTV = function(target){
+    if(!L()) return;
+    build();
+    var p = pin();
+    TARGET = target || (p && p.target) || 'rotate';
+    SEC = (p && p.sec) || SEC; IDX = 0; STARTED = Date.now();
+    if(window._lnClose) window._lnClose();
+    var ov = document.getElementById('lnTv'); ov.classList.add('open');
+    draw(); schedule(); tick(); clearInterval(CLOCK); CLOCK = setInterval(tick, 15000);
+    keepAwake();
+    ov.classList.add('showctrl'); clearTimeout(CTRL_T); CTRL_T = setTimeout(function(){ ov.classList.remove('showctrl'); }, 5000);
+  };
+  window._lnTVSet = function(v){ TARGET = v; IDX = 0; var p = pin(); if(p) setPin({ target:v, sec:SEC }); draw(); schedule(); };
+  window._lnTVSpeed = function(v){ SEC = parseInt(v, 10) || 20; var p = pin(); if(p) setPin({ target:TARGET, sec:SEC }); schedule(); };
+  window._lnTVPin = function(){
+    var p = pin();
+    if(p && p.target === TARGET){ setPin(null); if(window.showToast) window.showToast('yellow','Unpinned','This screen won\'t open the monitor on its own anymore.'); }
+    else { setPin({ target:TARGET, sec:SEC }); if(window.showToast) window.showToast('green','📌 Kept on this screen', (TARGET === 'rotate' ? 'Rotating all cells' : TARGET) + ' — comes back up after a refresh.'); }
+    draw();
+  };
+  window._lnTVFull = function(){ var el = document.documentElement; try{ (el.requestFullscreen || el.webkitRequestFullscreen).call(el); }catch(e){} keepAwake(); };
+  window._lnTVExit = function(){
+    clearInterval(TIMER); clearInterval(CLOCK);
+    var ov = document.getElementById('lnTv'); if(ov) ov.classList.remove('open');
+    try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(e){}
+    try{ if(WAKE) WAKE.release(); }catch(e){}
+  };
+  document.addEventListener('visibilitychange', function(){ var ov = document.getElementById('lnTv'); if(!document.hidden && ov && ov.classList.contains('open')) keepAwake(); });
+
+  // Live: redraw on every floor update (keeps the rotation timer as-is)
+  var hook = setInterval(function(){
+    if(typeof window._applyMachineEdges !== 'function' || !window._ln) return;
+    clearInterval(hook);
+    var orig = window._applyMachineEdges;
+    window._applyMachineEdges = function(){
+      var r = orig.apply(this, arguments);
+      try{ var ov = document.getElementById('lnTv'); if(ov && ov.classList.contains('open')) draw(); }catch(e){}
+      return r;
+    };
+  }, 400);
+  setInterval(function(){ var ov = document.getElementById('lnTv'); if(ov && ov.classList.contains('open')) draw(); }, 60000);   // waiting times tick up
+
+  // Pinned screen (or ?monitor=MPPI / ?monitor=rotate in the link): open by itself after login
+  var auto = setInterval(function(){
+    var auth = document.getElementById('authOverlay');
+    if(!window.currentUser || (auth && !auth.classList.contains('hidden')) || !window._ln || !document.querySelector('.floor-grid .machine')) return;
+    if(!window.machineNotes) return;
+    clearInterval(auto);
+    var m = /[?&]monitor=([^&#]+)/.exec(location.search), p = pin();
+    var target = m ? decodeURIComponent(m[1]).replace(/\+/g,' ') : (p ? p.target : null);
+    if(target){
+      if(target !== 'rotate'){ var hit = window._lnCells().filter(function(c){ return c.name.toLowerCase() === target.toLowerCase(); })[0]; target = hit ? hit.name : 'rotate'; }
+      setTimeout(function(){ window._lnTV(target); }, 600);
+    }
+  }, 1000);
 })();
 </script>
 </body>
