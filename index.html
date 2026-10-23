@@ -22084,8 +22084,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._lnTVSpeed = function(v){ SEC = parseInt(v, 10) || 20; var p = pin(); if(p) setPin({ target:TARGET, sec:SEC }); schedule(); };
   window._lnTVPin = function(){
     var p = pin();
-    if(p && p.target === TARGET){ setPin(null); if(window.showToast) window.showToast('yellow','Unpinned','This screen won\'t open the monitor on its own anymore.'); }
-    else { setPin({ target:TARGET, sec:SEC }); if(window.showToast) window.showToast('green','📌 Kept on this screen', (TARGET === 'rotate' ? 'Rotating all cells' : TARGET) + ' — comes back up after a refresh.'); }
+    if(p && p.target === TARGET){ setPin(null); try{ var u0 = new URL(location.href); u0.searchParams.delete('monitor'); history.replaceState(null, '', u0.toString()); }catch(e){} if(window.showToast) window.showToast('yellow','Unpinned','This screen won\'t open the monitor on its own anymore.'); }
+    else {
+      setPin({ target:TARGET, sec:SEC });
+      // Put the cell in the address bar so a refresh (or a bookmark of this page) brings the monitor back up
+      try{ var u = new URL(location.href); u.searchParams.set('monitor', TARGET); history.replaceState(null, '', u.toString()); }catch(e){}
+      if(window.showToast) window.showToast('green','📌 Kept on this screen', (TARGET === 'rotate' ? 'Rotating all cells' : TARGET) + ' — bookmark this page so it opens straight to the monitor.');
+    }
     draw();
   };
   window._lnTVFull = function(){ var el = document.documentElement; try{ (el.requestFullscreen || el.webkitRequestFullscreen).call(el); }catch(e){} keepAwake(); };
@@ -22116,8 +22121,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(!window.currentUser || (auth && !auth.classList.contains('hidden')) || !window._ln || !document.querySelector('.floor-grid .machine')) return;
     if(!window.machineNotes) return;
     clearInterval(auto);
-    var m = /[?&]monitor=([^&#]+)/.exec(location.search), p = pin();
-    var target = m ? decodeURIComponent(m[1]).replace(/\+/g,' ') : (p ? p.target : null);
+    // Everyone lands on the Shop Floor. Only a ?monitor=CELL link opens the shop monitor by itself.
+    var m = /[?&]monitor=([^&#]+)/.exec(location.search);
+    var target = m ? decodeURIComponent(m[1]).replace(/\+/g,' ') : null;
+    if(!target){
+      ['linesOverlay','woBoard','lnTv'].forEach(function(id){ var el = document.getElementById(id); if(el) el.classList.remove('open'); });
+      if(!/[?&]ptsync=1/.test(location.search) && window.switchTab) try{ window.switchTab('shop'); }catch(e){}
+    }
     if(target){
       if(target !== 'rotate'){ var hit = window._lnCells().filter(function(c){ return c.name.toLowerCase() === target.toLowerCase(); })[0]; target = hit ? hit.name : 'rotate'; }
       setTimeout(function(){ window._lnTV(target); }, 600);
