@@ -20760,6 +20760,9 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 .ro-pill.canceled { background:rgba(100,116,139,0.2); color:#94a3b8; border:1px solid #475569; }
 .ro-pill.late { background:rgba(239,68,68,0.2); color:#fca5a5; border:1px solid rgba(239,68,68,0.6); }
 .ro-date { margin-left:auto; font-size:11px; color:#64748b; }
+.ro-draft { background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.4); color:#fde68a; border-radius:8px; padding:7px 10px; font-size:12px; margin-bottom:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.ro-draft button { background:none; border:1px solid rgba(251,191,36,0.5); color:#fbbf24; border-radius:6px; padding:3px 8px; font-size:11px; cursor:pointer; }
+.ro-nudge { animation:roNudge .35s; } @keyframes roNudge { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
 .ro-range { display:flex; align-items:center; gap:6px; font-size:11px; color:#94a3b8; flex-wrap:wrap; }
 .ro-range input { background:#0d1f35; border:1px solid #1e3a5c; color:#e2e8f0; border-radius:7px; padding:6px 8px; font-size:12px; }
 .ro-stamps { display:flex; flex-wrap:wrap; gap:4px 12px; margin-top:6px; font-size:11px; color:#cbd5e1; }
@@ -20885,7 +20888,15 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     document.body.appendChild(ov);
     ['roEdit','roDetail'].forEach(function(id){
       var m = document.createElement('div'); m.className = 'ro-modal'; m.id = id;
-      m.onclick = function(e){ if(e.target === m) m.classList.remove('open'); };
+      m.onclick = function(e){
+        if(e.target !== m) return;
+        if(id === 'roEdit'){   // never lose a half-filled form to a stray click
+          var sh = m.querySelector('.ro-sheet'); if(sh){ sh.classList.remove('ro-nudge'); void sh.offsetWidth; sh.classList.add('ro-nudge'); }
+          toast('yellow','Form is still open','Tap Cancel to close it — your draft is saved.');
+          return;
+        }
+        m.classList.remove('open');
+      };
       document.body.appendChild(m);
     });
   }
@@ -21106,11 +21117,32 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     document.querySelectorAll('.machine .machine-name').forEach(function(el){ var t = el.textContent.trim(); if(t && !seen[t]){ seen[t] = 1; out.push(t); } });
     return out;
   }
+  // Draft of a new request — saved on this device as you type, so closing
+  // the form, switching tabs or a page refresh never loses your work.
+  var DRAFT_KEY = 'hillReorderDraft';
+  function draftHasContent(d){ return !!(d && (d.wo || d.machine || d.vendor || d.notes || d.quoteNum || d.dateNeeded || (d.items||[]).some(function(i){ return i.qty || i.name || i.part; }))); }
+  function saveDraft(){
+    if(!EDIT || EDIT._id) return;               // only new requests get a draft
+    readForm();
+    try{ if(draftHasContent(EDIT)) localStorage.setItem(DRAFT_KEY, JSON.stringify(EDIT)); else localStorage.removeItem(DRAFT_KEY); }catch(e){}
+  }
+  function clearDraft(){ try{ localStorage.removeItem(DRAFT_KEY); }catch(e){} }
+  window._roStartFresh = function(){ clearDraft(); EDIT = blankReq(); EDIT._id = null; drawEdit(); };
   window._roNew = function(prefillKey){
     if(!canSend()) return;
-    EDIT = blankReq(); EDIT._id = null;
-    if(prefillKey){ var t = toolFromKey(prefillKey); if(t) EDIT.items = [Object.assign({qty:1, ship:''}, t)]; }
+    var d = null; try{ d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); }catch(e){}
+    if(draftHasContent(d)){ EDIT = d; EDIT._id = null; EDIT._restored = true; }
+    else { EDIT = blankReq(); EDIT._id = null; }
+    if(prefillKey){
+      var t = toolFromKey(prefillKey);
+      if(t){
+        var blank = EDIT.items.filter(function(i){ return !i.qty && !i.name && !i.part; })[0];
+        var line = Object.assign({qty:1, ship:''}, t);
+        if(blank) EDIT.items[EDIT.items.indexOf(blank)] = line; else if(EDIT.items.length < 15) EDIT.items.push(line);
+      }
+    }
     drawEdit();
+    saveDraft();
   };
   window._roEditExisting = function(id){
     var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r || !canSend()) return;
@@ -21126,6 +21158,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     var m = document.getElementById('roEdit');
     m.innerHTML = '<div class="ro-sheet">'
       + '<div class="ro-h">🛒 ' + (EDIT._id ? 'Edit ' + esc(EDIT._num) : 'New Tooling Reorder') + '<span style="margin-left:auto;font-family:Barlow,sans-serif;font-size:11px;color:#64748b;letter-spacing:0;">Same fields as the Rev 8 paper form</span></div>'
+      + (EDIT._restored ? '<div class="ro-draft">📝 Picked up where you left off. <button type="button" onclick="window._roStartFresh()">Start a blank form instead</button></div>' : '')
       + '<div class="ro-grid3">' + fld('roReqBy','Requested By',EDIT.requestedBy,true) + fld('roDateReq','Date Requested',EDIT.dateRequested,true,'date') + fld('roDateNeed','Date Needed By',EDIT.dateNeeded,false,'date') + '</div>'
       + '<div class="ro-grid3">' + fld('roWo','Job / WO #',EDIT.wo) + fld('roMachine','Machine / Work Center',EDIT.machine,false,'text',' list="roMachines"') + fld('roVendor','Vendor (if known)',EDIT.vendor) + '</div>'
       + '<datalist id="roMachines">' + machineList().map(function(n){ return '<option value="' + esc(n) + '">'; }).join('') + '</datalist>'
@@ -21143,6 +21176,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
       + '</div>';
     m.classList.add('open');
     drawLines();
+    if(!m._draftWired){ m._draftWired = true; ['input','change'].forEach(function(ev){ m.addEventListener(ev, function(){ clearTimeout(m._dt); m._dt = setTimeout(saveDraft, 300); }); }); }
   }
   function drawLines(){
     var box = document.getElementById('roLines'); if(!box) return;
@@ -21160,6 +21194,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
         + ((i.toolRef || i.location) ? '<div class="ref">' + thumb + esc([i.toolRef, i.location ? '📍 ' + i.location : ''].filter(Boolean).join(' · ')) + '</div>' : '')
         + '</div>';
     }).join('');
+    setTimeout(saveDraft, 0);   // picking a tool, adding/removing a line or choosing shipping all save the draft
   }
   function readForm(){
     if(!EDIT) return;
@@ -21169,7 +21204,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     var hq = document.getElementById('roHasQuote'); EDIT.hasQuote = !!(hq && hq.checked);
     document.querySelectorAll('#roLines [data-k]').forEach(function(el){ var it = EDIT.items[+el.getAttribute('data-i')]; if(it) it[el.getAttribute('data-k')] = el.value.trim(); });
   }
-  window._roShip = function(n, s){ readForm(); EDIT.items[n].ship = EDIT.items[n].ship === s ? '' : s; drawLines(); };
+  window._roShip = function(n, s){ readForm(); EDIT.items[n].ship = EDIT.items[n].ship === s ? '' : s; drawLines(); saveDraft(); };
   window._roAddLine = function(){ readForm(); if(EDIT.items.length >= 15){ setErr('The form holds 15 lines — send this one and start another.'); return; } EDIT.items.push({qty:'',name:'',part:'',ship:''}); drawLines(); };
   window._roDelLine = function(n){ readForm(); EDIT.items.splice(n,1); if(!EDIT.items.length) EDIT.items.push({qty:'',name:'',part:'',ship:''}); drawLines(); };
   function setErr(t){ var e = document.getElementById('roErr'); if(e) e.textContent = t || ''; }
@@ -21205,6 +21240,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     data.history = [{ at:new Date().toISOString(), by:me(), action:'sent' }];
     m.addDoc(m.collection(db(), COL), data).then(function(){
       toast('green','📨 Sent to Purchasing', data.num);
+      clearDraft();
       notifyPurchaser(data);
       done();
     }).catch(function(e){ setErr('Couldn\'t send: ' + e.message); if(btn){ btn.disabled = false; btn.textContent = '📨 Send to Purchasing'; } });
