@@ -21647,6 +21647,36 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       .then(function(){ if(window.showToast) window.showToast('green','Sorted by due date', mid); })
       .catch(function(e){ if(window.showToast) window.showToast('red','Couldn\'t save the order', e.message); });
   };
+  // Setup clock on a pending job: Start → (Pause/Resume) → Setup done. Uses the same Start/Finish as the Shop Floor,
+  // so your setup time is logged to the WO and the job flips to Running when you hit done.
+  function setupMins(n){
+    var acc = n.accumulatedElapsedMins || 0;
+    if(n.inProgress && n.startedAt && n.startedAt.seconds) acc += Math.max(0, Math.round((Date.now() - n.startedAt.seconds * 1000) / 60000));
+    return acc;
+  }
+  function hm(m){ return m >= 60 ? Math.floor(m/60) + 'h ' + (m%60) + 'm' : m + 'm'; }
+  function setupCtl(n){
+    var can = window._isAdmin || window.currentUser === 'hilladmin' || window._isManager;
+    var id = esc(n.id), hr = esc(n.hillReqId || n.id), hrF = esc(n.hillReqId || '');
+    var stop = 'event.stopPropagation();';
+    if(n.inProgress){
+      return '<div class="ln-setup on">🔧 SETTING UP · <b>' + hm(setupMins(n)) + '</b>' + (n.startedBy ? ' · ' + esc(String(n.startedBy).replace(/^hilladmin$/,'Miguel')) : '') + '</div>'
+        + (can ? '<div class="ln-sbtns"><button class="ln-sb hold" onclick="' + stop + 'window.holdRequest(\'' + id + '\',\'' + hrF + '\')">⏸ Pause</button>'
+          + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Setup done — GO</button></div>' : '');
+    }
+    if(n.onHold || n.accumulatedElapsedMins){
+      return '<div class="ln-setup held">⏸ SETUP PAUSED · <b>' + hm(setupMins(n)) + '</b>' + (n.holdReason ? ' · ' + esc(n.holdReason) : '') + '</div>'
+        + (can ? '<div class="ln-sbtns"><button class="ln-sb" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Resume</button>'
+          + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Setup done — GO</button></div>' : '');
+    }
+    return can ? '<div class="ln-sbtns"><button class="ln-sb start" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Start setup</button></div>' : '';
+  }
+  window._lnSetupDone = function(id, hr){
+    if(!confirm('Setup done? Your setup time is logged to this work order and the job goes to Running.')) return;
+    window.finishRequest(id, hr);
+  };
+  window._lnSetupCtl = setupCtl;
+
   function jobHtml(n, kind, pos, total, mid){
     var who = n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : '';
     var by = n.operator ? 'by <b>' + esc(String(n.operator).split(' ')[0]) + '</b>' : '';
@@ -21661,11 +21691,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var drag = kind !== 'run' && canOrder();
     if(drag) moves = (moves ? moves.replace('<div class="ln-moves">', '<div class="ln-moves">') : '<div class="ln-moves">')
       .replace(/<\/div>$/, '') + '<button class="ln-mv ln-to" title="Move to another machine" onclick="event.stopPropagation();window._lnMoveMenu(\'' + esc(n.id) + '\', this)">⇄</button></div>';
-    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + (drag ? ' drag' : '') + '"'
+    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + (n.inProgress ? ' setting' : '') + (drag ? ' drag' : '') + '"'
       + (drag ? ' draggable="true" data-id="' + esc(n.id) + '" data-mid="' + esc(mid) + '" ondragstart="window._lnDragStart(event)" ondragend="window._lnDragEnd(event)"' : '') + '>'
       + '<div class="ln-pos">' + (kind === 'run' ? 'RUN' : '#' + (pos+1)) + '</div>'
-      + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
-      + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '') + '</div>'
+      + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? '<span class="ln-wolink" title="Full job review" onclick="event.stopPropagation();window._jobReview && window._jobReview(\'' + esc(n.wo) + '\')">WO ' + esc(n.wo) + '</span>' : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
+      + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '')
+      + (kind !== 'run' && n.type === 'blue' ? setupCtl(n) : '')
+      + (kind === 'run' && n.setupTime ? '<div class="ln-meta">🔧 Setup took <b>' + esc(n.setupTime) + '</b></div>' : '') + '</div>'
       + moves + '</div>';
   }
 
@@ -21869,6 +21901,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
       + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
       + '<div class="ln-bar" style="padding-bottom:4px;"><div id="lnCells" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>'
+      +   '<button class="ln-btn" style="background:#f5c842;border-color:#f5c842;color:#1a1300;" onclick="window._jobReview && window._jobReview()">🔍 Job Review</button>'
       +   '<button class="ln-btn" style="background:#10b981;border-color:#10b981;color:#03241a;" onclick="window._woOpen && window._woOpen()">📋 Work Orders</button>'
       +   '<button class="ln-btn" id="lnPtBtn" style="display:none;" onclick="window._ptOpen && window._ptOpen()">⏱ ProShop Sync</button>'
       +   '<button class="ln-btn" style="background:#0ea5e9;border-color:#0ea5e9;color:#04121f;" onclick="window._lnTV(window._lnCurrentCell() === \'all\' ? \'rotate\' : window._lnCurrentCell())">📺 Shop monitor</button></div>'
@@ -22009,7 +22042,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
         + '<div class="tv-lbl">UP NEXT</div>'
         + (pend.length ? pend.slice(0, maxNext).map(function(n, i){
               return '<div class="tv-row' + (i === 0 ? ' first' : '') + '"><div class="tv-n">' + (i+1) + '</div><div><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div>'
-                + '<div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + '</div></div>';
+                + '<div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + (n.inProgress ? '<div class="tv-due soon">🔧 SETTING UP NOW</div>' : '') + (window._ptJobBadge ? window._ptJobBadge(n) : '') + '</div></div>';
             }).join('') + (pend.length > maxNext ? '<div class="tv-more">+ ' + (pend.length - maxNext) + ' more in line</div>' : '')
           : '<div class="tv-empty">Nothing queued</div>')
         + '</div>';
@@ -22228,7 +22261,10 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     qtyDone:   /^(qty ?(done|complete|completed|good|made|run|ran|comp)|completed|complete|good|done|made|qtydone)$/i,
     qtyTotal:  /^(qty|qty ?(total|required|ordered|req|order|due)|quantity|order ?qty|total ?qty|req ?qty|qtytotal)$/i,
     status:    /^(status|wo ?status|state|stage)$/i,
-    customer:  /^(customer|cust|customer ?name)$/i
+    customer:  /^(customer|cust|customer ?name)$/i,
+    setupHrs:  /^(setup ?(hrs|hours|time)|setuphrs|actual ?setup( ?hrs)?)$/i,
+    runHrs:    /^(run ?(hrs|hours|time)|runhrs|actual ?run( ?hrs)?)$/i,
+    labor:     /^(labor|time ?entries|timeentries|entries|time ?log|timelog|history)$/i
   };
   function splitLine(l){
     if(l.indexOf('\t') !== -1) return l.split('\t');
@@ -22278,7 +22314,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var by = {};
     function add(r, fromClock){
       if(!r.wo) return;
-      var k = norm(r.wo) + '|' + norm(r.op || ''), w = by[k] || (by[k] = { wo:String(r.wo), op:String(r.op || ''), part:'', customer:'', workCenter:'', machine:'', dueISO:'', qtyDone:null, qtyTotal:null, status:'', onClock:[] });
+      var k = norm(r.wo) + '|' + norm(r.op || ''), w = by[k] || (by[k] = { wo:String(r.wo), op:String(r.op || ''), part:'', customer:'', workCenter:'', machine:'', dueISO:'', qtyDone:null, qtyTotal:null, status:'', onClock:[], setupHrs:null, runHrs:null, labor:null });
       if(r.part && !w.part) w.part = String(r.part);
       if(r.customer && !w.customer) w.customer = String(r.customer);
       if(r.workCenter && !w.workCenter) w.workCenter = String(r.workCenter);
@@ -22287,6 +22323,11 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       if(num(r.qtyDone) != null && w.qtyDone == null) w.qtyDone = num(r.qtyDone);
       if(num(r.qtyTotal) != null && w.qtyTotal == null) w.qtyTotal = num(r.qtyTotal);
       if(r.status && !w.status) w.status = String(r.status);
+      if(num(r.setupHrs) != null && w.setupHrs == null) w.setupHrs = num(r.setupHrs);
+      if(num(r.runHrs) != null && w.runHrs == null) w.runHrs = num(r.runHrs);
+      if(Array.isArray(r.labor) && !w.labor) w.labor = r.labor.map(function(e){
+        return { employee:String(e.employee || e.name || e.who || ''), type:String(e.type || e.kind || e.activity || ''), start:String(e.start || e.in || e.clockIn || ''), end:String(e.end || e.out || e.clockOut || ''), hours: num(e.hours != null ? e.hours : e.hrs) };
+      });
       if(fromClock && r.employee && w.onClock.indexOf(String(r.employee)) === -1) w.onClock.push(String(r.employee));
       if(!w.machine) w.machine = r.machine || matchMachine(r);
     }
@@ -22462,7 +22503,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       }).join(' · ');
       var prog = window._ptProgHtml(r) || '<div class="wb-src">No qty / due date from ProShop yet</div>';
       return '<div class="wb-card' + (st.late ? ' late' : st.rawCls === 'hold' ? ' hold' : '') + '">'
-        + '<div class="wb-wo">WO ' + esc(r.wo) + (r.op ? ' <span style="font-size:15px;color:#94a3b8;">OP ' + esc(r.op) + '</span>' : '') + '</div>'
+        + '<div class="wb-wo" style="cursor:pointer;" title="Full job review" onclick="window._jobReview(\'' + esc(r.wo) + '\')">WO ' + esc(r.wo) + (r.op ? ' <span style="font-size:15px;color:#94a3b8;">OP ' + esc(r.op) + '</span>' : '') + '</div>'
         + '<div class="wb-meta">' + [r.part ? 'Part <b>' + esc(r.part) + '</b>' : '', r.customer ? esc(r.customer) : ''].filter(Boolean).join(' · ') + '</div>'
         + prog
         + '<div class="wb-meta" style="margin-top:4px;">' + [r.machine ? '🏭 <b>' + esc(machineName(r.machine)) + '</b>' : (r.workCenter ? '🏭 ' + esc(r.workCenter) : ''), line ? esc(line) : '', who.length ? '👷 <b>' + esc(who.join(', ')) + '</b>' : ''].filter(Boolean).join(' · ') + '</div>'
@@ -22579,6 +22620,15 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var rows = PREVIEW.map(function(r){ return { employee:String(r.employee||''), wo:String(r.wo||''), op:String(r.op||''), part:String(r.part||''), workCenter:String(r.workCenter||''), start:String(r.start||''), startMs:r.startMs||0, machine:r.machine||'' }; });
     var wos = buildWOs(rows, PREVIEW_WOS);
     var w = [m.setDoc(m.doc(db(), 'hillSettings', 'proshopTimeClock'), { rows:rows, workOrders:wos, syncedAtMs:now, syncedBy:who, updatedAt:m.serverTimestamp() })];
+    // Permanent history per work order (hillProshopWO/<WO>) — Job Review reads this even after the job leaves the schedule
+    var perWo = {};
+    wos.forEach(function(x){ var id = norm(x.wo); if(!id) return; (perWo[id] = perWo[id] || { wo:x.wo, ops:{} }).ops[norm(x.op) || '_'] = Object.assign({}, x, { syncedAtMs:now }); });
+    rows.forEach(function(r){ var id = norm(r.wo); if(!id) return; var d = (perWo[id] = perWo[id] || { wo:r.wo, ops:{} }); (d.seen = d.seen || {})[norm(r.employee) + '_' + (r.startMs || 0)] = { employee:r.employee, op:r.op || '', machine:r.machine || '', startMs:r.startMs || 0, lastSeenMs:now }; });
+    Object.keys(perWo).forEach(function(id){
+      var d = perWo[id], data = { wo:d.wo, lastSyncMs:now, ops:d.ops };
+      if(d.seen) data.seen = d.seen;
+      try{ w.push(m.setDoc(m.doc(db(), 'hillProshopWO', id), data, { merge:true }).catch(function(){})); }catch(e){}
+    });
     if(window._ptMapDirty) w.push(m.setDoc(m.doc(db(), 'hillSettings', 'proshopWorkCenterMap'), { map:MAP, updatedAt:m.serverTimestamp() }));
     Promise.all(w).then(function(){
       window._ptMapDirty = false;
@@ -22604,5 +22654,238 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   }, 1000);
 })();
 </script>
+<style>
+/* ═══ JOB REVIEW — one WO, everything ═══ */
+.ln-setup { margin-top:5px; font-size:11px; font-weight:700; letter-spacing:0.5px; border-radius:7px; padding:4px 8px; display:inline-block; }
+.ln-setup.on { background:rgba(245,200,66,0.15); border:1px solid rgba(245,200,66,0.6); color:#fde68a; }
+.ln-setup.held { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.5); color:#fbbf24; }
+.ln-setup b { color:#fff; }
+.ln-sbtns { display:flex; gap:6px; flex-wrap:wrap; margin-top:5px; }
+.ln-sb { border-radius:7px; padding:6px 10px; font-size:12px; font-weight:700; cursor:pointer; border:1px solid #334155; background:rgba(255,255,255,0.06); color:#e2e8f0; }
+.ln-sb.start { background:#2563eb; border-color:#2563eb; color:#fff; }
+.ln-sb.go { background:#10b981; border-color:#10b981; color:#03241a; }
+.ln-sb.hold { background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.5); color:#fbbf24; }
+.ln-job.setting { border-color:rgba(245,200,66,0.75) !important; box-shadow:0 0 0 1px rgba(245,200,66,0.35); }
+.ln-wolink { cursor:pointer; text-decoration:underline dotted rgba(255,255,255,0.35); text-underline-offset:3px; }
+.ln-wolink:hover { color:#f5c842; }
+#jobRev { position:fixed; inset:0; z-index:9750; background:#06101d; display:none; flex-direction:column; font-family:'Barlow',sans-serif; color:#e2e8f0; }
+#jobRev.open { display:flex; }
+.jr-top { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid #1e3a5f; flex-wrap:wrap; }
+.jr-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:2px; color:#f5c842; }
+.jr-search { display:flex; gap:8px; flex:1; min-width:220px; }
+.jr-search input { flex:1; background:#08121f; border:1px solid #1e3a5c; border-radius:8px; color:#e2e8f0; padding:9px 12px; font-size:14px; }
+.jr-body { flex:1; overflow-y:auto; padding:14px 16px 40px; }
+.jr-wrap { max-width:1100px; margin:0 auto; }
+.jr-h { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+.jr-wo { font-family:'Bebas Neue',sans-serif; font-size:40px; letter-spacing:1px; color:#fff; line-height:1; }
+.jr-sub { font-size:13px; color:#94a3b8; } .jr-sub b { color:#e2e8f0; }
+.jr-tiles { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin:12px 0; }
+.jr-tile { background:#0d1f35; border:1px solid #1e3a5f; border-radius:10px; padding:9px 11px; }
+.jr-tile .k { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#64748b; font-weight:700; }
+.jr-tile .v { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1px; color:#fff; line-height:1.1; }
+.jr-tile .s { font-size:11px; color:#94a3b8; }
+.jr-tile.me { border-color:rgba(245,200,66,0.6); } .jr-tile.me .v { color:#f5c842; }
+.jr-tile.ps { border-color:rgba(16,185,129,0.5); } .jr-tile.ps .v { color:#6ee7b7; }
+.jr-sec { font-size:11px; letter-spacing:2px; color:#7dd3fc; font-weight:700; margin:18px 0 6px; text-transform:uppercase; }
+.jr-tbl { width:100%; border-collapse:collapse; font-size:12px; }
+.jr-tbl th { text-align:left; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#64748b; padding:5px 6px; border-bottom:1px solid #1e3a5f; }
+.jr-tbl td { padding:6px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:top; }
+.jr-tl { border-left:2px solid #1e3a5f; margin-left:6px; padding-left:12px; }
+.jr-ev { position:relative; padding:6px 0 8px; }
+.jr-ev:before { content:''; position:absolute; left:-18px; top:10px; width:10px; height:10px; border-radius:50%; background:var(--c,#64748b); border:2px solid #06101d; }
+.jr-ev .t { font-size:11px; color:#64748b; } .jr-ev .w { font-size:13px; } .jr-ev .w b { color:#fff; } .jr-ev .d { font-size:12px; color:#94a3b8; margin-top:1px; }
+.jr-empty { color:#64748b; font-size:13px; padding:8px 0; }
+.jr-note { font-size:11px; color:#64748b; margin-top:4px; }
+.jr-wrap .wo-row1 { font-size:13px; } .jr-wrap .wo-bar { height:9px; }
+@media (max-width:640px){ .jr-wo { font-size:32px; } .jr-body { padding:10px 10px 40px; } .jr-tbl { font-size:11px; } .jr-hide-m { display:none; } }
+@media print { body > *:not(#jobRev) { display:none !important; } #jobRev { position:static; background:#fff; color:#000; } .jr-top, .jr-noprint { display:none !important; } .jr-body { overflow:visible; } }
+</style>
+<script>
+// ═══ JOB REVIEW ═══
+// Search a WO and see the whole job in one place: ProShop (qty, due, status, setup/run hours, who was clocked in),
+// the Scheduler (where it sits now), your setup time, and every request on that WO from start to finish.
+(function(){
+  function M(){ return window._fbModules; } function db(){ return window.fbDb || window._db; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function norm(s){ return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  function tsMs(t){ if(!t) return 0; if(typeof t.toMillis === 'function') return t.toMillis(); if(t.seconds) return t.seconds * 1000; if(typeof t === 'number') return t; var d = Date.parse(t); return isNaN(d) ? 0 : d; }
+  function fmtDT(ms){ if(!ms) return ''; var d = new Date(ms), h = d.getHours(); return (d.getMonth()+1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(-2) + ' ' + ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h >= 12 ? ' PM' : ' AM'); }
+  function hm(m){ m = Math.round(m || 0); return m >= 60 ? Math.floor(m/60) + 'h ' + (m%60) + 'm' : m + 'm'; }
+  function hrs(h){ return h == null ? '—' : (Math.round(h * 10) / 10) + ' h'; }
+  function who(u){ return String(u || '').replace(/^hilladmin$/i, 'Miguel'); }
+  var TYPE = { blue:['🔵','Pending WO','#3b82f6'], green:['🟢','Running','#22c55e'], yellow:['🟡','Machinist request','#eab308'], red:['🔴','Inspection','#ef4444'], orange:['🟠','Floor support','#f97316'], dnx:['🔷','Datanomix','#38bdf8'] };
+
+  function variants(wo){
+    var raw = String(wo || '').trim().replace(/^WO[\s#\-]*/i, ''), clean = raw.replace(/[^0-9A-Za-z]/g, '');
+    var v = [raw, raw.toUpperCase(), clean];
+    if(/^\d{6}$/.test(clean)) v.push(clean.slice(0,2) + '-' + clean.slice(2));
+    return v.filter(function(x, i){ return x && v.indexOf(x) === i; }).slice(0, 10);
+  }
+
+  async function load(wo){
+    var m = M(), d = db(), vs = variants(wo), out = { wo:wo, reqs:[], logs:[], ps:null };
+    if(!m || !d) return out;
+    var seen = {};
+    try{
+      var snaps = await Promise.all(vs.map(function(v){ return m.getDocs(m.query(m.collection(d, 'hillRequests'), m.where('wo', '==', v))).catch(function(){ return null; }); }));
+      snaps.forEach(function(sn){ if(sn) sn.forEach(function(x){ if(!seen[x.id]){ seen[x.id] = 1; var r = x.data(); r.id = x.id; out.reqs.push(r); } }); });
+    }catch(e){}
+    try{
+      var tl = await Promise.all(vs.map(function(v){ return m.getDocs(m.query(m.collection(d, 'hillTimeLog'), m.where('wo', '==', v))).catch(function(){ return null; }); }));
+      var s2 = {}; tl.forEach(function(sn){ if(sn) sn.forEach(function(x){ if(!s2[x.id]){ s2[x.id] = 1; var r = x.data(); r.id = x.id; out.logs.push(r); } }); });
+    }catch(e){}
+    try{ var p = await m.getDoc(m.doc(d, 'hillProshopWO', norm(wo))); if(p && p.exists && p.exists()) out.ps = p.data(); }catch(e){}
+    return out;
+  }
+
+  function render(data){
+    var box = document.getElementById('jrBody');
+    var wo = data.wo, live = window._ptWO ? window._ptWO(wo) : null;
+    var ops = data.ps && data.ps.ops ? Object.keys(data.ps.ops).map(function(k){ return data.ps.ops[k]; }) : [];
+    if(live && !ops.some(function(o){ return norm(o.op) === norm(live.op); })) ops.push(live);
+    var main = live || ops[0] || null;
+    var notes = []; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){ if(n && norm(n.wo) === norm(wo)) notes.push(n); }); });
+    var reqs = data.reqs.slice().sort(function(a, b){ return tsMs(a.createdAt) - tsMs(b.createdAt); });
+    if(!reqs.length && !ops.length && !notes.length && !data.logs.length){
+      box.innerHTML = '<div class="jr-wrap"><div class="jr-empty">Nothing found for WO ' + esc(wo) + '. Check the number — it searches requests, setups and ProShop syncs.</div></div>'; return;
+    }
+    var part = (main && main.part) || (reqs.filter(function(r){ return r.part || r.partNumber; })[0] || {}).part || (reqs.filter(function(r){ return r.partNumber; })[0] || {}).partNumber || (notes[0] || {}).part || '';
+    var machines = []; reqs.concat(notes).forEach(function(r){ if(r.machine && machines.indexOf(r.machine) === -1) machines.push(r.machine); });
+
+    // ── time totals from the app ──
+    var kind = function(r){ return r.originalType || r.type; };
+    var mySetup = 0, mySetupN = 0, mach = 0, machN = 0, insp = 0, inspN = 0, flo = 0, floN = 0, run = 0;
+    reqs.forEach(function(r){
+      var k = kind(r), mins = r.elapsedMins || 0;
+      if(r.autoPosted || r.autoCompleted) return;   // the auto "Running" card, not a separate request
+      if(k === 'blue'){ mySetupN++; mySetup += mins; }
+      else if(k === 'yellow'){ machN++; mach += mins; }
+      else if(k === 'red'){ inspN++; insp += mins; }
+      else if(k === 'orange'){ floN++; flo += mins; }
+    });
+    data.logs.forEach(function(l){ if(l.role === 'run') run += l.elapsedMins || 0; });
+    notes.forEach(function(n){ if(n.type === 'blue' && n.inProgress && n.startedAt && n.startedAt.seconds) mySetup += (n.accumulatedElapsedMins || 0) + Math.round((Date.now() - n.startedAt.seconds * 1000) / 60000); });
+
+    // ── ProShop totals ──
+    var psSetup = 0, psRun = 0, psHave = false, labor = [];
+    ops.forEach(function(o){
+      if(o.setupHrs != null){ psSetup += o.setupHrs; psHave = true; }
+      if(o.runHrs != null){ psRun += o.runHrs; psHave = true; }
+      (o.labor || []).forEach(function(e){ labor.push(Object.assign({ op:o.op }, e)); });
+    });
+    if(!psHave && labor.length){ labor.forEach(function(e){ if(e.hours == null) return; psHave = true; if(/set/i.test(e.type)) psSetup += e.hours; else psRun += e.hours; }); }
+    var seen = data.ps && data.ps.seen ? Object.keys(data.ps.seen).map(function(k){ return data.ps.seen[k]; }) : [];
+    seen.sort(function(a, b){ return (a.startMs || 0) - (b.startMs || 0); });
+
+    var st = main && window._ptStatus ? window._ptStatus(main) : null;
+    var h = '<div class="jr-wrap">'
+      + '<div class="jr-h"><div class="jr-wo">WO ' + esc(wo) + '</div>'
+      + '<div class="jr-sub">' + [part ? 'Part <b>' + esc(part) + '</b>' : '', main && main.customer ? esc(main.customer) : '', machines.length ? '🏭 <b>' + esc(machines.join(', ')) + '</b>' : ''].filter(Boolean).join(' · ') + '</div>'
+      + '<button class="pt-btn jr-noprint" style="margin-left:auto;" onclick="window.print()">🖨 Print / PDF</button></div>'
+      + (main && window._ptProgHtml ? window._ptProgHtml(main) : '<div class="jr-note">No ProShop qty / due date synced for this WO yet.</div>');
+
+    h += '<div class="jr-tiles">'
+      + tile('me', 'My setup time', mySetup ? hm(mySetup) : '—', mySetupN ? mySetupN + ' setup' + (mySetupN === 1 ? '' : 's') : 'not started')
+      + tile('ps', 'ProShop setup', psHave ? hrs(psSetup) : '—', 'from ProShop labor')
+      + tile('ps', 'ProShop run', psHave ? hrs(psRun) : '—', 'from ProShop labor')
+      + (main && main.qtyTotal ? tile('', 'Parts', (main.qtyDone || 0) + ' / ' + main.qtyTotal, Math.round(((main.qtyDone || 0) / main.qtyTotal) * 100) + '% done') : '')
+      + tile('', 'Machinist requests', machN, mach ? hm(mach) + ' handling' : '')
+      + tile('', 'Inspections', inspN, insp ? hm(insp) : '')
+      + tile('', 'Floor support', floN, flo ? hm(flo) : '')
+      + (run ? tile('', 'Run time (app)', hm(run), 'start → complete') : '')
+      + '</div>';
+
+    // Where it is now
+    h += '<div class="jr-sec">Right now</div>';
+    if(notes.length){
+      h += notes.map(function(n){
+        var t = TYPE[n.type] || ['•', n.type, '#64748b'];
+        var pos = ''; if(n.type === 'blue' && window._ln){ var q = window._ln.pendingFor(n.machine); var i = q.map(function(x){ return x.id; }).indexOf(n.id); if(i >= 0) pos = ' · #' + (i+1) + ' in line'; }
+        return '<div class="jr-sub" style="margin:3px 0;">' + t[0] + ' <b>' + esc(t[1]) + '</b> on <b>' + esc(n.machine) + '</b>' + (n.op ? ' · OP ' + esc(n.op) : '') + pos
+          + (n.inProgress ? ' · <span style="color:#fde68a;font-weight:700;">🔧 setting up</span>' : '') + (n.assignedTo ? ' · 🔧 ' + esc(n.assignedTo) : '') + '</div>'
+          + (n.type === 'blue' && window._lnSetupCtl ? '<div class="jr-noprint">' + window._lnSetupCtl(n) + '</div>' : '');
+      }).join('');
+    } else h += '<div class="jr-empty">Not on the floor or in the Scheduler right now.</div>';
+    var clockNow = window._ptForWo ? window._ptForWo(wo) : [];
+    if(clockNow.length) h += '<div class="jr-sub" style="margin-top:4px;">👷 On the clock now: <b>' + esc(clockNow.map(function(r){ return r.employee + (r.op ? ' (OP ' + r.op + ')' : ''); }).join(', ')) + '</b></div>';
+
+    // ProShop by operation
+    if(ops.length){
+      h += '<div class="jr-sec">ProShop — by operation</div><table class="jr-tbl"><tr><th>OP</th><th>Status</th><th>Qty</th><th>Due</th><th>Setup</th><th>Run</th><th class="jr-hide-m">Synced</th></tr>'
+        + ops.sort(function(a, b){ return (parseFloat(a.op) || 0) - (parseFloat(b.op) || 0); }).map(function(o){
+          var s = window._ptStatus ? window._ptStatus(o) : null;
+          return '<tr><td><b>' + esc(o.op || '—') + '</b></td><td>' + (s && s.label ? '<span class="wo-st s-' + s.cls + '">' + esc(s.label) + '</span>' : '—') + '</td>'
+            + '<td>' + (o.qtyTotal != null ? esc((o.qtyDone || 0) + ' / ' + o.qtyTotal) : o.qtyDone != null ? esc(o.qtyDone) : '—') + '</td>'
+            + '<td>' + esc(o.dueISO || '—') + '</td><td>' + hrs(o.setupHrs) + '</td><td>' + hrs(o.runHrs) + '</td><td class="jr-hide-m">' + esc(fmtDT(o.syncedAtMs)) + '</td></tr>';
+        }).join('') + '</table>';
+    }
+    // ProShop labor
+    h += '<div class="jr-sec">ProShop time — who worked it</div>';
+    if(labor.length){
+      h += '<table class="jr-tbl"><tr><th>Who</th><th>OP</th><th>Setup / Run</th><th>Start</th><th class="jr-hide-m">End</th><th>Hours</th></tr>'
+        + labor.map(function(e){ return '<tr><td><b>' + esc(e.employee) + '</b></td><td>' + esc(e.op || '') + '</td><td>' + esc(e.type || '') + '</td><td>' + esc(e.start) + '</td><td class="jr-hide-m">' + esc(e.end) + '</td><td>' + hrs(e.hours) + '</td></tr>'; }).join('')
+        + '</table>';
+    } else if(seen.length){
+      h += '<div class="jr-note" style="margin-bottom:4px;">No labor list from ProShop yet — these are the hourly clock-in checks:</div><table class="jr-tbl"><tr><th>Who</th><th>OP</th><th>Clocked in</th><th>Last seen on it</th></tr>'
+        + seen.map(function(e){ return '<tr><td><b>' + esc(e.employee) + '</b></td><td>' + esc(e.op) + '</td><td>' + esc(fmtDT(e.startMs)) + '</td><td>' + esc(fmtDT(e.lastSeenMs)) + '</td></tr>'; }).join('') + '</table>';
+    } else h += '<div class="jr-empty">No ProShop time synced for this WO yet.</div>';
+
+    // Timeline
+    var ev = [];
+    reqs.forEach(function(r){
+      var k = kind(r), t = TYPE[k] || ['•', k || 'Request', '#64748b'];
+      if(r.autoPosted || r.autoCompleted){
+        ev.push({ ms:tsMs(r.createdAt), c:'#22c55e', w:'🟢 <b>Running</b> on ' + esc(r.machine || '') + (r.assignedTo ? ' · ' + esc(r.assignedTo) : ''), d:r.setupTime ? 'Setup took ' + esc(r.setupTime) + (r.setupBy ? ' (' + esc(who(r.setupBy)) + ')' : '') : '' });
+        return;
+      }
+      ev.push({ ms:tsMs(r.createdAt), c:t[2], w:t[0] + ' <b>' + esc(t[1]) + '</b>' + (r.machine ? ' · ' + esc(r.machine) : '') + (r.op ? ' · OP ' + esc(r.op) : '') + (r.operator ? ' — by ' + esc(r.operator) : ''), d:esc(r.detail || '') });
+      if(r.movedAt || r.movedFrom) ev.push({ ms:tsMs(r.movedAt), c:'#a78bfa', w:'⇄ Moved' + (r.movedFrom ? ' from ' + esc(r.movedFrom) : '') + ' to ' + esc(r.machine || ''), d:r.movedBy ? 'by ' + esc(r.movedBy) : '' });
+      if(r.startedAt) ev.push({ ms:tsMs(r.startedAt), c:t[2], w:'▶ ' + (k === 'blue' ? '<b>Setup started</b>' : 'Started') + (r.startedBy ? ' — ' + esc(who(r.startedBy)) : ''), d:'' });
+      if(r.resolvedAt) ev.push({ ms:tsMs(r.resolvedAt), c:t[2], w:'✅ ' + (k === 'blue' ? '<b>Setup done</b>' : 'Done') + (r.resolvedBy ? ' — ' + esc(who(r.resolvedBy)) : ''), d:r.elapsedStr || r.setupTime ? '⏱ ' + esc(r.elapsedStr || r.setupTime) : '' });
+      if(r.completedAt && r.jobStatus === 'completed' && r.runTime) ev.push({ ms:tsMs(r.completedAt), c:'#64748b', w:'🏁 <b>Job complete</b>', d:'Run time ' + esc(r.runTime) });
+    });
+    seen.forEach(function(e){ if(e.startMs) ev.push({ ms:e.startMs, c:'#10b981', w:'⏱ ProShop: <b>' + esc(e.employee) + '</b> clocked in' + (e.op ? ' on OP ' + esc(e.op) : ''), d:e.machine ? esc(e.machine) : '' }); });
+    ev = ev.filter(function(e){ return e.ms; }).sort(function(a, b){ return a.ms - b.ms; });
+    h += '<div class="jr-sec">Full history (' + ev.length + ')</div>'
+      + (ev.length ? '<div class="jr-tl">' + ev.map(function(e){ return '<div class="jr-ev" style="--c:' + e.c + '"><div class="t">' + esc(fmtDT(e.ms)) + '</div><div class="w">' + e.w + '</div>' + (e.d ? '<div class="d">' + e.d + '</div>' : '') + '</div>'; }).join('') + '</div>'
+                   : '<div class="jr-empty">No requests logged for this WO yet.</div>');
+    h += '</div>';
+    box.innerHTML = h;
+  }
+  function tile(cls, k, v, s){ return '<div class="jr-tile ' + cls + '"><div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div>' + (s ? '<div class="s">' + esc(s) + '</div>' : '') + '</div>'; }
+
+  function build(){
+    if(document.getElementById('jobRev')) return;
+    var o = document.createElement('div'); o.id = 'jobRev';
+    o.innerHTML = '<div class="jr-top"><div class="jr-title">🔍 Job Review</div>'
+      + '<form class="jr-search" onsubmit="event.preventDefault();window._jobReview(document.getElementById(\'jrInput\').value)">'
+      + '<input id="jrInput" placeholder="Work order # (e.g. 26-0868)" autocomplete="off"><button class="pt-btn go" type="submit">Search</button></form>'
+      + '<button class="pt-btn" onclick="window._jobReviewClose()">✕ Close</button></div>'
+      + '<div class="jr-body" id="jrBody"><div class="jr-wrap"><div class="jr-empty">Type a work order number to see everything on that job — ProShop qty, due date and labor, your setup time, and every request.</div></div></div>';
+    document.body.appendChild(o);
+  }
+  var CUR = '';
+  window._jobReview = async function(wo){
+    build(); document.getElementById('jobRev').classList.add('open');
+    wo = String(wo || '').trim().replace(/^WO[\s#\-]*/i, '');
+    var inp = document.getElementById('jrInput'); if(inp) inp.value = wo;
+    if(!wo){ setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 50); return; }
+    CUR = wo;
+    document.getElementById('jrBody').innerHTML = '<div class="jr-wrap"><div class="jr-empty">Pulling up WO ' + esc(wo) + '…</div></div>';
+    var data = await load(wo);
+    if(CUR !== wo) return;
+    LAST = data; render(data);
+  };
+  var LAST = null;
+  // Keep "Right now" live while the review is open (Start / Pause / Setup done update straight away)
+  var hook = setInterval(function(){
+    if(typeof window._applyMachineEdges !== 'function') return; clearInterval(hook);
+    var orig = window._applyMachineEdges;
+    window._applyMachineEdges = function(){ var r = orig.apply(this, arguments); try{ var o = document.getElementById('jobRev'); if(LAST && o && o.classList.contains('open')) render(LAST); }catch(e){} return r; };
+  }, 500);
+  window._jobReviewClose = function(){ var o = document.getElementById('jobRev'); if(o) o.classList.remove('open'); CUR = ''; };
+})();
+</script>
+
 </body>
 </html>
