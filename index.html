@@ -8306,6 +8306,9 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     var emuWrapAllUsers = document.getElementById('emulatorCardWrap');
     if (emuWrapAllUsers) emuWrapAllUsers.style.display = 'grid';
 
+    var _sparkyWrap = document.getElementById('sparky-btn-wrap');
+    if (_sparkyWrap) _sparkyWrap.style.display = user.role === 'admin' ? '' : 'none';
+    if (user.role !== 'admin') { try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch(e) {} }
     if (user.role === 'admin') {
       document.getElementById('adminBtn').classList.add('visible');
       window._isAdmin = true;
@@ -17233,7 +17236,12 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   setInterval(fetchData, 600000);
 
   // ── SPEECH — browser TTS, reliable on all phones ──────────
+  // Sparky only makes sound on the admin account — every employee/manager/
+  // purchaser login stays silent (no voice, no music, no auto-start).
+  function sparkyAllowed(){ return !!(window._isAdmin || window.currentUser === 'hilladmin'); }
+  window._sparkyAllowed = sparkyAllowed;
   function say(text, onDone){
+    if(!sparkyAllowed()) return;
     var synth=window.speechSynthesis;
     if(!synth){if(onDone)onDone();return;}
     synth.cancel();
@@ -17253,6 +17261,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── MUSIC — use the persistent _audio element (unlocked on tap) ──
   function playSong(song, onDone){
+    if(!sparkyAllowed()) return;
     console.log('Playing:', song.title);
     if(!song.url){ if(onDone)onDone(); return; }
     if(!_audio){ if(onDone)onDone(); return; }
@@ -17543,6 +17552,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
   // ── ACTIVATE ──────────────────────────────────────────────
   function start(){
     if(_on)return;
+    if(!sparkyAllowed())return;
     _on=true;
     badge(true);
     fetchWeather(); fetchSports(); // refresh on every Sparky start
@@ -17578,6 +17588,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // ── CONTROLS ──────────────────────────────────────────────
   window._sparkyButtonTap=function(){
+    if(!sparkyAllowed()){ if(window.showToast) window.showToast('yellow','🔇 Sparky is admin-only',''); return; }
     // THIS is the user gesture — create and unlock audio RIGHT HERE
     if(!_audio){
       _audio=new Audio();
@@ -19662,6 +19673,7 @@ var _origUpdateNotifFeed = window.updateNotifFeed;
 
   // Direct speak using Sparky's say function
   function _sparkySpeak(text){
+    if(!(window._isAdmin || window.currentUser === 'hilladmin')) return;   // admin-only, same as Sparky
     if(window.say){ window.say(text, function(){}); return; }
     // Fallback to browser TTS
     var synth = window.speechSynthesis;
