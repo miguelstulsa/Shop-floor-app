@@ -2396,6 +2396,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           <option>Tyler Stockham</option>
           <option>Will Garcia</option>
         </select>
+        <div style="font-size:11px;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin:10px 0 6px;font-weight:700;">Due Date</div>
+        <input type="date" id="pendDueDate" style="width:100%;background:#0d1f35;border:1px solid #1e3a5f;border-radius:8px;color:#f0f4f8;padding:9px 10px;font-size:14px;font-family:'Barlow',sans-serif;">
       </div>
       <!-- MACHINIST SUPPLY REQUEST — shown only for yellow type -->
       <div id="machinistSupplyField" style="display:none;margin-bottom:10px;">
@@ -5009,6 +5011,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   function openModal(machine, cell) {
     currentMachine = machine; window.currentMachine = machine; currentCell = cell; selectedType = null;
+    var _pdd = document.getElementById('pendDueDate'); if (_pdd) _pdd.value = '';
     document.getElementById('modalTitle').textContent = 'Add Request';
     document.getElementById('modalMachineName').textContent = cell + ' — ' + machine;
     // QMI/DGP isn't a physical machine on the floor — it only ever needs
@@ -7771,7 +7774,8 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       combinedDetail = toolingLines.join('\n') + (combinedDetail ? '\n' + combinedDetail : '');
     }
     const floorSupportType = selectedType === 'orange' ? (document.getElementById('floorSupportType') || {}).value || '' : '';
-    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, part, po, assignedTo, floorSupportType };
+    const dueDate = selectedType === 'blue' ? ((document.getElementById('pendDueDate') || {}).value || '') : '';
+    const note = { machine: currentMachine, cell: currentCell, type: selectedType, wo, detail: combinedDetail, operator, op, part, po, assignedTo, floorSupportType, dueDate };
     // Carry the raw equipment list through on the request itself — the
     // actual Inspector-tab log entry doesn't get created until FINISH is
     // tapped (see _finishInspectionWithReminder), so this is what that
@@ -21471,6 +21475,13 @@ textarea.ro-in { min-height:64px; resize:vertical; }
 .ln-mv { width:30px; height:22px; border-radius:5px; border:1px solid #334155; background:rgba(255,255,255,0.05); color:#cbd5e1; font-size:12px; cursor:pointer; padding:0; }
 .ln-mv:disabled { opacity:0.25; cursor:default; }
 .ln-none { font-size:12px; color:#475569; padding:4px 2px; }
+.ln-due { display:inline-block; margin-top:4px; font-size:11px; padding:2px 8px; border-radius:6px; border:1px solid rgba(59,130,246,0.5); background:rgba(59,130,246,0.12); color:#bfdbfe; }
+.ln-due b { color:#fff; } .ln-due span { font-weight:800; letter-spacing:0.5px; margin-left:3px; }
+.ln-due.soon { border-color:rgba(234,179,8,0.7); background:rgba(234,179,8,0.15); color:#fde68a; }
+.ln-due.late { border-color:rgba(239,68,68,0.8); background:rgba(239,68,68,0.18); color:#fecaca; }
+.ln-due.none { border-style:dashed; border-color:#334155; background:none; color:#64748b; cursor:pointer; }
+.ln-due[onclick] { cursor:pointer; }
+.ln-sort { margin-left:6px; background:rgba(255,255,255,0.05); border:1px solid #334155; color:#cbd5e1; border-radius:6px; padding:3px 7px; font-size:10px; cursor:pointer; }
 .ln-job.drag { cursor:grab; } .ln-job.dragging { opacity:0.35; }
 .ln-card.ln-drop-on, .ln-pill.ln-drop-on { border-color:#38bdf8 !important; box-shadow:0 0 0 2px rgba(56,189,248,0.5); }
 .ln-gap { height:6px; border-radius:3px; background:#38bdf8; margin:2px 0 6px; box-shadow:0 0 10px rgba(56,189,248,0.7); }
@@ -21516,6 +21527,31 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     return (d.getMonth()+1) + '/' + d.getDate() + ' ' + ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h>=12?' PM':' AM');
   }
 
+  // ── Due dates ────────────────────────────────────────────────
+  // From the Due Date box on the Pending WO form, or set later in the
+  // Scheduler; older requests that say "Due 10/30" in their details are
+  // read from the text.
+  function dueOf(n){
+    if(n.dueDate) return n.dueDate;
+    var m = /\bdue(?:\s*date)?\s*[:\-]?\s*(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/i.exec(n.detail || '');
+    if(!m) return '';
+    var y = m[3] ? (m[3].length === 2 ? 2000 + (+m[3]) : +m[3]) : new Date().getFullYear();
+    return y + '-' + ('0' + m[1]).slice(-2) + '-' + ('0' + m[2]).slice(-2);
+  }
+  function dueInfo(n){
+    var d = dueOf(n); if(!d) return null;
+    var dt = new Date(d + 'T12:00:00'); if(isNaN(dt)) return null;
+    var t = new Date(); t.setHours(12,0,0,0);
+    var days = Math.round((dt - t) / 86400000);
+    var wd = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dt.getDay()];
+    var txt = wd + ' ' + (dt.getMonth()+1) + '/' + dt.getDate();
+    var cls = days < 0 ? 'late' : days <= 1 ? 'soon' : 'ok';
+    var tag = days < 0 ? 'OVERDUE ' + (-days) + 'D' : days === 0 ? 'TODAY' : days === 1 ? 'TOMORROW' : '';
+    var md = (dt.getMonth()+1) + '/' + dt.getDate();
+    var short = tag ? tag + ' · ' + md : 'DUE ' + wd.toUpperCase() + ' ' + md;   // e.g. "TODAY · 10/23", "DUE SAT 10/31"
+    return { iso:d, txt:txt, cls:cls, tag:tag, days:days, short:short };
+  }
+
   // Machines in Shop Floor order, with their cell name
   function machines(){
     var out = [], seen = {};
@@ -21555,14 +21591,65 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._pendPosLabel = function(n){
     var list = pendingFor(n.machine), i = list.indexOf(n);
     if(i === -1) list.forEach(function(x, k){ if(x.id === n.id) i = k; });
-    return i >= 0 ? ' <span style="background:#3b82f6;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">#' + (i+1) + ' in line</span>' : '';
+    var di = dueInfo(n);
+    return (i >= 0 ? ' <span style="background:#3b82f6;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">#' + (i+1) + ' in line</span>' : '')
+      + (di ? ' <span style="background:' + (di.cls === 'late' ? '#dc2626' : di.cls === 'soon' ? '#ca8a04' : '#1e3a5f') + ';color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">Due ' + di.txt + '</span>' : '');
   };
 
+  function dueHtml(n){
+    var di = dueInfo(n), edit = canOrder();
+    var click = edit ? ' onclick="event.stopPropagation();window._lnDueEdit(\'' + esc(n.id) + '\', this)" title="Tap to change the due date"' : '';
+    if(!di) return edit ? '<div class="ln-due none"' + click + '>＋ Set due date</div>' : '';
+    return '<div class="ln-due ' + di.cls + '"' + click + '>📅 <b>' + esc(di.short) + '</b></div>';
+  }
+  window._ln_dueInfo = dueInfo;
+  window._lnDueEdit = function(id, el){
+    if(!canOrder()) return;
+    var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n) return;
+    var old = document.getElementById('lnDuePop'); if(old) old.remove();
+    var pop = document.createElement('div'); pop.id = 'lnDuePop'; pop.className = 'ln-menu'; pop.style.width = '230px';
+    pop.innerHTML = '<div class="ln-sec" style="margin:0 0 6px;">Due date · WO ' + esc(n.wo || '') + '</div>'
+      + '<input type="date" id="lnDueIn" value="' + esc(dueOf(n)) + '" style="width:100%;background:#0d1f35;border:1px solid #334155;color:#f0f4f8;border-radius:8px;padding:8px;font-size:14px;margin-bottom:8px;">'
+      + '<div style="display:flex;gap:6px;"><button style="justify-content:center;color:#4ade80;" onclick="window._lnDueSave(\'' + esc(id) + '\', document.getElementById(\'lnDueIn\').value)">Save</button>'
+      + '<button style="justify-content:center;color:#94a3b8;" onclick="window._lnDueSave(\'' + esc(id) + '\', \'\')">Clear</button>'
+      + '<button style="justify-content:center;color:#fca5a5;" onclick="document.getElementById(\'lnDuePop\').remove()">✕</button></div>';
+    document.body.appendChild(pop);
+    var r = el.getBoundingClientRect();
+    pop.style.top = Math.max(8, Math.min(window.innerHeight - pop.offsetHeight - 8, r.bottom + 4)) + 'px';
+    pop.style.left = Math.max(8, Math.min(window.innerWidth - pop.offsetWidth - 8, r.left)) + 'px';
+    var inp = document.getElementById('lnDueIn'); try{ inp.focus(); if(inp.showPicker) inp.showPicker(); }catch(e){}
+  };
+  window._lnDueSave = function(id, val){
+    if(!canOrder()) return;
+    var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n) return;
+    var db = window.fbDb || window._db, M = window._fbModules; if(!db || !M) return;
+    n.dueDate = val || '';
+    var pop = document.getElementById('lnDuePop'); if(pop) pop.remove();
+    window._lnRender();
+    var w = [M.updateDoc(M.doc(db, 'notes', id), { dueDate: val || '' })];
+    if(n.hillReqId) w.push(M.updateDoc(M.doc(db, 'hillRequests', n.hillReqId), { dueDate: val || '' }).catch(function(){}));
+    Promise.all(w).then(function(){ if(window.showToast) window.showToast('green', val ? '📅 Due date saved' : 'Due date cleared', 'WO ' + (n.wo || '')); })
+      .catch(function(e){ if(window.showToast) window.showToast('red','Couldn\'t save the due date', e.message); });
+  };
+  // Put a machine's line in due-date order (no due date goes last)
+  window._lnSortDue = function(mid){
+    if(!canOrder()) return;
+    var list = pendingFor(mid).slice().sort(function(a,b){
+      var da = dueOf(a) || '9999', dbb = dueOf(b) || '9999';
+      return da < dbb ? -1 : da > dbb ? 1 : 0;
+    });
+    var db = window.fbDb || window._db, M = window._fbModules; if(!db || !M) return;
+    list.forEach(function(n, k){ n.queuePos = k + 1; });
+    window._lnRender();
+    Promise.all(list.map(function(n, k){ return M.updateDoc(M.doc(db, 'notes', n.id), { queuePos: k + 1 }); }))
+      .then(function(){ if(window.showToast) window.showToast('green','Sorted by due date', mid); })
+      .catch(function(e){ if(window.showToast) window.showToast('red','Couldn\'t save the order', e.message); });
+  };
   function jobHtml(n, kind, pos, total, mid){
     var who = n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : '';
     var by = n.operator ? 'by <b>' + esc(String(n.operator).split(' ')[0]) + '</b>' : '';
     var meta = [ n.op ? 'OP <b>' + esc(n.op) + '</b>' : '', n.part ? 'Part <b>' + esc(n.part) + '</b>' : '', who ].filter(Boolean).join(' · ');
-    var meta2 = kind === 'run' ? ([n.operator ? 'by <b>' + esc(String(n.operator).split(' ')[0]) + '</b>' : '', when(n) ? 'sent ' + esc(when(n)) : ''].filter(Boolean).join(' · ')) : ([by, when(n) ? 'sent ' + esc(when(n)) : '', age(n) ? 'waiting <b>' + esc(age(n)) + '</b>' : ''].filter(Boolean).join(' · '));
+    var meta2 = kind === 'run' ? ([n.operator ? 'by <b>' + esc(String(n.operator).split(' ')[0]) + '</b>' : '', when(n) ? 'sent ' + esc(when(n)) : ''].filter(Boolean).join(' · ')) : ([by, when(n) ? 'sent ' + esc(when(n)) : ''].filter(Boolean).join(' · '));
     var moves = '';
     if(kind !== 'run' && canOrder() && total > 1){
       moves = '<div class="ln-moves">'
@@ -21576,7 +21663,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + (drag ? ' draggable="true" data-id="' + esc(n.id) + '" data-mid="' + esc(mid) + '" ondragstart="window._lnDragStart(event)" ondragend="window._lnDragEnd(event)"' : '') + '>'
       + '<div class="ln-pos">' + (kind === 'run' ? 'RUN' : '#' + (pos+1)) + '</div>'
       + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
-      + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '') + '</div>'
+      + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '') + '</div>'
       + moves + '</div>';
   }
 
@@ -21590,7 +21677,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var run = runningFor(m.id), pend = pendingFor(m.id);
       totalPend += pend.length; if(run.length || pend.length) busy++;
       if(CELL !== 'all' && m.cell !== CELL) return '';
-      if(FILTER === 'busy' && !run.length && !pend.length && CELL === 'all') return '';
+      var clk = window._ptFor ? window._ptFor(m.id) : [];
+      if(FILTER === 'busy' && !run.length && !pend.length && !clk.length && CELL === 'all') return '';
       if(FILTER === 'queued' && !pend.length) return '';
       if(words.length){
         var hay = (m.name + ' ' + m.cell + ' ' + run.concat(pend).map(function(n){ return [n.wo, n.op, n.part, n.assignedTo, n.operator].join(' '); }).join(' ')).toLowerCase();
@@ -21598,7 +21686,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       }
       return '<div class="ln-card' + (!run.length && !pend.length ? ' empty' : '') + '" data-drop="' + esc(m.id) + '" ondragover="window._lnDragOver(event)" ondragleave="window._lnDragLeave(event)" ondrop="window._lnDrop(event)">'
         + '<div class="ln-mh"><span class="ln-mname" onclick="window._lnOpenMachine(\'' + esc(m.id) + '\')" title="Open this machine">' + esc(m.name) + '</span><span class="ln-cell">' + esc(m.cell) + '</span>'
-        + '<span class="ln-count">' + (pend.length ? pend.length + ' in line' : '') + '</span></div>'
+        + '<span class="ln-count">' + (pend.length ? pend.length + ' in line' : '') + '</span>'
+        + (canOrder() && pend.length > 1 ? '<button class="ln-sort" title="Put this line in due-date order" onclick="window._lnSortDue(\'' + esc(m.id) + '\')">📅 Sort by due</button>' : '') + '</div>'
+        + (window._ptListHtml ? window._ptListHtml(m.id) : '')
         + '<div class="ln-sec">Running</div>' + (run.length ? run.map(function(n){ return jobHtml(n, 'run', 0, 0, m.id); }).join('') : '<div class="ln-none">Nothing running</div>')
         + '<div class="ln-sec">Up next</div>' + (pend.length ? pend.map(function(n, i){ return jobHtml(n, 'pend', i, pend.length, m.id); }).join('') : '<div class="ln-none">Nothing queued</div>')
         + '</div>';
@@ -21623,6 +21713,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       return '<span class="ln-chip' + (FILTER === c[0] ? ' on' : '') + '" onclick="window._lnFilter(\'' + c[0] + '\')">' + c[1] + '</span>';
     }).join('');
     var sub = document.getElementById('lnSub');
+    var stampEl = document.getElementById('lnPtStamp'); if(stampEl) stampEl.innerHTML = window._ptStamp ? window._ptStamp() : '';
+    var syncBtn = document.getElementById('lnPtBtn'); if(syncBtn) syncBtn.style.display = canOrder() ? '' : 'none';
     if(sub) sub.textContent = totalPend + ' pending job' + (totalPend === 1 ? '' : 's') + ' across ' + busy + ' machine' + (busy === 1 ? '' : 's') + (canOrder() ? ' · drag jobs (or ▲ ▼ ⇄) to change the order or move them to another machine' : '');
   };
   window._lnFilter = function(f){ FILTER = f; window._lnRender(); };
@@ -21725,7 +21817,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     return order;
   };
   // Shared helpers for the shop-monitor display
-  window._ln = { machines:machines, pendingFor:pendingFor, runningFor:runningFor, when:when, age:age, esc:esc };
+  window._ln = { machines:machines, pendingFor:pendingFor, runningFor:runningFor, when:when, age:age, esc:esc, dueInfo:dueInfo };
   window._lnSearch = function(v){ SEARCH = (v||'').toLowerCase().trim(); window._lnRender(); };
   window._lnOpenMachine = function(mid){
     var m = machines().filter(function(x){ return x.id === mid; })[0];
@@ -21775,7 +21867,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
       + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
       + '<div class="ln-bar" style="padding-bottom:4px;"><div id="lnCells" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>'
+      +   '<button class="ln-btn" id="lnPtBtn" style="display:none;" onclick="window._ptOpen && window._ptOpen()">⏱ ProShop Sync</button>'
       +   '<button class="ln-btn" style="background:#0ea5e9;border-color:#0ea5e9;color:#04121f;" onclick="window._lnTV(window._lnCurrentCell() === \'all\' ? \'rotate\' : window._lnCurrentCell())">📺 Shop monitor</button></div>'
+      + '<div style="padding:0 16px 4px;" id="lnPtStamp"></div>'
       + '<div class="ln-bar"><input class="ln-search" placeholder="Search machine, WO, part, OP, machinist..." oninput="window._lnSearch(this.value)">'
       + '<div id="lnChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>'
       + '<button class="ln-btn" id="lnOldBtn" style="display:none;" onclick="window._lnClose(); window._openScheduler && window._openScheduler();">📋 Daily floor-walk tracker</button></div>'
@@ -21844,6 +21938,11 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 .tv-sub b { color:#e2e8f0; }
 .tv-empty { font-size:clamp(14px,1.2vw,20px); color:#475569; padding:6px 2px; }
 .tv-more { font-size:clamp(12px,1vw,16px); color:#7dd3fc; padding:2px 4px; }
+.tv-row > div:last-child { flex:1; min-width:0; }
+.tv-due { display:inline-block; max-width:100%; box-sizing:border-box; margin-top:5px; font-family:'Bebas Neue',sans-serif; font-size:clamp(14px,1.15vw,20px); letter-spacing:0.5px; padding:2px 8px; border-radius:8px; background:rgba(59,130,246,0.18); border:1px solid rgba(59,130,246,0.6); color:#dbeafe; }
+.tv-due.soon { background:rgba(234,179,8,0.2); border-color:rgba(234,179,8,0.8); color:#fde68a; }
+.tv-due.late { background:rgba(239,68,68,0.25); border-color:#ef4444; color:#fecaca; animation:tvLate 2s ease-in-out infinite; }
+@keyframes tvLate { 50% { background:rgba(239,68,68,0.45); } }
 .tv-foot { display:flex; align-items:center; gap:10px; padding:8px 22px 14px; }
 .tv-dots { display:flex; gap:7px; flex-wrap:wrap; }
 .tv-dot { padding:3px 10px; border-radius:12px; font-size:12px; letter-spacing:1px; color:#64748b; border:1px solid #1e3a5f; }
@@ -21870,7 +21969,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   function L(){ return window._ln; }
   function pin(){ try{ return JSON.parse(localStorage.getItem(PIN_KEY) || 'null'); }catch(e){ return null; } }
   function setPin(v){ try{ if(v) localStorage.setItem(PIN_KEY, JSON.stringify(v)); else localStorage.removeItem(PIN_KEY); }catch(e){} }
-  function cellLoad(c){ var p = 0, r = 0; c.machines.forEach(function(m){ p += L().pendingFor(m.id).length; r += L().runningFor(m.id).length; }); return { pend:p, run:r }; }
+  function cellLoad(c){ var p = 0, r = 0; c.machines.forEach(function(m){ p += L().pendingFor(m.id).length; r += L().runningFor(m.id).length + (window._ptFor ? window._ptFor(m.id).length : 0); }); return { pend:p, run:r }; }
   function rotation(){
     var cells = window._lnCells(), busy = cells.filter(function(c){ var x = cellLoad(c); return x.pend || x.run; });
     return busy.length ? busy : cells;
@@ -21882,6 +21981,10 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     IDX = IDX % rot.length; return rot[IDX];
   }
 
+  function tvDue(n){
+    var di = L().dueInfo ? L().dueInfo(n) : null; if(!di) return '';
+    return '<div class="tv-due ' + di.cls + '">📅 ' + L().esc(di.short) + '</div>';
+  }
   function draw(){
     var ov = document.getElementById('lnTv'); if(!ov || !L()) return;
     var esc = L().esc, c = currentCell();
@@ -21890,19 +21993,20 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.querySelector('.tv-cell').textContent = c.name;
     ov.querySelector('.tv-kicker').textContent = TARGET === 'rotate' ? 'WORK CELL SCHEDULE · ROTATING' : 'WORK CELL SCHEDULE';
     ov.querySelector('#tvRun').textContent = load.run;
+    ov.querySelector('#tvRunLbl').textContent = window._ptFor && c.machines.some(function(m){ return window._ptFor(m.id).length; }) ? 'Running / clocked in' : 'Running';
     ov.querySelector('#tvPend').textContent = load.pend;
     var maxNext = c.machines.length > 4 ? 3 : 5;
     ov.querySelector('.tv-grid').innerHTML = c.machines.map(function(m){
       var run = L().runningFor(m.id), pend = L().pendingFor(m.id);
       var line = function(n){ return [n.op ? 'OP <b>' + esc(n.op) + '</b>' : '', n.part ? 'Part <b>' + esc(n.part) + '</b>' : '', n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : ''].filter(Boolean).join(' · '); };
-      return '<div class="tv-m"><div class="tv-mname">' + esc(m.name) + '</div>'
+      return '<div class="tv-m"><div class="tv-mname">' + esc(m.name) + '</div>' + (window._ptTvHtml ? window._ptTvHtml(m.id) : '')
         + '<div class="tv-lbl">RUNNING</div>'
-        + (run.length ? run.map(function(n){ return '<div class="tv-run"><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div><div class="tv-sub">' + line(n) + '</div></div>'; }).join('')
+        + (run.length ? run.map(function(n){ return '<div class="tv-run"><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div><div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + '</div>'; }).join('')
                       : '<div class="tv-empty">Nothing running</div>')
         + '<div class="tv-lbl">UP NEXT</div>'
         + (pend.length ? pend.slice(0, maxNext).map(function(n, i){
               return '<div class="tv-row' + (i === 0 ? ' first' : '') + '"><div class="tv-n">' + (i+1) + '</div><div><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div>'
-                + '<div class="tv-sub">' + line(n) + (L().age(n) ? ' · waiting <b>' + esc(L().age(n)) + '</b>' : '') + '</div></div></div>';
+                + '<div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + '</div></div>';
             }).join('') + (pend.length > maxNext ? '<div class="tv-more">+ ' + (pend.length - maxNext) + ' more in line</div>' : '')
           : '<div class="tv-empty">Nothing queued</div>')
         + '</div>';
@@ -21913,6 +22017,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var rot = rotation();
       dots.innerHTML = rot.map(function(x, i){ return '<span class="tv-dot' + (i === IDX ? ' on' : '') + '">' + esc(x.name) + '</span>'; }).join('');
     } else dots.innerHTML = '<span class="tv-dot on">📌 ' + esc(c.name) + '</span>';
+    dots.innerHTML += (window._ptStamp && window._ptStamp() ? '<span style="margin-left:10px;">' + window._ptStamp() + '</span>' : '');
     // control panel state
     var sel = ov.querySelector('#tvSel'); if(sel){
       sel.innerHTML = '<option value="rotate">🔄 Rotate all cells</option>' + window._lnCells().map(function(x){ return '<option value="' + esc(x.name) + '">' + esc(x.name) + '</option>'; }).join('');
@@ -21943,7 +22048,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(document.getElementById('lnTv')) return;
     var ov = document.createElement('div'); ov.id = 'lnTv';
     ov.innerHTML = '<div class="tv-head"><div><div class="tv-kicker"></div><div class="tv-cell"></div></div>'
-      + '<div class="tv-stats"><div class="tv-stat"><b id="tvRun">0</b><span>Running</span></div><div class="tv-stat"><b id="tvPend">0</b><span>In line</span></div><div class="tv-clock" id="tvClock"></div></div></div>'
+      + '<div class="tv-stats"><div class="tv-stat"><b id="tvRun">0</b><span id="tvRunLbl">Running</span></div><div class="tv-stat"><b id="tvPend">0</b><span>In line</span></div><div class="tv-clock" id="tvClock"></div></div></div>'
       + '<div class="tv-grid"></div>'
       + '<div class="tv-foot"><div class="tv-dots"></div></div>'
       + '<div class="tv-prog"></div>'
@@ -21971,6 +22076,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     keepAwake();
     ov.classList.add('showctrl'); clearTimeout(CTRL_T); CTRL_T = setTimeout(function(){ ov.classList.remove('showctrl'); }, 5000);
   };
+  window._lnTvRedraw = function(){ draw(); };
   window._lnTVSet = function(v){ TARGET = v; IDX = 0; var p = pin(); if(p) setPin({ target:v, sec:SEC }); draw(); schedule(); };
   window._lnTVSpeed = function(v){ SEC = parseInt(v, 10) || 20; var p = pin(); if(p) setPin({ target:TARGET, sec:SEC }); schedule(); };
   window._lnTVPin = function(){
@@ -22013,6 +22119,229 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       if(target !== 'rotate'){ var hit = window._lnCells().filter(function(c){ return c.name.toLowerCase() === target.toLowerCase(); })[0]; target = hit ? hit.name : 'rotate'; }
       setTimeout(function(){ window._lnTV(target); }, 600);
     }
+  }, 1000);
+})();
+</script>
+<style>
+/* ═══ PROSHOP TIME TRACKER SYNC ═══ */
+#ptSync { position:fixed; inset:0; z-index:9700; background:rgba(2,6,14,0.85); display:none; align-items:flex-start; justify-content:center; padding:20px 12px; overflow-y:auto; font-family:'Barlow',sans-serif; color:#e2e8f0; }
+#ptSync.open { display:flex; }
+.pt-sheet { width:100%; max-width:860px; background:#0d1f35; border:1px solid #1e3a5f; border-radius:14px; padding:16px; }
+.pt-h { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; color:#7dd3fc; display:flex; align-items:center; gap:10px; }
+.pt-h button { margin-left:auto; }
+.pt-note { font-size:12px; color:#94a3b8; line-height:1.5; margin:4px 0 10px; }
+#ptSyncInput { width:100%; min-height:150px; background:#08121f; border:1px solid #1e3a5c; border-radius:8px; color:#e2e8f0; padding:10px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; box-sizing:border-box; }
+.pt-btn { background:rgba(255,255,255,0.06); border:1px solid #334155; color:#e2e8f0; border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600; cursor:pointer; }
+.pt-btn.go { background:#0ea5e9; border-color:#0ea5e9; color:#04121f; }
+.pt-btn.x { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.4); color:#fca5a5; }
+.pt-tbl { width:100%; border-collapse:collapse; font-size:12px; margin-top:10px; }
+.pt-tbl th { text-align:left; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#64748b; padding:5px 6px; border-bottom:1px solid #1e3a5f; }
+.pt-tbl td { padding:5px 6px; border-bottom:1px solid rgba(255,255,255,0.05); }
+.pt-tbl select { background:#08121f; border:1px solid #334155; color:#e2e8f0; border-radius:6px; padding:4px; font-size:12px; }
+.pt-miss { color:#fbbf24; font-weight:700; }
+.pt-msg { font-size:12px; margin-top:8px; min-height:16px; }
+.pt-clock { margin:2px 0 6px; }
+.pt-who { display:flex; align-items:center; gap:6px; font-size:11px; color:#d1fae5; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:7px; padding:4px 7px; margin-bottom:4px; }
+.pt-who b { color:#fff; } .pt-who i { font-style:normal; color:#86efac; margin-left:auto; white-space:nowrap; }
+.pt-tag { display:inline-block; margin:3px 0 0 4px; font-size:10px; font-weight:800; letter-spacing:0.5px; padding:1px 6px; border-radius:6px; background:#10b981; color:#03241a; }
+.pt-stamp { font-size:11px; color:#64748b; }
+.pt-stamp.stale { color:#fbbf24; }
+.tv-clk { background:rgba(16,185,129,0.14); border:2px solid rgba(16,185,129,0.6); border-radius:10px; padding:6px 10px; margin-bottom:6px; color:#d1fae5; }
+.tv-clk-n { font-size:clamp(15px,1.3vw,22px); } .tv-clk-n b { color:#fff; }
+.tv-clk-s { font-size:clamp(12px,1vw,17px); color:#86efac; margin-top:1px; }
+</style>
+<script>
+// ═══ PROSHOP TIME TRACKER SYNC ═══
+// Who's clocked in on ProShop's Time Tracker (employee, WO, OP, work
+// center, clock-in time) → saved to Firestore (hillSettings/proshopTimeClock)
+// → shown live on the Scheduler cards and shop monitors.
+// Paste a copied ProShop table, or a JSON list (what Claude/Cowork sends).
+// Work-center names the app can't match on its own get matched once by
+// hand and remembered (hillSettings/proshopWorkCenterMap).
+(function(){
+  var CLOCK = { rows:[], syncedAt:null, syncedBy:'' }, MAP = {}, PREVIEW = null;
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function db(){ return window.fbDb || window._db; } function M(){ return window._fbModules; }
+  function canSync(){ return !!(window._isAdmin || window.currentUser === 'hilladmin' || /corey/i.test((window._userDisplayName||'') + ' ' + (window.currentUser||''))); }
+  function norm(s){ return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+  function machinesList(){ return (window._ln && window._ln.machines) ? window._ln.machines() : []; }
+
+  // ── Reading what was pasted ─────────────────────────────────
+  var FIELDS = {
+    employee:  /^(employee|emp|user|name|operator|person|who|machinist|employee name)$/i,
+    wo:        /^(wo|w\/o|wo ?#|work ?order|work ?order ?#|job|job ?#|wo number)$/i,
+    op:        /^(op|op ?#|operation|oper|seq|op number)$/i,
+    part:      /^(part|part ?#|part ?number|pn|item)$/i,
+    workCenter:/^(work ?center|workcenter|machine|resource|equipment|station|wc|cell)$/i,
+    start:     /^(start|started|clock ?in|clocked ?in|time ?in|in|login|log ?in|since|start ?time)$/i
+  };
+  function splitLine(l){
+    if(l.indexOf('\t') !== -1) return l.split('\t');
+    if(/,/.test(l) && l.split(',').length >= 3) return l.split(',');
+    return l.split(/\s{2,}|\s\|\s/);
+  }
+  function parse(text){
+    text = String(text||'').trim(); if(!text) return [];
+    // JSON from Claude / Cowork: [{employee, wo, op, part, workCenter, start}] or {rows:[...]}
+    if(/^[\[{]/.test(text)){
+      try{
+        var j = JSON.parse(text); var arr = Array.isArray(j) ? j : (j.rows || j.data || []);
+        return arr.map(function(r){
+          var o = {}; Object.keys(r).forEach(function(k){ var kk = k.trim(); Object.keys(FIELDS).forEach(function(f){ if(FIELDS[f].test(kk) || kk === f) o[f] = r[k]; }); });
+          return o;
+        }).filter(function(o){ return o.employee; });
+      }catch(e){}
+    }
+    var lines = text.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    if(!lines.length) return [];
+    var head = splitLine(lines[0]).map(function(h){ return h.trim(); }), idx = {};
+    head.forEach(function(h, i){ Object.keys(FIELDS).forEach(function(f){ if(idx[f] == null && FIELDS[f].test(h.replace(/[:.]/g,'').trim())) idx[f] = i; }); });
+    var hasHeader = Object.keys(idx).length >= 2;
+    if(!hasHeader) idx = { employee:0, wo:1, op:2, workCenter:3, start:4 };   // no header: Employee, WO, OP, Work Center, Start
+    return lines.slice(hasHeader ? 1 : 0).map(function(l){
+      var c = splitLine(l).map(function(x){ return x.trim(); }), o = {};
+      Object.keys(idx).forEach(function(f){ if(c[idx[f]] != null) o[f] = c[idx[f]]; });
+      return o;
+    }).filter(function(o){ return o.employee && !/^total/i.test(o.employee); });
+  }
+  function startMs(s){
+    if(!s) return 0;
+    var t = Date.parse(s); if(!isNaN(t)) return t;
+    var m = /(\d{1,2}):(\d{2})\s*([ap])?/i.exec(s); if(!m) return 0;
+    var d = new Date(), h = +m[1]; if(m[3]){ if(/p/i.test(m[3]) && h < 12) h += 12; if(/a/i.test(m[3]) && h === 12) h = 0; }
+    d.setHours(h, +m[2], 0, 0); if(d - Date.now() > 3600000) d.setDate(d.getDate() - 1);
+    return d.getTime();
+  }
+  function fmtT(ms){ if(!ms) return ''; var d = new Date(ms), h = d.getHours(); return ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h>=12?' PM':' AM'); }
+
+  // Which app machine a ProShop work center / WO belongs to
+  function matchMachine(r){
+    var wc = norm(r.workCenter);
+    if(wc && MAP[wc]) return MAP[wc];
+    var ms = machinesList(), best = null;
+    if(wc) ms.forEach(function(m){ var n = norm(m.id); if(!n) return; if(n === wc || wc.indexOf(n) !== -1 || n.indexOf(wc) !== -1){ if(!best || n.length > norm(best).length) best = m.id; } });
+    if(best) return best;
+    if(r.wo){   // fall back to the WO: whichever machine has that job
+      var w = norm(r.wo), hit = '';
+      Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k]||[]).forEach(function(n){ if(n.wo && norm(n.wo) === w && (n.type === 'blue' || n.type === 'green')) hit = n.machine; }); });
+      if(hit) return hit;
+    }
+    return '';
+  }
+
+  // ── Public lookups used by the Scheduler + monitors ─────────
+  window._ptFor = function(mid){ return (CLOCK.rows || []).filter(function(r){ return r.machine === mid; }); };
+  window._ptForWo = function(wo){ var w = norm(wo); return w ? (CLOCK.rows || []).filter(function(r){ return norm(r.wo) === w; }) : []; };
+  window._ptStamp = function(){
+    if(!CLOCK.syncedAt) return '';
+    var age = (Date.now() - CLOCK.syncedAt) / 60000;
+    return '<span class="pt-stamp' + (age > 120 ? ' stale' : '') + '">⏱ ProShop clock-ins synced ' + esc(fmtT(CLOCK.syncedAt)) + (CLOCK.syncedBy ? ' by ' + esc(CLOCK.syncedBy) : '') + (age > 120 ? ' — may be out of date' : '') + '</span>';
+  };
+  function whoLine(r){ return '👷 <b>' + esc(r.employee) + '</b>' + (r.wo ? ' · WO ' + esc(r.wo) : '') + (r.op ? ' OP ' + esc(r.op) : ''); }
+  window._ptListHtml = function(mid){
+    var rows = window._ptFor(mid); if(!rows.length) return '';
+    return '<div class="ln-sec">On the clock (ProShop)</div><div class="pt-clock">' + rows.map(function(r){
+      return '<div class="pt-who">' + whoLine(r) + (r.startMs ? '<i>since ' + esc(fmtT(r.startMs)) + '</i>' : '') + '</div>';
+    }).join('') + '</div>';
+  };
+  window._ptTvHtml = function(mid){
+    return window._ptFor(mid).map(function(r){
+      return '<div class="tv-clk"><div class="tv-clk-n">👷 <b>' + esc(r.employee) + '</b></div>'
+        + '<div class="tv-clk-s">' + [r.wo ? 'WO ' + esc(r.wo) : '', r.op ? 'OP ' + esc(r.op) : '', r.startMs ? 'on since ' + esc(fmtT(r.startMs)) : ''].filter(Boolean).join(' · ') + '</div></div>';
+    }).join('');
+  };
+  window._ptJobBadge = function(n){
+    var rows = window._ptForWo(n.wo).filter(function(r){ return !r.op || !n.op || norm(r.op) === norm(n.op); });
+    return rows.length ? '<span class="pt-tag">⏱ CLOCKED IN · ' + esc(rows.map(function(r){ return String(r.employee).split(' ')[0]; }).join(', ')) + '</span>' : '';
+  };
+
+  // ── Live data from Firestore ────────────────────────────────
+  function refresh(){
+    try{ if(window._lnRender) window._lnRender(); }catch(e){}
+    try{ var tv = document.getElementById('lnTv'); if(tv && tv.classList.contains('open') && window._applyMachineEdges) window._lnTvRedraw && window._lnTvRedraw(); }catch(e){}
+  }
+  var wait = setInterval(function(){
+    if(!db() || !M() || !M().onSnapshot) return;
+    clearInterval(wait);
+    var m = M();
+    m.onSnapshot(m.doc(db(), 'hillSettings', 'proshopTimeClock'), function(s){
+      var d = s && s.exists && s.exists() ? s.data() : null;
+      CLOCK = d ? { rows:d.rows || [], syncedAt:d.syncedAtMs || 0, syncedBy:d.syncedBy || '' } : { rows:[], syncedAt:0, syncedBy:'' };
+      refresh();
+    }, function(){});
+    m.onSnapshot(m.doc(db(), 'hillSettings', 'proshopWorkCenterMap'), function(s){ MAP = (s && s.exists && s.exists() && s.data().map) || {}; }, function(){});
+  }, 800);
+
+  // ── The sync panel ──────────────────────────────────────────
+  function build(){
+    if(document.getElementById('ptSync')) return;
+    var o = document.createElement('div'); o.id = 'ptSync';
+    o.innerHTML = '<div class="pt-sheet"><div class="pt-h">⏱ ProShop Time Tracker Sync <button class="pt-btn x" onclick="window._ptClose()">✕ Close</button></div>'
+      + '<div class="pt-note">Paste who\'s clocked in from ProShop\'s Time Tracker — copy the table straight off the page, or a JSON list from Claude: '
+      + '<code>[{"employee":"Hank Anglin","wo":"26-0868","op":"60","part":"10041418","workCenter":"1050-B","start":"6:02 AM"}]</code>. '
+      + 'Saving <b>replaces</b> the last sync, so paste everyone who\'s clocked in right now.</div>'
+      + '<textarea id="ptSyncInput" placeholder="Paste the ProShop Time Tracker table or JSON here..." oninput="window._ptPreview()"></textarea>'
+      + '<div id="ptPrev"></div><div class="pt-msg" id="ptMsg"></div>'
+      + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"><button class="pt-btn go" id="ptSyncSave" onclick="window._ptSave()">💾 Save to Scheduler</button>'
+      + '<button class="pt-btn" onclick="window._ptClear()">Clear all clock-ins</button><span id="ptLast" style="align-self:center;"></span></div></div>';
+    document.body.appendChild(o);
+  }
+  window._ptOpen = function(){
+    if(!canSync()){ if(window.showToast) window.showToast('yellow','Admin / Corey only',''); return; }
+    build(); document.getElementById('ptSync').classList.add('open');
+    document.getElementById('ptLast').innerHTML = window._ptStamp();
+    window._ptPreview();
+  };
+  window._ptClose = function(){ var o = document.getElementById('ptSync'); if(o) o.classList.remove('open'); };
+  window._ptPreview = function(){
+    var box = document.getElementById('ptPrev'); if(!box) return;
+    var rows = parse(document.getElementById('ptSyncInput').value);
+    PREVIEW = rows.map(function(r){ return Object.assign({}, r, { machine: matchMachine(r), startMs: startMs(r.start) }); });
+    if(!rows.length){ box.innerHTML = ''; return; }
+    var opts = '<option value="">— pick machine —</option>' + machinesList().map(function(m){ return '<option value="' + esc(m.id) + '">' + esc(m.name) + ' (' + esc(m.cell) + ')</option>'; }).join('');
+    box.innerHTML = '<table class="pt-tbl"><thead><tr><th>Employee</th><th>WO</th><th>OP</th><th>Work center</th><th>Clocked in</th><th>App machine</th></tr></thead><tbody>'
+      + PREVIEW.map(function(r, i){
+          return '<tr><td>' + esc(r.employee) + '</td><td>' + esc(r.wo||'') + '</td><td>' + esc(r.op||'') + '</td><td>' + esc(r.workCenter||'') + '</td><td>' + esc(r.startMs ? fmtT(r.startMs) : (r.start||'')) + '</td>'
+            + '<td><select data-i="' + i + '" onchange="window._ptPick(this)">' + opts.replace('value="' + esc(r.machine) + '"', 'value="' + esc(r.machine) + '" selected') + '</select>'
+            + (r.machine ? '' : ' <span class="pt-miss">match me</span>') + '</td></tr>';
+        }).join('') + '</tbody></table>'
+      + '<div class="pt-note" style="margin-top:6px;">' + PREVIEW.length + ' clocked in · ' + PREVIEW.filter(function(r){ return r.machine; }).length + ' matched to a machine. Picking a machine for a work center is remembered for next time.</div>';
+  };
+  window._ptPick = function(sel){
+    var r = PREVIEW && PREVIEW[+sel.getAttribute('data-i')]; if(!r) return;
+    var wc = norm(r.workCenter);
+    if(wc && sel.value){ MAP[wc] = sel.value; window._ptMapDirty = true; window._ptPreview(); }   // remembered for every row on that work center
+    else r.machine = sel.value;                                                                  // no work center given: just this row
+  };
+  window._ptSave = function(){
+    if(!canSync()) return;
+    var msg = document.getElementById('ptMsg');
+    if(!PREVIEW || !PREVIEW.length){ msg.innerHTML = '<span style="color:#fbbf24;">Nothing to save — paste the Time Tracker first.</span>'; return; }
+    var m = M(), now = Date.now(), who = window._userDisplayName || window.currentUser || '';
+    var rows = PREVIEW.map(function(r){ return { employee:String(r.employee||''), wo:String(r.wo||''), op:String(r.op||''), part:String(r.part||''), workCenter:String(r.workCenter||''), start:String(r.start||''), startMs:r.startMs||0, machine:r.machine||'' }; });
+    var w = [m.setDoc(m.doc(db(), 'hillSettings', 'proshopTimeClock'), { rows:rows, syncedAtMs:now, syncedBy:who, updatedAt:m.serverTimestamp() })];
+    if(window._ptMapDirty) w.push(m.setDoc(m.doc(db(), 'hillSettings', 'proshopWorkCenterMap'), { map:MAP, updatedAt:m.serverTimestamp() }));
+    Promise.all(w).then(function(){
+      window._ptMapDirty = false;
+      CLOCK = { rows:rows, syncedAt:now, syncedBy:who }; refresh();
+      var miss = rows.filter(function(r){ return !r.machine; }).length;
+      msg.innerHTML = '<span style="color:#4ade80;">✅ Saved ' + rows.length + ' clock-in' + (rows.length === 1 ? '' : 's') + ' to the Scheduler' + (miss ? ' · ' + miss + ' not matched to a machine' : '') + '.</span>';
+      document.getElementById('ptLast').innerHTML = window._ptStamp();
+      if(window.showToast) window.showToast('green','⏱ ProShop clock-ins synced', rows.length + ' on the clock');
+    }).catch(function(e){ msg.innerHTML = '<span style="color:#f87171;">Couldn\'t save: ' + esc(e.message) + '</span>'; });
+  };
+  window._ptClear = function(){
+    if(!canSync()) return;
+    var m = M();
+    m.setDoc(m.doc(db(), 'hillSettings', 'proshopTimeClock'), { rows:[], syncedAtMs:Date.now(), syncedBy:window._userDisplayName || window.currentUser || '', updatedAt:m.serverTimestamp() })
+      .then(function(){ CLOCK.rows = []; refresh(); document.getElementById('ptMsg').innerHTML = '<span style="color:#94a3b8;">Cleared.</span>'; });
+  };
+  // Link straight to the panel: …/Shop-floor-app/?ptsync=1
+  var deep = setInterval(function(){
+    var auth = document.getElementById('authOverlay');
+    if(!window.currentUser || (auth && !auth.classList.contains('hidden')) || !window._ln) return;
+    clearInterval(deep);
+    if(/[?&]ptsync=1/.test(location.search)) setTimeout(window._ptOpen, 800);
   }, 1000);
 })();
 </script>
