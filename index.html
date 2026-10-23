@@ -3896,7 +3896,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       colorEl.style.background = 'var(--' + n.type + ')';
       const textEl = document.createElement('div');
       textEl.className = 'existing-note-text';
-      textEl.innerHTML = '<strong>' + (n.autoCompleted ? '✅ Completed' : typeLabels[n.type]) + '</strong>' + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — WO ' + n.wo : '') + (n.op ? ' OP ' + n.op : '') + (n.detail ? ' · ' + n.detail : '') + (n.assignedTo ? ' <span style="background:rgba(59,130,246,0.2);color:#93c5fd;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;">→ ' + n.assignedTo + '</span>' : '');
+      textEl.innerHTML = '<strong>' + (n.autoCompleted ? '✅ Completed' : typeLabels[n.type]) + '</strong>' + (n.type === 'blue' && window._pendPosLabel ? window._pendPosLabel(n) : '') + (n.operator ? ' · ' + n.operator : '') + (n.wo ? ' — WO ' + n.wo : '') + (n.op ? ' OP ' + n.op : '') + (n.detail ? ' · ' + n.detail : '') + (n.assignedTo ? ' <span style="background:rgba(59,130,246,0.2);color:#93c5fd;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;">→ ' + n.assignedTo + '</span>' : '');
       const actionsEl = document.createElement('div');
       actionsEl.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
       if (n.type === 'blue') {
@@ -21434,6 +21434,249 @@ textarea.ro-in { min-height:64px; resize:vertical; }
   };
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build); else build();
+})();
+</script>
+<style>
+/* ═══ SCHEDULER — MACHINE LINES ═══ */
+#linesOverlay { position:fixed; inset:0; z-index:9000; background:#08121f; display:none; flex-direction:column; color:#e2e8f0; font-family:'Barlow',sans-serif; }
+#linesOverlay.open { display:flex; }
+.ln-top { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid #1e3a5f; background:linear-gradient(180deg,#0d1f35,#0a1828); flex-shrink:0; }
+.ln-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:3px; color:#7dd3fc; }
+.ln-sub { font-size:11px; color:#64748b; letter-spacing:1px; }
+.ln-x { margin-left:auto; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:8px; padding:8px 14px; font-family:'Bebas Neue',sans-serif; font-size:15px; letter-spacing:1px; cursor:pointer; }
+.ln-bar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid #132b45; flex-shrink:0; }
+.ln-search { flex:1; min-width:180px; background:#0d1f35; border:1px solid #1e3a5c; border-radius:8px; color:#f0f4f8; padding:9px 12px; font-size:14px; }
+.ln-chip { padding:6px 12px; border-radius:16px; border:1px solid #334155; background:rgba(255,255,255,0.04); color:#cbd5e1; font-size:12px; font-weight:600; cursor:pointer; }
+.ln-chip.on { background:#0ea5e9; border-color:#0ea5e9; color:#04121f; }
+.ln-btn { background:rgba(255,255,255,0.06); border:1px solid #334155; color:#cbd5e1; border-radius:8px; padding:7px 12px; font-size:12px; font-weight:600; cursor:pointer; }
+.ln-grid { flex:1; overflow-y:auto; padding:14px 16px 40px; display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; align-content:start; }
+.ln-card { background:linear-gradient(160deg,#122a45,#0e2136); border:1px solid #1e3a5f; border-radius:12px; padding:12px; }
+.ln-card.empty { opacity:0.55; }
+.ln-mh { display:flex; align-items:baseline; gap:8px; margin-bottom:8px; }
+.ln-mname { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:2px; color:#f5d050; cursor:pointer; }
+.ln-cell { font-size:10px; color:#64748b; letter-spacing:1.5px; text-transform:uppercase; }
+.ln-count { margin-left:auto; font-size:11px; color:#7dd3fc; font-weight:700; }
+.ln-sec { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#64748b; margin:8px 0 4px; }
+.ln-job { display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:8px; margin-bottom:5px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); }
+.ln-job.run { border-color:rgba(34,197,94,0.45); background:rgba(34,197,94,0.07); }
+.ln-job.next { border-color:rgba(59,130,246,0.6); background:rgba(59,130,246,0.1); }
+.ln-pos { flex-shrink:0; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Bebas Neue',sans-serif; font-size:17px; background:#1e3a5f; color:#bfdbfe; }
+.ln-job.next .ln-pos { background:#3b82f6; color:#fff; }
+.ln-job.run .ln-pos { background:#16a34a; color:#fff; font-size:13px; }
+.ln-info { flex:1; min-width:0; }
+.ln-wo { font-size:14px; font-weight:700; color:#f8fafc; }
+.ln-meta { font-size:11px; color:#94a3b8; margin-top:2px; }
+.ln-meta b { color:#e2e8f0; font-weight:600; }
+.ln-moves { display:flex; flex-direction:column; gap:3px; flex-shrink:0; }
+.ln-mv { width:30px; height:22px; border-radius:5px; border:1px solid #334155; background:rgba(255,255,255,0.05); color:#cbd5e1; font-size:12px; cursor:pointer; padding:0; }
+.ln-mv:disabled { opacity:0.25; cursor:default; }
+.ln-none { font-size:12px; color:#475569; padding:4px 2px; }
+@media (max-width:640px){ .ln-grid { grid-template-columns:1fr; padding:10px; } .ln-title { font-size:21px; } }
+</style>
+<script>
+// ═══ SCHEDULER — MACHINE LINES ═══
+// Every machine's line, built live from the requests themselves:
+//   Running = 🟢 Running WO requests on that machine
+//   Up next = 🔵 Pending WO requests, in order (#1 is next to set up)
+// A new Pending WO goes to the back of its machine's line. Admin and
+// Corey can move jobs up/down; the order is saved on the request itself
+// (field "queuePos"), so it's the same on every device. Tapping READY
+// moves a job to Running; finishing it drops it off — the line moves up.
+(function(){
+  var FILTER = 'busy', SEARCH = '';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function canOrder(){
+    if(window._isAdmin || window.currentUser === 'hilladmin') return true;
+    return /corey/i.test((window._userDisplayName || '') + ' ' + (window.currentUser || ''));
+  }
+  function secs(n){ var c = n && n.createdAt; return c ? (c.seconds || (c.toMillis ? c.toMillis()/1000 : 0)) : 0; }
+  function age(n){
+    var s = secs(n); if(!s) return '';
+    var m = Math.max(0, Math.round((Date.now()/1000 - s) / 60));
+    return m < 60 ? m + 'm' : m < 1440 ? Math.floor(m/60) + 'h ' + (m%60) + 'm' : Math.floor(m/1440) + 'd ' + Math.floor((m%1440)/60) + 'h';
+  }
+  function when(n){
+    var s = secs(n); if(!s) return '';
+    var d = new Date(s*1000), h = d.getHours();
+    return (d.getMonth()+1) + '/' + d.getDate() + ' ' + ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h>=12?' PM':' AM');
+  }
+
+  // Machines in Shop Floor order, with their cell name
+  function machines(){
+    var out = [], seen = {};
+    document.querySelectorAll('.floor-grid .cell').forEach(function(cell){
+      var cellName = ((cell.querySelector('.cell-title') || {}).textContent || '').trim();
+      cell.querySelectorAll('.machine').forEach(function(el){
+        var nm = el.querySelector('.machine-name'); var name = nm ? nm.textContent.trim() : '';
+        var notes = el.querySelector('.machine-notes');
+        var id = notes && notes.id ? notes.id.replace(/^notes-/, '') : name;
+        if(id && !seen[id]){ seen[id] = 1; out.push({ id:id, name:name || id, cell:cellName, el:el }); }
+      });
+    });
+    return out;
+  }
+  function allNotes(){
+    var out = [];
+    Object.keys(window.machineNotes || {}).forEach(function(m){ (window.machineNotes[m] || []).forEach(function(n){ out.push(n); }); });
+    return out;
+  }
+  // Pending jobs for one machine, in line order: saved position first,
+  // then anything not yet placed, oldest first (= back of the line).
+  function pendingFor(mid){
+    return allNotes().filter(function(n){ return n.machine === mid && n.type === 'blue' && !n.resolved; })
+      .sort(function(a,b){
+        var pa = typeof a.queuePos === 'number', pb = typeof b.queuePos === 'number';
+        if(pa && pb && a.queuePos !== b.queuePos) return a.queuePos - b.queuePos;
+        if(pa !== pb) return pa ? -1 : 1;
+        return secs(a) - secs(b);
+      });
+  }
+  function runningFor(mid){
+    return allNotes().filter(function(n){ return n.machine === mid && n.type === 'green' && !n.resolved && !n.autoCompleted; })
+      .sort(function(a,b){ return secs(a) - secs(b); });
+  }
+  window._pendPosLabel = function(n){
+    var list = pendingFor(n.machine), i = list.indexOf(n);
+    if(i === -1) list.forEach(function(x, k){ if(x.id === n.id) i = k; });
+    return i >= 0 ? ' <span style="background:#3b82f6;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:4px;">#' + (i+1) + ' in line</span>' : '';
+  };
+
+  function jobHtml(n, kind, pos, total, mid){
+    var who = n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : '';
+    var by = n.operator ? 'by <b>' + esc(String(n.operator).split(' ')[0]) + '</b>' : '';
+    var meta = [ n.op ? 'OP <b>' + esc(n.op) + '</b>' : '', n.part ? 'Part <b>' + esc(n.part) + '</b>' : '', who ].filter(Boolean).join(' · ');
+    var meta2 = kind === 'run' ? ([n.operator ? 'by <b>' + esc(String(n.operator).split(' ')[0]) + '</b>' : '', when(n) ? 'sent ' + esc(when(n)) : ''].filter(Boolean).join(' · ')) : ([by, when(n) ? 'sent ' + esc(when(n)) : '', age(n) ? 'waiting <b>' + esc(age(n)) + '</b>' : ''].filter(Boolean).join(' · '));
+    var moves = '';
+    if(kind !== 'run' && canOrder() && total > 1){
+      moves = '<div class="ln-moves">'
+        + '<button class="ln-mv" title="Move up" ' + (pos === 0 ? 'disabled' : '') + ' onclick="event.stopPropagation();window._lnMove(\'' + esc(mid) + '\',\'' + esc(n.id) + '\',-1)">▲</button>'
+        + '<button class="ln-mv" title="Move down" ' + (pos === total-1 ? 'disabled' : '') + ' onclick="event.stopPropagation();window._lnMove(\'' + esc(mid) + '\',\'' + esc(n.id) + '\',1)">▼</button></div>';
+    }
+    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + '">'
+      + '<div class="ln-pos">' + (kind === 'run' ? 'RUN' : '#' + (pos+1)) + '</div>'
+      + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
+      + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '') + '</div>'
+      + moves + '</div>';
+  }
+
+  window._lnRender = function(){
+    var grid = document.getElementById('lnGrid'); if(!grid) return;
+    var words = SEARCH ? SEARCH.split(/\s+/) : [];
+    var ms = machines(), totalPend = 0, busy = 0;
+    var cards = ms.map(function(m){
+      var run = runningFor(m.id), pend = pendingFor(m.id);
+      totalPend += pend.length; if(run.length || pend.length) busy++;
+      if(FILTER === 'busy' && !run.length && !pend.length) return '';
+      if(FILTER === 'queued' && !pend.length) return '';
+      if(words.length){
+        var hay = (m.name + ' ' + m.cell + ' ' + run.concat(pend).map(function(n){ return [n.wo, n.op, n.part, n.assignedTo, n.operator].join(' '); }).join(' ')).toLowerCase();
+        if(!words.every(function(w){ return hay.indexOf(w) !== -1; })) return '';
+      }
+      return '<div class="ln-card' + (!run.length && !pend.length ? ' empty' : '') + '">'
+        + '<div class="ln-mh"><span class="ln-mname" onclick="window._lnOpenMachine(\'' + esc(m.id) + '\')" title="Open this machine">' + esc(m.name) + '</span><span class="ln-cell">' + esc(m.cell) + '</span>'
+        + '<span class="ln-count">' + (pend.length ? pend.length + ' in line' : '') + '</span></div>'
+        + '<div class="ln-sec">Running</div>' + (run.length ? run.map(function(n){ return jobHtml(n, 'run', 0, 0, m.id); }).join('') : '<div class="ln-none">Nothing running</div>')
+        + '<div class="ln-sec">Up next</div>' + (pend.length ? pend.map(function(n, i){ return jobHtml(n, 'pend', i, pend.length, m.id); }).join('') : '<div class="ln-none">Nothing queued</div>')
+        + '</div>';
+    }).join('');
+    grid.innerHTML = cards || '<div class="ln-none" style="grid-column:1/-1;text-align:center;padding:30px;">' + (words.length ? 'Nothing matches.' : 'No machines have jobs right now.') + '</div>';
+    var chips = document.getElementById('lnChips');
+    if(chips) chips.innerHTML = [['busy','With jobs'],['queued','Has a line'],['all','All machines']].map(function(c){
+      return '<span class="ln-chip' + (FILTER === c[0] ? ' on' : '') + '" onclick="window._lnFilter(\'' + c[0] + '\')">' + c[1] + '</span>';
+    }).join('');
+    var sub = document.getElementById('lnSub');
+    if(sub) sub.textContent = totalPend + ' pending job' + (totalPend === 1 ? '' : 's') + ' across ' + busy + ' machine' + (busy === 1 ? '' : 's') + (canOrder() ? ' · use ▲ ▼ to change the order' : '');
+  };
+  window._lnFilter = function(f){ FILTER = f; window._lnRender(); };
+  window._lnSearch = function(v){ SEARCH = (v||'').toLowerCase().trim(); window._lnRender(); };
+  window._lnOpenMachine = function(mid){
+    var m = machines().filter(function(x){ return x.id === mid; })[0];
+    if(m && m.el){ window._lnClose(); m.el.click(); }
+  };
+
+  // Move a pending job up/down — rewrites 1..n positions for that machine
+  window._lnMove = function(mid, id, dir){
+    if(!canOrder()) return;
+    var list = pendingFor(mid), i = -1;
+    list.forEach(function(n, k){ if(n.id === id) i = k; });
+    var j = i + dir; if(i < 0 || j < 0 || j >= list.length) return;
+    var t = list[i]; list[i] = list[j]; list[j] = t;
+    var db = window.fbDb || window._db, m = window._fbModules; if(!db || !m) return;
+    list.forEach(function(n, k){ n.queuePos = k + 1; });   // show it right away
+    window._lnRender();
+    Promise.all(list.map(function(n, k){ return m.updateDoc(m.doc(db, 'notes', n.id), { queuePos: k + 1 }); }))
+      .catch(function(e){ if(window.showToast) window.showToast('red','Couldn\'t save the order', e.message); });
+  };
+
+  // New pending jobs get stamped with the next spot at the back of their
+  // machine's line, so later moves never shuffle them ahead of older ones.
+  var stamping = {};
+  function stampNew(){
+    if(!canOrder()) return;                    // one of the editors' devices does the stamping
+    var db = window.fbDb || window._db, m = window._fbModules; if(!db || !m) return;
+    machines().forEach(function(mc){
+      var list = pendingFor(mc.id);
+      var max = 0; list.forEach(function(n){ if(typeof n.queuePos === 'number' && n.queuePos > max) max = n.queuePos; });
+      list.forEach(function(n){
+        if(typeof n.queuePos === 'number' || stamping[n.id]) return;
+        stamping[n.id] = 1; max += 1;
+        m.updateDoc(m.doc(db, 'notes', n.id), { queuePos: max }).catch(function(){ delete stamping[n.id]; });
+      });
+    });
+  }
+
+  function badge(){
+    var b = document.getElementById('jobTrackerBadge'); if(!b) return;
+    var n = allNotes().filter(function(x){ return x.type === 'blue' && !x.resolved; }).length;
+    b.textContent = n; b.style.display = n ? 'inline-flex' : 'none';
+  }
+
+  function build(){
+    if(document.getElementById('linesOverlay')) return;
+    var ov = document.createElement('div'); ov.id = 'linesOverlay';
+    ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
+      + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
+      + '<div class="ln-bar"><input class="ln-search" placeholder="Search machine, WO, part, OP, machinist..." oninput="window._lnSearch(this.value)">'
+      + '<div id="lnChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>'
+      + '<button class="ln-btn" id="lnOldBtn" style="display:none;" onclick="window._lnClose(); window._openScheduler && window._openScheduler();">📋 Daily floor-walk tracker</button></div>'
+      + '<div class="ln-grid" id="lnGrid"></div>';
+    document.body.appendChild(ov);
+  }
+  window._openLines = function(){
+    build();
+    var old = document.getElementById('lnOldBtn'); if(old) old.style.display = (window._isAdmin || window.currentUser === 'hilladmin') ? '' : 'none';
+    document.getElementById('linesOverlay').classList.add('open');
+    window._lnRender();
+  };
+  window._lnClose = function(){ var o = document.getElementById('linesOverlay'); if(o) o.classList.remove('open'); };
+
+  // Turn the Scheduler tab on for everyone, pointing at Machine Lines
+  function wireTab(){
+    var tab = document.getElementById('tab-jobtracker');
+    if(!tab){ setTimeout(wireTab, 500); return; }
+    tab.setAttribute('onclick', 'window._openLines()');
+    tab.onclick = function(){ window._openLines(); };
+  }
+  wireTab();
+  setInterval(function(){
+    var tab = document.getElementById('tab-jobtracker');
+    var auth = document.getElementById('authOverlay');
+    var loggedIn = !!window.currentUser && (!auth || auth.classList.contains('hidden'));
+    if(tab) tab.style.display = loggedIn ? 'flex' : 'none';
+  }, 1500);
+
+  // Stay live: every floor update re-draws the lines and badge
+  var hook = setInterval(function(){
+    if(typeof window._applyMachineEdges !== 'function') return;
+    clearInterval(hook);
+    var orig = window._applyMachineEdges;
+    window._applyMachineEdges = function(){
+      var r = orig.apply(this, arguments);
+      try{ badge(); stampNew(); var o = document.getElementById('linesOverlay'); if(o && o.classList.contains('open')) window._lnRender(); }catch(e){ console.warn('lines', e); }
+      return r;
+    };
+  }, 400);
+  setInterval(function(){ var o = document.getElementById('linesOverlay'); if(o && o.classList.contains('open')) window._lnRender(); }, 60000);   // ages tick up
 })();
 </script>
 </body>
