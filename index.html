@@ -21533,6 +21533,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   // read from the text.
   function dueOf(n){
     if(n.dueDate) return n.dueDate;
+    var pw = window._ptWO ? window._ptWO(n.wo, n.op) : null;
+    if(pw && pw.dueISO && !/\bdue/i.test(n.detail || '')) return pw.dueISO;
     var m = /\bdue(?:\s*date)?\s*[:\-]?\s*(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/i.exec(n.detail || '');
     if(!m) return '';
     var y = m[3] ? (m[3].length === 2 ? 2000 + (+m[3]) : +m[3]) : new Date().getFullYear();
@@ -21867,6 +21869,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
       + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
       + '<div class="ln-bar" style="padding-bottom:4px;"><div id="lnCells" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>'
+      +   '<button class="ln-btn" style="background:#10b981;border-color:#10b981;color:#03241a;" onclick="window._woOpen && window._woOpen()">📋 Work Orders</button>'
       +   '<button class="ln-btn" id="lnPtBtn" style="display:none;" onclick="window._ptOpen && window._ptOpen()">⏱ ProShop Sync</button>'
       +   '<button class="ln-btn" style="background:#0ea5e9;border-color:#0ea5e9;color:#04121f;" onclick="window._lnTV(window._lnCurrentCell() === \'all\' ? \'rotate\' : window._lnCurrentCell())">📺 Shop monitor</button></div>'
       + '<div style="padding:0 16px 4px;" id="lnPtStamp"></div>'
@@ -22001,7 +22004,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var line = function(n){ return [n.op ? 'OP <b>' + esc(n.op) + '</b>' : '', n.part ? 'Part <b>' + esc(n.part) + '</b>' : '', n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : ''].filter(Boolean).join(' · '); };
       return '<div class="tv-m"><div class="tv-mname">' + esc(m.name) + '</div>' + (window._ptTvHtml ? window._ptTvHtml(m.id) : '')
         + '<div class="tv-lbl">RUNNING</div>'
-        + (run.length ? run.map(function(n){ return '<div class="tv-run"><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div><div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + '</div>'; }).join('')
+        + (run.length ? run.map(function(n){ return '<div class="tv-run"><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div><div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + '</div>'; }).join('')
                       : '<div class="tv-empty">Nothing running</div>')
         + '<div class="tv-lbl">UP NEXT</div>'
         + (pend.length ? pend.slice(0, maxNext).map(function(n, i){
@@ -22149,6 +22152,40 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 .tv-clk { background:rgba(16,185,129,0.14); border:2px solid rgba(16,185,129,0.6); border-radius:10px; padding:6px 10px; margin-bottom:6px; color:#d1fae5; }
 .tv-clk-n { font-size:clamp(15px,1.3vw,22px); } .tv-clk-n b { color:#fff; }
 .tv-clk-s { font-size:clamp(12px,1vw,17px); color:#86efac; margin-top:1px; }
+/* Work order progress (qty / status / due) */
+.wo-prog { margin:4px 0 2px; }
+.wo-row1 { display:flex; align-items:center; gap:6px; flex-wrap:wrap; font-size:11px; color:#cbd5e1; }
+.wo-st { display:inline-block; font-size:10px; font-weight:800; letter-spacing:0.5px; padding:1px 7px; border-radius:6px; text-transform:uppercase; white-space:nowrap; }
+.wo-st.s-run { background:#10b981; color:#03241a; } .wo-st.s-setup { background:#a78bfa; color:#1e1036; }
+.wo-st.s-hold { background:#f59e0b; color:#2a1700; } .wo-st.s-done { background:#64748b; color:#f1f5f9; }
+.wo-st.s-wait { background:#3b82f6; color:#f8fafc; } .wo-st.s-insp { background:#ef4444; color:#fff; }
+.wo-st.s-late { background:#dc2626; color:#fff; animation:woBlink 1.6s ease-in-out infinite; } .wo-st.s-other { background:#334155; color:#e2e8f0; }
+@keyframes woBlink { 50% { opacity:0.55; } }
+.wo-qty { font-weight:700; color:#f8fafc; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.wo-due { white-space:nowrap; font-weight:700; } .wo-due.late { color:#f87171; } .wo-due.soon { color:#fbbf24; } .wo-due.ok { color:#86efac; }
+.wo-bar { height:6px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:3px; }
+.wo-bar > i { display:block; height:100%; background:linear-gradient(90deg,#10b981,#34d399); border-radius:4px; }
+.wo-bar.late > i { background:linear-gradient(90deg,#dc2626,#f87171); } .wo-bar.full > i { background:#64748b; }
+.tv-m .wo-row1, .tv-clk .wo-row1 { font-size:clamp(12px,1vw,17px); } .tv-m .wo-st, .tv-clk .wo-st { font-size:clamp(11px,0.9vw,15px); }
+.tv-m .wo-bar, .tv-clk .wo-bar { height:clamp(7px,0.6vw,11px); }
+/* Work Orders board */
+#woBoard { position:fixed; inset:0; z-index:9650; background:#06101d; display:none; flex-direction:column; font-family:'Barlow',sans-serif; color:#e2e8f0; }
+#woBoard.open { display:flex; }
+.wb-top { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid #1e3a5f; }
+.wb-title { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:2px; color:#7dd3fc; }
+.wb-bar { display:flex; gap:6px; flex-wrap:wrap; align-items:center; padding:10px 16px 4px; }
+.wb-chip { padding:6px 12px; border-radius:16px; border:1px solid #334155; background:rgba(255,255,255,0.04); font-size:12px; font-weight:700; cursor:pointer; color:#e2e8f0; }
+.wb-chip.on { background:rgba(14,165,233,0.2); border-color:#0ea5e9; color:#7dd3fc; }
+.wb-chip b { margin-left:3px; }
+.wb-list { flex:1; overflow-y:auto; padding:8px 16px 30px; display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:10px; align-content:start; }
+.wb-card { background:#0d1f35; border:1px solid #1e3a5f; border-radius:12px; padding:10px 12px; }
+.wb-card.late { border-color:rgba(239,68,68,0.7); box-shadow:0 0 0 1px rgba(239,68,68,0.35); }
+.wb-card.hold { border-color:rgba(245,158,11,0.6); }
+.wb-wo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; color:#fff; display:flex; align-items:center; gap:8px; }
+.wb-wo .wo-st { margin-left:auto; font-family:'Barlow',sans-serif; }
+.wb-meta { font-size:12px; color:#94a3b8; margin-top:1px; } .wb-meta b { color:#e2e8f0; }
+.wb-src { font-size:10px; color:#64748b; margin-top:4px; }
+@media (max-width:640px){ .wb-list { grid-template-columns:1fr; padding:8px 10px 30px; } .wb-top, .wb-bar { padding-left:10px; padding-right:10px; } }
 </style>
 <script>
 // ═══ PROSHOP TIME TRACKER SYNC ═══
@@ -22159,7 +22196,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 // Work-center names the app can't match on its own get matched once by
 // hand and remembered (hillSettings/proshopWorkCenterMap).
 (function(){
-  var CLOCK = { rows:[], syncedAt:null, syncedBy:'' }, MAP = {}, PREVIEW = null;
+  var CLOCK = { rows:[], workOrders:[], syncedAt:null, syncedBy:'' }, MAP = {}, PREVIEW = null, PREVIEW_WOS = [];
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function db(){ return window.fbDb || window._db; } function M(){ return window._fbModules; }
   function canSync(){ return !!(window._isAdmin || window.currentUser === 'hilladmin' || /corey/i.test((window._userDisplayName||'') + ' ' + (window.currentUser||''))); }
@@ -22173,7 +22210,12 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     op:        /^(op|op ?#|operation|oper|seq|op number)$/i,
     part:      /^(part|part ?#|part ?number|pn|item)$/i,
     workCenter:/^(work ?center|workcenter|machine|resource|equipment|station|wc|cell)$/i,
-    start:     /^(start|started|clock ?in|clocked ?in|time ?in|in|login|log ?in|since|start ?time)$/i
+    start:     /^(start|started|clock ?in|clocked ?in|time ?in|in|login|log ?in|since|start ?time)$/i,
+    dueDate:   /^(due|due ?date|ship ?date|promise ?date|promised|need ?by|required ?date|req ?date)$/i,
+    qtyDone:   /^(qty ?(done|complete|completed|good|made|run|ran|comp)|completed|complete|good|done|made|qtydone)$/i,
+    qtyTotal:  /^(qty|qty ?(total|required|ordered|req|order|due)|quantity|order ?qty|total ?qty|req ?qty|qtytotal)$/i,
+    status:    /^(status|wo ?status|state|stage)$/i,
+    customer:  /^(customer|cust|customer ?name)$/i
   };
   function splitLine(l){
     if(l.indexOf('\t') !== -1) return l.split('\t');
@@ -22185,11 +22227,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     // JSON from Claude / Cowork: [{employee, wo, op, part, workCenter, start}] or {rows:[...]}
     if(/^[\[{]/.test(text)){
       try{
-        var j = JSON.parse(text); var arr = Array.isArray(j) ? j : (j.rows || j.data || []);
-        return arr.map(function(r){
-          var o = {}; Object.keys(r).forEach(function(k){ var kk = k.trim(); Object.keys(FIELDS).forEach(function(f){ if(FIELDS[f].test(kk) || kk === f) o[f] = r[k]; }); });
-          return o;
-        }).filter(function(o){ return o.employee; });
+        var j = JSON.parse(text);
+        var mapRows = function(arr){ return (arr || []).map(function(r){
+          var o = {}; Object.keys(r).forEach(function(k){ var kk = k.trim(); Object.keys(FIELDS).forEach(function(f){ if(o[f] == null && (kk === f || FIELDS[f].test(kk))) o[f] = r[k]; }); });
+          return o; }); };
+        var clock = mapRows(Array.isArray(j) ? j : (j.clockIns || j.clockins || j.rows || j.data || []));
+        var wos = mapRows(Array.isArray(j) ? [] : (j.workOrders || j.workorders || j.wos || []));
+        return { clock: clock.filter(function(o){ return o.employee; }), wos: wos.concat(clock.filter(function(o){ return !o.employee && o.wo; })).filter(function(o){ return o.wo; }) };
       }catch(e){}
     }
     var lines = text.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
@@ -22198,11 +22242,44 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     head.forEach(function(h, i){ Object.keys(FIELDS).forEach(function(f){ if(idx[f] == null && FIELDS[f].test(h.replace(/[:.]/g,'').trim())) idx[f] = i; }); });
     var hasHeader = Object.keys(idx).length >= 2;
     if(!hasHeader) idx = { employee:0, wo:1, op:2, workCenter:3, start:4 };   // no header: Employee, WO, OP, Work Center, Start
-    return lines.slice(hasHeader ? 1 : 0).map(function(l){
+    var all = lines.slice(hasHeader ? 1 : 0).map(function(l){
       var c = splitLine(l).map(function(x){ return x.trim(); }), o = {};
       Object.keys(idx).forEach(function(f){ if(c[idx[f]] != null) o[f] = c[idx[f]]; });
       return o;
-    }).filter(function(o){ return o.employee && !/^total/i.test(o.employee); });
+    });
+    // A pasted Work Orders list (no employee column) fills the WO board; a Time Tracker list fills the clock-ins
+    return { clock: all.filter(function(o){ return o.employee && !/^total/i.test(o.employee); }),
+             wos: idx.employee == null ? all.filter(function(o){ return o.wo && !/^total/i.test(o.wo); }) : [] };
+  }
+  function num(v){ var n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g,'')); return isNaN(n) ? null : n; }
+  function dueISO(v){
+    if(!v) return '';
+    var s = String(v).trim(), m;
+    if((m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s))) return m[1] + '-' + ('0'+m[2]).slice(-2) + '-' + ('0'+m[3]).slice(-2);
+    if((m = /^(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/.exec(s))){ var y = m[3] ? (m[3].length === 2 ? 2000 + (+m[3]) : +m[3]) : new Date().getFullYear(); return y + '-' + ('0'+m[1]).slice(-2) + '-' + ('0'+m[2]).slice(-2); }
+    var t = Date.parse(s); if(!isNaN(t)){ var d = new Date(t); return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2); }
+    return '';
+  }
+  // One record per WO (+OP when given): from the Work Orders list, topped up by clock-in rows
+  function buildWOs(clock, wos){
+    var by = {};
+    function add(r, fromClock){
+      if(!r.wo) return;
+      var k = norm(r.wo) + '|' + norm(r.op || ''), w = by[k] || (by[k] = { wo:String(r.wo), op:String(r.op || ''), part:'', customer:'', workCenter:'', machine:'', dueISO:'', qtyDone:null, qtyTotal:null, status:'', onClock:[] });
+      if(r.part && !w.part) w.part = String(r.part);
+      if(r.customer && !w.customer) w.customer = String(r.customer);
+      if(r.workCenter && !w.workCenter) w.workCenter = String(r.workCenter);
+      if((r.dueDate || r.dueISO) && !w.dueISO) w.dueISO = dueISO(r.dueDate || r.dueISO);
+      if(r.onClock) r.onClock.forEach(function(e){ if(w.onClock.indexOf(e) === -1) w.onClock.push(e); });
+      if(num(r.qtyDone) != null && w.qtyDone == null) w.qtyDone = num(r.qtyDone);
+      if(num(r.qtyTotal) != null && w.qtyTotal == null) w.qtyTotal = num(r.qtyTotal);
+      if(r.status && !w.status) w.status = String(r.status);
+      if(fromClock && r.employee && w.onClock.indexOf(String(r.employee)) === -1) w.onClock.push(String(r.employee));
+      if(!w.machine) w.machine = r.machine || matchMachine(r);
+    }
+    (wos || []).forEach(function(r){ add(r, false); });
+    (clock || []).forEach(function(r){ add(r, true); });
+    return Object.keys(by).map(function(k){ return by[k]; });
   }
   function startMs(s){
     if(!s) return 0;
@@ -22241,23 +22318,162 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._ptListHtml = function(mid){
     var rows = window._ptFor(mid); if(!rows.length) return '';
     return '<div class="ln-sec">On the clock (ProShop)</div><div class="pt-clock">' + rows.map(function(r){
-      return '<div class="pt-who">' + whoLine(r) + (r.startMs ? '<i>since ' + esc(fmtT(r.startMs)) + '</i>' : '') + '</div>';
+      return '<div class="pt-who">' + whoLine(r) + (r.startMs ? '<i>since ' + esc(fmtT(r.startMs)) + '</i>' : '') + '</div>' + window._ptProgHtml(window._ptWO(r.wo, r.op));
     }).join('') + '</div>';
   };
   window._ptTvHtml = function(mid){
     return window._ptFor(mid).map(function(r){
       return '<div class="tv-clk"><div class="tv-clk-n">👷 <b>' + esc(r.employee) + '</b></div>'
-        + '<div class="tv-clk-s">' + [r.wo ? 'WO ' + esc(r.wo) : '', r.op ? 'OP ' + esc(r.op) : '', r.startMs ? 'on since ' + esc(fmtT(r.startMs)) : ''].filter(Boolean).join(' · ') + '</div></div>';
+        + '<div class="tv-clk-s">' + [r.wo ? 'WO ' + esc(r.wo) : '', r.op ? 'OP ' + esc(r.op) : '', r.startMs ? 'on since ' + esc(fmtT(r.startMs)) : ''].filter(Boolean).join(' · ') + '</div>'
+        + window._ptProgHtml(window._ptWO(r.wo, r.op)) + '</div>';
     }).join('');
   };
   window._ptJobBadge = function(n){
     var rows = window._ptForWo(n.wo).filter(function(r){ return !r.op || !n.op || norm(r.op) === norm(n.op); });
-    return rows.length ? '<span class="pt-tag">⏱ CLOCKED IN · ' + esc(rows.map(function(r){ return String(r.employee).split(' ')[0]; }).join(', ')) + '</span>' : '';
+    return (rows.length ? '<span class="pt-tag">⏱ CLOCKED IN · ' + esc(rows.map(function(r){ return String(r.employee).split(' ')[0]; }).join(', ')) + '</span>' : '')
+      + window._ptProgHtml(window._ptWO(n.wo, n.op), { noDue: true });
   };
+
+  // ── Work orders: due date · qty done of total · status ──────
+  window._ptWOs = function(){ return CLOCK.workOrders || []; };
+  // Best match for a WO (+OP): exact OP first, then a WO-level row, then any row for that WO
+  window._ptWO = function(wo, op){
+    var w = norm(wo); if(!w) return null;
+    var list = (CLOCK.workOrders || []).filter(function(x){ return norm(x.wo) === w; }); if(!list.length) return null;
+    var o = norm(op);
+    return (o && list.filter(function(x){ return norm(x.op) === o; })[0]) || list.filter(function(x){ return !x.op; })[0] || list[0];
+  };
+  function today12(){ var t = new Date(); t.setHours(12,0,0,0); return t; }
+  function dueBits(iso){
+    if(!iso) return null;
+    var dt = new Date(iso + 'T12:00:00'); if(isNaN(dt)) return null;
+    var days = Math.round((dt - today12()) / 86400000), md = (dt.getMonth()+1) + '/' + dt.getDate();
+    var txt = days < 0 ? 'OVERDUE ' + (-days) + 'D · ' + md : days === 0 ? 'DUE TODAY · ' + md : days === 1 ? 'DUE TOMORROW · ' + md
+      : 'DUE ' + ['SUN','MON','TUE','WED','THU','FRI','SAT'][dt.getDay()] + ' ' + md;
+    return { days:days, txt:txt, cls: days < 0 ? 'late' : days <= 2 ? 'soon' : 'ok' };
+  }
+  // Sort a ProShop status into a colour family; LATE wins when the job is past due and short on qty
+  window._ptStatus = function(w){
+    if(!w) return null;
+    var raw = String(w.status || '').trim(), s = raw.toLowerCase();
+    var done = w.qtyTotal != null && w.qtyDone != null && w.qtyDone >= w.qtyTotal;
+    var d = dueBits(w.dueISO);
+    var cls = /complete|closed|shipped|finished|done/.test(s) ? 'done'
+      : /hold|wait.*mat|material|stop|suspend|block/.test(s) ? 'hold'
+      : /inspect|qc|fai|first.?art/.test(s) ? 'insp'
+      : /set.?up/.test(s) ? 'setup'
+      : /run|active|progress|production|machin|started|open.*run/.test(s) ? 'run'
+      : /not.?start|released|open|queue|sched|new|pending|planned/.test(s) ? 'wait'
+      : raw ? 'other' : (done ? 'done' : w.onClock && w.onClock.length ? 'run' : '');
+    if(done && !raw) raw = 'Complete';
+    if(!raw && cls === 'run') raw = 'Running';
+    var late = d && d.days < 0 && cls !== 'done' && !done;
+    return { cls: late ? 'late' : cls, label: late ? 'LATE' + (raw ? ' · ' + raw : '') : raw, late: !!late, rawCls: cls, done: done || cls === 'done' };
+  };
+  window._ptProgHtml = function(w, opt){
+    if(!w) return '';
+    opt = opt || {};
+    var st = window._ptStatus(w), d = opt.noDue ? null : dueBits(w.dueISO), parts = [];
+    if(st && st.label) parts.push('<span class="wo-st s-' + st.cls + '">' + esc(st.label) + '</span>');
+    var hasQty = w.qtyTotal != null && w.qtyTotal > 0;
+    var pct = hasQty ? Math.max(0, Math.min(100, Math.round(((w.qtyDone || 0) / w.qtyTotal) * 100))) : null;
+    if(hasQty) parts.push('<span class="wo-qty">' + esc(fmtN(w.qtyDone || 0)) + ' / ' + esc(fmtN(w.qtyTotal)) + ' pcs · ' + pct + '%</span>');
+    else if(w.qtyDone != null) parts.push('<span class="wo-qty">' + esc(fmtN(w.qtyDone)) + ' pcs done</span>');
+    if(d) parts.push('<span class="wo-due ' + d.cls + '">📅 ' + esc(d.txt) + '</span>');
+    if(!parts.length) return '';
+    return '<div class="wo-prog"><div class="wo-row1">' + parts.join('') + '</div>'
+      + (hasQty ? '<div class="wo-bar' + (st && st.late ? ' late' : pct >= 100 ? ' full' : '') + '"><i style="width:' + pct + '%"></i></div>' : '') + '</div>';
+  };
+  function fmtN(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits:2 }); }
+
+  // ── Work Orders board: every WO from ProShop + every job in the app ──
+  var WB = { filter:'open', search:'' };
+  function boardRows(){
+    var by = {}, out = [];
+    (CLOCK.workOrders || []).forEach(function(w){ var r = Object.assign({}, w, { src:'proshop', app:[] }); by[norm(w.wo) + '|' + norm(w.op)] = r; out.push(r); });
+    var notes = []; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){ if(n && (n.type === 'blue' || n.type === 'green') && n.wo && !n.resolved) notes.push(n); }); });
+    notes.forEach(function(n){
+      var hit = by[norm(n.wo) + '|' + norm(n.op)] || window._ptWO(n.wo, n.op);
+      hit = hit && out.filter(function(r){ return norm(r.wo) === norm(hit.wo) && norm(r.op) === norm(hit.op); })[0];
+      if(hit){ hit.app.push(n); if(!hit.machine) hit.machine = n.machine; return; }
+      var due = window._ln && window._ln.dueInfo ? window._ln.dueInfo(n) : null;
+      var r = { wo:String(n.wo), op:String(n.op || ''), part:n.part || '', customer:'', machine:n.machine, dueISO: due ? due.iso : '', qtyDone:null, qtyTotal:null,
+        status: n.type === 'green' ? 'Running' : 'In line', onClock:[], src:'app', app:[n] };
+      by[norm(n.wo) + '|' + norm(n.op)] = r; out.push(r);
+    });
+    return out;
+  }
+  function machineName(id){
+    if(!id) return '';
+    var m = window._ln && window._ln.machines ? window._ln.machines().filter(function(x){ return x.id === id; })[0] : null;
+    return m ? m.name + (m.cell ? ' · ' + m.cell : '') : id;
+  }
+  function inFilter(r, f){
+    var st = window._ptStatus(r) || {}, d = dueBits(r.dueISO);
+    if(f === 'late') return st.late;
+    if(f === 'week') return d && d.days >= 0 && d.days <= 7 && !st.done;
+    if(f === 'hold') return st.rawCls === 'hold';
+    if(f === 'run') return st.rawCls === 'run' || st.rawCls === 'setup' || (r.onClock && r.onClock.length) || r.app.some(function(n){ return n.type === 'green'; });
+    if(f === 'open') return !st.done;
+    if(f === 'done') return st.done;
+    return true;
+  }
+  window._woRender = function(){
+    var box = document.getElementById('wbList'); if(!box) return;
+    var rows = boardRows();
+    var F = [['open','Open'],['late','🔴 Late'],['week','📅 Due in 7 days'],['run','🟢 Running'],['hold','🟠 On hold'],['done','✔ Complete'],['all','All']];
+    document.getElementById('wbChips').innerHTML = F.map(function(f){
+      return '<span class="wb-chip' + (WB.filter === f[0] ? ' on' : '') + '" onclick="window._woFilter(\'' + f[0] + '\')">' + f[1] + '<b>' + rows.filter(function(r){ return inFilter(r, f[0]); }).length + '</b></span>';
+    }).join('');
+    var words = WB.search ? WB.search.toLowerCase().split(/\s+/) : [];
+    var list = rows.filter(function(r){ return inFilter(r, WB.filter); }).filter(function(r){
+      if(!words.length) return true;
+      var hay = [r.wo, r.op, r.part, r.customer, r.status, r.workCenter, machineName(r.machine), (r.onClock || []).join(' ')].join(' ').toLowerCase();
+      return words.every(function(w){ return hay.indexOf(w) !== -1; });
+    });
+    list.sort(function(a, b){
+      var sa = window._ptStatus(a), sb = window._ptStatus(b);
+      if(!!sa.done !== !!sb.done) return sa.done ? 1 : -1;
+      return (a.dueISO || '9999') < (b.dueISO || '9999') ? -1 : (a.dueISO || '9999') > (b.dueISO || '9999') ? 1 : String(a.wo).localeCompare(String(b.wo));
+    });
+    box.innerHTML = list.length ? list.map(function(r){
+      var st = window._ptStatus(r) || {};
+      var who = (r.onClock || []).slice();
+      var line = r.app.map(function(n){
+        if(n.type === 'green') return 'Running in app';
+        var q = window._ln && window._ln.pendingFor ? window._ln.pendingFor(n.machine) : [], i = q.map(function(x){ return x.id; }).indexOf(n.id); return i >= 0 ? '#' + (i+1) + ' in line' : 'In line';
+      }).join(' · ');
+      var prog = window._ptProgHtml(r) || '<div class="wb-src">No qty / due date from ProShop yet</div>';
+      return '<div class="wb-card' + (st.late ? ' late' : st.rawCls === 'hold' ? ' hold' : '') + '">'
+        + '<div class="wb-wo">WO ' + esc(r.wo) + (r.op ? ' <span style="font-size:15px;color:#94a3b8;">OP ' + esc(r.op) + '</span>' : '') + '</div>'
+        + '<div class="wb-meta">' + [r.part ? 'Part <b>' + esc(r.part) + '</b>' : '', r.customer ? esc(r.customer) : ''].filter(Boolean).join(' · ') + '</div>'
+        + prog
+        + '<div class="wb-meta" style="margin-top:4px;">' + [r.machine ? '🏭 <b>' + esc(machineName(r.machine)) + '</b>' : (r.workCenter ? '🏭 ' + esc(r.workCenter) : ''), line ? esc(line) : '', who.length ? '👷 <b>' + esc(who.join(', ')) + '</b>' : ''].filter(Boolean).join(' · ') + '</div>'
+        + (r.src === 'app' ? '<div class="wb-src">From the app only — not in the last ProShop sync</div>' : '')
+        + '</div>';
+    }).join('') : '<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:40px;">' + (rows.length ? 'Nothing matches.' : 'No work orders yet. They arrive with the hourly ProShop sync.') + '</div>';
+    document.getElementById('wbStamp').innerHTML = window._ptStamp() || '<span class="pt-stamp">Not synced from ProShop yet</span>';
+  };
+  window._woFilter = function(f){ WB.filter = f; window._woRender(); };
+  window._woSearch = function(v){ WB.search = String(v || '').trim(); window._woRender(); };
+  window._woOpen = function(){
+    var ov = document.getElementById('woBoard');
+    if(!ov){
+      ov = document.createElement('div'); ov.id = 'woBoard';
+      ov.innerHTML = '<div class="wb-top"><div><div class="wb-title">📋 Work Orders — Status</div><div id="wbStamp"></div></div>'
+        + '<button class="pt-btn" style="margin-left:auto;" onclick="window._woClose()">✕ Close</button></div>'
+        + '<div class="wb-bar"><input class="ln-search" style="flex:1;min-width:180px;" placeholder="Search WO, part, customer, machine, status..." oninput="window._woSearch(this.value)"></div>'
+        + '<div class="wb-bar" id="wbChips"></div><div class="wb-list" id="wbList"></div>';
+      document.body.appendChild(ov);
+    }
+    ov.classList.add('open'); window._woRender();
+  };
+  window._woClose = function(){ var ov = document.getElementById('woBoard'); if(ov) ov.classList.remove('open'); };
 
   // ── Live data from Firestore ────────────────────────────────
   function refresh(){
     try{ if(window._lnRender) window._lnRender(); }catch(e){}
+    try{ var wb = document.getElementById('woBoard'); if(wb && wb.classList.contains('open')) window._woRender(); }catch(e){}
     try{ var tv = document.getElementById('lnTv'); if(tv && tv.classList.contains('open') && window._applyMachineEdges) window._lnTvRedraw && window._lnTvRedraw(); }catch(e){}
   }
   var wait = setInterval(function(){
@@ -22266,7 +22482,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var m = M();
     m.onSnapshot(m.doc(db(), 'hillSettings', 'proshopTimeClock'), function(s){
       var d = s && s.exists && s.exists() ? s.data() : null;
-      CLOCK = d ? { rows:d.rows || [], syncedAt:d.syncedAtMs || 0, syncedBy:d.syncedBy || '' } : { rows:[], syncedAt:0, syncedBy:'' };
+      CLOCK = d ? { rows:d.rows || [], workOrders:d.workOrders || [], syncedAt:d.syncedAtMs || 0, syncedBy:d.syncedBy || '' } : { rows:[], workOrders:[], syncedAt:0, syncedBy:'' };
       refresh();
     }, function(){});
     m.onSnapshot(m.doc(db(), 'hillSettings', 'proshopWorkCenterMap'), function(s){ MAP = (s && s.exists && s.exists() && s.data().map) || {}; }, function(){});
@@ -22295,9 +22511,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._ptClose = function(){ var o = document.getElementById('ptSync'); if(o) o.classList.remove('open'); };
   window._ptPreview = function(){
     var box = document.getElementById('ptPrev'); if(!box) return;
-    var rows = parse(document.getElementById('ptSyncInput').value);
+    var res = parse(document.getElementById('ptSyncInput').value), rows = res.clock || [];
     PREVIEW = rows.map(function(r){ return Object.assign({}, r, { machine: matchMachine(r), startMs: startMs(r.start) }); });
-    if(!rows.length){ box.innerHTML = ''; return; }
+    PREVIEW_WOS = buildWOs(PREVIEW, res.wos || []);
+    var woNote = PREVIEW_WOS.length ? '<div class="pt-note" style="margin-top:6px;">📋 ' + PREVIEW_WOS.length + ' work order' + (PREVIEW_WOS.length === 1 ? '' : 's') + ' with '
+      + PREVIEW_WOS.filter(function(w){ return w.dueISO; }).length + ' due dates, ' + PREVIEW_WOS.filter(function(w){ return w.qtyTotal != null; }).length + ' qty totals, '
+      + PREVIEW_WOS.filter(function(w){ return w.status; }).length + ' statuses.</div>' : '';
+    if(!rows.length){ box.innerHTML = woNote; return; }
     var opts = '<option value="">— pick machine —</option>' + machinesList().map(function(m){ return '<option value="' + esc(m.id) + '">' + esc(m.name) + ' (' + esc(m.cell) + ')</option>'; }).join('');
     box.innerHTML = '<table class="pt-tbl"><thead><tr><th>Employee</th><th>WO</th><th>OP</th><th>Work center</th><th>Clocked in</th><th>App machine</th></tr></thead><tbody>'
       + PREVIEW.map(function(r, i){
@@ -22305,7 +22525,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
             + '<td><select data-i="' + i + '" onchange="window._ptPick(this)">' + opts.replace('value="' + esc(r.machine) + '"', 'value="' + esc(r.machine) + '" selected') + '</select>'
             + (r.machine ? '' : ' <span class="pt-miss">match me</span>') + '</td></tr>';
         }).join('') + '</tbody></table>'
-      + '<div class="pt-note" style="margin-top:6px;">' + PREVIEW.length + ' clocked in · ' + PREVIEW.filter(function(r){ return r.machine; }).length + ' matched to a machine. Picking a machine for a work center is remembered for next time.</div>';
+      + '<div class="pt-note" style="margin-top:6px;">' + PREVIEW.length + ' clocked in · ' + PREVIEW.filter(function(r){ return r.machine; }).length + ' matched to a machine. Picking a machine for a work center is remembered for next time.</div>' + woNote;
   };
   window._ptPick = function(sel){
     var r = PREVIEW && PREVIEW[+sel.getAttribute('data-i')]; if(!r) return;
@@ -22316,16 +22536,17 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._ptSave = function(){
     if(!canSync()) return;
     var msg = document.getElementById('ptMsg');
-    if(!PREVIEW || !PREVIEW.length){ msg.innerHTML = '<span style="color:#fbbf24;">Nothing to save — paste the Time Tracker first.</span>'; return; }
+    if((!PREVIEW || !PREVIEW.length) && !PREVIEW_WOS.length){ msg.innerHTML = '<span style="color:#fbbf24;">Nothing to save — paste the Time Tracker first.</span>'; return; }
     var m = M(), now = Date.now(), who = window._userDisplayName || window.currentUser || '';
     var rows = PREVIEW.map(function(r){ return { employee:String(r.employee||''), wo:String(r.wo||''), op:String(r.op||''), part:String(r.part||''), workCenter:String(r.workCenter||''), start:String(r.start||''), startMs:r.startMs||0, machine:r.machine||'' }; });
-    var w = [m.setDoc(m.doc(db(), 'hillSettings', 'proshopTimeClock'), { rows:rows, syncedAtMs:now, syncedBy:who, updatedAt:m.serverTimestamp() })];
+    var wos = buildWOs(rows, PREVIEW_WOS);
+    var w = [m.setDoc(m.doc(db(), 'hillSettings', 'proshopTimeClock'), { rows:rows, workOrders:wos, syncedAtMs:now, syncedBy:who, updatedAt:m.serverTimestamp() })];
     if(window._ptMapDirty) w.push(m.setDoc(m.doc(db(), 'hillSettings', 'proshopWorkCenterMap'), { map:MAP, updatedAt:m.serverTimestamp() }));
     Promise.all(w).then(function(){
       window._ptMapDirty = false;
-      CLOCK = { rows:rows, syncedAt:now, syncedBy:who }; refresh();
+      CLOCK = { rows:rows, workOrders:wos, syncedAt:now, syncedBy:who }; refresh();
       var miss = rows.filter(function(r){ return !r.machine; }).length;
-      msg.innerHTML = '<span style="color:#4ade80;">✅ Saved ' + rows.length + ' clock-in' + (rows.length === 1 ? '' : 's') + ' to the Scheduler' + (miss ? ' · ' + miss + ' not matched to a machine' : '') + '.</span>';
+      msg.innerHTML = '<span style="color:#4ade80;">✅ Saved ' + rows.length + ' clock-in' + (rows.length === 1 ? '' : 's') + (wos.length ? ' and ' + wos.length + ' work order' + (wos.length === 1 ? '' : 's') : '') + ' to the Scheduler' + (miss ? ' · ' + miss + ' not matched to a machine' : '') + '.</span>';
       document.getElementById('ptLast').innerHTML = window._ptStamp();
       if(window.showToast) window.showToast('green','⏱ ProShop clock-ins synced', rows.length + ' on the clock');
     }).catch(function(e){ msg.innerHTML = '<span style="color:#f87171;">Couldn\'t save: ' + esc(e.message) + '</span>'; });
@@ -22333,8 +22554,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._ptClear = function(){
     if(!canSync()) return;
     var m = M();
-    m.setDoc(m.doc(db(), 'hillSettings', 'proshopTimeClock'), { rows:[], syncedAtMs:Date.now(), syncedBy:window._userDisplayName || window.currentUser || '', updatedAt:m.serverTimestamp() })
-      .then(function(){ CLOCK.rows = []; refresh(); document.getElementById('ptMsg').innerHTML = '<span style="color:#94a3b8;">Cleared.</span>'; });
+    m.setDoc(m.doc(db(), 'hillSettings', 'proshopTimeClock'), { rows:[], workOrders:[], syncedAtMs:Date.now(), syncedBy:window._userDisplayName || window.currentUser || '', updatedAt:m.serverTimestamp() })
+      .then(function(){ CLOCK.rows = []; CLOCK.workOrders = []; refresh(); document.getElementById('ptMsg').innerHTML = '<span style="color:#94a3b8;">Cleared.</span>'; });
   };
   // Link straight to the panel: …/Shop-floor-app/?ptsync=1
   var deep = setInterval(function(){
