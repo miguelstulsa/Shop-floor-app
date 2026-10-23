@@ -3579,6 +3579,10 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
           setupTime:  elapsedStr,
           setupDoneAt: new Date().toISOString(),
           originalType: confirmedType,
+          part:       origData.part || (window._lastFinishedNote && window._lastFinishedNote.part) || '',
+          buildMins:  elapsedMins,
+          jobStartedAt: (window._lastFinishedNote && (window._lastFinishedNote.jobStartedAt || window._lastFinishedNote.startedAt)) || origData.jobStartedAt || null,
+          dueDate:    (window._lastFinishedNote && window._lastFinishedNote.dueDate) || origData.dueDate || '',
         };
         // Add to notes (shows on shop floor) and hillRequests (shows on dashboard)
         var greenReqRef = await mods.addDoc(mods.collection(db2, 'hillRequests'), {
@@ -20921,6 +20925,10 @@ textarea.ro-in { min-height:64px; resize:vertical; }
   window._reordersOnLogin = function(user){
     build();
     var allowed = canSend() || (user && user.role === 'purchaser');
+    if(user && user.role === 'purchaser'){   // Cody gets the AI search tab too
+      var showAi = function(){ var ai = document.getElementById('tab-aichat'); if(ai){ ai.style.display = 'flex'; } };
+      showAi(); setTimeout(showAi, 600); setTimeout(showAi, 1500);
+    }
     var tab = document.getElementById('tab-reorders');
     if(tab) tab.style.display = allowed ? 'flex' : 'none';
     if(allowed) listen();
@@ -20933,6 +20941,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     LIST = []; LOADED = false;
     var tab = document.getElementById('tab-reorders'); if(tab) tab.style.display = 'none';
     window._closeReorders();
+    var ai = document.getElementById('tab-aichat'); if(ai && !isAdmin()) ai.style.display = 'none';
   };
 
   function listen(){
@@ -20989,7 +20998,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
             y+'-'+('0'+m).slice(-2), mn, mn.slice(0,3), String(y)].join(' ');
   }
   function searchText(r){
-    return [r.num, r.requestedBy, r.wo, r.machine, r.vendor, r.notes, r.quoteNum, r.po, r.orderedBy, r.orderNote, r.receivedBy, r.receiveNote, STATUS_LABEL[r.status],
+    return [r.num, r.requestedBy, r.wo, r.machine, r.vendor, r.notes, r.quoteNum, r.po, r.orderedBy, r.orderNote, r.authorizedBy, r.purchVendor, r.cost, r.tracking, r.account, dateWords(r.eta), r.receivedBy, r.receiveNote, STATUS_LABEL[r.status],
             dateWords(r.dateRequested), dateWords(r.dateNeeded), dateWords(r.dateOrdered), dateWords(r.dateReceived),
             dateWords(evMs(r,'sent')), dateWords(evMs(r,'ordered')), dateWords(evMs(r,'received'))]
       .concat((r.history||[]).map(function(h){ return [h.by, h.action, h.text].join(' '); }))
@@ -21161,7 +21170,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     saveDraft();
   };
   window._roEditExisting = function(id){
-    var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r || !canSend()) return;
+    var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r || !(canSend() || isPurch())) return;
     EDIT = JSON.parse(JSON.stringify({ requestedBy:r.requestedBy, dateRequested:r.dateRequested, dateNeeded:r.dateNeeded, wo:r.wo, machine:r.machine, vendor:r.vendor, items:r.items||[], notes:r.notes, hasQuote:!!r.hasQuote, quoteNum:r.quoteNum||'' }));
     EDIT._id = id; EDIT._num = r.num;
     document.getElementById('roDetail').classList.remove('open');
@@ -21226,7 +21235,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
   function setErr(t){ var e = document.getElementById('roErr'); if(e) e.textContent = t || ''; }
 
   window._roSave = function(){
-    if(!canSend()) return;
+    if(!canSend() && !(isPurch() && EDIT && EDIT._id)) return;   // Cody can fix up a request he was sent, not start new ones
     readForm();
     var items = EDIT.items.filter(function(i){ return i.qty || i.name || i.part || i.ship; });
     if(!EDIT.requestedBy) return setErr('Fill in Requested By.');
@@ -21246,7 +21255,7 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     var done = function(){ document.getElementById('roEdit').classList.remove('open'); };
     if(EDIT._id){
       data.history = m.arrayUnion({ at:new Date().toISOString(), by:me(), action:'edited' });
-      m.updateDoc(m.doc(db(), COL, EDIT._id), data).then(function(){ toast('green','💾 Saved', EDIT._num); done(); })
+      m.updateDoc(m.doc(db(), COL, EDIT._id), data).then(function(){ toast('green','💾 Saved', EDIT._num); if(isPurch() && window.adminPushover) window.adminPushover('✏️ ' + me() + ' edited ' + EDIT._num, 'Purchasing changed the request — open it to see what changed.', 'pushover', 0); done(); })
         .catch(function(e){ setErr('Couldn\'t save: ' + e.message); if(btn){ btn.disabled = false; btn.textContent = '💾 Save Changes'; } });
       return;
     }
@@ -21290,15 +21299,22 @@ textarea.ro-in { min-height:64px; resize:vertical; }
       + '<div class="ro-box"><div class="ro-kv">' + kv('Vendor quote', r.hasQuote ? 'Yes — PDF emailed' : 'No') + kv('Quote #', r.quoteNum) + '</div></div>';
 
     // Purchasing box — the "Purchasing use only" section of the paper form
-    var canOrder = (isPurch() || isAdmin()) && r.status === 'sent';
-    html += '<div class="ro-box ro-purch"><div class="ro-sec" style="margin-top:0;color:#93c5fd;">Purchasing</div>';
+    var editingPurch = PURCH_EDIT === r.id && r.status === 'ordered';
+    var canOrder = (isPurch() || isAdmin()) && (r.status === 'sent' || editingPurch);
+    if(PURCH_EDIT && PURCH_EDIT !== r.id) PURCH_EDIT = null;
+    html += '<div class="ro-box ro-purch"><div class="ro-sec" style="margin-top:0;color:#93c5fd;">Purchasing — authorization</div>';
     if(canOrder){
       html += '<div class="ro-grid3">' + fld('roOrdBy','Ordered By', r.orderedBy || (isPurch() ? me() : ''), true) + fld('roPo','PO #', r.po || '', true) + fld('roOrdDate','Date Ordered', r.dateOrdered || today(), true, 'date') + '</div>'
-        + '<input class="ro-in" id="roOrdNote" placeholder="Note back to Tooling (optional) — e.g. ETA, backorder, substitute">'
+        + '<div class="ro-grid3">' + fld('roAuthBy','Authorized By', r.authorizedBy || (isPurch() ? me() : ''), true) + fld('roPVendor','Vendor ordered from', r.purchVendor || r.vendor || '') + fld('roCost','Total cost ($)', r.cost || '', false, 'text', ' inputmode="decimal" placeholder="0.00"') + '</div>'
+        + '<div class="ro-grid3">' + fld('roEta','Expected delivery', r.eta || '', false, 'date') + fld('roTrack','Tracking # / confirmation', r.tracking || '') + fld('roAcct','Account / cost code', r.account || '') + '</div>'
+        + '<input class="ro-in" id="roOrdNote" placeholder="Note back to Tooling (optional) — e.g. ETA, backorder, substitute" value="' + esc(r.orderNote || '') + '">'
         + '<div class="ro-err" id="roOrdErr"></div>'
-        + '<div class="ro-actions"><button class="ro-btn blue" onclick="window._roMarkOrdered(\'' + r.id + '\')">✅ Mark Ordered</button></div>';
+        + '<div class="ro-actions">' + (editingPurch ? '<button class="ro-btn" onclick="window._roPurchEdit(null,\'' + r.id + '\')">Cancel</button><button class="ro-btn blue" onclick="window._roMarkOrdered(\'' + r.id + '\')">💾 Save purchasing</button>'
+          : '<button class="ro-btn blue" onclick="window._roMarkOrdered(\'' + r.id + '\')">✅ Authorize &amp; Mark Ordered</button>') + '</div>';
     } else {
-      html += '<div class="ro-kv">' + kv('Ordered By', r.orderedBy) + kv('PO #', r.po) + kv('Date Ordered', fmtDate(r.dateOrdered)) + '</div>'
+      html += '<div class="ro-kv">' + kv('Ordered By', r.orderedBy) + kv('PO #', r.po) + kv('Date Ordered', fmtDate(r.dateOrdered))
+        + kv('Authorized By', r.authorizedBy) + kv('Vendor ordered from', r.purchVendor) + kv('Total cost', r.cost ? '$' + r.cost : '')
+        + kv('Expected delivery', fmtDate(r.eta)) + kv('Tracking #', r.tracking) + kv('Account / cost code', r.account) + '</div>'
         + (r.orderNote ? '<div style="margin-top:8px;font-size:13px;color:#cbd5e1;">💬 ' + esc(r.orderNote) + '</div>' : '');
     }
     html += '</div>';
@@ -21319,7 +21335,8 @@ textarea.ro-in { min-height:64px; resize:vertical; }
         + '<button class="ro-btn green" onclick="window._roMarkReceived(\'' + r.id + '\')">📦 Mark Received</button>';
     }
     html += '<button class="ro-btn" onclick="window._roPrint(\'' + r.id + '\')">🖨 Print / PDF</button>';
-    if(canSend() && r.status === 'sent') html += '<button class="ro-btn" onclick="window._roEditExisting(\'' + r.id + '\')">✏️ Edit</button>';
+    if((canSend() || isPurch()) && (r.status === 'sent' || r.status === 'ordered')) html += '<button class="ro-btn" onclick="window._roEditExisting(\'' + r.id + '\')">✏️ Edit request</button>';
+    if((isPurch() || isAdmin()) && r.status === 'ordered' && PURCH_EDIT !== r.id) html += '<button class="ro-btn" onclick="window._roPurchEdit(\'' + r.id + '\')">✏️ Edit purchasing</button>';
     if(canSend() && (r.status === 'sent' || r.status === 'ordered')) html += '<button class="ro-btn red" id="roCancelBtn" onclick="window._roCancel(\'' + r.id + '\', this)">Cancel request</button>';
     if(canSend() && r.status === 'canceled') html += '<button class="ro-btn" onclick="window._roReopen(\'' + r.id + '\')">↩ Reopen</button>';
     html += '</div></div>';
@@ -21330,16 +21347,22 @@ textarea.ro-in { min-height:64px; resize:vertical; }
     var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r) return;
     var g = function(i){ var e = document.getElementById(i); return e ? e.value.trim() : ''; };
     var by = g('roOrdBy'), po = g('roPo'), dt = g('roOrdDate'), note = g('roOrdNote'), err = document.getElementById('roOrdErr');
-    if(!by || !po || !dt){ if(err) err.textContent = 'Ordered By, PO # and Date Ordered are all required.'; return; }
-    var m = M();
-    m.updateDoc(m.doc(db(), COL, id), { status:'ordered', orderedBy:by, po:po, dateOrdered:dt, orderNote:note, updatedAt:m.serverTimestamp(),
-      history: m.arrayUnion({ at:new Date().toISOString(), by:me(), action:'ordered', text:'PO ' + po + (note ? ' — ' + note : '') }) })
+    var auth = g('roAuthBy'), pv = g('roPVendor'), cost = g('roCost').replace(/[$,\s]/g,''), eta = g('roEta'), track = g('roTrack'), acct = g('roAcct');
+    if(!by || !po || !dt || !auth){ if(err) err.textContent = 'Ordered By, PO #, Date Ordered and Authorized By are all required.'; return; }
+    if(cost && isNaN(+cost)){ if(err) err.textContent = 'Total cost should be a number, like 245.80'; return; }
+    var m = M(), again = r.status === 'ordered';
+    m.updateDoc(m.doc(db(), COL, id), { status:'ordered', orderedBy:by, po:po, dateOrdered:dt, orderNote:note, authorizedBy:auth, purchVendor:pv, cost:cost, eta:eta, tracking:track, account:acct, updatedAt:m.serverTimestamp(),
+      history: m.arrayUnion({ at:new Date().toISOString(), by:me(), action: again ? 'purchasing updated' : 'ordered', text:'PO ' + po + (auth ? ' · authorized by ' + auth : '') + (cost ? ' · $' + cost : '') + (eta ? ' · ETA ' + fmtDate(eta) : '') + (note ? ' — ' + note : '') }) })
       .then(function(){
+        PURCH_EDIT = null;
+        if(again){ toast('blue','💾 Purchasing updated', r.num); return; }
         toast('blue','✅ Marked Ordered', r.num + ' · PO ' + po);
         if(window.adminPushover) window.adminPushover('✅ Ordered ' + r.num + ' · PO ' + po,
           by + ' ordered it on ' + fmtDate(dt) + '.\n' + (r.items||[]).map(function(i){ return i.qty + '× ' + i.name; }).join('\n') + (note ? '\n💬 ' + note : ''), 'cashregister', 0);
       }).catch(function(e){ if(err) err.textContent = 'Couldn\'t save: ' + e.message; });
   };
+  var PURCH_EDIT = null;
+  window._roPurchEdit = function(id, reopen){ PURCH_EDIT = id; window._roOpen(id || reopen); };
   window._roMarkReceived = function(id){
     var r = LIST.filter(function(x){ return x.id === id; })[0]; if(!r || !canSend()) return;
     var n = document.getElementById('roRecNote'), note = n ? n.value.trim() : '', m = M();
@@ -21413,7 +21436,9 @@ textarea.ro-in { min-height:64px; resize:vertical; }
       + '<table><thead><tr><th>#</th><th>QTY NEEDED</th><th>COMPLETE TOOL NAME / MODEL</th><th>PART # / LINK</th><th>NEXT DAY AIR</th><th>GROUND</th></tr></thead><tbody>' + rows + '</tbody></table>'
       + '<div class="l" style="margin-top:12px;">Notes / Reason for Reorder</div><div class="n">' + esc(r.notes||'') + '</div>'
       + '<div style="margin-top:10px;"><span class="l">Vendor Quote</span> ' + (r.hasQuote ? '☒' : '☐') + ' I have a quote — I will attach it to the email &nbsp;&nbsp; <b>Quote #</b> ' + esc(r.quoteNum||'') + '</div>'
-      + '<div style="margin-top:12px;font-size:10px;color:#6b7280;font-style:italic;">PURCHASING USE ONLY</div><div class="g">' + box('Ordered By', r.orderedBy) + box('PO #', r.po) + box('Date Ordered', fmtDate(r.dateOrdered)) + '</div>'
+      + '<div style="margin-top:12px;font-size:10px;color:#6b7280;font-style:italic;">PURCHASING USE ONLY</div><div class="g">' + box('Ordered By', r.orderedBy) + box('PO #', r.po) + box('Date Ordered', fmtDate(r.dateOrdered))
+      + box('Authorized By', r.authorizedBy) + box('Vendor ordered from', r.purchVendor) + box('Total cost', r.cost ? '$' + r.cost : '')
+      + box('Expected delivery', fmtDate(r.eta)) + box('Tracking #', r.tracking) + box('Account / cost code', r.account) + '</div>'
       + '<div class="ft">SAVE &amp; EMAIL COMPLETED FORM TO: Tony Lang &amp; Cody Wilson</div><div class="tag">Tooling Reorder Form - Rev 8 (10/22/2026) · printed from the Hill Shop Floor app</div>'
       + '<script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>';
     var w = window.open('', '_blank');
@@ -21660,22 +21685,48 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var id = esc(n.id), hr = esc(n.hillReqId || n.id), hrF = esc(n.hillReqId || '');
     var stop = 'event.stopPropagation();';
     if(n.inProgress){
-      return '<div class="ln-setup on">🔧 SETTING UP · <b>' + hm(setupMins(n)) + '</b>' + (n.startedBy ? ' · ' + esc(String(n.startedBy).replace(/^hilladmin$/,'Miguel')) : '') + '</div>'
+      return '<div class="ln-setup on">🛠 BUILDING · <b>' + hm(setupMins(n)) + '</b>' + (n.startedBy ? ' · ' + esc(String(n.startedBy).replace(/^hilladmin$/,'Miguel')) : '') + '</div>'
         + (can ? '<div class="ln-sbtns"><button class="ln-sb hold" onclick="' + stop + 'window.holdRequest(\'' + id + '\',\'' + hrF + '\')">⏸ Pause</button>'
-          + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Setup done — GO</button></div>' : '');
+          + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Build done — GO</button></div>' : '');
     }
     if(n.onHold || n.accumulatedElapsedMins){
-      return '<div class="ln-setup held">⏸ SETUP PAUSED · <b>' + hm(setupMins(n)) + '</b>' + (n.holdReason ? ' · ' + esc(n.holdReason) : '') + '</div>'
+      return '<div class="ln-setup held">⏸ BUILD PAUSED · <b>' + hm(setupMins(n)) + '</b>' + (n.holdReason ? ' · ' + esc(n.holdReason) : '') + '</div>'
         + (can ? '<div class="ln-sbtns"><button class="ln-sb" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Resume</button>'
-          + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Setup done — GO</button></div>' : '');
+          + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Build done — GO</button></div>' : '');
     }
-    return can ? '<div class="ln-sbtns"><button class="ln-sb start" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Start setup</button></div>' : '';
+    return can ? '<div class="ln-sbtns"><button class="ln-sb start" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Start build</button></div>' : '';
   }
   window._lnSetupDone = function(id, hr){
-    if(!confirm('Setup done? Your setup time is logged to this work order and the job goes to Running.')) return;
+    if(!confirm('Build done? Your build time is logged to this work order and the job goes to Running.')) return;
     window.finishRequest(id, hr);
   };
   window._lnSetupCtl = setupCtl;
+  // Running card: total job time from the moment the build started, plus how long the build took
+  function jobClock(n){
+    var st = n.jobStartedAt && (n.jobStartedAt.seconds ? n.jobStartedAt.seconds * 1000 : Date.parse(n.jobStartedAt));
+    if(!st && !n.setupTime) return '';
+    return '<div class="ln-meta">' + (st ? '⏱ Total job time <b>' + hm(Math.max(0, Math.round((Date.now() - st) / 60000))) + '</b>' : '') + (n.setupTime ? (st ? ' · ' : '') + '🛠 build <b>' + esc(n.setupTime) + '</b>' : '') + '</div>';
+  }
+  window._lnJobClock = jobClock;
+  // First Start on a Pending WO stamps when the whole job began (pauses/resumes don't reset it)
+  (function wrapStart(){
+    if(typeof window.startRequest !== 'function'){ setTimeout(wrapStart, 500); return; }
+    if(window.startRequest._wrapped) return;
+    var orig = window.startRequest;
+    window.startRequest = async function(noteId, hillReqId){
+      var n = null; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(x){ if(x && x.id === noteId) n = x; }); });
+      var r = await orig.apply(this, arguments);
+      try{
+        if(n && n.type === 'blue' && !n.jobStartedAt){
+          var m = window._fbModules, d = window.fbDb || window._db, now = m.serverTimestamp();
+          await m.updateDoc(m.doc(d, 'notes', noteId), { jobStartedAt: now });
+          if(n.hillReqId) m.updateDoc(m.doc(d, 'hillRequests', n.hillReqId), { jobStartedAt: now }).catch(function(){});
+        }
+      }catch(e){ console.warn('jobStartedAt', e); }
+      return r;
+    };
+    window.startRequest._wrapped = true;
+  })();
 
   function jobHtml(n, kind, pos, total, mid){
     var who = n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : '';
@@ -21697,7 +21748,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? '<span class="ln-wolink" title="Full job review" onclick="event.stopPropagation();window._jobReview && window._jobReview(\'' + esc(n.wo) + '\')">WO ' + esc(n.wo) + '</span>' : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
       + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '')
       + (kind !== 'run' && n.type === 'blue' ? setupCtl(n) : '')
-      + (kind === 'run' && n.setupTime ? '<div class="ln-meta">🔧 Setup took <b>' + esc(n.setupTime) + '</b></div>' : '') + '</div>'
+      + (kind === 'run' ? jobClock(n) : '') + '</div>'
       + moves + '</div>';
   }
 
@@ -21729,6 +21780,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     }).join('');
     var shown = {}; (cards.match(/data-drop="([^"]*)"/g) || []).forEach(function(x){ shown[x.slice(11,-1).replace(/&amp;/g,'&')] = 1; });
     var others = canOrder() ? ms.filter(function(m){ return !shown[m.id]; }) : [];
+    var soonEl = document.getElementById('lnSoon'); if(soonEl) soonEl.innerHTML = window._ptSoonHtml ? window._ptSoonHtml(CELL) : '';
     grid.innerHTML = (cards || '<div class="ln-none" style="grid-column:1/-1;text-align:center;padding:30px;">' + (words.length ? 'Nothing matches.' : 'No machines have jobs right now.') + '</div>')
       + (others.length ? '<div class="ln-others" id="lnOthers"><div class="ln-sec" style="margin-top:0;">Drag a job onto any machine</div>'
           + others.map(function(m){ return '<span class="ln-pill" data-drop="' + esc(m.id) + '" ondragover="window._lnDragOver(event)" ondragleave="window._lnDragLeave(event)" ondrop="window._lnDrop(event)">' + esc(m.name) + ' <i>' + esc(m.cell) + '</i></span>'; }).join('')
@@ -21909,7 +21961,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + '<div class="ln-bar"><input class="ln-search" placeholder="Search machine, WO, part, OP, machinist..." oninput="window._lnSearch(this.value)">'
       + '<div id="lnChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>'
       + '<button class="ln-btn" id="lnOldBtn" style="display:none;" onclick="window._lnClose(); window._openScheduler && window._openScheduler();">📋 Daily floor-walk tracker</button></div>'
-      + '<div class="ln-grid" id="lnGrid"></div>';
+      + '<div id="lnSoon"></div><div class="ln-grid" id="lnGrid"></div>';
     document.body.appendChild(ov);
   }
   window._openLines = function(){
@@ -22032,6 +22084,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.querySelector('#tvRunLbl').textContent = window._ptFor && c.machines.some(function(m){ return window._ptFor(m.id).length; }) ? 'Running / clocked in' : 'Running';
     ov.querySelector('#tvPend').textContent = load.pend;
     var maxNext = c.machines.length > 4 ? 3 : 5;
+    var ts = ov.querySelector('#tvSoon'); if(ts) ts.innerHTML = window._ptSoonHtml ? window._ptSoonHtml(c.name) : '';
     ov.querySelector('.tv-grid').innerHTML = c.machines.map(function(m){
       var run = L().runningFor(m.id), pend = L().pendingFor(m.id);
       var line = function(n){ return [n.op ? 'OP <b>' + esc(n.op) + '</b>' : '', n.part ? 'Part <b>' + esc(n.part) + '</b>' : '', n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : ''].filter(Boolean).join(' · '); };
@@ -22085,7 +22138,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var ov = document.createElement('div'); ov.id = 'lnTv';
     ov.innerHTML = '<div class="tv-head"><div><div class="tv-kicker"></div><div class="tv-cell"></div></div>'
       + '<div class="tv-stats"><div class="tv-stat"><b id="tvRun">0</b><span id="tvRunLbl">Running</span></div><div class="tv-stat"><b id="tvPend">0</b><span>In line</span></div><div class="tv-clock" id="tvClock"></div></div></div>'
-      + '<div class="tv-grid"></div>'
+      + '<div id="tvSoon"></div><div class="tv-grid"></div>'
       + '<div class="tv-foot"><div class="tv-dots"></div></div>'
       + '<div class="tv-prog"></div>'
       + '<div class="tv-ctrl"><select id="tvSel" onchange="window._lnTVSet(this.value)"></select>'
@@ -22212,6 +22265,17 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 .wo-bar { height:6px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden; margin-top:3px; }
 .wo-bar > i { display:block; height:100%; background:linear-gradient(90deg,#10b981,#34d399); border-radius:4px; }
 .wo-bar.late > i { background:linear-gradient(90deg,#dc2626,#f87171); } .wo-bar.full > i { background:#64748b; }
+.pt-det { display:flex; flex-wrap:wrap; gap:3px 6px; align-items:center; font-size:11px; color:#cbd5e1; margin:-1px 0 3px; padding:0 2px; }
+.pt-det b { color:#fff; } .pt-det i { font-style:normal; color:#475569; }
+.wo-eta { font-size:11px; color:#cbd5e1; margin:3px 0 2px; padding:3px 7px; border-radius:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); }
+.wo-eta b { color:#fff; } .wo-eta.soon { background:rgba(34,197,94,0.14); border-color:rgba(34,197,94,0.6); color:#bbf7d0; font-weight:700; }
+.wo-eta.done { background:rgba(100,116,139,0.2); border-color:#64748b; color:#e2e8f0; font-weight:700; } .wo-eta.setup { border-color:rgba(167,139,250,0.5); color:#ddd6fe; }
+.pt-soon { margin:4px 16px 8px; padding:8px 10px; border-radius:10px; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.5); }
+.pt-soon-h { font-family:'Bebas Neue',sans-serif; letter-spacing:1.5px; font-size:17px; color:#86efac; } .pt-soon-h span { font-family:'Barlow',sans-serif; font-size:11px; letter-spacing:0; color:#64748b; } .pt-soon-h a { color:#7dd3fc; }
+.pt-soon-r { display:flex; flex-wrap:wrap; gap:4px 12px; align-items:center; font-size:13px; padding:4px 0; border-top:1px solid rgba(255,255,255,0.06); }
+.pt-soon-r .m { font-family:'Bebas Neue',sans-serif; font-size:19px; letter-spacing:1px; color:#fbbf24; min-width:70px; } .pt-soon-r .t { color:#bbf7d0; font-weight:700; } .pt-soon-r .n { margin-left:auto; color:#cbd5e1; } .pt-soon-r .n b { color:#fff; }
+.tv-m .pt-det, .tv-clk .pt-det { font-size:clamp(11px,0.9vw,15px); } .tv-m .wo-eta, .tv-clk .wo-eta { font-size:clamp(12px,1vw,18px); }
+@media (max-width:640px){ .pt-soon { margin:4px 10px 8px; } .pt-soon-r .n { margin-left:0; width:100%; } }
 .tv-m .wo-row1, .tv-clk .wo-row1 { font-size:clamp(12px,1vw,17px); } .tv-m .wo-st, .tv-clk .wo-st { font-size:clamp(11px,0.9vw,15px); }
 .tv-m .wo-bar, .tv-clk .wo-bar { height:clamp(7px,0.6vw,11px); }
 /* Work Orders board */
@@ -22264,8 +22328,18 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     customer:  /^(customer|cust|customer ?name)$/i,
     setupHrs:  /^(setup ?(hrs|hours|time)|setuphrs|actual ?setup( ?hrs)?)$/i,
     runHrs:    /^(run ?(hrs|hours|time)|runhrs|actual ?run( ?hrs)?)$/i,
-    labor:     /^(labor|time ?entries|timeentries|entries|time ?log|timelog|history)$/i
+    labor:     /^(labor|labor ?entries|time ?entries|timeentries|entries|time ?log|timelog|history)$/i,
+    category:  /^(category|cat|activity|labor ?type|kind|work ?type)$/i,
+    begin:     /^(begin|begin ?date|op ?begin|sched(uled)? ?begin|start ?date)$/i,
+    end:       /^(end|end ?date|op ?end|sched(uled)? ?end|finish ?date)$/i,
+    qtyPerHour:/^((qty|pcs|parts|pieces) ?(per|\/) ?(hr|hour)|qtyperhour|per ?hour|rate|pph)$/i,
+    target:    /^(target|target ?(qty|time|hrs|hours|rate))$/i,
+    timeIn:    /^(time ?in|timein)$/i,
+    timeOut:   /^(time ?out|timeout|clock ?out|clocked ?out)$/i,
+    laborTime: /^(labor ?time|labor ?(hrs|hours)|labortime)$/i,
+    elapsed:   /^(elapsed|elapsed ?time|elapsedtime)$/i
   };
+  var CLOCK_EXTRA = ['category','begin','end','qtyPerHour','target','timeIn','timeOut','laborTime','elapsed','qtyDone','qtyTotal','status','dueDate'];
   function splitLine(l){
     if(l.indexOf('\t') !== -1) return l.split('\t');
     if(/,/.test(l) && l.split(',').length >= 3) return l.split(',');
@@ -22278,7 +22352,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       try{
         var j = JSON.parse(text);
         var mapRows = function(arr){ return (arr || []).map(function(r){
-          var o = {}; Object.keys(r).forEach(function(k){ var kk = k.trim(); Object.keys(FIELDS).forEach(function(f){ if(o[f] == null && (kk === f || FIELDS[f].test(kk))) o[f] = r[k]; }); });
+          var o = {}; Object.keys(r).forEach(function(k){ var kk = k.trim(); if(Array.isArray(r[k])){ if(/labor|entries|log|history/i.test(kk)) o.labor = r[k]; return; } Object.keys(FIELDS).forEach(function(f){ if(f !== 'labor' && o[f] == null && (kk === f || FIELDS[f].test(kk))) o[f] = r[k]; }); });
           return o; }); };
         var clock = mapRows(Array.isArray(j) ? j : (j.clockIns || j.clockins || j.rows || j.data || []));
         var wos = mapRows(Array.isArray(j) ? [] : (j.workOrders || j.workorders || j.wos || []));
@@ -22324,11 +22398,14 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       if(num(r.qtyTotal) != null && w.qtyTotal == null) w.qtyTotal = num(r.qtyTotal);
       if(r.status && !w.status) w.status = String(r.status);
       if(num(r.setupHrs) != null && w.setupHrs == null) w.setupHrs = num(r.setupHrs);
+      if(num(r.qtyPerHour) != null && w.qtyPerHour == null) w.qtyPerHour = num(r.qtyPerHour);
+      if(r.target && !w.target) w.target = String(r.target);
       if(num(r.runHrs) != null && w.runHrs == null) w.runHrs = num(r.runHrs);
       if(Array.isArray(r.labor) && !w.labor) w.labor = r.labor.map(function(e){
         return { employee:String(e.employee || e.name || e.who || ''), type:String(e.type || e.kind || e.activity || ''), start:String(e.start || e.in || e.clockIn || ''), end:String(e.end || e.out || e.clockOut || ''), hours: num(e.hours != null ? e.hours : e.hrs) };
       });
       if(fromClock && r.employee && w.onClock.indexOf(String(r.employee)) === -1) w.onClock.push(String(r.employee));
+      if(fromClock && r.category && !w.status){ var ph0 = phaseOf(r.category); w.status = ph0 === 'setup' ? 'Setup' : ph0 === 'insp' ? 'Inspection' : 'Running'; }
       if(!w.machine) w.machine = r.machine || matchMachine(r);
     }
     (wos || []).forEach(function(r){ add(r, false); });
@@ -22372,20 +22449,21 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._ptListHtml = function(mid){
     var rows = window._ptFor(mid); if(!rows.length) return '';
     return '<div class="ln-sec">On the clock (ProShop)</div><div class="pt-clock">' + rows.map(function(r){
-      return '<div class="pt-who">' + whoLine(r) + (r.startMs ? '<i>since ' + esc(fmtT(r.startMs)) + '</i>' : '') + '</div>' + window._ptProgHtml(window._ptWO(r.wo, r.op));
+      return '<div class="pt-who">' + whoLine(r) + (r.startMs ? '<i>since ' + esc(fmtT(r.startMs)) + '</i>' : '') + '</div>' + clockDetail(r) + window._ptProgHtml(window._ptWO(r.wo, r.op)) + window._ptEtaHtml(window._ptEta(r.wo, r.op));
     }).join('') + '</div>';
   };
   window._ptTvHtml = function(mid){
     return window._ptFor(mid).map(function(r){
       return '<div class="tv-clk"><div class="tv-clk-n">👷 <b>' + esc(r.employee) + '</b></div>'
         + '<div class="tv-clk-s">' + [r.wo ? 'WO ' + esc(r.wo) : '', r.op ? 'OP ' + esc(r.op) : '', r.startMs ? 'on since ' + esc(fmtT(r.startMs)) : ''].filter(Boolean).join(' · ') + '</div>'
-        + window._ptProgHtml(window._ptWO(r.wo, r.op)) + '</div>';
+        + clockDetail(r) + window._ptProgHtml(window._ptWO(r.wo, r.op)) + window._ptEtaHtml(window._ptEta(r.wo, r.op)) + '</div>';
     }).join('');
   };
   window._ptJobBadge = function(n){
     var rows = window._ptForWo(n.wo).filter(function(r){ return !r.op || !n.op || norm(r.op) === norm(n.op); });
     return (rows.length ? '<span class="pt-tag">⏱ CLOCKED IN · ' + esc(rows.map(function(r){ return String(r.employee).split(' ')[0]; }).join(', ')) + '</span>' : '')
-      + window._ptProgHtml(window._ptWO(n.wo, n.op), { noDue: true });
+      + window._ptProgHtml(window._ptWO(n.wo, n.op), { noDue: true })
+      + (n.type === 'green' ? window._ptEtaHtml(window._ptEta(n.wo, n.op)) : '');
   };
 
   // ── Work orders: due date · qty done of total · status ──────
@@ -22443,6 +22521,122 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + (hasQty ? '<div class="wo-bar' + (st && st.late ? ' late' : pct >= 100 ? ' full' : '') + '"><i style="width:' + pct + '%"></i></div>' : '') + '</div>';
   };
   function fmtN(n){ return Number(n).toLocaleString('en-US', { maximumFractionDigits:2 }); }
+
+  // ── Time left on the machine (ETA) ──────────────────────────
+  function hrsOf(v){
+    if(v == null || v === '') return null;
+    var s = String(v).trim(), m;
+    if((m = /^(\d+):(\d{2})(?::(\d{2}))?$/.exec(s))) return (+m[1]) + (+m[2]) / 60 + (m[3] ? (+m[3]) / 3600 : 0);
+    if((m = /(\d+(?:\.\d+)?)\s*h(?:rs?|ours?)?\s*(?:(\d+)\s*m)?/i.exec(s))) return (+m[1]) + (m[2] ? (+m[2]) / 60 : 0);
+    if((m = /^(\d+)\s*m(in)?/i.exec(s))) return (+m[1]) / 60;
+    var n = num(s); return n;
+  }
+  function phaseOf(cat){ var c = String(cat || '').toLowerCase(); return /set ?up|setup/.test(c) ? 'setup' : /insp|buy ?off|fai|first ?art|qc/.test(c) ? 'insp' : c ? 'run' : ''; }
+  var PHASE_LBL = { setup:'🔧 SETUP', insp:'🔍 INSPECTION', run:'▶ RUNNING' };
+  function warnHrs(){ var v = 2; try{ v = parseFloat(localStorage.getItem('hillEtaWarnHrs')) || 2; }catch(e){} return v; }
+  window._ptEta = function(wo, op){
+    var w = window._ptWO(wo, op), cr = window._ptForWo(wo).filter(function(r){ return !r.op || !op || norm(r.op) === norm(op); });
+    if(!w && !cr.length) return null;
+    var pick = function(f){ for(var i = 0; i < cr.length; i++){ var v = num(cr[i][f]); if(v != null) return v; } return null; };
+    var done = w && w.qtyDone != null ? w.qtyDone : pick('qtyDone'), total = w && w.qtyTotal != null ? w.qtyTotal : pick('qtyTotal');
+    var rate = pick('qtyPerHour'); if(rate == null && w && w.qtyPerHour) rate = w.qtyPerHour;
+    if(rate == null && w && w.qtyDone && w.runHrs) rate = w.qtyDone / w.runHrs;
+    var phases = cr.map(function(r){ return phaseOf(r.category); });
+    var phase = phases.indexOf('run') !== -1 ? 'run' : phases.indexOf('insp') !== -1 ? 'insp' : phases.indexOf('setup') !== -1 ? 'setup' : (cr.length ? 'run' : '');
+    var o = { wo:String(wo), op:String(op || (w && w.op) || ''), done:done, total:total, rate:rate, phase:phase, onClock:cr, machine:(cr[0] && cr[0].machine) || (w && w.machine) || '' };
+    if(total == null || done == null) return o;
+    o.remaining = Math.max(0, total - done);
+    if(o.remaining === 0){ o.finished = true; return o; }
+    if(!rate || rate <= 0) return o;
+    o.hoursLeft = o.remaining / rate;
+    o.etaMs = (CLOCK.syncedAt || Date.now()) + o.hoursLeft * 3600000;
+    o.soon = o.hoursLeft <= warnHrs();
+    return o;
+  };
+  function etaWhen(ms){
+    var d = new Date(ms), t = new Date(), h = d.getHours();
+    var tm = ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h >= 12 ? ' PM' : ' AM');
+    var days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(t.getFullYear(), t.getMonth(), t.getDate())) / 86400000);
+    return days === 0 ? tm : days === 1 ? 'tomorrow ' + tm : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()] + ' ' + (d.getMonth()+1) + '/' + d.getDate() + ' ' + tm;
+  }
+  function hLeft(h){ return h < 1 ? Math.max(1, Math.round(h * 60)) + ' min' : (Math.round(h * 10) / 10) + ' h'; }
+  window._ptEtaHtml = function(e){
+    if(!e) return '';
+    if(e.finished) return '<div class="wo-eta done">✅ Qty complete — ' + esc(fmtN(e.done)) + ' / ' + esc(fmtN(e.total)) + '</div>';
+    if(e.phase === 'setup') return '<div class="wo-eta setup">🔧 In setup' + (e.total != null ? ' · ' + esc(fmtN(e.total)) + ' pcs to run' : '') + (e.rate ? ' · ≈ ' + hLeft(e.total / e.rate) + ' once running' : '') + '</div>';
+    if(e.etaMs) return '<div class="wo-eta' + (e.soon ? ' soon' : '') + '">🏁 Done ≈ <b>' + esc(etaWhen(e.etaMs)) + '</b> · ' + hLeft(e.hoursLeft) + ' left · ' + esc(fmtN(e.remaining)) + ' pcs @ ' + esc(fmtN(Math.round(e.rate * 10) / 10)) + '/hr</div>';
+    if(e.remaining != null) return '<div class="wo-eta">' + esc(fmtN(e.remaining)) + ' pcs left · no rate from ProShop yet</div>';
+    return '';
+  };
+  // Everything ProShop's Time Tracker gives for one clock-in, laid out for a machine card / monitor
+  function clockDetail(r){
+    var bits = [];
+    var ph = phaseOf(r.category);
+    if(r.category) bits.push('<span class="wo-st s-' + (ph === 'setup' ? 'setup' : ph === 'insp' ? 'insp' : 'run') + '">' + esc(r.category) + '</span>');
+    if(r.timeIn || r.start) bits.push('In <b>' + esc(r.timeIn || r.start) + '</b>');
+    if(r.timeOut) bits.push('Out <b>' + esc(r.timeOut) + '</b>');
+    if(r.laborTime) bits.push('Labor <b>' + esc(r.laborTime) + '</b>');
+    if(r.elapsed) bits.push('Elapsed <b>' + esc(r.elapsed) + '</b>');
+    if(r.qtyPerHour) bits.push('<b>' + esc(r.qtyPerHour) + '</b>/hr');
+    if(r.target){
+      var tg = hrsOf(r.target), lb = hrsOf(r.laborTime || r.elapsed);
+      bits.push('Target <b' + (tg != null && lb != null && lb > tg ? ' style="color:#f87171;"' : '') + '>' + esc(r.target) + '</b>');
+    }
+    if(r.begin || r.end) bits.push('Op ' + esc([r.begin, r.end].filter(Boolean).join(' → ')));
+    return bits.length ? '<div class="pt-det">' + bits.join('<i>·</i>') + '</div>' : '';
+  }
+  window._ptClockDetail = clockDetail;
+
+  // ── Finishing soon: jobs about to come off a machine, and what's next on it ──
+  window._ptSoon = function(){
+    var seen = {}, out = [];
+    (CLOCK.rows || []).forEach(function(r){
+      var k = norm(r.wo) + '|' + norm(r.op); if(!r.wo || seen[k]) return; seen[k] = 1;
+      var e = window._ptEta(r.wo, r.op); if(!e || e.phase === 'setup') return;
+      if(!(e.finished || e.soon)) return;
+      var mid = r.machine || e.machine, next = mid && window._ln ? window._ln.pendingFor(mid)[0] : null;
+      out.push(Object.assign(e, { machine:mid, next:next }));
+    });
+    return out.sort(function(a, b){ return (a.etaMs || 0) - (b.etaMs || 0); });
+  };
+  window._ptSoonHtml = function(cell){
+    var list = window._ptSoon().filter(function(e){
+      if(!cell || cell === 'all' || !window._ln) return true;
+      var m = window._ln.machines().filter(function(x){ return x.id === e.machine; })[0]; return m && m.cell === cell;
+    });
+    if(!list.length) return '';
+    return '<div class="pt-soon"><div class="pt-soon-h">🏁 Finishing soon — get the next job ready <span>(within ' + warnHrs() + ' h · <a href="#" onclick="event.preventDefault();window._ptWarnSet()">change</a>)</span></div>'
+      + list.map(function(e){
+        var mn = e.machine || '—';
+        return '<div class="pt-soon-r"><b class="m">' + esc(mn) + '</b><span>WO ' + esc(e.wo) + (e.op ? ' OP ' + esc(e.op) : '') + '</span>'
+          + '<span class="t">' + (e.finished ? '✅ qty complete' : '≈ ' + esc(etaWhen(e.etaMs)) + ' · ' + hLeft(e.hoursLeft) + ' left') + '</span>'
+          + '<span class="n">' + (e.next ? 'Next: <b>WO ' + esc(e.next.wo || '—') + '</b>' + (e.next.inProgress ? ' · 🔧 building' : e.next.type === 'blue' && !e.next.inProgress ? ' · <span style="color:#fbbf24;">not started</span>' : '') : '<span style="color:#f87171;">Nothing in line</span>') + '</span></div>';
+      }).join('') + '</div>';
+  };
+  window._ptWarnSet = function(){
+    var v = prompt('Warn me when a job has this many hours (or less) left on the machine:', String(warnHrs()));
+    if(v == null) return; var n = parseFloat(v); if(!(n > 0)) return;
+    try{ localStorage.setItem('hillEtaWarnHrs', String(n)); }catch(e){}
+    refresh();
+  };
+
+  // Phone alert to the admin (once per job) when it's about to finish
+  var ALERTED = null;
+  function etaAlerts(){
+    if(!(window._isAdmin || window.currentUser === 'hilladmin') || !window.adminPushover || ALERTED === null) return;
+    var m = M(); if(!m || !db()) return;
+    window._ptSoon().forEach(function(e){
+      var key = norm(e.wo) + '_' + norm(e.op);
+      if(ALERTED[key]) return;
+      ALERTED[key] = Date.now();
+      var upd = {}; upd[key] = ALERTED[key];
+      m.setDoc(m.doc(db(), 'hillSettings', 'etaAlerts'), upd, { merge:true }).catch(function(){});
+      var nx = e.next ? 'Next up: WO ' + (e.next.wo || '—') + (e.next.inProgress ? ' (building now)' : ' — not started yet') : 'Nothing in line for this machine!';
+      window.adminPushover('🏁 ' + (e.machine || 'Machine') + ' finishing ' + (e.finished ? 'now' : '≈ ' + etaWhen(e.etaMs)),
+        'WO ' + e.wo + (e.op ? ' OP ' + e.op : '') + (e.finished ? ' — qty complete.' : ' — ' + e.remaining + ' pcs left (' + hLeft(e.hoursLeft) + ').') + '\n' + nx, 'magic', 0);
+      if(window.showToast) window.showToast('green', '🏁 ' + (e.machine || '') + ' finishing soon', 'WO ' + e.wo + ' · ' + nx);
+    });
+  }
 
   // ── Work Orders board: every WO from ProShop + every job in the app ──
   var WB = { filter:'open', search:'' };
@@ -22532,6 +22726,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   function refresh(){
     try{ if(window._lnRender) window._lnRender(); }catch(e){}
     try{ var wb = document.getElementById('woBoard'); if(wb && wb.classList.contains('open')) window._woRender(); }catch(e){}
+    try{ etaAlerts(); }catch(e){ console.warn('eta alerts', e); }
     try{ var tv = document.getElementById('lnTv'); if(tv && tv.classList.contains('open') && window._applyMachineEdges) window._lnTvRedraw && window._lnTvRedraw(); }catch(e){}
   }
   var wait = setInterval(function(){
@@ -22543,6 +22738,11 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       CLOCK = d ? { rows:d.rows || [], workOrders:d.workOrders || [], syncedAt:d.syncedAtMs || 0, syncedBy:d.syncedBy || '' } : { rows:[], workOrders:[], syncedAt:0, syncedBy:'' };
       refresh();
     }, function(){});
+    m.onSnapshot(m.doc(db(), 'hillSettings', 'etaAlerts'), function(s){
+      var d = s && s.exists && s.exists() ? s.data() : {}; var cut = Date.now() - 3 * 86400000;
+      ALERTED = {}; Object.keys(d || {}).forEach(function(k){ if(d[k] > cut) ALERTED[k] = d[k]; });
+      try{ etaAlerts(); }catch(e){}
+    }, function(){ ALERTED = {}; });
     m.onSnapshot(m.doc(db(), 'hillSettings', 'proshopWorkCenterMap'), function(s){ MAP = (s && s.exists && s.exists() && s.data().map) || {}; }, function(){});
   }, 800);
 
@@ -22576,7 +22776,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   // The work orders the hourly sync should look up: everything in the Scheduler + everyone clocked in
   window._ptLookups = function(){
     var seen = {}, out = [];
-    function add(wo, op, part, where){ if(!wo) return; var k = norm(wo) + '|' + norm(op); if(seen[k]) return; seen[k] = 1; out.push({ wo:String(wo), op:String(op || ''), part:String(part || ''), where:where }); }
+    function add(wo, op, part, where){ if(!wo) return; var k = norm(wo) + '|' + norm(op); if(seen[k]) return; seen[k] = 1; out.push({ wo:String(wo), op:/\d/.test(String(op || '')) ? String(op) : '', part:String(part || ''), where:where }); }
     Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){
       if(n && !n.resolved && (n.type === 'green' || n.type === 'blue')) add(n.wo, n.op, n.part, (n.type === 'green' ? 'running on ' : 'in line on ') + n.machine);
     }); });
@@ -22591,7 +22791,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   window._ptPreview = function(){
     var box = document.getElementById('ptPrev'); if(!box) return;
     var res = parse(document.getElementById('ptSyncInput').value), rows = res.clock || [];
-    PREVIEW = rows.map(function(r){ return Object.assign({}, r, { machine: matchMachine(r), startMs: startMs(r.start) }); });
+    PREVIEW = rows.map(function(r){ return Object.assign({}, r, { machine: matchMachine(r), startMs: startMs(r.start || r.timeIn) }); });
     PREVIEW_WOS = buildWOs(PREVIEW, res.wos || []);
     var woNote = PREVIEW_WOS.length ? '<div class="pt-note" style="margin-top:6px;">📋 ' + PREVIEW_WOS.length + ' work order' + (PREVIEW_WOS.length === 1 ? '' : 's') + ' with '
       + PREVIEW_WOS.filter(function(w){ return w.dueISO; }).length + ' due dates, ' + PREVIEW_WOS.filter(function(w){ return w.qtyTotal != null; }).length + ' qty totals, '
@@ -22617,7 +22817,11 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var msg = document.getElementById('ptMsg');
     if((!PREVIEW || !PREVIEW.length) && !PREVIEW_WOS.length){ msg.innerHTML = '<span style="color:#fbbf24;">Nothing to save — paste the Time Tracker first.</span>'; return; }
     var m = M(), now = Date.now(), who = window._userDisplayName || window.currentUser || '';
-    var rows = PREVIEW.map(function(r){ return { employee:String(r.employee||''), wo:String(r.wo||''), op:String(r.op||''), part:String(r.part||''), workCenter:String(r.workCenter||''), start:String(r.start||''), startMs:r.startMs||0, machine:r.machine||'' }; });
+    var rows = PREVIEW.map(function(r){
+      var o = { employee:String(r.employee||''), wo:String(r.wo||''), op:String(r.op||''), part:String(r.part||''), workCenter:String(r.workCenter||''), start:String(r.start || r.timeIn || ''), startMs:r.startMs||0, machine:r.machine||'' };
+      CLOCK_EXTRA.forEach(function(f){ if(r[f] != null && r[f] !== '') o[f] = String(r[f]); });
+      return o;
+    });
     var wos = buildWOs(rows, PREVIEW_WOS);
     var w = [m.setDoc(m.doc(db(), 'hillSettings', 'proshopTimeClock'), { rows:rows, workOrders:wos, syncedAtMs:now, syncedBy:who, updatedAt:m.serverTimestamp() })];
     // Permanent history per work order (hillProshopWO/<WO>) — Job Review reads this even after the job leaves the schedule
@@ -22766,6 +22970,10 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     data.logs.forEach(function(l){ if(l.role === 'run') run += l.elapsedMins || 0; });
     notes.forEach(function(n){ if(n.type === 'blue' && n.inProgress && n.startedAt && n.startedAt.seconds) mySetup += (n.accumulatedElapsedMins || 0) + Math.round((Date.now() - n.startedAt.seconds * 1000) / 60000); });
 
+    // ── total job clock: first Start build → job complete ──
+    var jobStart = 0, jobEnd = 0;
+    reqs.concat(notes).forEach(function(r){ var t = tsMs(r.jobStartedAt) || (kind(r) === 'blue' ? tsMs(r.startedAt) : 0); if(t && (!jobStart || t < jobStart)) jobStart = t; });
+    reqs.forEach(function(r){ if(r.jobStatus === 'completed' && r.runTime && tsMs(r.completedAt) > jobEnd) jobEnd = tsMs(r.completedAt); });
     // ── ProShop totals ──
     var psSetup = 0, psRun = 0, psHave = false, labor = [];
     ops.forEach(function(o){
@@ -22785,7 +22993,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + (main && window._ptProgHtml ? window._ptProgHtml(main) : '<div class="jr-note">No ProShop qty / due date synced for this WO yet.</div>');
 
     h += '<div class="jr-tiles">'
-      + tile('me', 'My setup time', mySetup ? hm(mySetup) : '—', mySetupN ? mySetupN + ' setup' + (mySetupN === 1 ? '' : 's') : 'not started')
+      + tile('', 'Total job time', jobStart ? hm(((jobEnd || Date.now()) - jobStart) / 60000) : '—', jobStart ? (jobEnd ? 'build start → complete' : 'since build started · still open') : 'starts when you hit Start build')
+      + tile('me', 'My build time', mySetup ? hm(mySetup) : '—', mySetupN ? mySetupN + ' build' + (mySetupN === 1 ? '' : 's') : 'not started')
       + tile('ps', 'ProShop setup', psHave ? hrs(psSetup) : '—', 'from ProShop labor')
       + tile('ps', 'ProShop run', psHave ? hrs(psRun) : '—', 'from ProShop labor')
       + (main && main.qtyTotal ? tile('', 'Parts', (main.qtyDone || 0) + ' / ' + main.qtyTotal, Math.round(((main.qtyDone || 0) / main.qtyTotal) * 100) + '% done') : '')
@@ -22802,12 +23011,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
         var t = TYPE[n.type] || ['•', n.type, '#64748b'];
         var pos = ''; if(n.type === 'blue' && window._ln){ var q = window._ln.pendingFor(n.machine); var i = q.map(function(x){ return x.id; }).indexOf(n.id); if(i >= 0) pos = ' · #' + (i+1) + ' in line'; }
         return '<div class="jr-sub" style="margin:3px 0;">' + t[0] + ' <b>' + esc(t[1]) + '</b> on <b>' + esc(n.machine) + '</b>' + (n.op ? ' · OP ' + esc(n.op) : '') + pos
-          + (n.inProgress ? ' · <span style="color:#fde68a;font-weight:700;">🔧 setting up</span>' : '') + (n.assignedTo ? ' · 🔧 ' + esc(n.assignedTo) : '') + '</div>'
+          + (n.inProgress ? ' · <span style="color:#fde68a;font-weight:700;">🛠 building</span>' : '') + (n.assignedTo ? ' · 🔧 ' + esc(n.assignedTo) : '') + '</div>'
           + (n.type === 'blue' && window._lnSetupCtl ? '<div class="jr-noprint">' + window._lnSetupCtl(n) + '</div>' : '');
       }).join('');
     } else h += '<div class="jr-empty">Not on the floor or in the Scheduler right now.</div>';
     var clockNow = window._ptForWo ? window._ptForWo(wo) : [];
-    if(clockNow.length) h += '<div class="jr-sub" style="margin-top:4px;">👷 On the clock now: <b>' + esc(clockNow.map(function(r){ return r.employee + (r.op ? ' (OP ' + r.op + ')' : ''); }).join(', ')) + '</b></div>';
+    if(clockNow.length) h += '<div class="jr-sub" style="margin-top:4px;">👷 On the clock now:</div>' + clockNow.map(function(r){ return '<div class="pt-who" style="margin-top:3px;">👷 <b>' + esc(r.employee) + '</b>' + (r.op ? ' · OP ' + esc(r.op) : '') + (r.machine ? ' · ' + esc(r.machine) : '') + '</div>' + (window._ptClockDetail ? window._ptClockDetail(r) : ''); }).join('');
+    var etaNow = window._ptEta ? window._ptEta(wo, main && main.op) : null; if(etaNow && window._ptEtaHtml) h += window._ptEtaHtml(etaNow);
 
     // ProShop by operation
     if(ops.length){
@@ -22835,13 +23045,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     reqs.forEach(function(r){
       var k = kind(r), t = TYPE[k] || ['•', k || 'Request', '#64748b'];
       if(r.autoPosted || r.autoCompleted){
-        ev.push({ ms:tsMs(r.createdAt), c:'#22c55e', w:'🟢 <b>Running</b> on ' + esc(r.machine || '') + (r.assignedTo ? ' · ' + esc(r.assignedTo) : ''), d:r.setupTime ? 'Setup took ' + esc(r.setupTime) + (r.setupBy ? ' (' + esc(who(r.setupBy)) + ')' : '') : '' });
+        ev.push({ ms:tsMs(r.createdAt), c:'#22c55e', w:'🟢 <b>Running</b> on ' + esc(r.machine || '') + (r.assignedTo ? ' · ' + esc(r.assignedTo) : ''), d:r.setupTime ? 'Build took ' + esc(r.setupTime) + (r.setupBy ? ' (' + esc(who(r.setupBy)) + ')' : '') : '' });
         return;
       }
       ev.push({ ms:tsMs(r.createdAt), c:t[2], w:t[0] + ' <b>' + esc(t[1]) + '</b>' + (r.machine ? ' · ' + esc(r.machine) : '') + (r.op ? ' · OP ' + esc(r.op) : '') + (r.operator ? ' — by ' + esc(r.operator) : ''), d:esc(r.detail || '') });
       if(r.movedAt || r.movedFrom) ev.push({ ms:tsMs(r.movedAt), c:'#a78bfa', w:'⇄ Moved' + (r.movedFrom ? ' from ' + esc(r.movedFrom) : '') + ' to ' + esc(r.machine || ''), d:r.movedBy ? 'by ' + esc(r.movedBy) : '' });
-      if(r.startedAt) ev.push({ ms:tsMs(r.startedAt), c:t[2], w:'▶ ' + (k === 'blue' ? '<b>Setup started</b>' : 'Started') + (r.startedBy ? ' — ' + esc(who(r.startedBy)) : ''), d:'' });
-      if(r.resolvedAt) ev.push({ ms:tsMs(r.resolvedAt), c:t[2], w:'✅ ' + (k === 'blue' ? '<b>Setup done</b>' : 'Done') + (r.resolvedBy ? ' — ' + esc(who(r.resolvedBy)) : ''), d:r.elapsedStr || r.setupTime ? '⏱ ' + esc(r.elapsedStr || r.setupTime) : '' });
+      if(r.startedAt) ev.push({ ms:tsMs(r.startedAt), c:t[2], w:'▶ ' + (k === 'blue' ? '<b>Build started</b>' : 'Started') + (r.startedBy ? ' — ' + esc(who(r.startedBy)) : ''), d:'' });
+      if(r.resolvedAt) ev.push({ ms:tsMs(r.resolvedAt), c:t[2], w:'✅ ' + (k === 'blue' ? '<b>Build done</b> → to the machine' : 'Done') + (r.resolvedBy ? ' — ' + esc(who(r.resolvedBy)) : ''), d:r.elapsedStr || r.setupTime ? '⏱ ' + esc(r.elapsedStr || r.setupTime) : '' });
       if(r.completedAt && r.jobStatus === 'completed' && r.runTime) ev.push({ ms:tsMs(r.completedAt), c:'#64748b', w:'🏁 <b>Job complete</b>', d:'Run time ' + esc(r.runTime) });
     });
     seen.forEach(function(e){ if(e.startMs) ev.push({ ms:e.startMs, c:'#10b981', w:'⏱ ProShop: <b>' + esc(e.employee) + '</b> clocked in' + (e.op ? ' on OP ' + esc(e.op) : ''), d:e.machine ? esc(e.machine) : '' }); });
