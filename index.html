@@ -22075,6 +22075,17 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 .tv-m.tight .tv-due { font-size:clamp(12px,0.95vw,16px); margin-top:3px; } .tv-m.tight .tv-lbl { margin:3px 0 4px; }
 .tv-m.tight .pt-det { display:none; } .tv-m.tight .wo-bar { display:none; }
 .tv-m.tighter .tv-sub, .tv-m.tighter .wo-prog .wo-row1 .wo-qty, .tv-m.tighter .tv-clk-s { display:none; }
+/* Phones: one machine per row at natural height, whole screen scrolls — nothing squeezed or cut off */
+@media (max-width:700px){
+  .tv-grid { grid-template-columns:1fr !important; grid-template-rows:none !important; grid-auto-rows:auto !important; align-content:start !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch; gap:12px; padding:10px 10px 16px; }
+  .tv-m { overflow:visible !important; min-height:auto; padding:12px 14px; }
+  .tv-mname { font-size:34px; margin-bottom:6px; }
+  .tv-head { gap:8px 14px; } .tv-cell { font-size:40px; } .tv-stat b, .tv-clock { font-size:30px; }
+  .tv-wo { font-size:19px; } .tv-sub { font-size:13px; } .tv-due { font-size:15px; } .tv-n { width:36px; height:36px; font-size:20px; }
+  .tv-foot { padding:6px 10px 10px; gap:6px; }
+  .tv-ctrl { width:100%; justify-content:stretch; padding:6px; gap:5px; opacity:1 !important; }
+  .tv-ctrl select, .tv-ctrl button { flex:1 1 auto; padding:7px 8px; font-size:13px; }
+}
 .tv-ctrl select, .tv-ctrl button { background:#0d1f35; border:1px solid #334155; color:#e2e8f0; border-radius:8px; padding:7px 10px; font-size:13px; cursor:pointer; }
 .tv-ctrl button.pin.on { background:#16a34a; border-color:#16a34a; color:#fff; }
 .tv-ctrl button.x { background:rgba(239,68,68,0.2); border-color:rgba(239,68,68,0.5); color:#fca5a5; }
