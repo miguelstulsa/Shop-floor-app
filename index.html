@@ -24222,6 +24222,16 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var m = M(); if(!m || !db() || !n || !n.wo) return Promise.resolve(null);
     var item = { wo:String(n.wo), op:String(n.op || ''), part:String(n.part || ''), machine:n.machine || '', noteId:n.id || '', why:why || 'Build started',
       requestedBy:me(), atMs:Date.now(), status:'queued' };
+    // An employee (not you) asked for a print → it also lands as a 🟡 Machinist Request on that machine so you see who/what/why
+    var boss = window._isAdmin || window.currentUser === 'hilladmin';
+    if(!boss && why !== 'Build started' && window.submitNoteToFirebase){
+      var mach = window._ln && window._ln.machines ? window._ln.machines().filter(function(x){ return x.id === n.machine; })[0] : null;
+      var who = me() || 'An employee';
+      var det = '🖨 Blueprint print — WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · Part ' + item.part : '') + ' sent to the front office printer';
+      window.submitNoteToFirebase({ machine:n.machine || '', cell:(mach && (mach.reqCell || mach.cell)) || n.cell || '', type:'yellow', wo:item.wo, op:item.op, part:item.part, po:'',
+        detail:det, operator:who, assignedTo:'', floorSupportType:'', dueDate:'', printRequest:true }).catch(function(e){ console.warn('print request note', e && e.message); });
+      if(window.adminPushover) window.adminPushover('🖨 ' + who + ' printed a blueprint', 'WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · Part ' + item.part : '') + (n.machine ? '\nMachine: ' + n.machine : '') + '\nSent to the front office printer.', 'pushover', 0);
+    }
     return m.addDoc(m.collection(db(), 'hillPrintQueue'), Object.assign({}, item, { at:m.serverTimestamp() })).then(function(ref){
       if(n.id) m.updateDoc(m.doc(db(), 'notes', n.id), { printStatus:'queued', printQueuedAtMs:item.atMs }).catch(function(){});
       if(window.showToast) window.showToast('blue', '🖨 Blueprint sent to the front office', 'WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · ' + item.part : ''));
