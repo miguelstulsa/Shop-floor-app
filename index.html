@@ -21744,6 +21744,28 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     return can ? '<div class="ln-sbtns"><button class="ln-sb start" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Start build</button>'
       + '<button class="ln-sb" onclick="' + stop + 'window._lnMarkBuilt(\'' + id + '\')" title="Tools were already built before — no build time">✓ Already built</button></div>' : '';
   }
+  // 🧰 Tool list for a job: same part + OP first, then any list for that part
+  window._lnFindToolList = function(n){
+    var c = window._toolListCache || {}, part = String(n.part || '').trim().toLowerCase(), op = String(n.op || '').trim().toLowerCase();
+    if(!part) return null;
+    if(window._toolListKey && c[window._toolListKey(n.part, n.op)]) return c[window._toolListKey(n.part, n.op)];
+    var any = Object.keys(c).map(function(k){ return c[k]; }).filter(function(t){ return String(t.part || '').trim().toLowerCase() === part; });
+    return any.filter(function(t){ return String(t.op || '').trim().toLowerCase() === op; })[0] || any[0] || null;
+  };
+  window._lnToolList = function(id){
+    var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n) return;
+    var tl = window._lnFindToolList(n);
+    if(tl && window._openToolListViewer){
+      var key = window._toolListKey(tl.part, tl.op);
+      window._openToolListViewer(key);
+      if(String(tl.op || '') !== String(n.op || '') && window.showToast) window.showToast('yellow', 'Showing OP ' + (tl.op || '—') + '\'s list', 'No list saved for OP ' + (n.op || '—') + ' yet');
+      return;
+    }
+    var boss = window._isAdmin || window.currentUser === 'hilladmin' || window._isManager;
+    if(boss && window._printQueue && confirm('No tool list for part ' + n.part + (n.op ? ' OP ' + n.op : '') + ' yet.\n\nBuild it from the newest G-code? (This also prints the blueprint at the front office.)')){
+      window._printQueue(n, 'Tool list + print');
+    } else if(!boss && window.showToast) window.showToast('yellow', 'No tool list yet', 'Part ' + n.part + (n.op ? ' OP ' + n.op : '') + ' — ask Miguel');
+  };
   var LAST_PRINT = {};
   window._lnReprint = function(id){
     var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n || !window._printQueue) return;
@@ -21816,7 +21838,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var drag = kind !== 'run' && canOrder();
     if(drag) moves = (moves ? moves.replace('<div class="ln-moves">', '<div class="ln-moves">') : '<div class="ln-moves">')
       .replace(/<\/div>$/, '') + '<button class="ln-mv ln-to" title="Move to another machine" onclick="event.stopPropagation();window._lnMoveMenu(\'' + esc(n.id) + '\', this)">⇄</button></div>';
+    var tlHas = n.part && window._lnFindToolList ? window._lnFindToolList(n) : null;
     var fb = (n.wo && window._printQueue ? '<button class="ln-mv" title="Print the blueprint at the front office" onclick="event.stopPropagation();window._lnReprint(\'' + esc(n.id) + '\')">🖨</button>' : '')
+      + (n.part ? '<button class="ln-mv' + (tlHas ? ' ln-tl-has' : '') + '" title="' + (tlHas ? 'Open the tool list (' + ((tlHas.tools || []).length) + ' tools)' : 'No tool list yet') + '" onclick="event.stopPropagation();window._lnToolList(\'' + esc(n.id) + '\')">🧰</button>' : '')
       + (window._jfBtn ? window._jfBtn(n) : '')
       + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._jeEdit ? '<button class="ln-mv" title="Edit this job" onclick="event.stopPropagation();window._jeEdit(\'' + esc(n.id) + '\')">✏️</button>' : '');
     if(kind !== 'run' && n.type === 'blue' && pos > 0 && !n.builtReady && !n.inProgress && !n.onHold && !n.accumulatedElapsedMins && (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager))
@@ -23335,6 +23359,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 .ln-job.run .pt-tag { display:none; }
 .ln-runby { margin-top:5px; font-size:12px; color:#d1fae5; background:rgba(16,185,129,0.14); border:1px solid rgba(16,185,129,0.55); border-radius:7px; padding:4px 8px; }
 .ln-runby b { color:#fff; } .ln-runby i { font-style:normal; color:#86efac; }
+#toolListViewerOverlay, #toolListOverlay { z-index:9600 !important; }   /* open on top of the Scheduler */
+.ln-mv.ln-tl-has { border-color:rgba(34,197,94,0.6) !important; background:rgba(34,197,94,0.14) !important; }
 .ln-wolink { cursor:pointer; text-decoration:underline dotted rgba(255,255,255,0.35); text-underline-offset:3px; }
 .ln-wolink:hover { color:#f5c842; }
 #jobRev { position:fixed; inset:0; z-index:9750; background:#06101d; display:none; flex-direction:column; font-family:'Barlow',sans-serif; color:#e2e8f0; }
@@ -23473,6 +23499,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + '<span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;" class="jr-noprint">'
       + (notes[0] && window._lnReprint ? '<button class="pt-btn go" onclick="window._lnReprint(\'' + esc(notes[0].id) + '\')">🖨 Print blueprint</button>'
          : window._printQueue ? '<button class="pt-btn go" onclick="window._printQueue({ wo:\'' + esc(wo) + '\', op:\'' + esc((main && main.op) || '') + '\', part:\'' + esc(part) + '\', machine:\'' + esc(machines[0] || '') + '\' }, \'Print requested from Job Review\')">🖨 Print blueprint</button>' : '')
+      + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._printQueue ? '<button class="pt-btn" title="Prints the blueprint and builds the tool list from the newest G-code" onclick="window._printQueue({ wo:\'' + esc(wo) + '\', op:\'' + esc((main && main.op) || (notes[0] && notes[0].op) || '') + '\', part:\'' + esc(part) + '\', machine:\'' + esc((notes[0] && notes[0].machine) || machines[0] || '') + '\', dueDate:\'' + esc((main && main.dueISO) || (notes[0] && notes[0].dueDate) || '') + '\' }, \'Tool list + print\')">🧰 Tool list + print</button>' : '')
       + '<button class="pt-btn" onclick="window.print()">📄 Report PDF</button></span></div>'
       + (main && window._ptProgHtml ? window._ptProgHtml(main) : '<div class="jr-note">No ProShop qty / due date synced for this WO yet.</div>');
 
@@ -24313,7 +24340,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   function autoOn(){ try{ return localStorage.getItem('hillAutoPrint') === '1'; }catch(e){ return false; } }
   function hpUrl(it){
     return 'hillprint://print?wo=' + encodeURIComponent(it.wo) + '&part=' + encodeURIComponent(it.part || '') + (it.op ? '&op=' + encodeURIComponent(it.op) : '') + '&id=' + encodeURIComponent(it.id || '')
-      + (it.why === 'Build started' ? '&gcode=1&machine=' + encodeURIComponent(it.machine || '') + '&due=' + encodeURIComponent(it.dueDate || '') : '');   // gcode=1 → helper also uploads the newest program for the tool list
+      + (it.why === 'Build started' || /^Tool list/.test(it.why || '') ? '&gcode=1&machine=' + encodeURIComponent(it.machine || '') + '&due=' + encodeURIComponent(it.dueDate || '') : '');   // gcode=1 → helper also uploads the newest program for the tool list
   }
   var FIRED = {};
   function fireKey(it){ return it.id + '|' + (it.requeuedAtMs || it.atMs || 0); }
