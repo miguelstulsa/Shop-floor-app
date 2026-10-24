@@ -21522,6 +21522,24 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 .ln-menu-cell { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#64748b; margin:8px 0 4px; }
 .ln-menu .ln-menu-x { justify-content:center; color:#fca5a5; border-color:rgba(239,68,68,0.4); margin-top:6px; }
 @media (max-width:640px){ .ln-grid { grid-template-columns:1fr; padding:10px; } .ln-title { font-size:21px; } }
+/* Phones: the whole Scheduler scrolls as one page; toolbars become single swipe rows */
+@media (max-width:700px){
+  #linesOverlay { overflow-y:auto; -webkit-overflow-scrolling:touch; display:none; }
+  #linesOverlay.open { display:block; }
+  #linesOverlay .ln-top { position:sticky; top:0; z-index:5; padding:8px 10px; }
+  #linesOverlay .ln-title { font-size:20px; letter-spacing:2px; }
+  #linesOverlay .ln-sub, #lnOldBtn { display:none !important; }
+  #linesOverlay .ln-x { padding:6px 10px; font-size:13px; }
+  #linesOverlay .ln-bar { flex-wrap:nowrap !important; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:8px 10px; gap:6px; scrollbar-width:none; }
+  #linesOverlay .ln-bar::-webkit-scrollbar { display:none; }
+  #linesOverlay .ln-bar > * { flex:0 0 auto !important; }
+  #lnCells, #lnChips { flex-wrap:nowrap !important; flex:0 0 auto !important; }
+  #linesOverlay .ln-chip, #linesOverlay .ln-btn { white-space:nowrap; padding:7px 11px; font-size:13px; }
+  #linesOverlay .ln-search { flex:0 0 78vw !important; width:78vw; }
+  #lnPtStamp { padding:2px 10px !important; }
+  #linesOverlay .ln-grid { overflow:visible; flex:none; padding:8px 8px 60px; }
+  #linesOverlay .pt-soon { margin:4px 8px 8px; }
+}
 </style>
 <script>
 // ═══ SCHEDULER — MACHINE LINES ═══
@@ -21707,7 +21725,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       return '<div class="ln-setup on">🛠 BUILDING · <b>' + hm(setupMins(n)) + '</b>' + (n.startedBy ? ' · ' + esc(String(n.startedBy).replace(/^hilladmin$/,'Miguel')) : '') + '</div>'
         + (can ? '<div class="ln-sbtns"><button class="ln-sb hold" onclick="' + stop + 'window.holdRequest(\'' + id + '\',\'' + hrF + '\')">⏸ Pause</button>'
           + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Build done — GO</button>'
-          + (window._printQueue ? '<button class="ln-sb" title="Send the blueprint to the front office printer again" onclick="' + stop + 'window._lnReprint(\'' + id + '\')">🖨</button>' : '') + '</div>' : '');
+          + '</div>' : '');
     }
     if(n.onHold || n.accumulatedElapsedMins){
       return '<div class="ln-setup held">⏸ BUILD PAUSED · <b>' + hm(setupMins(n)) + '</b>' + (n.holdReason ? ' · ' + esc(n.holdReason) : '') + '</div>'
@@ -21726,7 +21744,14 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     return can ? '<div class="ln-sbtns"><button class="ln-sb start" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Start build</button>'
       + '<button class="ln-sb" onclick="' + stop + 'window._lnMarkBuilt(\'' + id + '\')" title="Tools were already built before — no build time">✓ Already built</button></div>' : '';
   }
-  window._lnReprint = function(id){ var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(n && window._printQueue) window._printQueue(n, 'Reprint requested'); };
+  var LAST_PRINT = {};
+  window._lnReprint = function(id){
+    var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n || !window._printQueue) return;
+    if(LAST_PRINT[id] && Date.now() - LAST_PRINT[id] < 60000){ if(window.showToast) window.showToast('yellow', 'Already sent', 'WO ' + (n.wo || '') + ' went to the printer a moment ago'); return; }
+    LAST_PRINT[id] = Date.now();
+    var who = (window._userDisplayName || window.currentUser || '').replace(/^hilladmin$/i, 'Miguel');
+    window._printQueue(n, 'Print requested by ' + (who || 'someone'));
+  };
   window._lnSetupDone = function(id, hr){
     if(!confirm('Build done? Your build time is logged to this work order and the job goes to Running.')) return;
     window.finishRequest(id, hr);
@@ -21791,7 +21816,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var drag = kind !== 'run' && canOrder();
     if(drag) moves = (moves ? moves.replace('<div class="ln-moves">', '<div class="ln-moves">') : '<div class="ln-moves">')
       .replace(/<\/div>$/, '') + '<button class="ln-mv ln-to" title="Move to another machine" onclick="event.stopPropagation();window._lnMoveMenu(\'' + esc(n.id) + '\', this)">⇄</button></div>';
-    var fb = (window._jfBtn ? window._jfBtn(n) : '')
+    var fb = (n.wo && window._printQueue ? '<button class="ln-mv" title="Print the blueprint at the front office" onclick="event.stopPropagation();window._lnReprint(\'' + esc(n.id) + '\')">🖨</button>' : '')
+      + (window._jfBtn ? window._jfBtn(n) : '')
       + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._jeEdit ? '<button class="ln-mv" title="Edit this job" onclick="event.stopPropagation();window._jeEdit(\'' + esc(n.id) + '\')">✏️</button>' : '');
     if(kind !== 'run' && n.type === 'blue' && pos > 0 && !n.builtReady && !n.inProgress && !n.onHold && !n.accumulatedElapsedMins && (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager))
       fb = '<button class="ln-mv" title="Start build on this one (out of order)" onclick="event.stopPropagation();window.startRequest(\'' + esc(n.id) + '\',\'' + esc(n.hillReqId || n.id) + '\')">▶</button>'
@@ -23444,7 +23470,10 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var h = '<div class="jr-wrap">'
       + '<div class="jr-h"><div class="jr-wo">WO ' + esc(wo) + '</div>'
       + '<div class="jr-sub">' + [part ? 'Part <b>' + esc(part) + '</b>' : '', main && main.customer ? esc(main.customer) : '', machines.length ? '🏭 <b>' + esc(machines.join(', ')) + '</b>' : ''].filter(Boolean).join(' · ') + '</div>'
-      + '<button class="pt-btn jr-noprint" style="margin-left:auto;" onclick="window.print()">🖨 Print / PDF</button></div>'
+      + '<span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;" class="jr-noprint">'
+      + (notes[0] && window._lnReprint ? '<button class="pt-btn go" onclick="window._lnReprint(\'' + esc(notes[0].id) + '\')">🖨 Print blueprint</button>'
+         : window._printQueue ? '<button class="pt-btn go" onclick="window._printQueue({ wo:\'' + esc(wo) + '\', op:\'' + esc((main && main.op) || '') + '\', part:\'' + esc(part) + '\', machine:\'' + esc(machines[0] || '') + '\' }, \'Print requested from Job Review\')">🖨 Print blueprint</button>' : '')
+      + '<button class="pt-btn" onclick="window.print()">📄 Report PDF</button></span></div>'
       + (main && window._ptProgHtml ? window._ptProgHtml(main) : '<div class="jr-note">No ProShop qty / due date synced for this WO yet.</div>');
 
     h += whereWeAre(wo, ops, notes, main);
@@ -24232,7 +24261,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   function draw(){
     var o = document.getElementById('psStation'); if(!o) return;
     var waiting = Q.filter(function(x){ return x.status !== 'printed' && x.status !== 'skipped'; });
-    var recent = Q.filter(function(x){ return x.status === 'printed' || x.status === 'skipped'; }).slice(0, 8);
+    var recent = [];   // printed jobs drop off — reprint from the 🖨 button on any job
     var ab = o.querySelector('#psAutoBtn'); if(ab){ var on = autoOn(); ab.textContent = on ? '🖨 Auto-print: ON' : '🖨 Auto-print: OFF'; ab.className = 'ps-btn' + (on ? ' go' : ''); ab.title = on ? 'This PC prints every new job through HillPrint the moment Start build is hit' : 'Turn on ONLY on the PC with the HillPrint helper and the printer'; }
     o.querySelector('.ps-sub').textContent = waiting.length ? waiting.length + ' blueprint' + (waiting.length === 1 ? '' : 's') + ' to print' : 'All caught up — this screen beeps when a build starts';
     o.querySelector('.ps-list').innerHTML = (waiting.length ? waiting.map(card).join('') : '<div class="ps-empty">🖨 Nothing to print right now.</div>')
