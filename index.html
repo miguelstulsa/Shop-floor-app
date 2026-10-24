@@ -21706,7 +21706,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(n.inProgress){
       return '<div class="ln-setup on">🛠 BUILDING · <b>' + hm(setupMins(n)) + '</b>' + (n.startedBy ? ' · ' + esc(String(n.startedBy).replace(/^hilladmin$/,'Miguel')) : '') + '</div>'
         + (can ? '<div class="ln-sbtns"><button class="ln-sb hold" onclick="' + stop + 'window.holdRequest(\'' + id + '\',\'' + hrF + '\')">⏸ Pause</button>'
-          + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Build done — GO</button></div>' : '');
+          + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Build done — GO</button>'
+          + (window._printQueue ? '<button class="ln-sb" title="Send the blueprint to the front office printer again" onclick="' + stop + 'window._lnReprint(\'' + id + '\')">🖨</button>' : '') + '</div>' : '');
     }
     if(n.onHold || n.accumulatedElapsedMins){
       return '<div class="ln-setup held">⏸ BUILD PAUSED · <b>' + hm(setupMins(n)) + '</b>' + (n.holdReason ? ' · ' + esc(n.holdReason) : '') + '</div>'
@@ -21725,6 +21726,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     return can ? '<div class="ln-sbtns"><button class="ln-sb start" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Start build</button>'
       + '<button class="ln-sb" onclick="' + stop + 'window._lnMarkBuilt(\'' + id + '\')" title="Tools were already built before — no build time">✓ Already built</button></div>' : '';
   }
+  window._lnReprint = function(id){ var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(n && window._printQueue) window._printQueue(n, 'Reprint requested'); };
   window._lnSetupDone = function(id, hr){
     if(!confirm('Build done? Your build time is logged to this work order and the job goes to Running.')) return;
     window.finishRequest(id, hr);
@@ -21761,6 +21763,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var n = null; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(x){ if(x && x.id === noteId) n = x; }); });
       var r = await orig.apply(this, arguments);
       try{
+        if(n && n.type === 'blue' && !n.jobStartedAt && !n.printStatus && window._printQueue) window._printQueue(n, 'Build started');   // 🖨 blueprint to the front office
         if(n && n.type === 'blue' && !n.jobStartedAt){
           var m = window._fbModules, d = window.fbDb || window._db, now = m.serverTimestamp();
           await m.updateDoc(m.doc(d, 'notes', noteId), { jobStartedAt: now });
@@ -21801,7 +21804,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + (n.rework ? '<span class="je-rw">♻ REWORK</span>' : n.broughtBack ? '<span class="je-rw" style="background:#0369a1;">↩ BROUGHT BACK</span>' : '')
       + (n.wo && DUPS[dupKey(n, mid)] > 1 ? '<span class="jf-tag hold">⚠ Duplicate — this WO/OP is on ' + esc(mid || n.machine) + ' ' + DUPS[dupKey(n, mid)] + ' times'
           + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._jeRemove ? ' <button class="ln-sb" style="padding:2px 8px;font-size:11px;margin-left:4px;" onclick="event.stopPropagation();window._jeRemove(\'' + esc(n.id) + '\', this)">🗑 Remove this copy</button>' : '') + '</span>' : '')
-      + (window._jfHtml ? window._jfHtml(n) : '') + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '')
+      + (window._jfHtml ? window._jfHtml(n) : '') + (window._printTag ? window._printTag(n) : '') + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '')
       + (kind !== 'run' && n.type === 'blue' ? setupCtl(n, pos) : '')
       + (kind === 'run' ? whoRuns(n, mid) + jobClock(n) : '') + '</div>'
       + moves + '</div>';
@@ -21882,6 +21885,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var sub = document.getElementById('lnSub');
     var stampEl = document.getElementById('lnPtStamp'); if(stampEl) stampEl.innerHTML = window._ptStamp ? window._ptStamp() : '';
     var syncBtn = document.getElementById('lnPtBtn'); if(syncBtn) syncBtn.style.display = canOrder() ? '' : 'none';
+    var psB = document.getElementById('psBtn'); if(psB) psB.style.display = (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) ? '' : 'none';
     var cjBtn = document.getElementById('jeClosedBtn'); if(cjBtn) cjBtn.style.display = (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) ? '' : 'none';
     var hardBtn = document.getElementById('lnHardBtn'); if(hardBtn) hardBtn.style.display = (window._isAdmin || window.currentUser === 'hilladmin') ? '' : 'none';
     if(sub) sub.textContent = totalPend + ' pending job' + (totalPend === 1 ? '' : 's') + ' across ' + busy + ' machine' + (busy === 1 ? '' : 's') + (canOrder() ? ' · drag jobs (or ▲ ▼ ⇄) to change the order or move them to another machine' : '');
@@ -22046,7 +22050,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
       + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
       + '<div class="ln-bar" style="padding-bottom:4px;"><div id="lnCells" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>'
-       +   '<button class="ln-btn" id="jeClosedBtn" style="display:none;" onclick="window._jeClosed && window._jeClosed()">♻ Closed jobs</button>'
+       +   '<button class="ln-btn" id="psBtn" style="display:none;" onclick="window._psOpen && window._psOpen()">🖨 Print station</button>'
+      +   '<button class="ln-btn" id="jeClosedBtn" style="display:none;" onclick="window._jeClosed && window._jeClosed()">♻ Closed jobs</button>'
       +   '<button class="ln-btn" id="jaBell" style="display:none;" onclick="window._jaOpen && window._jaOpen()">🔔 Alerts</button>'
       +   '<button class="ln-btn" id="lnHardBtn" style="display:none;" title="Admin: reload the app fresh — newest version from GitHub + latest ProShop sync" onclick="window._hardRefresh()">🔄 Refresh</button>'
       +   '<button class="ln-btn" style="background:#f5c842;border-color:#f5c842;color:#1a1300;" onclick="window._jobReview && window._jobReview()">🔍 Job Review</button>'
@@ -24143,6 +24148,153 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 #jeClosedPanel { position:fixed; inset:0; z-index:9805; background:rgba(2,6,14,0.82); display:none; align-items:flex-start; justify-content:center; padding:24px 12px; overflow-y:auto; font-family:'Barlow',sans-serif; color:#e2e8f0; }
 #jeClosedPanel.open { display:flex; }
 </style>
+
+<style>
+/* ═══ BLUEPRINT PRINT QUEUE + FRONT OFFICE PRINT STATION ═══ */
+#psStation { position:fixed; inset:0; z-index:9900; background:radial-gradient(ellipse at top,#10263f 0%,#060d18 70%); display:none; flex-direction:column; font-family:'Barlow',sans-serif; color:#e2e8f0; }
+#psStation.open { display:flex; }
+.ps-top { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:2px solid rgba(125,211,252,0.25); flex-wrap:wrap; }
+.ps-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(28px,3vw,46px); letter-spacing:3px; color:#f5d050; line-height:1; }
+.ps-sub { font-size:13px; color:#94a3b8; }
+.ps-top .sp { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+.ps-btn { border-radius:10px; padding:10px 16px; font-size:15px; font-weight:800; cursor:pointer; border:1px solid #334155; background:rgba(255,255,255,0.06); color:#e2e8f0; }
+.ps-btn.go { background:#16a34a; border-color:#16a34a; color:#fff; }
+.ps-btn.blue { background:#0ea5e9; border-color:#0ea5e9; color:#04121f; }
+.ps-list { flex:1; overflow-y:auto; padding:16px 20px 40px; display:flex; flex-direction:column; gap:12px; }
+.ps-card { background:linear-gradient(170deg,#123052,#0b1c31); border:2px solid #1e3a5f; border-radius:16px; padding:14px 18px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+.ps-card.new { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,0.35), 0 0 28px rgba(245,158,11,0.35); animation:psPulse 1.6s ease-in-out infinite; }
+.ps-card.done { opacity:0.5; border-style:dashed; }
+@keyframes psPulse { 50% { box-shadow:0 0 0 5px rgba(245,158,11,0.6), 0 0 40px rgba(245,158,11,0.55); } }
+.ps-wo { font-family:'Bebas Neue',sans-serif; font-size:clamp(30px,3vw,48px); letter-spacing:1px; color:#fff; line-height:1; }
+.ps-meta { font-size:clamp(14px,1.2vw,19px); color:#cbd5e1; margin-top:3px; } .ps-meta b { color:#fff; }
+.ps-when { font-size:13px; color:#94a3b8; margin-top:3px; }
+.ps-acts { margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+.ps-empty { text-align:center; color:#64748b; font-size:20px; padding:60px 0; }
+.ln-print { display:inline-block; margin-top:4px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.55); color:#fde68a; }
+.ln-print.done { background:rgba(34,197,94,0.12); border-color:rgba(34,197,94,0.5); color:#bbf7d0; }
+@media (max-width:640px){ .ps-acts { margin-left:0; width:100%; } .ps-acts .ps-btn { flex:1; } }
+</style>
+<script>
+// ═══ BLUEPRINT PRINT QUEUE + FRONT OFFICE PRINT STATION ═══
+// ▶ Start build puts the WO in a print queue (hillPrintQueue).
+// • The front office PC keeps …/Shop-floor-app/?printstation=1 open: it beeps, shows the job big, and opens the
+//   drawing in ProShop with one click → Print → "✅ Printed".
+// • Claude's scheduled run prints anything still waiting (same page) and marks it printed — the backstop.
+(function(){
+  function M(){ return window._fbModules; } function db(){ return window.fbDb || window._db; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function me(){ var n = window._userDisplayName || window.currentUser || ''; return /^hilladmin$/i.test(n) ? 'Miguel' : n; }
+  function norm(s){ return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+  function fmtT(ms){ if(!ms) return ''; var d = new Date(ms), h = d.getHours(), t = new Date().toDateString() === d.toDateString(); return (t ? '' : (d.getMonth()+1) + '/' + d.getDate() + ' ') + ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h >= 12 ? ' PM' : ' AM'); }
+  var Q = [], LINK = { wo:'', part:'' }, UNSUB = null;
+
+  // ── Queue a print (Start build does this; 🖨 buttons can too) ──
+  window._printQueue = function(n, why){
+    var m = M(); if(!m || !db() || !n || !n.wo) return Promise.resolve(null);
+    var item = { wo:String(n.wo), op:String(n.op || ''), part:String(n.part || ''), machine:n.machine || '', noteId:n.id || '', why:why || 'Build started',
+      requestedBy:me(), atMs:Date.now(), status:'queued' };
+    return m.addDoc(m.collection(db(), 'hillPrintQueue'), Object.assign({}, item, { at:m.serverTimestamp() })).then(function(ref){
+      if(n.id) m.updateDoc(m.doc(db(), 'notes', n.id), { printStatus:'queued', printQueuedAtMs:item.atMs }).catch(function(){});
+      if(window.showToast) window.showToast('blue', '🖨 Blueprint sent to the front office', 'WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · ' + item.part : ''));
+      return ref;
+    }).catch(function(e){ console.warn('print queue', e && e.message); });
+  };
+  // Badge on the Scheduler card
+  window._printTag = function(n){
+    if(!n || !n.printStatus) return '';
+    return n.printStatus === 'printed' ? '<span class="ln-print done">🖨 Blueprint printed' + (n.printedBy ? ' · ' + esc(String(n.printedBy).split(' ')[0]) : '') + (n.printedAtMs ? ' ' + esc(fmtT(n.printedAtMs)) : '') + '</span>'
+      : '<span class="ln-print">🖨 Blueprint queued for the front office</span>';
+  };
+
+  // ── ProShop links (set once, from the print station) ──
+  function linkFor(it){
+    if(LINK.wo) return LINK.wo.replace(/\{WO\}/g, encodeURIComponent(it.wo)).replace(/\{PART\}/g, encodeURIComponent(it.part || ''));
+    return '';
+  }
+  window._psSetLink = function(){
+    var v = prompt('Open any work order in ProShop, copy its web address, paste it here, and replace the WO number with {WO}.\n\nExample:  https://yourshop.adionsystems.com/procnc/workorders/{WO}', LINK.wo || '');
+    if(v == null) return; v = v.trim();
+    if(v && v.indexOf('{WO}') === -1){ alert('Put {WO} where the work order number goes.'); return; }
+    var m = M(); if(!m || !db()) return;
+    m.setDoc(m.doc(db(), 'hillSettings', 'printStation'), { woUrl:v, updatedBy:me(), updatedAtMs:Date.now() }, { merge:true });
+  };
+
+  // ── Front office print station (…?printstation=1) ──
+  var SEEN = {}, FIRST = true;
+  function beep(){
+    try{
+      var C = window.AudioContext || window.webkitAudioContext; if(!C) return;
+      var ctx = window._psCtx || (window._psCtx = new C());
+      [0, 0.25, 0.5].forEach(function(t){ var o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.25, ctx.currentTime + t); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.2); o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.21); });
+    }catch(e){}
+  }
+  function draw(){
+    var o = document.getElementById('psStation'); if(!o) return;
+    var waiting = Q.filter(function(x){ return x.status !== 'printed' && x.status !== 'skipped'; });
+    var recent = Q.filter(function(x){ return x.status === 'printed' || x.status === 'skipped'; }).slice(0, 8);
+    o.querySelector('.ps-sub').textContent = waiting.length ? waiting.length + ' blueprint' + (waiting.length === 1 ? '' : 's') + ' to print' : 'All caught up — this screen beeps when a build starts';
+    o.querySelector('.ps-list').innerHTML = (waiting.length ? waiting.map(card).join('') : '<div class="ps-empty">🖨 Nothing to print right now.</div>')
+      + (recent.length ? '<div class="ps-sub" style="margin-top:10px;">Recently printed</div>' + recent.map(card).join('') : '');
+  }
+  function card(it){
+    var done = it.status === 'printed' || it.status === 'skipped', url = linkFor(it);
+    return '<div class="ps-card' + (done ? ' done' : (Date.now() - (it.atMs || 0) < 10 * 60000 ? ' new' : '')) + '">'
+      + '<div><div class="ps-wo">WO ' + esc(it.wo) + (it.op ? ' <span style="font-size:0.6em;color:#94a3b8;">OP ' + esc(it.op) + '</span>' : '') + '</div>'
+      + '<div class="ps-meta">' + [it.part ? 'Part <b>' + esc(it.part) + '</b>' : '', it.machine ? 'for <b>' + esc(it.machine) + '</b>' : ''].filter(Boolean).join(' · ') + '</div>'
+      + '<div class="ps-when">' + esc(it.why || '') + ' by ' + esc(it.requestedBy || '') + ' · ' + esc(fmtT(it.atMs)) + (done ? ' · ' + (it.status === 'printed' ? '✅ printed by ' + esc(it.printedBy || '') + ' ' + esc(fmtT(it.printedAtMs)) : 'skipped') : '') + '</div></div>'
+      + '<div class="ps-acts">'
+      + (url ? '<a class="ps-btn blue" href="' + esc(url) + '" target="_blank" rel="noopener" style="text-decoration:none;">📄 Open in ProShop</a>'
+             : '<button class="ps-btn blue" onclick="window._psCopy(\'' + esc(it.wo) + '\')">📋 Copy WO #</button>')
+      + (done ? '<button class="ps-btn" onclick="window._psMark(\'' + esc(it.id) + '\',\'queued\')">↩ Print again</button>'
+              : '<button class="ps-btn go" onclick="window._psMark(\'' + esc(it.id) + '\',\'printed\')">✅ Printed</button><button class="ps-btn" onclick="window._psMark(\'' + esc(it.id) + '\',\'skipped\')">Skip</button>')
+      + '</div></div>';
+  }
+  window._psCopy = function(wo){ try{ navigator.clipboard.writeText(wo); if(window.showToast) window.showToast('green', 'Copied ' + wo, 'Paste it into ProShop search'); }catch(e){} };
+  window._psMark = function(id, st){
+    var it = Q.filter(function(x){ return x.id === id; })[0], m = M(); if(!it || !m) return;
+    var u = { status:st }; if(st === 'printed'){ u.printedBy = me(); u.printedAtMs = Date.now(); }
+    m.updateDoc(m.doc(db(), 'hillPrintQueue', id), u).then(function(){
+      if(it.noteId) m.updateDoc(m.doc(db(), 'notes', it.noteId), st === 'printed' ? { printStatus:'printed', printedBy:u.printedBy, printedAtMs:u.printedAtMs } : { printStatus: st === 'queued' ? 'queued' : '' }).catch(function(){});
+      if(st === 'printed' && window._jobAlert) window._jobAlert({ kind:'note', wo:it.wo, op:it.op, part:it.part, machine:it.machine, text:'🖨 Blueprint printed by ' + u.printedBy });
+    });
+  };
+  function listen(){
+    if(UNSUB) return;
+    var m = M(); if(!m || !db() || !m.onSnapshot || !m.query || !m.orderBy || !m.limit) return;
+    UNSUB = m.onSnapshot(m.query(m.collection(db(), 'hillPrintQueue'), m.orderBy('atMs', 'desc'), m.limit(40)), function(snap){
+      var arr = []; snap.forEach(function(d){ var x = d.data(); x.id = d.id; arr.push(x); }); Q = arr;
+      var fresh = arr.filter(function(x){ return x.status === 'queued' && !SEEN[x.id]; });
+      arr.forEach(function(x){ SEEN[x.id] = 1; });
+      if(!FIRST && fresh.length && document.getElementById('psStation') && document.getElementById('psStation').classList.contains('open')) beep();
+      FIRST = false; draw();
+    }, function(e){ console.warn('print queue', e && e.message); });
+    m.onSnapshot(m.doc(db(), 'hillSettings', 'printStation'), function(s){ var d = s && s.exists && s.exists() ? s.data() : {}; LINK.wo = (d && d.woUrl) || ''; draw(); }, function(){});
+  }
+  window._psOpen = function(){
+    var o = document.getElementById('psStation');
+    if(!o){
+      o = document.createElement('div'); o.id = 'psStation';
+      o.innerHTML = '<div class="ps-top"><div><div class="ps-title">🖨 Blueprint Print Station</div><div class="ps-sub"></div></div>'
+        + '<div class="sp"><button class="ps-btn" onclick="window._psSetLink()">⚙ ProShop link</button>'
+        + '<button class="ps-btn" onclick="try{document.documentElement.requestFullscreen()}catch(e){}">⛶ Full screen</button>'
+        + '<button class="ps-btn" onclick="document.getElementById(\'psStation\').classList.remove(\'open\')">✕ Exit</button></div></div>'
+        + '<div class="ps-list"></div>';
+      document.body.appendChild(o);
+      o.addEventListener('click', function(){ try{ if(window._psCtx && window._psCtx.state === 'suspended') window._psCtx.resume(); else if(!window._psCtx) beep(); }catch(e){} }, { once:true });
+    }
+    o.classList.add('open'); listen(); draw();
+  };
+  // Open by itself on the front office PC: …/Shop-floor-app/?printstation=1
+  var auto = setInterval(function(){
+    var auth = document.getElementById('authOverlay');
+    if(!window.currentUser || (auth && !auth.classList.contains('hidden')) || !M() || !db()) return;
+    clearInterval(auto);
+    listen();
+    if(/[?&]printstation=1/.test(location.search)) setTimeout(window._psOpen, 1200);
+  }, 800);
+})();
+</script>
 
 </body>
 </html>
