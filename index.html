@@ -3175,6 +3175,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
     if (window._removeActiveJob) window._removeActiveJob(noteId);
     showToast('green', '🏁 Job Complete!', 'Run time: ' + elapsedStr);
+    try{ if(window._jobAlert && typeof nData !== 'undefined' && nData) window._jobAlert({ kind:'done', wo:nData.wo || '', op:nData.op || '', part:nData.part || '', machine:nData.machine || '', text:'Run time ' + elapsedStr + (nData.assignedTo ? ' · ' + nData.assignedTo : '') }); }catch(e){}
 
     // Sparky announces it
     if (window._djAnnounceNew) {
@@ -22851,17 +22852,30 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   function etaAlerts(){
     if(!(window._isAdmin || window.currentUser === 'hilladmin') || !window.adminPushover || ALERTED === null) return;
     var m = M(); if(!m || !db()) return;
-    window._ptSoon().forEach(function(e){
-      var key = norm(e.wo) + '_' + norm(e.op);
-      if(ALERTED[key]) return;
-      ALERTED[key] = Date.now();
-      var upd = {}; upd[key] = ALERTED[key];
-      m.setDoc(m.doc(db(), 'hillSettings', 'etaAlerts'), upd, { merge:true }).catch(function(){});
-      var nx = e.next ? 'Next up: WO ' + (e.next.wo || '—') + (e.next.inProgress ? ' (building now)' : ' — not started yet') : 'Nothing in line for this machine!';
-      window.adminPushover('🏁 ' + (e.machine || 'Machine') + ' finishing ' + (e.finished ? 'now' : '≈ ' + etaWhen(e.etaMs)),
-        'WO ' + e.wo + (e.op ? ' OP ' + e.op : '') + (e.finished ? ' — qty complete.' : ' — ' + e.remaining + ' pcs left (' + hLeft(e.workLeft != null ? e.workLeft : e.hoursLeft) + ' of shop time).') + '\n' + nx, 'magic', 0);
-      if(window.showToast) window.showToast('green', '🏁 ' + (e.machine || '') + ' finishing soon', 'WO ' + e.wo + ' · ' + nx);
+    var seenJob = {}, upd = {}, any = false;
+    (CLOCK.rows || []).forEach(function(r){
+      var jk = norm(r.wo) + '_' + norm(r.op); if(!r.wo || seenJob[jk]) return; seenJob[jk] = 1;
+      var e = window._ptEta(r.wo, r.op); if(!e || e.phase === 'setup') return;
+      var mid = r.machine || e.machine, next = mid && window._ln ? (window._ln.splitFor ? window._ln.splitFor(mid).pend : window._ln.pendingFor(mid))[0] : null;
+      var nx = next ? 'Next up: WO ' + (next.wo || '—') + (next.inProgress ? ' (building now)' : next.builtReady ? ' (tools built ✅)' : ' — NOT built yet') : 'Nothing in line for this machine!';
+      var job = 'WO ' + e.wo + (e.op ? ' OP ' + e.op : ''), left = e.workLeft != null ? e.workLeft : e.hoursLeft;
+      var fire = function(stage, title, msg, sound, pri){
+        var key = jk + '_' + stage; if(ALERTED[key]) return false;
+        ALERTED[key] = upd[key] = Date.now(); any = true;
+        if(window._jobAlert) window._jobAlert({ kind:'eta', wo:e.wo, op:e.op, machine:mid || '', title:title, msg:msg, sound:sound, pri:pri, text:title.replace(/^\S+\s/, '') });
+        else window.adminPushover(title, msg, sound, pri);
+        if(window.showToast) window.showToast('green', title, nx);
+        return true;
+      };
+      if(e.finished){ fire('qty', '🏁 ' + (mid || 'Machine') + ': ' + job + ' parts complete', e.done + ' / ' + e.total + ' pcs done per ProShop.\n' + nx, 'magic', 0); }
+      else if(e.etaMs){
+        if(left <= 1){ ALERTED[jk + '_2h'] = ALERTED[jk + '_2h'] || (upd[jk + '_2h'] = Date.now());
+          fire('1h', '⏰ 1 hour left: ' + (mid || '') + ' · ' + job, 'Done ≈ ' + etaWhen(e.etaMs) + ' — ' + e.remaining + ' pcs left.\n' + nx, 'magic', 1); }
+        else if(left <= 2) fire('2h', '⏰ ~2 hours left: ' + (mid || '') + ' · ' + job, 'Done ≈ ' + etaWhen(e.etaMs) + ' — ' + e.remaining + ' pcs left (' + hLeft(left) + ' of shop time).\n' + nx, 'magic', 0);
+        if(e.missDue) fire('due', '⚠ Won\'t make due date: ' + job, (mid || '') + ' — due ' + e.missDue.slice(5).replace('-','/') + ' but done ≈ ' + etaWhen(e.etaMs) + ' (' + hLeft(-e.slack) + ' behind) at ' + (Math.round(e.rate * 10) / 10) + '/hr.', 'falling', 0);
+      }
     });
+    if(any) m.setDoc(m.doc(db(), 'hillSettings', 'etaAlerts'), upd, { merge:true }).catch(function(){});
   }
 
   // ── Work Orders board: every WO from ProShop + every job in the app ──
@@ -23105,6 +23119,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       return queueNextOps(hits, wos, who).then(function(nx){ list.next = nx; return list; });
     }).then(function(list){
       if(list.length && window.showToast) window.showToast('green', '✅ ' + list.length + ' job' + (list.length === 1 ? '' : 's') + ' closed — ProShop says complete', list.map(function(x){ return x.label; }).join(' · '));
+      list.forEach(function(x){ if(window._jobAlert) window._jobAlert({ kind:'done', wo:x.data.wo || '', op:x.data.op || '', part:x.data.part || '', machine:x.data.machine || '', text:'ProShop marked it complete' }); });
       return list;
     });
   }
@@ -23567,7 +23582,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   function first(s){ return String(s || '').split(' ')[0]; }
 
   // ── Alert: in-app log (hillJobAlerts) + Pushover to Miguel ──
-  var ICON = { move:'⇄', hot:'🔥', unhot:'✅', hold:'⏸', unhold:'▶', note:'📝' };
+  var ICON = { move:'⇄', hot:'🔥', unhot:'✅', hold:'⏸', unhold:'▶', note:'📝', done:'🏁', eta:'⏰' };
   window._jobAlert = function(a){
     var m = M(); if(!m || !db()) return;
     a = Object.assign({ by:me(), atMs:Date.now() }, a);
@@ -23579,6 +23594,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     else if(a.kind === 'unhot'){ title = '✅ No longer hot: ' + job; msg = a.by + ' cleared the HOT flag.'; }
     else if(a.kind === 'hold'){ title = '⏸ ON HOLD: ' + job + ' — ' + (a.reason || ''); msg = a.by + ' put it on hold' + (a.reason ? ' (' + a.reason + ')' : '') + (a.text ? ':\n' + a.text : '.'); sound = 'falling'; }
     else if(a.kind === 'unhold'){ title = '▶ Off hold: ' + job; msg = a.by + ' took it off hold.'; }
+    else if(a.kind === 'done'){ title = '🏁 Job complete: ' + job + (a.machine ? ' on ' + a.machine : ''); msg = (a.text || 'Complete') + '.'; sound = 'magic'; }
+    else if(a.kind === 'eta'){ title = a.title; msg = a.msg; sound = a.sound || 'magic'; pri = a.pri || 0; }
     else { title = '📝 Note on ' + job + (a.machine ? ' · ' + a.machine : ''); msg = a.by + ': ' + (a.text || ''); }
     if(window.adminPushover) window.adminPushover(title, msg + (a.part ? '\nPart ' + a.part : ''), sound, pri);
   };
@@ -23709,6 +23726,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(a.kind === 'unhot') return job + ' no longer hot';
     if(a.kind === 'hold') return job + ' ON HOLD — ' + (a.reason || '') + (a.text ? ': ' + a.text : '');
     if(a.kind === 'unhold') return job + ' off hold';
+    if(a.kind === 'done') return job + ' COMPLETE' + (a.machine ? ' on ' + a.machine : '') + (a.text ? ' — ' + a.text : '');
+    if(a.kind === 'eta') return a.text || a.title || job;
     return job + ': ' + (a.text || '');
   }
   function drawPanel(){
