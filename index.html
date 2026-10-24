@@ -1380,7 +1380,6 @@
       </div>
     </div>
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Pending WO</div>
       <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Inspection</div>
       <div class="legend-item"><div class="legend-dot" style="background:#eab308"></div>Machinist Req</div>
       <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Running WO</div>
@@ -1561,7 +1560,6 @@
       <button class="req-filter active" onclick="filterRequests('all')">ALL</button>
       <button class="req-filter red"    onclick="filterRequests('red')">🔴 INSPECTION</button>
       <button class="req-filter yellow" onclick="filterRequests('yellow')">🟡 MACHINIST</button>
-      <button class="req-filter blue"   onclick="filterRequests('blue')">🔵 PENDING WO</button>
       <button class="req-filter green"  onclick="filterRequests('green')">🟢 RUNNING WO</button>
     </div>
     <div class="requests-list" id="requestsList">
@@ -2715,7 +2713,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     notes.forEach(n => {
       if (n.machine !== 'QMI/DGP') {
         if (!machineActiveTypes[n.machine]) machineActiveTypes[n.machine] = new Set();
-        machineActiveTypes[n.machine].add(n.type);
+        if (n.type !== 'blue') machineActiveTypes[n.machine].add(n.type);   // Pending WOs live in the Scheduler only — no blue light on the floor
         return;
       }
       const container = document.getElementById('notes-' + n.machine);
@@ -2750,7 +2748,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
       if (notesEl) { const btn = notesEl.closest('.machine'); if (btn) btn.classList.add('has-' + type); }
     });
     window._renderQmiDgpTileSummary(notes);
-    const actionable = notes.filter(n => n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'green' || n.type === 'orange' || n.inProgress);
+    const actionable = notes.filter(n => n.type !== 'blue' && (n.type === 'red' || n.type === 'yellow' || n.type === 'green' || n.type === 'orange' || n.inProgress));   // Pending WOs → Scheduler
     // Active/pending requests stay pinned above completed ones. Within
     // each group, order is untouched (Array.sort is stable) — so it's
     // still newest-created-first exactly like before, just with the two
@@ -2759,7 +2757,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     updateNotifFeed(actionable);
     if (!isFirstLoad) {
       notes.forEach(n => {
-        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'blue' || n.type === 'orange')) {
+        if (!knownIds.has(n.id) && (n.type === 'red' || n.type === 'yellow' || n.type === 'orange' || (n.type === 'blue' && (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager)))) {
           // Only browser notification from listener — Pushover fires from submit button only
           sendBrowserNotif(n);
           showToast(n.type, typeIcons[n.type] + ' ' + typeLabels[n.type], (n.cell ? n.cell + ' — ' : '') + n.machine + ': ' + n.wo);
@@ -2789,7 +2787,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     notes.forEach(n => {
       if (n.machine !== 'QMI/DGP') {
         if (!machineActiveTypes[n.machine]) machineActiveTypes[n.machine] = new Set();
-        machineActiveTypes[n.machine].add(n.type);
+        if (n.type !== 'blue') machineActiveTypes[n.machine].add(n.type);   // Pending WOs live in the Scheduler only — no blue light on the floor
         return;
       }
       const container = document.getElementById('notes-' + n.machine);
@@ -3892,7 +3890,7 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
 
   window.renderExistingNotes = function() {
     const container = document.getElementById('existingNotes');
-    const notes = (window.machineNotes || {})[window.currentMachine] || [];
+    const notes = ((window.machineNotes || {})[window.currentMachine] || []).filter(n => n.type !== 'blue');   // Pending WOs are in the Scheduler
     if (notes.length === 0) { container.innerHTML = ''; return; }
     container.innerHTML = '<div class="existing-notes-title">Active Notes on ' + window.currentMachine + '</div>';
     notes.forEach(n => {
@@ -21613,7 +21611,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       });
   }
   function runningFor(mid){
-    return allNotes().filter(function(n){ return n.machine === mid && n.type === 'green' && !n.resolved && !n.autoCompleted; })
+    return allNotes().filter(function(n){ return n.machine === mid && n.type === 'green' && !n.resolved; })   // includes the Running card made by Build done / Move to Running
       .sort(function(a,b){ return secs(a) - secs(b); });
   }
   window._pendPosLabel = function(n){
@@ -21732,8 +21730,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   // Running card: total job time from the moment the build started, plus how long the build took
   function jobClock(n){
     var st = n.jobStartedAt && (n.jobStartedAt.seconds ? n.jobStartedAt.seconds * 1000 : Date.parse(n.jobStartedAt));
-    if(!st && !n.setupTime) return '';
-    return '<div class="ln-meta">' + (st ? '⏱ Total job time <b>' + hm(Math.max(0, Math.round((Date.now() - st) / 60000))) + '</b>' : '') + (n.setupTime ? (st ? ' · ' : '') + '🛠 build <b>' + esc(n.setupTime) + '</b>' : '') + '</div>';
+    var bt = /^(unknown|0m|not logged)$/i.test(String(n.setupTime || '')) ? '' : n.setupTime;   // moved to Running without a timed build
+    if(!st && !bt) return '';
+    return '<div class="ln-meta">' + (st ? '⏱ Total job time <b>' + hm(Math.max(0, Math.round((Date.now() - st) / 60000))) + '</b>' : '') + (bt ? (st ? ' · ' : '') + '🛠 build <b>' + esc(bt) + '</b>' : '') + '</div>';
   }
   window._lnJobClock = jobClock;
   function whoRuns(n, mid){
@@ -21779,15 +21778,17 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var drag = kind !== 'run' && canOrder();
     if(drag) moves = (moves ? moves.replace('<div class="ln-moves">', '<div class="ln-moves">') : '<div class="ln-moves">')
       .replace(/<\/div>$/, '') + '<button class="ln-mv ln-to" title="Move to another machine" onclick="event.stopPropagation();window._lnMoveMenu(\'' + esc(n.id) + '\', this)">⇄</button></div>';
-    var fb = window._jfBtn ? window._jfBtn(n) : '';
+    var fb = (window._jfBtn ? window._jfBtn(n) : '')
+      + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._jeEdit ? '<button class="ln-mv" title="Edit this job" onclick="event.stopPropagation();window._jeEdit(\'' + esc(n.id) + '\')">✏️</button>' : '');
     if(kind !== 'run' && n.type === 'blue' && pos > 0 && !n.builtReady && !n.inProgress && !n.onHold && !n.accumulatedElapsedMins && !inProduction(n) && (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager))
       fb = '<button class="ln-mv" title="Start build on this one (out of order)" onclick="event.stopPropagation();window.startRequest(\'' + esc(n.id) + '\',\'' + esc(n.hillReqId || n.id) + '\')">▶</button>'
         + '<button class="ln-mv" title="Tools already built — mark it ready (no build time)" onclick="event.stopPropagation();window._lnMarkBuilt(\'' + esc(n.id) + '\')">✓</button>' + fb;
     if(fb) moves = moves ? moves.replace(/<\/div>$/, fb + '</div>') : '<div class="ln-moves">' + fb + '</div>';
-    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + (n.inProgress ? ' setting' : '') + (window._jfClass ? window._jfClass(n) : '') + (drag ? ' drag' : '') + '"'
+    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + (n.inProgress ? ' setting' : '') + (n.rework ? ' je-rework' : '') + (window._jfClass ? window._jfClass(n) : '') + (drag ? ' drag' : '') + '"'
       + (drag ? ' draggable="true" data-id="' + esc(n.id) + '" data-mid="' + esc(mid) + '" ondragstart="window._lnDragStart(event)" ondragend="window._lnDragEnd(event)"' : '') + '>'
       + '<div class="ln-pos">' + (kind === 'run' ? 'RUN' : '#' + (pos+1)) + '</div>'
       + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? '<span class="ln-wolink" title="Full job review" onclick="event.stopPropagation();window._jobReview && window._jobReview(\'' + esc(n.wo) + '\')">WO ' + esc(n.wo) + '</span>' : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
+      + (n.rework ? '<span class="je-rw">♻ REWORK</span>' : n.broughtBack ? '<span class="je-rw" style="background:#0369a1;">↩ BROUGHT BACK</span>' : '')
       + (window._jfHtml ? window._jfHtml(n) : '') + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '')
       + (kind !== 'run' && n.type === 'blue' ? setupCtl(n, pos) : '')
       + (kind === 'run' ? whoRuns(n, mid) + jobClock(n) : '') + '</div>'
@@ -21795,6 +21796,20 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   }
 
   var DRAGGING = null, REDRAW_LATER = false;
+  // Job-level filters and the words each job answers to in search ("hot", "hold material", "rework", "late"…)
+  function isLate(n){ var d = dueInfo(n); var st = window._ptStatus && window._ptWO ? window._ptStatus(window._ptWO(n.wo, n.op)) : null; return (d && d.cls === 'late') || !!(st && st.late); }
+  var JOBF = {
+    hot: function(n){ return !!n.flagHot; },
+    hold: function(n){ return !!n.flagHold; },
+    rework: function(n){ return !!(n.rework || n.broughtBack); },
+    late: isLate
+  };
+  window.FILTER_TOGGLE = function(k){ return FILTER === k ? 'busy' : k; };
+  function jobWords(n){
+    return [n.wo, n.op, n.part, n.assignedTo, n.operator, n.flagHot ? 'hot rush 🔥 ' + (n.flagHotWhy || '') : '', n.flagHold ? 'hold on hold ' + n.flagHold : '',
+      n.rework ? 'rework' : '', n.broughtBack ? 'brought back' : '', isLate(n) ? 'late overdue' : '', n.inProgress ? 'building' : '', n.builtReady ? 'built ready' : '',
+      (n.jobNotes || []).map(function(x){ return x.text; }).join(' ')].join(' ');
+  }
   window._lnRender = function(){
     if(DRAGGING){ REDRAW_LATER = true; return; }
     var grid = document.getElementById('lnGrid'); if(!grid) return;
@@ -21807,8 +21822,14 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var clk = window._ptFor ? window._ptFor(m.id) : [];
       if(FILTER === 'busy' && !run.length && !pend.length && !clk.length && CELL === 'all') return '';
       if(FILTER === 'queued' && !pend.length) return '';
+      // job filters (🔥 hot, ⏸ hold, ♻ rework, ⏰ late): only machines with a match, and only the matching jobs on them
+      var jf = JOBF[FILTER], runShow = run, pendIdx = pend.map(function(n, i){ return i; });
+      if(jf){
+        runShow = run.filter(jf); pendIdx = pendIdx.filter(function(i){ return jf(pend[i]); });
+        if(!runShow.length && !pendIdx.length) return '';
+      }
       if(words.length){
-        var hay = (m.name + ' ' + m.cell + ' ' + run.concat(pend).map(function(n){ return [n.wo, n.op, n.part, n.assignedTo, n.operator].join(' '); }).join(' ')).toLowerCase();
+        var hay = (m.name + ' ' + m.cell + ' ' + run.concat(pend).map(jobWords).join(' ')).toLowerCase();
         if(!words.every(function(w){ return hay.indexOf(w) !== -1; })) return '';
       }
       return '<div class="ln-card' + (!run.length && !pend.length ? ' empty' : '') + '" data-drop="' + esc(m.id) + '" ondragover="window._lnDragOver(event)" ondragleave="window._lnDragLeave(event)" ondrop="window._lnDrop(event)">'
@@ -21816,8 +21837,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
         + '<span class="ln-count">' + (pend.length ? pend.length + ' in line' : '') + '</span>'
         + (canOrder() && pend.length > 1 ? '<button class="ln-sort" title="Put this line in due-date order" onclick="window._lnSortDue(\'' + esc(m.id) + '\')">📅 Sort by due</button>' : '') + '</div>'
         + (window._ptListHtml ? window._ptListHtml(m.id) : '')
-        + '<div class="ln-sec">Running</div>' + (run.length ? run.map(function(n){ return jobHtml(n, 'run', 0, 0, m.id); }).join('') : '<div class="ln-none">Nothing running</div>')
-        + '<div class="ln-sec">Up next</div>' + (pend.length ? pend.map(function(n, i){ return jobHtml(n, 'pend', i, pend.length, m.id); }).join('') : '<div class="ln-none">Nothing queued</div>')
+        + (jf && !runShow.length ? '' : '<div class="ln-sec">Running</div>' + (runShow.length ? runShow.map(function(n){ return jobHtml(n, 'run', 0, 0, m.id); }).join('') : '<div class="ln-none">Nothing running</div>'))
+        + (jf && !pendIdx.length ? '' : '<div class="ln-sec">Up next</div>' + (pendIdx.length ? pendIdx.map(function(i){ return jobHtml(pend[i], 'pend', i, pend.length, m.id); }).join('') : '<div class="ln-none">Nothing queued</div>'))
         + '</div>';
     }).join('');
     var shown = {}; (cards.match(/data-drop="([^"]*)"/g) || []).forEach(function(x){ shown[x.slice(11,-1).replace(/&amp;/g,'&')] = 1; });
@@ -21837,12 +21858,18 @@ body.ln-dragging .ln-card.empty { opacity:1; }
           }).join('');
     }
     var chips = document.getElementById('lnChips');
+    var every = allNotes().filter(function(n){ return n.type === 'blue' || n.type === 'green'; });
+    var cnt = function(k){ return every.filter(JOBF[k]).length; };
     if(chips) chips.innerHTML = [['busy','With jobs'],['queued','Has a line'],['all','All machines']].map(function(c){
       return '<span class="ln-chip' + (FILTER === c[0] ? ' on' : '') + '" onclick="window._lnFilter(\'' + c[0] + '\')">' + c[1] + '</span>';
+    }).join('') + [['hot','🔥 Hot','#ef4444'],['hold','⏸ On hold','#f59e0b'],['late','⏰ Late','#f87171'],['rework','♻ Rework','#a78bfa']].map(function(c){
+      var k = cnt(c[0]);
+      return '<span class="ln-chip' + (FILTER === c[0] ? ' on' : '') + '" style="' + (FILTER === c[0] ? 'background:' + c[2] + ';border-color:' + c[2] + ';color:#fff;' : k ? 'border-color:' + c[2] + ';' : 'opacity:0.5;') + '" onclick="window._lnFilter(FILTER_TOGGLE(\'' + c[0] + '\'))">' + c[1] + (k ? ' <b>' + k + '</b>' : '') + '</span>';
     }).join('');
     var sub = document.getElementById('lnSub');
     var stampEl = document.getElementById('lnPtStamp'); if(stampEl) stampEl.innerHTML = window._ptStamp ? window._ptStamp() : '';
     var syncBtn = document.getElementById('lnPtBtn'); if(syncBtn) syncBtn.style.display = canOrder() ? '' : 'none';
+    var cjBtn = document.getElementById('jeClosedBtn'); if(cjBtn) cjBtn.style.display = (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) ? '' : 'none';
     var hardBtn = document.getElementById('lnHardBtn'); if(hardBtn) hardBtn.style.display = (window._isAdmin || window.currentUser === 'hilladmin') ? '' : 'none';
     if(sub) sub.textContent = totalPend + ' pending job' + (totalPend === 1 ? '' : 's') + ' across ' + busy + ' machine' + (busy === 1 ? '' : 's') + (canOrder() ? ' · drag jobs (or ▲ ▼ ⇄) to change the order or move them to another machine' : '');
   };
@@ -22006,7 +22033,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
       + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
       + '<div class="ln-bar" style="padding-bottom:4px;"><div id="lnCells" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>'
-       +   '<button class="ln-btn" id="jaBell" style="display:none;" onclick="window._jaOpen && window._jaOpen()">🔔 Alerts</button>'
+       +   '<button class="ln-btn" id="jeClosedBtn" style="display:none;" onclick="window._jeClosed && window._jeClosed()">♻ Closed jobs</button>'
+      +   '<button class="ln-btn" id="jaBell" style="display:none;" onclick="window._jaOpen && window._jaOpen()">🔔 Alerts</button>'
       +   '<button class="ln-btn" id="lnHardBtn" style="display:none;" title="Admin: reload the app fresh — newest version from GitHub + latest ProShop sync" onclick="window._hardRefresh()">🔄 Refresh</button>'
       +   '<button class="ln-btn" style="background:#f5c842;border-color:#f5c842;color:#1a1300;" onclick="window._jobReview && window._jobReview()">🔍 Job Review</button>'
       +   '<button class="ln-btn" style="background:#10b981;border-color:#10b981;color:#03241a;" onclick="window._woOpen && window._woOpen()">📋 Work Orders</button>'
@@ -23386,9 +23414,15 @@ body.ln-dragging .ln-card.empty { opacity:1; }
           + (n.inProgress ? ' · <span style="color:#fde68a;font-weight:700;">🛠 building</span>' : '') + (n.assignedTo ? ' · 🔧 ' + esc(n.assignedTo) : '') + '</div>'
           + (window._jfHtml ? window._jfHtml(n) : '')
           + '<div class="jr-noprint" style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;">' + (n.type === 'blue' && window._lnSetupCtl ? window._lnSetupCtl(n) : '')
-          + (window._jfBtn && window._jfBtn(n) ? '<div class="ln-sbtns"><button class="ln-sb" style="border-color:rgba(239,68,68,0.5);color:#fca5a5;" onclick="window._jfOpen(\'' + esc(n.id) + '\')">🚩 Flag / note</button></div>' : '') + '</div>';
+          + (window._jfBtn && window._jfBtn(n) ? '<div class="ln-sbtns"><button class="ln-sb" style="border-color:rgba(239,68,68,0.5);color:#fca5a5;" onclick="window._jfOpen(\'' + esc(n.id) + '\')">🚩 Flag / note</button>'
+            + '<button class="ln-sb" onclick="window._jeEdit(\'' + esc(n.id) + '\')">✏️ Edit</button></div>' : '') + '</div>';
       }).join('');
     } else h += '<div class="jr-empty">Not on the floor or in the Scheduler right now.</div>';
+    if(window._jeBringBack && (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager)){
+      var lastReq = reqs.filter(function(r){ return r.machine; }).slice(-1)[0] || {};
+      window._jrBackSrc = { wo:wo, op:(main && main.op) || lastReq.op || '', part:part, machine:lastReq.machine || (main && main.machine) || '', dueDate:(main && main.dueISO) || lastReq.dueDate || '', assignedTo:lastReq.assignedTo || '', id:lastReq.id || '' };
+      h += '<div class="ln-sbtns jr-noprint"><button class="ln-sb" style="border-color:rgba(124,58,237,0.6);color:#ddd6fe;" onclick="window._jeBringBack(window._jrBackSrc)">↩ Bring back / ♻ rework</button></div>';
+    }
     var clockNow = window._ptForWo ? window._ptForWo(wo) : [];
     if(clockNow.length) h += '<div class="jr-sub" style="margin-top:4px;">👷 On the clock now:</div>' + clockNow.map(function(r){ return '<div class="pt-who" style="margin-top:3px;">👷 <b>' + esc(r.employee) + '</b>' + (r.op ? ' · OP ' + esc(r.op) : '') + (r.machine ? ' · ' + esc(r.machine) : '') + '</div>' + (window._ptClockDetail ? window._ptClockDetail(r) : ''); }).join('');
     var etaNow = window._ptEta ? window._ptEta(wo, main && main.op) : null; if(etaNow && window._ptEtaHtml) h += window._ptEtaHtml(etaNow);
@@ -23686,7 +23720,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
 
   // ── Shop floor tiles glow red when a job on that machine is HOT ──
   function tiles(){
-    var hot = {}; allNotes().forEach(function(n){ if(n.flagHot && (n.type === 'blue' || n.type === 'green')) hot[n.machine] = 1; });
+    var hot = {}; allNotes().forEach(function(n){ if(n.flagHot && n.type === 'green') hot[n.machine] = 1; });
     document.querySelectorAll('.machine[data-machine]').forEach(function(el){ el.classList.toggle('jf-hot-tile', !!hot[el.getAttribute('data-machine')]); });
   }
   var hook = setInterval(function(){
@@ -23820,6 +23854,203 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   setInterval(function(){ try{ render(); }catch(e){} }, 30000);   // waiting times tick up
 })();
 </script>
+
+<style>
+/* ═══ JOB EDIT & BRING BACK ═══ */
+#jeSheet { position:fixed; inset:0; z-index:9810; background:rgba(2,6,14,0.82); display:none; align-items:flex-start; justify-content:center; padding:24px 12px; overflow-y:auto; font-family:'Barlow',sans-serif; color:#e2e8f0; }
+#jeSheet.open { display:flex; }
+.je-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px 10px; }
+.je-f label { display:block; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#64748b; font-weight:700; margin-bottom:3px; }
+.je-f input, .je-f select, .je-f textarea { width:100%; box-sizing:border-box; background:#08121f; border:1px solid #1e3a5c; border-radius:8px; color:#e2e8f0; padding:9px 10px; font-size:14px; font-family:inherit; }
+.je-f textarea { min-height:60px; }
+.je-f.full { grid-column:1 / -1; }
+.je-seg { display:flex; gap:6px; flex-wrap:wrap; }
+.je-seg span { flex:1; text-align:center; padding:9px 6px; border-radius:9px; border:1px solid #334155; background:rgba(255,255,255,0.04); font-size:13px; font-weight:700; cursor:pointer; }
+.je-seg span.on { background:rgba(14,165,233,0.2); border-color:#0ea5e9; color:#fff; }
+.je-seg span.on.rw { background:rgba(239,68,68,0.2); border-color:#ef4444; }
+.ln-job.je-rework { border-style:dashed !important; }
+.je-rw { display:inline-block; margin-top:4px; font-size:10px; font-weight:800; letter-spacing:0.5px; padding:1px 7px; border-radius:6px; background:#7c3aed; color:#fff; }
+.je-closed { display:flex; gap:10px; align-items:center; padding:8px 4px; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13px; }
+.je-closed b { color:#fff; } .je-closed .w { font-size:11px; color:#64748b; }
+.je-closed button { margin-left:auto; flex-shrink:0; }
+@media (max-width:560px){ .je-grid { grid-template-columns:1fr; } }
+</style>
+<script>
+// ═══ JOB EDIT & BRING BACK ═══
+// ✏️ Edit any job in the Scheduler (WO, OP, part, due date, machinist, machine, in line ↔ running, notes),
+// and ↩ bring a closed / vanished job back — for rework, a mistake, or more changes.
+(function(){
+  function M(){ return window._fbModules; } function db(){ return window.fbDb || window._db; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function me(){ var n = window._userDisplayName || window.currentUser || ''; return /^hilladmin$/i.test(n) ? 'Miguel' : n; }
+  function can(){ return !!(window._isAdmin || window.currentUser === 'hilladmin' || window._isManager || window._userRole === 'manager' || /corey/i.test(window._userDisplayName || window.currentUser || '')); }
+  function allNotes(){ var a = []; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){ if(n) a.push(n); }); }); return a; }
+  function machines(){ return window._ln && window._ln.machines ? window._ln.machines() : []; }
+  function mach(id){ return machines().filter(function(m){ return m.id === id; })[0]; }
+  function tsMs(t){ return !t ? 0 : t.seconds ? t.seconds * 1000 : typeof t.toMillis === 'function' ? t.toMillis() : (Date.parse(t) || 0); }
+  function fmtDT(ms){ if(!ms) return ''; var d = new Date(ms), h = d.getHours(); return (d.getMonth()+1) + '/' + d.getDate() + ' ' + ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h >= 12 ? ' PM' : ' AM'); }
+  // Machinist names: the same list the request form's "Assigned to" dropdown uses
+  var MACHINISTS = function(){
+    var out = []; document.querySelectorAll('#assignField option, #assignTo option, select option').forEach(function(o){ var t = (o.value || o.textContent || '').trim(); if(/^[A-Z][a-z]+ [A-Z][A-Za-z\-']+$/.test(t) && out.indexOf(t) === -1) out.push(t); });
+    return out.sort();
+  };
+
+  function sheet(){
+    var o = document.getElementById('jeSheet');
+    if(!o){ o = document.createElement('div'); o.id = 'jeSheet'; o.onclick = function(e){ if(e.target === o) window._jeClose(); }; document.body.appendChild(o); }
+    return o;
+  }
+  window._jeClose = function(){ var o = document.getElementById('jeSheet'); if(o) o.classList.remove('open'); };
+  function machineOptions(sel){ return machines().map(function(m){ return '<option value="' + esc(m.id) + '"' + (m.id === sel ? ' selected' : '') + '>' + esc(m.name) + ' · ' + esc(m.cell) + '</option>'; }).join(''); }
+  function form(v, mode){
+    var staff = MACHINISTS();
+    return '<div class="je-grid">'
+      + '<div class="je-f"><label>WO #</label><input id="jeWo" value="' + esc(v.wo) + '"></div>'
+      + '<div class="je-f"><label>OP</label><input id="jeOp" value="' + esc(v.op) + '"></div>'
+      + '<div class="je-f"><label>Part #</label><input id="jePart" value="' + esc(v.part) + '"></div>'
+      + '<div class="je-f"><label>Due date</label><input id="jeDue" type="date" value="' + esc(v.dueDate) + '"></div>'
+      + '<div class="je-f"><label>Machine</label><select id="jeMach">' + machineOptions(v.machine) + '</select></div>'
+      + '<div class="je-f"><label>Machinist</label><input id="jeWho" list="jeStaff" value="' + esc(v.assignedTo) + '" placeholder="Who will run it"><datalist id="jeStaff">' + staff.map(function(s){ return '<option value="' + esc(s) + '">'; }).join('') + '</datalist></div>'
+      + '<div class="je-f full"><label>Status</label><div class="je-seg" id="jeSeg">'
+      +   '<span data-v="blue" class="' + (v.type === 'blue' && !v.rework ? 'on' : '') + '" onclick="window._jeSeg(this)">📋 In line (needs build)</span>'
+      +   '<span data-v="green" class="' + (v.type === 'green' ? 'on' : '') + '" onclick="window._jeSeg(this)">▶ Running</span>'
+      +   (mode === 'back' ? '<span data-v="rework" class="rw' + (v.rework ? ' on rw' : '') + '" onclick="window._jeSeg(this)">♻ Rework (in line)</span>' : '')
+      + '</div></div>'
+      + '<div class="je-f full"><label>' + (mode === 'back' ? 'Why is it coming back?' : 'Notes / details') + '</label><textarea id="jeDetail" placeholder="' + (mode === 'back' ? 'e.g. Rework — 3 parts out on bore, re-cut OP 60' : '') + '">' + esc(v.detail) + '</textarea></div>'
+      + '</div>';
+  }
+  window._jeSeg = function(el){ el.parentNode.querySelectorAll('span').forEach(function(s){ s.classList.remove('on'); }); el.classList.add('on'); if(el.getAttribute('data-v') === 'rework') el.classList.add('rw'); };
+  function read(){
+    var g = function(id){ var e = document.getElementById(id); return e ? e.value.trim() : ''; };
+    var seg = document.querySelector('#jeSeg span.on'), st = seg ? seg.getAttribute('data-v') : 'blue';
+    return { wo:g('jeWo'), op:g('jeOp'), part:g('jePart'), dueDate:g('jeDue'), machine:g('jeMach'), assignedTo:g('jeWho'), detail:g('jeDetail'), type: st === 'green' ? 'green' : 'blue', rework: st === 'rework' };
+  }
+
+  // ── ✏️ Edit a job that's in the app ──
+  window._jeEdit = function(id){
+    if(!can()) return;
+    var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n) return;
+    var o = sheet();
+    o.innerHTML = '<div class="jf-box" style="max-width:600px;"><div class="jf-h">✏️ Edit WO ' + esc(n.wo || '—') + (n.op ? ' OP ' + esc(n.op) : '') + '<button class="jf-btn" onclick="window._jeClose()">✕</button></div>'
+      + '<div class="jf-sub">Changes save to the job and its history. Moving machines alerts Miguel.</div>'
+      + form({ wo:n.wo || '', op:n.op || '', part:n.part || '', dueDate:n.dueDate || '', machine:n.machine, assignedTo:n.assignedTo || '', detail:n.detail || '', type:n.type }, 'edit')
+      + '<div class="jf-err" id="jeErr" style="color:#fca5a5;font-size:12px;margin-top:6px;"></div>'
+      + '<div class="jf-row"><button class="jf-btn" onclick="window._jeClose()">Cancel</button><button class="jf-btn go calm" id="jeSave" onclick="window._jeSave(\'' + esc(id) + '\')">💾 Save changes</button></div>'
+      + '<div class="jf-row" style="margin-top:6px;"><button class="jf-btn" style="color:#fca5a5;border-color:rgba(239,68,68,0.4);" onclick="window._jeRemove(\'' + esc(id) + '\', this)">🗑 Take off the schedule</button></div></div>';
+    o.classList.add('open');
+  };
+  window._jeSave = function(id){
+    var n = allNotes().filter(function(x){ return x.id === id; })[0], m = M(); if(!n || !m || !db()) return;
+    var v = read(), err = document.getElementById('jeErr');
+    if(!v.wo){ if(err) err.textContent = 'WO # is required.'; return; }
+    var t = mach(v.machine), upd = { wo:v.wo, op:v.op, part:v.part, dueDate:v.dueDate, assignedTo:v.assignedTo, detail:v.detail }, changes = [];
+    ['wo','op','part','dueDate','assignedTo','detail'].forEach(function(k){ if(String(n[k] || '') !== String(upd[k] || '')) changes.push(k === 'dueDate' ? 'due ' + (upd[k] || 'cleared') : k === 'assignedTo' ? 'machinist ' + (upd[k] || 'cleared') : k === 'detail' ? 'notes' : k.toUpperCase() + ' ' + upd[k]); });
+    var moved = v.machine && v.machine !== n.machine;
+    if(moved){ upd.machine = v.machine; upd.cell = t ? (t.reqCell || t.cell) : ''; upd.movedFrom = n.machine; upd.movedBy = me(); upd.movedAt = m.serverTimestamp(); changes.push('moved ' + n.machine + ' → ' + v.machine); }
+    if(v.type !== n.type){
+      upd.type = v.type; changes.push(v.type === 'green' ? 'set to Running' : 'put back in line');
+      if(v.type === 'green'){ upd.autoPosted = true; upd.inProgress = false; }
+      else { upd.queuePos = 999; upd.builtReady = false; }
+    }
+    if(!changes.length){ window._jeClose(); return; }
+    if(m.arrayUnion) upd.jobNotes = m.arrayUnion({ kind:'note', by:me(), atMs:Date.now(), text:'✏️ Edited — ' + changes.join(', ') });
+    var hr = Object.assign({}, upd); delete hr.queuePos;
+    var w = [m.updateDoc(m.doc(db(), 'notes', id), upd)];
+    if(n.hillReqId) w.push(m.updateDoc(m.doc(db(), 'hillRequests', n.hillReqId), hr).catch(function(){}));
+    Promise.all(w).then(function(){
+      if(moved && window._jobAlert) window._jobAlert({ kind:'move', wo:v.wo, op:v.op, part:v.part, machine:v.machine, from:n.machine, to:v.machine, noteId:id });
+      else if(window._jobAlert) window._jobAlert({ kind:'note', wo:v.wo, op:v.op, part:v.part, machine:v.machine || n.machine, text:'Edited — ' + changes.join(', ') });
+      if(window.showToast) window.showToast('green', '💾 Job updated', 'WO ' + v.wo + ' · ' + changes.join(', '));
+      window._jeClose();
+    }).catch(function(e){ if(err) err.textContent = 'Couldn\'t save: ' + e.message; });
+  };
+  window._jeRemove = function(id, btn){
+    if(btn && !btn.dataset.armed){ btn.dataset.armed = '1'; btn.textContent = 'Tap again to take it off'; setTimeout(function(){ if(btn){ btn.dataset.armed = ''; btn.textContent = '🗑 Take off the schedule'; } }, 3000); return; }
+    var n = allNotes().filter(function(x){ return x.id === id; })[0], m = M(); if(!n || !m) return;
+    m.deleteDoc(m.doc(db(), 'notes', id)).then(function(){
+      if(n.hillReqId) m.updateDoc(m.doc(db(), 'hillRequests', n.hillReqId), { resolved:true, jobStatus:'removed', removedBy:me(), removedAtMs:Date.now() }).catch(function(){});
+      if(window._jobAlert) window._jobAlert({ kind:'note', wo:n.wo || '', op:n.op || '', machine:n.machine || '', text:'Taken off the schedule' });
+      if(window.showToast) window.showToast('yellow', 'Taken off the schedule', 'WO ' + (n.wo || '') + ' — bring it back any time from ♻ Closed jobs');
+      window._jeClose();
+    });
+  };
+
+  // ── ↩ Bring a job back (rework / it vanished / more changes) ──
+  window._jeBringBack = function(src){
+    if(!can()) return;
+    src = src || {};
+    var o = sheet();
+    o.innerHTML = '<div class="jf-box" style="max-width:600px;"><div class="jf-h">↩ Bring back WO ' + esc(src.wo || '') + '<button class="jf-btn" onclick="window._jeClose()">✕</button></div>'
+      + '<div class="jf-sub">Puts the job back on a machine. Its history stays together in Job Review. Miguel gets an alert.</div>'
+      + form({ wo:src.wo || '', op:src.op || '', part:src.part || src.partNumber || '', dueDate:src.dueDate || '', machine:src.machine || '', assignedTo:src.assignedTo || '', detail:'', type:'blue', rework:true }, 'back')
+      + '<div class="jf-err" id="jeErr" style="color:#fca5a5;font-size:12px;margin-top:6px;"></div>'
+      + '<div class="jf-row"><button class="jf-btn" onclick="window._jeClose()">Cancel</button><button class="jf-btn go" id="jeSave" onclick="window._jeBackSave(\'' + esc(src.hillReqId || src.id || '') + '\')">↩ Bring it back</button></div></div>';
+    o.classList.add('open');
+  };
+  window._jeBackSave = function(fromId){
+    var v = read(), err = document.getElementById('jeErr');
+    if(!v.wo){ if(err) err.textContent = 'WO # is required.'; return; }
+    if(!v.machine){ if(err) err.textContent = 'Pick a machine.'; return; }
+    if(v.rework && !v.detail){ if(err) err.textContent = 'Say what the rework is — it goes on the card.'; return; }
+    if(!window.submitNoteToFirebase){ if(err) err.textContent = 'Not connected yet.'; return; }
+    var t = mach(v.machine), now = Date.now();
+    var note = { machine:v.machine, cell:t ? (t.reqCell || t.cell) : '', type:v.type, wo:v.wo, op:v.op, part:v.part, po:'', operator:me(), assignedTo:v.assignedTo, floorSupportType:'', dueDate:v.dueDate,
+      detail:(v.rework ? '♻ REWORK — ' : '↩ Brought back — ') + (v.detail || 'more changes'), rework:!!v.rework, broughtBack:true, broughtBackFrom:fromId || '', queuePos:v.type === 'blue' ? 999 : null,
+      jobNotes:[{ kind:'note', by:me(), atMs:now, text:(v.rework ? '♻ Rework: ' : '↩ Brought back: ') + (v.detail || 'more changes') }] };
+    if(v.type === 'green'){ note.autoPosted = true; }
+    var btn = document.getElementById('jeSave'); if(btn){ btn.disabled = true; btn.textContent = 'Saving…'; }
+    window.submitNoteToFirebase(note).then(function(){
+      if(window._jobAlert) window._jobAlert({ kind:'note', wo:v.wo, op:v.op, part:v.part, machine:v.machine, text:(v.rework ? '♻ REWORK on ' : '↩ Brought back on ') + v.machine + (v.detail ? ' — ' + v.detail : '') });
+      if(window.showToast) window.showToast('green', v.rework ? '♻ Rework added' : '↩ Job is back', 'WO ' + v.wo + ' → ' + v.machine);
+      window._jeClose(); var cp = document.getElementById('jeClosedPanel'); if(cp) cp.classList.remove('open');
+    }).catch(function(e){ if(err) err.textContent = 'Couldn\'t save: ' + e.message; if(btn){ btn.disabled = false; btn.textContent = '↩ Bring it back'; } });
+  };
+
+  // ── ♻ Closed jobs: the last jobs that left the schedule, to bring one back ──
+  var CLOSED = [];
+  window._jeClosed = function(){
+    if(!can()) return;
+    var p = document.getElementById('jeClosedPanel');
+    if(!p){ p = document.createElement('div'); p.id = 'jeClosedPanel'; p.className = ''; p.style.cssText = ''; p.onclick = function(e){ if(e.target === p) p.classList.remove('open'); }; document.body.appendChild(p); }
+    p.setAttribute('id', 'jeClosedPanel'); p.classList.add('open');
+    p.innerHTML = '<div class="jf-box" style="max-width:640px;"><div class="jf-h">♻ Closed jobs<button class="jf-btn" onclick="document.getElementById(\'jeClosedPanel\').classList.remove(\'open\')">✕</button></div>'
+      + '<div class="jf-sub">Jobs that came off the schedule — finished, closed by ProShop, moved to Running or taken off. Tap ↩ to bring one back for rework or changes.</div>'
+      + '<input id="jeClosedQ" placeholder="Search WO, part, machine…" oninput="window._jeClosedDraw()" style="width:100%;box-sizing:border-box;background:#08121f;border:1px solid #1e3a5c;border-radius:8px;color:#e2e8f0;padding:9px 10px;font-size:14px;margin-bottom:6px;">'
+      + '<div id="jeClosedList"><div class="jf-sub">Loading…</div></div></div>';
+    var m = M(); if(!m || !db()) return;
+    var live = {}; allNotes().forEach(function(n){ live[String(n.wo) + '|' + String(n.op)] = 1; });
+    m.getDocs(m.query(m.collection(db(), 'hillRequests'), m.orderBy('createdAt', 'desc'), m.limit(400))).then(function(snap){
+      var rows = [], seen = {};
+      snap.forEach(function(d){
+        var r = d.data(); r.id = d.id; r.hillReqId = d.id;
+        var k = (r.originalType || r.type);
+        if(!r.wo || (k !== 'blue' && k !== 'green') || !r.resolved) return;
+        var key = String(r.wo) + '|' + String(r.op || ''); if(seen[key] || live[key]) return; seen[key] = 1;
+        r._when = tsMs(r.completedAt) || tsMs(r.resolvedAt) || r.removedAtMs || tsMs(r.createdAt);
+        r._how = r.closedByProshop ? 'Closed by ProShop' : r.jobStatus === 'removed' ? 'Taken off by ' + (r.removedBy || '') : r.runTime ? 'Completed · run ' + r.runTime : r.setupTime ? 'Built → Running' : 'Closed';
+        rows.push(r);
+      });
+      CLOSED = rows.sort(function(a, b){ return b._when - a._when; });
+      window._jeClosedDraw();
+    }).catch(function(e){ var l = document.getElementById('jeClosedList'); if(l) l.innerHTML = '<div class="jf-sub">Couldn\'t load: ' + esc(e.message) + '</div>'; });
+  };
+  window._jeClosedDraw = function(){
+    var l = document.getElementById('jeClosedList'); if(!l) return;
+    var q = ((document.getElementById('jeClosedQ') || {}).value || '').toLowerCase().trim();
+    var list = CLOSED.filter(function(r){ return !q || [r.wo, r.op, r.part, r.partNumber, r.machine, r.assignedTo].join(' ').toLowerCase().indexOf(q) !== -1; }).slice(0, 80);
+    l.innerHTML = list.length ? list.map(function(r, i){
+      return '<div class="je-closed"><div><b>WO ' + esc(r.wo) + (r.op ? ' OP ' + esc(r.op) : '') + '</b> · ' + esc(r.machine || '') + (r.part || r.partNumber ? ' · ' + esc(r.part || r.partNumber) : '')
+        + '<div class="w">' + esc(r._how) + ' · ' + esc(fmtDT(r._when)) + '</div></div>'
+        + '<button class="jf-btn" style="padding:6px 10px;font-size:12px;" onclick="window._jeBackFromList(' + CLOSED.indexOf(r) + ')">↩ Bring back</button></div>';
+    }).join('') : '<div class="jf-sub" style="padding:16px 0;text-align:center;">' + (q ? 'Nothing matches.' : 'No closed jobs found.') + '</div>';
+  };
+  window._jeBackFromList = function(i){ var r = CLOSED[i]; if(r) window._jeBringBack(r); };
+})();
+</script>
+<style>
+#jeClosedPanel { position:fixed; inset:0; z-index:9805; background:rgba(2,6,14,0.82); display:none; align-items:flex-start; justify-content:center; padding:24px 12px; overflow-y:auto; font-family:'Barlow',sans-serif; color:#e2e8f0; }
+#jeClosedPanel.open { display:flex; }
+</style>
 
 </body>
 </html>
