@@ -24233,6 +24233,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var o = document.getElementById('psStation'); if(!o) return;
     var waiting = Q.filter(function(x){ return x.status !== 'printed' && x.status !== 'skipped'; });
     var recent = Q.filter(function(x){ return x.status === 'printed' || x.status === 'skipped'; }).slice(0, 8);
+    var ab = o.querySelector('#psAutoBtn'); if(ab){ var on = autoOn(); ab.textContent = on ? '🖨 Auto-print: ON' : '🖨 Auto-print: OFF'; ab.className = 'ps-btn' + (on ? ' go' : ''); ab.title = on ? 'This PC prints every new job through HillPrint the moment Start build is hit' : 'Turn on ONLY on the PC with the HillPrint helper and the printer'; }
     o.querySelector('.ps-sub').textContent = waiting.length ? waiting.length + ' blueprint' + (waiting.length === 1 ? '' : 's') + ' to print' : 'All caught up — this screen beeps when a build starts';
     o.querySelector('.ps-list').innerHTML = (waiting.length ? waiting.map(card).join('') : '<div class="ps-empty">🖨 Nothing to print right now.</div>')
       + (recent.length ? '<div class="ps-sub" style="margin-top:10px;">Recently printed</div>' + recent.map(card).join('') : '');
@@ -24253,6 +24254,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + (dl ? '<a class="ps-btn go" href="' + esc(dl.url) + '" target="_blank" rel="noopener" style="text-decoration:none;">📐 Open drawing</a>' : '')
       + (url ? '<a class="ps-btn blue" href="' + esc(url) + '" target="_blank" rel="noopener" style="text-decoration:none;">📄 Open in ProShop</a>'
              : '<button class="ps-btn blue" onclick="window._psCopy(\'' + esc(it.wo) + '\')">📋 Copy WO #</button>')
+      + (autoOn() ? '<button class="ps-btn" onclick="window._psPrintNow(\'' + esc(it.id) + '\')">🖨 Print now</button>' : '')
       + (done ? '<button class="ps-btn" onclick="window._psMark(\'' + esc(it.id) + '\',\'queued\')">↩ Print again</button>'
               : '<button class="ps-btn go" onclick="window._psMark(\'' + esc(it.id) + '\',\'printed\')">✅ Printed</button><button class="ps-btn" onclick="window._psMark(\'' + esc(it.id) + '\',\'skipped\')">Skip</button>')
       + '</div></div>';
@@ -24267,10 +24269,41 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(it.part){ var upd = {}; upd[norm(it.part)] = { url:u, name:nm, part:it.part, savedBy:me(), atMs:Date.now() }; m.setDoc(m.doc(db(), 'hillSettings', 'drawingLinks'), upd, { merge:true }).catch(function(){}); }
     if(window.showToast) window.showToast('green', '📐 Drawing link saved', 'WO ' + it.wo + (nm ? ' · ' + nm : ''));
   };
+  // ── Auto-print: this PC hands each new job to the HillPrint helper (hillprint://print?wo=…&part=…) ──
+  // Turned on per computer (only the front-office PC), so a job is never printed twice.
+  function autoOn(){ try{ return localStorage.getItem('hillAutoPrint') === '1'; }catch(e){ return false; } }
+  function hpUrl(it){ return 'hillprint://print?wo=' + encodeURIComponent(it.wo) + '&part=' + encodeURIComponent(it.part || '') + (it.op ? '&op=' + encodeURIComponent(it.op) : '') + '&id=' + encodeURIComponent(it.id || ''); }
+  var FIRED = {};
+  function fireKey(it){ return it.id + '|' + (it.requeuedAtMs || it.atMs || 0); }
+  function launch(it){ try{ window.location.href = hpUrl(it); }catch(e){ console.warn('hillprint', e); } }   // Windows hands hillprint:// to the HillPrint helper
+  window._psPrintNow = function(id){
+    var it = Q.filter(function(x){ return x.id === id; })[0], m = M(); if(!it || !m) return;
+    FIRED[fireKey(it)] = 1;
+    launch(it);
+    var u = { status:'printed', printedBy:'Auto-print (' + (window._psPcName || 'front office PC') + ')', printedAtMs:Date.now(), autoPrinted:true };
+    m.updateDoc(m.doc(db(), 'hillPrintQueue', id), u).then(function(){
+      if(it.noteId) m.updateDoc(m.doc(db(), 'notes', it.noteId), { printStatus:'printed', printedBy:u.printedBy, printedAtMs:u.printedAtMs }).catch(function(){});
+    });
+    if(window.showToast) window.showToast('green', '🖨 Sent to the printer', 'WO ' + it.wo + (it.part ? ' · ' + it.part : ''));
+  };
+  window._psToggleAuto = function(){
+    var on = !autoOn();
+    try{ localStorage.setItem('hillAutoPrint', on ? '1' : '0'); }catch(e){}
+    if(on){ try{ window._psPcName = prompt('Name for this PC (shows as who printed):', localStorage.getItem('hillAutoPrintName') || 'Front office') || 'Front office'; localStorage.setItem('hillAutoPrintName', window._psPcName); }catch(e){} }
+    draw(); autoRun();
+  };
+  function autoRun(){
+    if(!autoOn()) return;
+    try{ window._psPcName = localStorage.getItem('hillAutoPrintName') || 'Front office'; }catch(e){}
+    Q.filter(function(x){ return x.status === 'queued' && !FIRED[fireKey(x)] && Date.now() - (x.requeuedAtMs || x.atMs || 0) < 12 * 3600000; }).forEach(function(it, i){
+      FIRED[fireKey(it)] = 1;
+      setTimeout(function(){ window._psPrintNow(it.id); }, i * 2500);   // one at a time so Windows doesn't drop any
+    });
+  }
   window._psCopy = function(wo){ try{ navigator.clipboard.writeText(wo); if(window.showToast) window.showToast('green', 'Copied ' + wo, 'Paste it into ProShop search'); }catch(e){} };
   window._psMark = function(id, st){
     var it = Q.filter(function(x){ return x.id === id; })[0], m = M(); if(!it || !m) return;
-    var u = { status:st }; if(st === 'printed'){ u.printedBy = me(); u.printedAtMs = Date.now(); }
+    var u = { status:st }; if(st === 'printed'){ u.printedBy = me(); u.printedAtMs = Date.now(); } if(st === 'queued') u.requeuedAtMs = Date.now();
     m.updateDoc(m.doc(db(), 'hillPrintQueue', id), u).then(function(){
       if(it.noteId) m.updateDoc(m.doc(db(), 'notes', it.noteId), st === 'printed' ? { printStatus:'printed', printedBy:u.printedBy, printedAtMs:u.printedAtMs } : { printStatus: st === 'queued' ? 'queued' : '' }).catch(function(){});
       if(st === 'printed' && window._jobAlert) window._jobAlert({ kind:'note', wo:it.wo, op:it.op, part:it.part, machine:it.machine, text:'🖨 Blueprint printed by ' + u.printedBy });
@@ -24284,7 +24317,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var fresh = arr.filter(function(x){ return x.status === 'queued' && !SEEN[x.id]; });
       arr.forEach(function(x){ SEEN[x.id] = 1; });
       if(!FIRST && fresh.length && document.getElementById('psStation') && document.getElementById('psStation').classList.contains('open')) beep();
-      FIRST = false; draw();
+      FIRST = false; draw(); autoRun();
     }, function(e){ console.warn('print queue', e && e.message); });
     m.onSnapshot(m.doc(db(), 'hillSettings', 'printStation'), function(s){ var d = s && s.exists && s.exists() ? s.data() : {}; LINK.wo = (d && d.woUrl) || ''; draw(); }, function(){});
     m.onSnapshot(m.doc(db(), 'hillSettings', 'drawingLinks'), function(s){ DRAW = (s && s.exists && s.exists() ? s.data() : {}) || {}; draw(); }, function(){});
@@ -24294,7 +24327,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(!o){
       o = document.createElement('div'); o.id = 'psStation';
       o.innerHTML = '<div class="ps-top"><div><div class="ps-title">🖨 Blueprint Print Station</div><div class="ps-sub"></div></div>'
-        + '<div class="sp"><button class="ps-btn" onclick="window._psSetLink()">⚙ ProShop link</button>'
+        + '<div class="sp"><button class="ps-btn" id="psAutoBtn" onclick="window._psToggleAuto()">🖨 Auto-print: OFF</button><button class="ps-btn" onclick="window._psSetLink()">⚙ ProShop link</button>'
         + '<button class="ps-btn" onclick="try{document.documentElement.requestFullscreen()}catch(e){}">⛶ Full screen</button>'
         + '<button class="ps-btn" onclick="document.getElementById(\'psStation\').classList.remove(\'open\')">✕ Exit</button></div></div>'
         + '<div class="ps-list"></div>';
