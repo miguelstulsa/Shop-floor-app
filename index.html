@@ -21713,8 +21713,11 @@ body.ln-dragging .ln-card.empty { opacity:1; }
         + (can ? '<div class="ln-sbtns"><button class="ln-sb" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Resume</button>'
           + '<button class="ln-sb go" onclick="' + stop + 'window._lnSetupDone(\'' + id + '\',\'' + hrF + '\')">✅ Build done — GO</button></div>' : '');
     }
-    if(inProduction(n)) return '<div class="ln-setup" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.5);color:#a7f3d0;">⚙ Already in production per ProShop</div>'
-      + (can ? '<div class="ln-sbtns"><button class="ln-sb" onclick="' + stop + 'window._lnAlreadyBuilt(\'' + id + '\',\'' + hrF + '\')">✓ Move to Running</button></div>' : '');
+    // ProShop shows parts on this op — just a heads-up; you still decide (it may be an old run, or a rework)
+    var prodNote = inProduction(n) ? '<div class="ln-setup" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.45);color:#a7f3d0;">⚙ ProShop shows parts on this op — build it, or Move to Running if it\'s already going</div>' : '';
+    if(prodNote) return prodNote + (can ? '<div class="ln-sbtns"><button class="ln-sb start" onclick="' + stop + 'window.startRequest(\'' + id + '\',\'' + hr + '\')">▶ Start build</button>'
+      + '<button class="ln-sb" onclick="' + stop + 'window._lnMarkBuilt(\'' + id + '\')">✓ Already built</button>'
+      + '<button class="ln-sb" onclick="' + stop + 'window._lnAlreadyBuilt(\'' + id + '\',\'' + hrF + '\')">✓ Move to Running</button></div>' : '');
     if(n.builtReady) return '<div class="ln-setup" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.5);color:#a7f3d0;">✅ Built — tools ready' + (n.builtBy ? ' · ' + esc(String(n.builtBy).split(' ')[0]) : '') + '</div>'
       + (can ? '<div class="ln-sbtns"><button class="ln-sb" onclick="' + stop + 'window._lnAlreadyBuilt(\'' + id + '\',\'' + hrF + '\')">✓ Move to Running</button>'
         + '<button class="ln-sb" style="font-size:11px;padding:6px 8px;" onclick="' + stop + 'window._lnMarkBuilt(\'' + id + '\', true)">↩ Not built</button></div>' : '');
@@ -21742,10 +21745,10 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var boss = window._isAdmin || window.currentUser === 'hilladmin' || window._isManager;
     if(boss) h += '<div class="ln-sbtns">'
       + (n.type === 'blue' ? '<button class="ln-sb" onclick="event.stopPropagation();window._lnAlreadyBuilt(\'' + esc(n.id) + '\',\'' + esc(n.hillReqId || '') + '\')">✓ Move to Running</button>' : '')
-      + (window._ptCloseJob ? '<button class="ln-sb go" onclick="event.stopPropagation();window._ptCloseJob(\'' + esc(n.id) + '\')">✅ Done — clear machine</button>' : '') + '</div>';
+      + '</div>';
     var w = window._ptWO ? window._ptWO(n.wo, n.op) : null;
     if(w && w.status && /complete|closed|shipped|finished/i.test(w.status) && !/not ?complete|incomplete/i.test(w.status))
-      h += '<div class="ln-runby" style="background:rgba(100,116,139,0.2);border-color:#64748b;color:#e2e8f0;">🏁 ProShop says <b>' + esc(w.status) + '</b>' + (n.rework || n.broughtBack ? ' — kept because you brought it back' : ' — clearing…') + '</div>';
+      h += '<div class="ln-runby" style="background:rgba(100,116,139,0.2);border-color:#64748b;color:#e2e8f0;">🏁 ProShop says <b>' + esc(w.status) + '</b>' + (n.rework || n.broughtBack || n.keepOpen ? ' — kept because you brought it back' : (w.qtyTotal && (w.qtyDone || 0) < w.qtyTotal) ? ' but only ' + (w.qtyDone || 0) + ' / ' + w.qtyTotal + ' pcs — left up until ProShop agrees' : '') + '</div>';
     return h;
   }
   window._lnWhoRuns = whoRuns;
@@ -21787,7 +21790,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       .replace(/<\/div>$/, '') + '<button class="ln-mv ln-to" title="Move to another machine" onclick="event.stopPropagation();window._lnMoveMenu(\'' + esc(n.id) + '\', this)">⇄</button></div>';
     var fb = (window._jfBtn ? window._jfBtn(n) : '')
       + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._jeEdit ? '<button class="ln-mv" title="Edit this job" onclick="event.stopPropagation();window._jeEdit(\'' + esc(n.id) + '\')">✏️</button>' : '');
-    if(kind !== 'run' && n.type === 'blue' && pos > 0 && !n.builtReady && !n.inProgress && !n.onHold && !n.accumulatedElapsedMins && !inProduction(n) && (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager))
+    if(kind !== 'run' && n.type === 'blue' && pos > 0 && !n.builtReady && !n.inProgress && !n.onHold && !n.accumulatedElapsedMins && (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager))
       fb = '<button class="ln-mv" title="Start build on this one (out of order)" onclick="event.stopPropagation();window.startRequest(\'' + esc(n.id) + '\',\'' + esc(n.hillReqId || n.id) + '\')">▶</button>'
         + '<button class="ln-mv" title="Tools already built — mark it ready (no build time)" onclick="event.stopPropagation();window._lnMarkBuilt(\'' + esc(n.id) + '\')">✓</button>' + fb;
     if(fb) moves = moves ? moves.replace(/<\/div>$/, fb + '</div>') : '<div class="ln-moves">' + fb + '</div>';
@@ -23146,7 +23149,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
         if(CLOSING[n.id]) return false;
         if(n.rework || n.broughtBack || n.keepOpen) return false;              // you brought it back on purpose — ProShop's old "Complete" doesn't close it
         if(tsMs2(n.createdAt) > cut + 60000) return false;                      // posted after this ProShop data was pulled
-        return done.some(function(w){ return norm(w.wo) === norm(n.wo) && (!w.op || !n.op || norm(w.op) === norm(n.op)); });
+        if(!n.op) return false;                                                 // only clear when we know exactly which op is done
+        if(window._ptForWo && window._ptForWo(n.wo).some(function(r){ return !r.op || norm(r.op) === norm(n.op); })) return false;   // someone is clocked in on it right now
+        return done.some(function(w){
+          if(norm(w.wo) !== norm(n.wo) || !w.op || norm(w.op) !== norm(n.op)) return false;        // that exact WO + OP, never a WO-wide guess
+          if(w.qtyTotal && (w.qtyDone || 0) < w.qtyTotal) return false;                             // "complete" but parts short → leave it up
+          return true;
+        });
       });
     }
     if(!hits.length) return Promise.resolve([]);
@@ -24069,7 +24078,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
         if(!r.wo || (k !== 'blue' && k !== 'green') || !r.resolved) return;
         var key = String(r.wo) + '|' + String(r.op || ''); if(seen[key] || live[key]) return; seen[key] = 1;
         r._when = tsMs(r.completedAt) || tsMs(r.resolvedAt) || r.removedAtMs || tsMs(r.createdAt);
-        r._how = r.closedByProshop ? 'Closed by ProShop' : r.jobStatus === 'removed' ? 'Taken off by ' + (r.removedBy || '') : r.runTime ? 'Completed · run ' + r.runTime : r.setupTime ? 'Built → Running' : 'Closed';
+        r._cleared = /Marked done by|ProShop sync/i.test(r.completedBy || '') && r._when > Date.now() - 2 * 86400000;
+        r._how = /Marked done by/i.test(r.completedBy || '') ? r.completedBy : /ProShop sync/i.test(r.completedBy || '') || r.closedByProshop ? 'Cleared automatically (ProShop said complete)' : r.jobStatus === 'removed' ? 'Taken off by ' + (r.removedBy || '') : r.runTime ? 'Completed · run ' + r.runTime : r.setupTime ? 'Built → Running' : 'Closed';
         rows.push(r);
       });
       CLOSED = rows.sort(function(a, b){ return b._when - a._when; });
@@ -24080,13 +24090,53 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var l = document.getElementById('jeClosedList'); if(!l) return;
     var q = ((document.getElementById('jeClosedQ') || {}).value || '').toLowerCase().trim();
     var list = CLOSED.filter(function(r){ return !q || [r.wo, r.op, r.part, r.partNumber, r.machine, r.assignedTo].join(' ').toLowerCase().indexOf(q) !== -1; }).slice(0, 80);
-    l.innerHTML = list.length ? list.map(function(r, i){
+    var recent = CLOSED.filter(function(r){ return r._cleared; });
+    var top = recent.length ? '<div class="pt-note" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.5);border-radius:9px;padding:9px 10px;margin:4px 0 8px;color:#fde68a;">'
+      + '⚠ <b>' + recent.length + ' job' + (recent.length === 1 ? '' : 's') + '</b> were cleared off machines by <b>Done</b> or the automatic clear in the last 2 days. If any weren\'t really done, restore them exactly as they were:'
+      + ' <button class="jf-btn go" style="padding:6px 12px;font-size:12px;margin-top:6px;" onclick="window._jeRestoreAll(this)">↩ Restore all ' + recent.length + '</button></div>' : '';
+    l.innerHTML = top + (list.length ? list.map(function(r, i){
       return '<div class="je-closed"><div><b>WO ' + esc(r.wo) + (r.op ? ' OP ' + esc(r.op) : '') + '</b> · ' + esc(r.machine || '') + (r.part || r.partNumber ? ' · ' + esc(r.part || r.partNumber) : '')
         + '<div class="w">' + esc(r._how) + ' · ' + esc(fmtDT(r._when)) + '</div></div>'
-        + '<button class="jf-btn" style="padding:6px 10px;font-size:12px;" onclick="window._jeBackFromList(' + CLOSED.indexOf(r) + ')">↩ Bring back</button></div>';
-    }).join('') : '<div class="jf-sub" style="padding:16px 0;text-align:center;">' + (q ? 'Nothing matches.' : 'No closed jobs found.') + '</div>';
+        + (r._cleared ? '<button class="jf-btn go" style="padding:6px 10px;font-size:12px;" onclick="window._jeRestore(' + CLOSED.indexOf(r) + ', this)">↩ Restore</button>'
+                     : '<button class="jf-btn" style="padding:6px 10px;font-size:12px;" onclick="window._jeBackFromList(' + CLOSED.indexOf(r) + ')">↩ Bring back</button>') + '</div>';
+    }).join('') : '<div class="jf-sub" style="padding:16px 0;text-align:center;">' + (q ? 'Nothing matches.' : 'No closed jobs found.') + '</div>');
   };
   window._jeBackFromList = function(i){ var r = CLOSED[i]; if(r) window._jeBringBack(r); };
+  // ↩ Restore: put a cleared job back exactly where it was (same machine, same request, same history) — not as rework
+  var KEEP = ['machine','cell','type','wo','op','part','po','detail','operator','assignedTo','dueDate','autoPosted','autoCompleted','setupTime','setupBy','setupDoneAt','buildMins','jobStartedAt',
+              'builtReady','builtBy','flagHot','flagHotBy','flagHotAt','flagHotWhy','flagHold','flagHoldBy','jobNotes','originalType','startedAt','fromProshop','floorSupportType'];
+  function restoreOne(r){
+    var m = M(); if(!m || !db()) return Promise.reject(new Error('Not connected'));
+    var note = { createdAt:r.createdAt || m.serverTimestamp(), hillReqId:r.id, keepOpen:true, restoredBy:me(), restoredAtMs:Date.now() };
+    KEEP.forEach(function(k){ if(r[k] !== undefined && r[k] !== null) note[k] = r[k]; });
+    if(r.originalType === 'blue' && r.autoPosted !== true && r.type === 'green' && !r.autoCompleted) note.type = 'blue';
+    if(note.type !== 'green' && note.type !== 'blue') note.type = 'blue';
+    if(note.type === 'blue') note.queuePos = 999;
+    if(m.arrayUnion) note.jobNotes = (r.jobNotes || []).concat([{ kind:'note', by:me(), atMs:Date.now(), text:'↩ Restored — it had been cleared (' + (r.completedBy || 'auto') + ') but wasn\'t done' }]);
+    return m.addDoc(m.collection(db(), 'notes'), note).then(function(){
+      var u = { closedByProshop:false, completedBy:'', restoredBy:me(), restoredAtMs:Date.now() };
+      if(note.type === 'blue'){ u.resolved = false; u.jobStatus = 'pending'; }
+      return m.updateDoc(m.doc(db(), 'hillRequests', r.id), u).catch(function(){});
+    });
+  }
+  window._jeRestore = function(i, btn){
+    var r = CLOSED[i]; if(!r) return;
+    if(btn){ btn.disabled = true; btn.textContent = 'Restoring…'; }
+    restoreOne(r).then(function(){
+      CLOSED.splice(i, 1); window._jeClosedDraw();
+      if(window.showToast) window.showToast('green', '↩ Restored', 'WO ' + r.wo + (r.op ? ' OP ' + r.op : '') + ' is back on ' + (r.machine || ''));
+    }).catch(function(e){ if(btn){ btn.disabled = false; btn.textContent = '↩ Restore'; } if(window.showToast) window.showToast('red', 'Couldn\'t restore', e.message); });
+  };
+  window._jeRestoreAll = function(btn){
+    var list = CLOSED.filter(function(r){ return r._cleared; }); if(!list.length) return;
+    if(!confirm('Put all ' + list.length + ' cleared jobs back on their machines?')) return;
+    if(btn){ btn.disabled = true; btn.textContent = 'Restoring…'; }
+    Promise.all(list.map(function(r){ return restoreOne(r).then(function(){ return 1; }, function(){ return 0; }); })).then(function(res){
+      var ok = res.reduce(function(a, b){ return a + b; }, 0);
+      CLOSED = CLOSED.filter(function(r){ return !r._cleared; }); window._jeClosedDraw();
+      if(window.showToast) window.showToast('green', '↩ Restored ' + ok + ' job' + (ok === 1 ? '' : 's'), 'They\'re back on their machines');
+    });
+  };
 })();
 </script>
 <style>
