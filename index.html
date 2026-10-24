@@ -21742,11 +21742,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var drag = kind !== 'run' && canOrder();
     if(drag) moves = (moves ? moves.replace('<div class="ln-moves">', '<div class="ln-moves">') : '<div class="ln-moves">')
       .replace(/<\/div>$/, '') + '<button class="ln-mv ln-to" title="Move to another machine" onclick="event.stopPropagation();window._lnMoveMenu(\'' + esc(n.id) + '\', this)">⇄</button></div>';
-    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + (n.inProgress ? ' setting' : '') + (drag ? ' drag' : '') + '"'
+    var fb = window._jfBtn ? window._jfBtn(n) : '';
+    if(fb) moves = moves ? moves.replace(/<\/div>$/, fb + '</div>') : '<div class="ln-moves">' + fb + '</div>';
+    return '<div class="ln-job ' + (kind === 'run' ? 'run' : pos === 0 ? 'next' : '') + (n.inProgress ? ' setting' : '') + (window._jfClass ? window._jfClass(n) : '') + (drag ? ' drag' : '') + '"'
       + (drag ? ' draggable="true" data-id="' + esc(n.id) + '" data-mid="' + esc(mid) + '" ondragstart="window._lnDragStart(event)" ondragend="window._lnDragEnd(event)"' : '') + '>'
       + '<div class="ln-pos">' + (kind === 'run' ? 'RUN' : '#' + (pos+1)) + '</div>'
       + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? '<span class="ln-wolink" title="Full job review" onclick="event.stopPropagation();window._jobReview && window._jobReview(\'' + esc(n.wo) + '\')">WO ' + esc(n.wo) + '</span>' : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
-      + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '')
+      + (window._jfHtml ? window._jfHtml(n) : '') + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '')
       + (kind !== 'run' && n.type === 'blue' ? setupCtl(n) : '')
       + (kind === 'run' ? jobClock(n) : '') + '</div>'
       + moves + '</div>';
@@ -21809,7 +21811,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   // ── Moving jobs between machines (admin + Corey) ─────────────
   // Rewrites positions 1..n on the target machine; if the machine changed,
   // the request itself moves (machine + cell), and the request log follows.
-  function moveJob(id, toMid, index){
+  function moveJob(id, toMid, index, silent){
     if(!canOrder()) return;
     var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n) return;
     var fromMid = n.machine, target = machines().filter(function(m){ return m.id === toMid; })[0]; if(!target) return;
@@ -21831,6 +21833,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     if(fromMid !== toMid) pendingFor(fromMid).filter(function(x){ return x.id !== id; }).forEach(function(x, k){ x.queuePos = k + 1; writes.push(M.updateDoc(M.doc(db, 'notes', x.id), { queuePos: k + 1 })); });
     Promise.all(writes).then(function(){
       if(fromMid !== toMid && window.showToast) window.showToast('blue','⇄ Moved WO ' + (n.wo || ''), fromMid + ' → ' + toMid + ' · #' + (index + 1) + ' in line');
+      if(fromMid !== toMid && !silent && window._jobAlert) window._jobAlert({ kind:'move', wo:n.wo || '', op:n.op || '', part:n.part || '', machine:toMid, from:fromMid, to:toMid, pos:index + 1, noteId:n.id });
     }).catch(function(e){ if(window.showToast) window.showToast('red','Couldn\'t move the job', e.message); });
     window._lnRender();
   }
@@ -21954,6 +21957,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     ov.innerHTML = '<div class="ln-top"><div><div class="ln-title">📅 Scheduler — Machine Lines</div><div class="ln-sub" id="lnSub"></div></div>'
       + '<button class="ln-x" onclick="window._lnClose()">✕ Close</button></div>'
       + '<div class="ln-bar" style="padding-bottom:4px;"><div id="lnCells" style="display:flex;gap:6px;flex-wrap:wrap;flex:1;"></div>'
+       +   '<button class="ln-btn" id="jaBell" style="display:none;" onclick="window._jaOpen && window._jaOpen()">🔔 Alerts</button>'
       +   '<button class="ln-btn" id="lnHardBtn" style="display:none;" title="Admin: reload the app fresh — newest version from GitHub + latest ProShop sync" onclick="window._hardRefresh()">🔄 Refresh</button>'
       +   '<button class="ln-btn" style="background:#f5c842;border-color:#f5c842;color:#1a1300;" onclick="window._jobReview && window._jobReview()">🔍 Job Review</button>'
       +   '<button class="ln-btn" style="background:#10b981;border-color:#10b981;color:#03241a;" onclick="window._woOpen && window._woOpen()">📋 Work Orders</button>'
@@ -22138,12 +22142,12 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       var line = function(n){ return [n.op ? 'OP <b>' + esc(n.op) + '</b>' : '', n.part ? 'Part <b>' + esc(n.part) + '</b>' : '', n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : ''].filter(Boolean).join(' · '); };
       return '<div class="tv-m"><div class="tv-mname">' + esc(m.name) + '</div>' + (window._ptTvHtml ? window._ptTvHtml(m.id) : '')
         + '<div class="tv-lbl">RUNNING</div>'
-        + (run.length ? run.map(function(n){ return '<div class="tv-run"><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div><div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + '</div>'; }).join('')
+        + (run.length ? run.map(function(n){ return '<div class="tv-run' + (window._jfClass ? window._jfClass(n) : '') + '"><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div>' + (window._jfHtml ? window._jfHtml(n) : '') + '<div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + '</div>'; }).join('')
                       : '<div class="tv-empty">Nothing running</div>')
         + '<div class="tv-lbl">UP NEXT</div>'
         + (pend.length ? pend.slice(0, maxNext).map(function(n, i){
-              return '<div class="tv-row' + (i === 0 ? ' first' : '') + '"><div class="tv-n">' + (i+1) + '</div><div><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div>'
-                + '<div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + (n.inProgress ? '<div class="tv-due soon">🔧 SETTING UP NOW</div>' : '') + (window._ptJobBadge ? window._ptJobBadge(n) : '') + '</div></div>';
+              return '<div class="tv-row' + (i === 0 ? ' first' : '') + (window._jfClass ? window._jfClass(n) : '') + '"><div class="tv-n">' + (i+1) + '</div><div><div class="tv-wo">' + (n.wo ? 'WO ' + esc(n.wo) : esc(n.part || '—')) + '</div>'
+                + (window._jfHtml ? window._jfHtml(n) : '') + '<div class="tv-sub">' + line(n) + '</div>' + tvDue(n) + (n.inProgress ? '<div class="tv-due soon">🛠 BUILDING NOW</div>' : '') + (window._ptJobBadge ? window._ptJobBadge(n) : '') + '</div></div>';
             }).join('') + (pend.length > maxNext ? '<div class="tv-more">+ ' + (pend.length - maxNext) + ' more in line</div>' : '')
           : '<div class="tv-empty">Nothing queued</div>')
         + '</div>';
@@ -23006,14 +23010,122 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       try{ w.push(m.setDoc(m.doc(db(), 'hillProshopWO', id), data, { merge:true }).catch(function(){})); }catch(e){}
     });
     if(window._ptMapDirty) w.push(m.setDoc(m.doc(db(), 'hillSettings', 'proshopWorkCenterMap'), { map:MAP, updatedAt:m.serverTimestamp() }));
-    Promise.all(w).then(function(){
+    Promise.all(w).then(function(){ return autoClose(wos, who); }).then(function(closed){
       window._ptMapDirty = false;
       CLOCK = { rows:rows, workOrders:wos, syncedAt:now, syncedBy:who }; refresh();
+      setTimeout(function(){ if(closed && closed.length){ var mm = document.getElementById('ptMsg'); if(mm) mm.innerHTML += closedHtml(closed); } }, 0);
       var miss = rows.filter(function(r){ return !r.machine; }).length;
       msg.innerHTML = '<span style="color:#4ade80;">✅ Saved ' + rows.length + ' clock-in' + (rows.length === 1 ? '' : 's') + (wos.length ? ' and ' + wos.length + ' work order' + (wos.length === 1 ? '' : 's') : '') + ' to the Scheduler' + (miss ? ' · ' + miss + ' not matched to a machine' : '') + '.</span>';
       document.getElementById('ptLast').innerHTML = window._ptStamp();
       if(window.showToast) window.showToast('green','⏱ ProShop clock-ins synced', rows.length + ' on the clock');
     }).catch(function(e){ msg.innerHTML = '<span style="color:#f87171;">Couldn\'t save: ' + esc(e.message) + '</span>'; });
+  };
+  // ── ProShop says COMPLETE → take the job off the app ──────
+  // Only an explicit ProShop status (Complete / Closed / Shipped / Finished) does this — never qty alone.
+  // Matches WO + OP (a WO-level "Complete" with no OP closes every card for that WO).
+  var LAST_CLOSED = [];
+  function tsMs2(t){ return !t ? 0 : t.seconds ? t.seconds * 1000 : typeof t.toMillis === 'function' ? t.toMillis() : (Date.parse(t) || 0); }
+  function autoClose(wos, who){
+    var m = M(); if(!m || !db() || !m.deleteDoc) return Promise.resolve([]);
+    var done = (wos || []).filter(function(w){ return w.status && /complete|closed|shipped|finished|done/i.test(w.status) && !/not ?complete|incomplete/i.test(w.status); });
+    if(!done.length) return Promise.resolve([]);
+    var notes = []; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){ if(n && n.id && n.wo && (n.type === 'green' || n.type === 'blue')) notes.push(n); }); });
+    var hits = notes.filter(function(n){ return done.some(function(w){ return norm(w.wo) === norm(n.wo) && (!w.op || !n.op || norm(w.op) === norm(n.op)); }); });
+    if(!hits.length) return Promise.resolve([]);
+    var nowMs = Date.now(), jobs = [];
+    hits.forEach(function(n){
+      var data = {}; Object.keys(n).forEach(function(k){ if(k !== 'id') data[k] = n[k]; });
+      var st = tsMs2(n.startedAt) || tsMs2(n.createdAt), mins = st ? Math.max(0, Math.round((nowMs - st) / 60000)) : null;
+      var str = mins == null ? '' : mins >= 60 ? Math.floor(mins/60) + 'h ' + (mins%60) + 'm' : mins + 'm';
+      var p = m.deleteDoc(m.doc(db(), 'notes', n.id)).then(function(){
+        var upd = { resolved:true, jobStatus:'completed', completedAt:m.serverTimestamp(), completedBy:'ProShop sync (' + who + ')', closedByProshop:true };
+        if(n.type === 'green' && mins != null){ upd.runMins = mins; upd.runTime = str; }
+        if(n.hillReqId) m.updateDoc(m.doc(db(), 'hillRequests', n.hillReqId), upd).catch(function(){});
+        if(n.type === 'green' && mins != null) m.addDoc(m.collection(db(), 'hillTimeLog'), { person:n.assignedTo || 'machinist', role:'run', machine:n.machine || '', wo:n.wo || '', op:n.op || '',
+          detail:'Closed by ProShop sync — status Complete', startedAt:n.startedAt || null, finishedAt:m.serverTimestamp(), elapsedMins:mins, elapsedStr:str, loggedAt:m.serverTimestamp(), byProshop:true }).catch(function(){});
+        return { id:n.id, data:data, label:(n.machine || '') + ' · WO ' + n.wo + (n.op ? ' OP ' + n.op : '') + (n.type === 'blue' ? ' (was in line)' : '') };
+      }).catch(function(){ return null; });
+      jobs.push(p);
+    });
+    return Promise.all(jobs).then(function(list){
+      list = list.filter(Boolean); LAST_CLOSED = list;
+      return queueNextOps(hits, wos, who).then(function(nx){ list.next = nx; return list; });
+    }).then(function(list){
+      if(list.length && window.showToast) window.showToast('green', '✅ ' + list.length + ' job' + (list.length === 1 ? '' : 's') + ' closed — ProShop says complete', list.map(function(x){ return x.label; }).join(' · '));
+      return list;
+    });
+  }
+  // ── When an OP finishes, put the WO's NEXT op in line on its machine (lathe → mill, etc.) ──
+  // Uses the routing ProShop sends: one workOrders entry per OP, each with its work center + status.
+  var LAST_NEXT = [], UNPLACED = [];
+  function opNum(o){ var n = parseFloat(String(o || '').replace(/[^0-9.]/g, '')); return isNaN(n) ? null : n; }
+  function machineForWc(wc){
+    var k = norm(wc); if(!k) return '';
+    if(MAP[k]) return MAP[k];
+    var best = ''; machinesList().forEach(function(m){ var n = norm(m.id); if(n && (n === k || k.indexOf(n) !== -1 || n.indexOf(k) !== -1) && (!best || n.length > norm(best).length)) best = m.id; });
+    return best;
+  }
+  function queueNextOps(closedNotes, wos, who){
+    LAST_NEXT = []; UNPLACED = [];
+    var isDone = function(w){ return w.status && /complete|closed|shipped|finished|done/i.test(w.status) && !/not ?complete|incomplete/i.test(w.status); };
+    var live = []; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){ if(n && (n.type === 'blue' || n.type === 'green')) live.push(n); }); });
+    var seen = {}, todo = [];
+    closedNotes.forEach(function(n){
+      var cur = opNum(n.op); if(cur == null) return;
+      var route = (wos || []).filter(function(w){ return norm(w.wo) === norm(n.wo) && opNum(w.op) != null; }).sort(function(a, b){ return opNum(a.op) - opNum(b.op); });
+      var next = route.filter(function(w){ return opNum(w.op) > cur && !isDone(w); })[0];
+      if(!next) return;                                                   // last op — the WO is done
+      var key = norm(next.wo) + '|' + norm(next.op); if(seen[key]) return; seen[key] = 1;
+      if(live.some(function(x){ return norm(x.wo) === norm(next.wo) && norm(x.op) === norm(next.op) && !closedNotes.some(function(c){ return c.id === x.id; }); })) return;   // already in the app
+      todo.push({ from:n, next:next, machine: machineForWc(next.workCenter) });
+    });
+    if(!todo.length || !window.submitNoteToFirebase) return Promise.resolve([]);
+    return Promise.all(todo.map(function(t){
+      if(!t.machine){ UNPLACED.push(t); return null; }
+      return addNextOp(t, who).catch(function(){ return null; });
+    })).then(function(list){ LAST_NEXT = list.filter(Boolean); return LAST_NEXT; });
+  }
+  function addNextOp(t, who){
+    var mach = window._ln ? window._ln.machines().filter(function(m){ return m.id === t.machine; })[0] : null;
+    var n = t.from, x = t.next;
+    var note = { machine:t.machine, cell:(mach && (mach.reqCell || mach.cell)) || '', type:'blue', wo:String(x.wo || n.wo), op:String(x.op || ''), part:x.part || n.part || '',
+      po:'', operator:'ProShop sync', assignedTo:'', floorSupportType:'', dueDate:x.dueISO || n.dueDate || '',
+      detail:'Next op after OP ' + (n.op || '?') + ' on ' + (n.machine || '?') + ' — from ProShop routing' + (x.workCenter ? ' (' + x.workCenter + ')' : ''),
+      fromProshop:true, prevOp:String(n.op || ''), prevMachine:n.machine || '' };
+    return window.submitNoteToFirebase(note).then(function(res){
+      if(window.adminPushover) window.adminPushover('🔵 Next op in line: ' + t.machine, 'WO ' + note.wo + ' OP ' + note.op + (note.part ? ' · ' + note.part : '') + '\nOP ' + (n.op || '?') + ' finished on ' + (n.machine || '?') + ' — ready for you to build.', 'pushover', 0);
+      return { noteId:res && res.noteId, reqId:res && res.id, label:note.machine + ' · WO ' + note.wo + ' OP ' + note.op };
+    });
+  }
+  window._ptPlaceNext = function(i){
+    var t = UNPLACED[i], sel = document.getElementById('ptNextSel' + i); if(!t || !sel || !sel.value) return;
+    t.machine = sel.value;
+    if(t.next.workCenter){ MAP[norm(t.next.workCenter)] = sel.value; window._ptMapDirty = true; var m = M(); if(m) m.setDoc(m.doc(db(), 'hillSettings', 'proshopWorkCenterMap'), { map:MAP, updatedAt:m.serverTimestamp() }).catch(function(){}); }
+    addNextOp(t, '').then(function(r){ LAST_NEXT.push(r); UNPLACED[i] = null; var row = document.getElementById('ptNextRow' + i); if(row) row.innerHTML = '✅ Added to <b>' + esc(sel.value) + '</b>\'s line'; });
+  };
+  function nextHtml(){
+    var h = '';
+    if(LAST_NEXT.length) h += '<div class="pt-note" style="margin-top:4px;color:#93c5fd;">🔵 Put the next op in line: <b>' + esc(LAST_NEXT.map(function(x){ return x.label; }).join(', ')) + '</b></div>';
+    UNPLACED.forEach(function(t, i){
+      if(!t) return;
+      h += '<div class="pt-note" id="ptNextRow' + i + '" style="margin-top:4px;color:#fbbf24;">❓ WO ' + esc(t.next.wo) + ' OP ' + esc(t.next.op) + ' goes to <b>' + esc(t.next.workCenter || 'an unknown work center') + '</b> — which machine? '
+        + '<select id="ptNextSel' + i + '" class="pt-sel" style="background:#08121f;border:1px solid #334155;color:#e2e8f0;border-radius:6px;padding:3px;"><option value="">pick…</option>'
+        + machinesList().map(function(m){ return '<option>' + esc(m.id) + '</option>'; }).join('') + '</select> <button class="pt-btn" style="padding:3px 9px;" onclick="window._ptPlaceNext(' + i + ')">Add to line</button></div>';
+    });
+    return h;
+  }
+  function closedHtml(list){
+    return nextHtml() + '<div class="pt-note" style="margin-top:6px;color:#bbf7d0;">✅ Took ' + list.length + ' job' + (list.length === 1 ? '' : 's') + ' off the app — ProShop marked ' + (list.length === 1 ? 'it' : 'them') + ' complete: <b>'
+      + esc(list.map(function(x){ return x.label; }).join(', ')) + '</b> <button class="pt-btn" style="padding:3px 9px;margin-left:6px;" onclick="window._ptUndoClose()">↩ Undo</button></div>';
+  }
+  window._ptUndoClose = function(){
+    var m = M(); if(!LAST_CLOSED.length || !m) return;
+    LAST_NEXT.forEach(function(x){ if(!x) return; if(x.noteId) m.deleteDoc(m.doc(db(), 'notes', x.noteId)).catch(function(){}); if(x.reqId) m.updateDoc(m.doc(db(), 'hillRequests', x.reqId), { resolved:true, jobStatus:'canceled', canceledBy:'undo ProShop sync' }).catch(function(){}); });
+    LAST_NEXT = [];
+    Promise.all(LAST_CLOSED.map(function(x){
+      if(x.data.hillReqId) m.updateDoc(m.doc(db(), 'hillRequests', x.data.hillReqId), { resolved:x.data.type !== 'blue', jobStatus:x.data.type === 'green' ? 'completed' : 'pending', closedByProshop:false }).catch(function(){});
+      return m.setDoc(m.doc(db(), 'notes', x.id), x.data);
+    })).then(function(){ if(window.showToast) window.showToast('yellow', '↩ Put back ' + LAST_CLOSED.length + ' job' + (LAST_CLOSED.length === 1 ? '' : 's'), ''); LAST_CLOSED = []; var mm = document.getElementById('ptMsg'); if(mm) mm.innerHTML = '<span style="color:#fbbf24;">↩ Jobs put back.</span>'; });
   };
   window._ptClear = function(){
     if(!canSync()) return;
@@ -23184,7 +23296,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
         var pos = ''; if(n.type === 'blue' && window._ln){ var q = window._ln.pendingFor(n.machine); var i = q.map(function(x){ return x.id; }).indexOf(n.id); if(i >= 0) pos = ' · #' + (i+1) + ' in line'; }
         return '<div class="jr-sub" style="margin:3px 0;">' + t[0] + ' <b>' + esc(t[1]) + '</b> on <b>' + esc(n.machine) + '</b>' + (n.op ? ' · OP ' + esc(n.op) : '') + pos
           + (n.inProgress ? ' · <span style="color:#fde68a;font-weight:700;">🛠 building</span>' : '') + (n.assignedTo ? ' · 🔧 ' + esc(n.assignedTo) : '') + '</div>'
-          + (n.type === 'blue' && window._lnSetupCtl ? '<div class="jr-noprint">' + window._lnSetupCtl(n) + '</div>' : '');
+          + (window._jfHtml ? window._jfHtml(n) : '')
+          + '<div class="jr-noprint" style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;">' + (n.type === 'blue' && window._lnSetupCtl ? window._lnSetupCtl(n) : '')
+          + (window._jfBtn && window._jfBtn(n) ? '<div class="ln-sbtns"><button class="ln-sb" style="border-color:rgba(239,68,68,0.5);color:#fca5a5;" onclick="window._jfOpen(\'' + esc(n.id) + '\')">🚩 Flag / note</button></div>' : '') + '</div>';
       }).join('');
     } else h += '<div class="jr-empty">Not on the floor or in the Scheduler right now.</div>';
     var clockNow = window._ptForWo ? window._ptForWo(wo) : [];
@@ -23226,6 +23340,12 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       if(r.resolvedAt) ev.push({ ms:tsMs(r.resolvedAt), c:t[2], w:'✅ ' + (k === 'blue' ? '<b>Build done</b> → to the machine' : 'Done') + (r.resolvedBy ? ' — ' + esc(who(r.resolvedBy)) : ''), d:r.elapsedStr || r.setupTime ? '⏱ ' + esc(r.elapsedStr || r.setupTime) : '' });
       if(r.completedAt && r.jobStatus === 'completed' && r.runTime) ev.push({ ms:tsMs(r.completedAt), c:'#64748b', w:'🏁 <b>Job complete</b>', d:'Run time ' + esc(r.runTime) });
     });
+    var jnSeen = {};
+    reqs.concat(notes).forEach(function(r){ (r.jobNotes || []).forEach(function(x){
+      var k = x.atMs + '|' + x.kind + '|' + x.text; if(jnSeen[k]) return; jnSeen[k] = 1;
+      var ic = { hot:'🔥', unhot:'✅', hold:'⏸', unhold:'▶', note:'📝' }[x.kind] || '📝';
+      ev.push({ ms:x.atMs, c: x.kind === 'hot' ? '#ef4444' : x.kind === 'hold' ? '#f59e0b' : '#7dd3fc', w:ic + ' <b>' + esc(x.kind === 'hot' ? 'Flagged HOT' : x.kind === 'hold' ? 'On hold' : x.kind === 'note' ? 'Note' : x.text) + '</b> — ' + esc(who(x.by)), d:x.kind === 'note' || x.kind === 'hot' || x.kind === 'hold' ? esc(x.text) : '' });
+    }); });
     seen.forEach(function(e){ if(e.startMs) ev.push({ ms:e.startMs, c:'#10b981', w:'⏱ ProShop: <b>' + esc(e.employee) + '</b> clocked in' + (e.op ? ' on OP ' + esc(e.op) : ''), d:e.machine ? esc(e.machine) : '' }); });
     ev = ev.filter(function(e){ return e.ms; }).sort(function(a, b){ return a.ms - b.ms; });
     h += '<div class="jr-sec">Full history (' + ev.length + ')</div>'
@@ -23266,6 +23386,241 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     window._applyMachineEdges = function(){ var r = orig.apply(this, arguments); try{ var o = document.getElementById('jobRev'); if(LAST && o && o.classList.contains('open')) render(LAST); }catch(e){} return r; };
   }, 500);
   window._jobReviewClose = function(){ var o = document.getElementById('jobRev'); if(o) o.classList.remove('open'); CUR = ''; };
+})();
+</script>
+
+<style>
+/* ═══ JOB FLAGS & ALERTS ═══ */
+.ln-job.jf-hot { border-color:#ef4444 !important; box-shadow:0 0 0 2px rgba(239,68,68,0.55), 0 0 18px rgba(239,68,68,0.35) !important; animation:jfPulse 1.8s ease-in-out infinite; }
+.ln-job.jf-hold { border-color:#f59e0b !important; }
+@keyframes jfPulse { 50% { box-shadow:0 0 0 3px rgba(239,68,68,0.9), 0 0 26px rgba(239,68,68,0.6); } }
+.jf-tag { display:block; margin-top:5px; font-size:11px; font-weight:700; padding:4px 8px; border-radius:7px; line-height:1.35; }
+.jf-tag.hot { background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.75); color:#fecaca; }
+.jf-tag.hold { background:rgba(245,158,11,0.16); border:1px solid rgba(245,158,11,0.6); color:#fde68a; }
+.jf-tag.note { background:rgba(125,211,252,0.1); border:1px solid rgba(125,211,252,0.35); color:#bae6fd; font-weight:600; }
+.jf-tag b { color:#fff; } .jf-tag i { font-style:normal; color:#94a3b8; font-weight:500; }
+.ln-mv.ln-flag { color:#fca5a5; }
+.tv-row.jf-hot, .tv-run.jf-hot { border:2px solid #ef4444 !important; background:rgba(239,68,68,0.16) !important; animation:jfPulse 1.8s ease-in-out infinite; }
+.tv-row .jf-tag, .tv-run .jf-tag { font-size:clamp(12px,1vw,17px); }
+.machine.jf-hot-tile { box-shadow:0 0 0 3px rgba(239,68,68,0.95), 0 0 22px rgba(239,68,68,0.6) !important; animation:jfPulse 1.8s ease-in-out infinite; }
+#jfSheet { position:fixed; inset:0; z-index:9800; background:rgba(2,6,14,0.82); display:none; align-items:flex-start; justify-content:center; padding:24px 12px; overflow-y:auto; font-family:'Barlow',sans-serif; color:#e2e8f0; }
+#jfSheet.open { display:flex; }
+.jf-box { width:100%; max-width:520px; background:#0d1f35; border:1px solid #1e3a5f; border-radius:14px; padding:16px; }
+.jf-h { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:1.5px; color:#f5c842; display:flex; align-items:center; gap:8px; }
+.jf-h button { margin-left:auto; }
+.jf-sub { font-size:12px; color:#94a3b8; margin-bottom:10px; }
+.jf-big { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.jf-opt { border:2px solid #334155; background:rgba(255,255,255,0.04); color:#e2e8f0; border-radius:12px; padding:12px 10px; font-size:15px; font-weight:800; cursor:pointer; text-align:center; }
+.jf-opt small { display:block; font-size:11px; font-weight:500; color:#94a3b8; margin-top:2px; }
+.jf-opt.hot.on { background:rgba(239,68,68,0.22); border-color:#ef4444; color:#fff; }
+.jf-opt.hold.on { background:rgba(245,158,11,0.2); border-color:#f59e0b; color:#fff; }
+.jf-chips { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 8px; }
+.jf-chip { padding:6px 10px; border-radius:14px; border:1px solid #334155; background:rgba(255,255,255,0.04); font-size:12px; cursor:pointer; color:#e2e8f0; }
+.jf-chip.on { background:rgba(125,211,252,0.18); border-color:#7dd3fc; color:#fff; }
+.jf-lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#64748b; font-weight:700; margin-top:8px; }
+#jfNote { width:100%; min-height:70px; box-sizing:border-box; background:#08121f; border:1px solid #1e3a5c; border-radius:8px; color:#e2e8f0; padding:9px; font-size:14px; font-family:inherit; }
+.jf-row { display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+.jf-btn { border-radius:9px; padding:10px 14px; font-size:14px; font-weight:800; cursor:pointer; border:1px solid #334155; background:rgba(255,255,255,0.06); color:#e2e8f0; }
+.jf-btn.go { background:#ef4444; border-color:#ef4444; color:#fff; flex:1; }
+.jf-btn.go.calm { background:#0ea5e9; border-color:#0ea5e9; color:#04121f; }
+.jf-hist { margin-top:12px; border-top:1px solid #1e3a5f; padding-top:8px; font-size:12px; color:#94a3b8; max-height:160px; overflow-y:auto; }
+.jf-hist div { padding:3px 0; } .jf-hist b { color:#e2e8f0; }
+#jaBell { position:relative; }
+#jaBell .n, .ja-tabn { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:#ef4444; color:#fff; font-size:11px; font-weight:800; margin-left:4px; }
+#jaPanel { position:fixed; inset:0; z-index:9790; background:rgba(2,6,14,0.82); display:none; align-items:flex-start; justify-content:center; padding:24px 12px; overflow-y:auto; font-family:'Barlow',sans-serif; color:#e2e8f0; }
+#jaPanel.open { display:flex; }
+.ja-item { display:flex; gap:10px; align-items:flex-start; padding:9px 4px; border-bottom:1px solid rgba(255,255,255,0.06); cursor:pointer; }
+.ja-item:hover { background:rgba(255,255,255,0.03); }
+.ja-item .ic { font-size:20px; line-height:1; }
+.ja-item .t { font-size:13px; } .ja-item .t b { color:#fff; } .ja-item .w { font-size:11px; color:#64748b; margin-top:2px; }
+.ja-item.new { background:rgba(239,68,68,0.07); }
+</style>
+<script>
+// ═══ JOB FLAGS & ALERTS ═══
+// Corey / Miguel can flag any job: 🔥 HOT (lights up red everywhere), ⏸ HOLD with a reason, or a 📝 note.
+// Every flag and every machine move sends Miguel a Pushover alert and shows up in the app's 🔔 alerts.
+(function(){
+  function M(){ return window._fbModules; } function db(){ return window.fbDb || window._db; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]; }); }
+  function me(){ var n = window._userDisplayName || window.currentUser || ''; return /^hilladmin$/i.test(n) ? 'Miguel' : n; }
+  function isAdmin(){ return !!(window._isAdmin || window.currentUser === 'hilladmin'); }
+  function canFlag(){ return isAdmin() || !!window._isManager || window._userRole === 'manager' || /corey/i.test(window._userDisplayName || window.currentUser || ''); }
+  function tsMs(t){ return !t ? 0 : t.seconds ? t.seconds * 1000 : typeof t.toMillis === 'function' ? t.toMillis() : (typeof t === 'number' ? t : (Date.parse(t) || 0)); }
+  function fmtT(ms){ if(!ms) return ''; var d = new Date(ms), h = d.getHours(), today = new Date().toDateString() === d.toDateString(); return (today ? '' : (d.getMonth()+1) + '/' + d.getDate() + ' ') + ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h >= 12 ? ' PM' : ' AM'); }
+  function allNotes(){ var a = []; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){ if(n) a.push(n); }); }); return a; }
+  function first(s){ return String(s || '').split(' ')[0]; }
+
+  // ── Alert: in-app log (hillJobAlerts) + Pushover to Miguel ──
+  var ICON = { move:'⇄', hot:'🔥', unhot:'✅', hold:'⏸', unhold:'▶', note:'📝' };
+  window._jobAlert = function(a){
+    var m = M(); if(!m || !db()) return;
+    a = Object.assign({ by:me(), atMs:Date.now() }, a);
+    try{ m.addDoc(m.collection(db(), 'hillJobAlerts'), Object.assign({}, a, { at:m.serverTimestamp() })).catch(function(){}); }catch(e){}
+    var job = 'WO ' + (a.wo || '—') + (a.op ? ' OP ' + a.op : '');
+    var title, msg, sound = 'pushover', pri = 0;
+    if(a.kind === 'move'){ title = '⇄ ' + job + ' moved → ' + a.to; msg = a.by + ' moved it from ' + (a.from || '?') + ' to ' + a.to + (a.pos ? ' (#' + a.pos + ' in line)' : '') + '.'; }
+    else if(a.kind === 'hot'){ title = '🔥 HOT: ' + job + ' on ' + (a.machine || '?'); msg = a.by + ' flagged it HOT' + (a.text ? ':\n' + a.text : '.') + (a.front ? '\nMoved to #1 in line.' : ''); sound = 'siren'; pri = 1; }
+    else if(a.kind === 'unhot'){ title = '✅ No longer hot: ' + job; msg = a.by + ' cleared the HOT flag.'; }
+    else if(a.kind === 'hold'){ title = '⏸ ON HOLD: ' + job + ' — ' + (a.reason || ''); msg = a.by + ' put it on hold' + (a.reason ? ' (' + a.reason + ')' : '') + (a.text ? ':\n' + a.text : '.'); sound = 'falling'; }
+    else if(a.kind === 'unhold'){ title = '▶ Off hold: ' + job; msg = a.by + ' took it off hold.'; }
+    else { title = '📝 Note on ' + job + (a.machine ? ' · ' + a.machine : ''); msg = a.by + ': ' + (a.text || ''); }
+    if(window.adminPushover) window.adminPushover(title, msg + (a.part ? '\nPart ' + a.part : ''), sound, pri);
+  };
+
+  // ── Badges on job cards / monitor rows ──
+  window._jfHtml = function(n){
+    if(!n) return '';
+    var h = '';
+    if(n.flagHot) h += '<span class="jf-tag hot">🔥 HOT' + (n.flagHotBy ? ' · ' + esc(first(n.flagHotBy)) : '') + (n.flagHotAt ? ' <i>' + esc(fmtT(tsMs(n.flagHotAt))) + '</i>' : '') + (n.flagHotWhy ? ' — <b>' + esc(n.flagHotWhy) + '</b>' : '') + '</span>';
+    if(n.flagHold) h += '<span class="jf-tag hold">⏸ HOLD — <b>' + esc(n.flagHold) + '</b>' + (n.flagHoldBy ? ' · ' + esc(first(n.flagHoldBy)) : '') + '</span>';
+    var notes = n.jobNotes || []; var last = notes.filter(function(x){ return x.kind === 'note'; }).slice(-1)[0];
+    if(last) h += '<span class="jf-tag note">📝 ' + esc(last.text) + ' <i>— ' + esc(first(last.by)) + ' ' + esc(fmtT(last.atMs)) + (notes.filter(function(x){ return x.kind === 'note'; }).length > 1 ? ' · ' + notes.filter(function(x){ return x.kind === 'note'; }).length + ' notes' : '') + '</i></span>';
+    return h;
+  };
+  window._jfClass = function(n){ return n ? (n.flagHot ? ' jf-hot' : '') + (n.flagHold ? ' jf-hold' : '') : ''; };
+  window._jfBtn = function(n){ return canFlag() && n && n.id ? '<button class="ln-mv ln-flag" title="Flag this job — hot, hold or a note (alerts Miguel)" onclick="event.stopPropagation();window._jfOpen(\'' + esc(n.id) + '\')">🚩</button>' : ''; };
+
+  // ── The flag sheet ──
+  var CUR = null, ST = {};
+  var HOLDS = ['Material', 'Tooling', 'Program', 'Fixture', 'Quality / FAI', 'Customer', 'Machine down'];
+  var QUICK = ['Customer called — needs it ASAP', 'Due date moved up', 'Expedite — ship today', 'Run this next', 'Waiting on material', 'Check with Corey'];
+  function build(){
+    if(document.getElementById('jfSheet')) return;
+    var o = document.createElement('div'); o.id = 'jfSheet';
+    o.onclick = function(e){ if(e.target === o) window._jfClose(); };
+    document.body.appendChild(o);
+  }
+  function draw(){
+    var n = CUR, o = document.getElementById('jfSheet'); if(!n || !o) return;
+    var hist = (n.jobNotes || []).slice().reverse();
+    o.innerHTML = '<div class="jf-box"><div class="jf-h">🚩 Flag WO ' + esc(n.wo || '—') + (n.op ? ' OP ' + esc(n.op) : '') + '<button class="jf-btn" onclick="window._jfClose()">✕</button></div>'
+      + '<div class="jf-sub">' + esc(n.machine || '') + (n.part ? ' · Part ' + esc(n.part) : '') + ' · Miguel gets a phone alert</div>'
+      + '<div class="jf-big"><div class="jf-opt hot' + (ST.hot ? ' on' : '') + '" onclick="window._jfSet(\'hot\')">🔥 HOT<small>' + (n.flagHot ? 'is hot — tap to clear' : 'lights up red everywhere') + '</small></div>'
+      + '<div class="jf-opt hold' + (ST.hold ? ' on' : '') + '" onclick="window._jfSet(\'hold\')">⏸ ON HOLD<small>' + (n.flagHold ? 'on hold — tap to clear' : 'pick a reason') + '</small></div></div>'
+      + (ST.hot && !n.flagHot ? '<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:-2px 0 6px;"><input type="checkbox" id="jfFront"' + (ST.front ? ' checked' : '') + ' onchange="window._jfFront(this.checked)" style="width:18px;height:18px;"> Move it to #1 in ' + esc(n.machine || 'this machine') + '\'s line</label>' : '')
+      + (ST.hold ? '<div class="jf-lbl">Hold reason</div><div class="jf-chips">' + HOLDS.map(function(h){ return '<span class="jf-chip' + (ST.reason === h ? ' on' : '') + '" onclick="window._jfReason(\'' + esc(h) + '\')">' + esc(h) + '</span>'; }).join('') + '</div>' : '')
+      + '<div class="jf-lbl">Note ' + (ST.hot || ST.hold ? '(why — optional)' : '') + '</div>'
+      + '<div class="jf-chips">' + QUICK.map(function(q){ return '<span class="jf-chip" onclick="window._jfQuick(\'' + esc(q) + '\')">' + esc(q) + '</span>'; }).join('') + '</div>'
+      + '<textarea id="jfNote" placeholder="Type a note for this job…" oninput="window._jfTxt(this.value)">' + esc(ST.text || '') + '</textarea>'
+      + '<div class="jf-row"><button class="jf-btn" onclick="window._jfClose()">Cancel</button><button class="jf-btn go' + (ST.hot ? '' : ' calm') + '" id="jfSend" onclick="window._jfSend()">' + sendLabel() + '</button></div>'
+      + '<div class="jf-err" id="jfErr" style="color:#fca5a5;font-size:12px;margin-top:6px;"></div>'
+      + (hist.length ? '<div class="jf-hist">' + hist.map(function(x){ return '<div>' + (ICON[x.kind] || '•') + ' <b>' + esc(first(x.by)) + '</b> ' + esc(fmtT(x.atMs)) + ' — ' + esc(x.text || x.kind) + '</div>'; }).join('') + '</div>' : '')
+      + '</div>';
+  }
+  function sendLabel(){
+    var n = CUR, parts = [];
+    if(ST.hot !== !!n.flagHot) parts.push(ST.hot ? '🔥 Make HOT' : '✅ Clear HOT');
+    if(!!ST.hold !== !!n.flagHold || (ST.hold && ST.reason !== n.flagHold)) parts.push(ST.hold ? '⏸ Hold' : '▶ Clear hold');
+    if(ST.text && ST.text.trim() && !parts.length) parts.push('📝 Add note');
+    return (parts.join(' + ') || 'Save') + ' & alert Miguel';
+  }
+  window._jfOpen = function(id){
+    if(!canFlag()) return;
+    var n = allNotes().filter(function(x){ return x.id === id; })[0]; if(!n) return;
+    CUR = n; ST = { hot:!!n.flagHot, hold:!!n.flagHold, reason:n.flagHold || '', text:'', front:true };
+    build(); draw(); document.getElementById('jfSheet').classList.add('open');
+  };
+  window._jfClose = function(){ var o = document.getElementById('jfSheet'); if(o) o.classList.remove('open'); CUR = null; };
+  window._jfSet = function(k){ ST[k] = !ST[k]; if(k === 'hold' && !ST.hold) ST.reason = ''; draw(); };
+  window._jfReason = function(r){ ST.reason = r; draw(); };
+  window._jfFront = function(v){ ST.front = v; };
+  window._jfTxt = function(v){ ST.text = v; var b = document.getElementById('jfSend'); if(b) b.textContent = sendLabel(); };
+  window._jfQuick = function(q){ ST.text = (ST.text && ST.text.trim() ? ST.text.trim() + ' — ' : '') + q; draw(); };
+  window._jfSend = function(){
+    var n = CUR, m = M(); if(!n || !m || !db()) return;
+    var err = document.getElementById('jfErr');
+    if(ST.hold && !ST.reason){ if(err) err.textContent = 'Pick a hold reason.'; return; }
+    var text = (ST.text || '').trim(), now = Date.now(), who = me(), upd = {}, events = [], alerts = [];
+    var base = { wo:n.wo || '', op:n.op || '', part:n.part || '', machine:n.machine || '', noteId:n.id };
+    if(ST.hot && !n.flagHot){ upd.flagHot = true; upd.flagHotBy = who; upd.flagHotAt = now; upd.flagHotWhy = text; events.push({ kind:'hot', text:text || 'Made HOT' }); alerts.push(Object.assign({ kind:'hot', text:text, front:!!ST.front }, base)); }
+    if(!ST.hot && n.flagHot){ upd.flagHot = false; upd.flagHotWhy = ''; events.push({ kind:'unhot', text:'Cleared HOT' }); alerts.push(Object.assign({ kind:'unhot' }, base)); }
+    if(ST.hold && ST.reason !== n.flagHold){ upd.flagHold = ST.reason; upd.flagHoldBy = who; upd.flagHoldAt = now; events.push({ kind:'hold', text:'On hold — ' + ST.reason + (text ? ': ' + text : '') }); alerts.push(Object.assign({ kind:'hold', reason:ST.reason, text:text }, base)); }
+    if(!ST.hold && n.flagHold){ upd.flagHold = ''; events.push({ kind:'unhold', text:'Off hold' }); alerts.push(Object.assign({ kind:'unhold' }, base)); }
+    if(text && !alerts.some(function(a){ return a.kind === 'hot' || a.kind === 'hold'; })){ events.push({ kind:'note', text:text }); alerts.push(Object.assign({ kind:'note', text:text }, base)); }
+    if(!events.length){ if(err) err.textContent = 'Nothing changed — pick HOT, HOLD or type a note.'; return; }
+    var ev = events.map(function(e){ return Object.assign({ by:who, atMs:now }, e); });
+    upd.jobNotes = m.arrayUnion.apply(null, ev);
+    var w = [m.updateDoc(m.doc(db(), 'notes', n.id), upd)];
+    if(n.hillReqId) w.push(m.updateDoc(m.doc(db(), 'hillRequests', n.hillReqId), Object.assign({}, upd, { jobNotes:m.arrayUnion.apply(null, ev) })).catch(function(){}));
+    var btn = document.getElementById('jfSend'); if(btn){ btn.disabled = true; btn.textContent = 'Sending…'; }
+    Promise.all(w).then(function(){
+      alerts.forEach(function(a){ window._jobAlert(a); });
+      if(upd.flagHot && ST.front && window._lnMoveJob && n.type === 'blue'){ try{ window._lnMoveJob(n.id, n.machine, 0, true); }catch(e){} }
+      if(window.showToast) window.showToast(upd.flagHot ? 'red' : 'blue', upd.flagHot ? '🔥 Flagged HOT — Miguel alerted' : '🚩 Saved — Miguel alerted', 'WO ' + (n.wo || ''));
+      window._jfClose();
+    }).catch(function(e){ if(err) err.textContent = 'Couldn\'t save: ' + e.message; if(btn){ btn.disabled = false; btn.textContent = sendLabel(); } });
+  };
+
+  // ── Shop floor tiles glow red when a job on that machine is HOT ──
+  function tiles(){
+    var hot = {}; allNotes().forEach(function(n){ if(n.flagHot && (n.type === 'blue' || n.type === 'green')) hot[n.machine] = 1; });
+    document.querySelectorAll('.machine[data-machine]').forEach(function(el){ el.classList.toggle('jf-hot-tile', !!hot[el.getAttribute('data-machine')]); });
+  }
+  var hook = setInterval(function(){
+    if(typeof window._applyMachineEdges !== 'function') return; clearInterval(hook);
+    var orig = window._applyMachineEdges;
+    window._applyMachineEdges = function(){ var r = orig.apply(this, arguments); try{ tiles(); }catch(e){} return r; };
+    try{ tiles(); }catch(e){}
+  }, 400);
+
+  // ── 🔔 Alerts inbox (admin): live list of moves / flags / notes, toast when a new one lands ──
+  var LIST = [], UNSUB = null, SEEN_KEY = 'hillJobAlertsSeen';
+  function seen(){ try{ return +localStorage.getItem(SEEN_KEY) || 0; }catch(e){ return 0; } }
+  function unread(){ var s = seen(); return LIST.filter(function(a){ return (a.atMs || 0) > s; }).length; }
+  function badges(){
+    var c = unread();
+    var b = document.getElementById('jaBell'); if(b) b.innerHTML = '🔔 Alerts' + (c ? '<span class="n">' + c + '</span>' : '');
+    var tab = document.getElementById('tab-jobtracker');
+    if(tab){ var t = tab.querySelector('.ja-tabn'); if(!t && c){ t = document.createElement('span'); t.className = 'ja-tabn'; tab.appendChild(t); } if(t){ t.textContent = '🔔' + c; t.style.display = c ? '' : 'none'; } }
+  }
+  function listen(){
+    if(UNSUB || !isAdmin()) return;
+    var m = M(); if(!m || !db() || !m.onSnapshot || !m.query || !m.orderBy || !m.limit) return;
+    var started = Date.now();
+    UNSUB = m.onSnapshot(m.query(m.collection(db(), 'hillJobAlerts'), m.orderBy('atMs', 'desc'), m.limit(60)), function(snap){
+      var before = {}; LIST.forEach(function(a){ before[a.id] = 1; });
+      var arr = []; snap.forEach(function(d){ var a = d.data(); a.id = d.id; arr.push(a); });
+      var fresh = arr.filter(function(a){ return !before[a.id] && (a.atMs || 0) > started - 5000 && LIST.length + arr.length > 0; });
+      LIST = arr; badges();
+      fresh.forEach(function(a){ if(window.showToast) window.showToast(a.kind === 'hot' ? 'red' : a.kind === 'hold' ? 'yellow' : 'blue', (ICON[a.kind] || '🔔') + ' ' + line(a), a.by ? 'by ' + a.by : ''); });
+      var p = document.getElementById('jaPanel'); if(p && p.classList.contains('open')) drawPanel();
+    }, function(e){ console.warn('job alerts:', e && e.message); });
+  }
+  function line(a){
+    var job = 'WO ' + (a.wo || '—') + (a.op ? ' OP ' + a.op : '');
+    if(a.kind === 'move') return job + ' moved ' + (a.from || '?') + ' → ' + a.to;
+    if(a.kind === 'hot') return job + ' is HOT' + (a.text ? ' — ' + a.text : '');
+    if(a.kind === 'unhot') return job + ' no longer hot';
+    if(a.kind === 'hold') return job + ' ON HOLD — ' + (a.reason || '') + (a.text ? ': ' + a.text : '');
+    if(a.kind === 'unhold') return job + ' off hold';
+    return job + ': ' + (a.text || '');
+  }
+  function drawPanel(){
+    var p = document.getElementById('jaPanel'); if(!p) return;
+    var s = seen();
+    p.innerHTML = '<div class="jf-box" style="max-width:620px;"><div class="jf-h">🔔 Job alerts<button class="jf-btn" onclick="window._jaClose()">✕</button></div>'
+      + '<div class="jf-sub">Moves, HOT flags, holds and notes from you and Corey — newest first. Tap one to open the job.</div>'
+      + (LIST.length ? LIST.map(function(a){
+          return '<div class="ja-item' + ((a.atMs || 0) > s ? ' new' : '') + '" onclick="window._jaClose();window._jobReview && window._jobReview(\'' + esc(a.wo) + '\')"><div class="ic">' + (ICON[a.kind] || '🔔') + '</div>'
+            + '<div><div class="t"><b>' + esc(line(a)) + '</b></div><div class="w">' + esc((a.by || '') + ' · ' + fmtT(a.atMs) + (a.machine && a.kind !== 'move' ? ' · ' + a.machine : '')) + '</div></div></div>';
+        }).join('') : '<div class="jf-sub" style="padding:20px 0;text-align:center;">No alerts yet.</div>')
+      + '</div>';
+  }
+  window._jaOpen = function(){
+    var p = document.getElementById('jaPanel');
+    if(!p){ p = document.createElement('div'); p.id = 'jaPanel'; p.onclick = function(e){ if(e.target === p) window._jaClose(); }; document.body.appendChild(p); }
+    drawPanel(); p.classList.add('open');
+    try{ localStorage.setItem(SEEN_KEY, String(Date.now())); }catch(e){}
+    badges();
+  };
+  window._jaClose = function(){ var p = document.getElementById('jaPanel'); if(p) p.classList.remove('open'); };
+  window._jaBadges = badges;
+  setInterval(function(){
+    var auth = document.getElementById('authOverlay');
+    if(!window.currentUser || (auth && !auth.classList.contains('hidden'))){ if(UNSUB){ try{ UNSUB(); }catch(e){} UNSUB = null; LIST = []; badges(); } return; }
+    listen();
+    var b = document.getElementById('jaBell'); if(b) b.style.display = isAdmin() ? '' : 'none';
+  }, 1500);
 })();
 </script>
 
