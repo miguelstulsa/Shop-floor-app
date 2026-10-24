@@ -21739,8 +21739,13 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var rows = clockOn(mid || n.machine, n), h = '';
     if(rows.length) h += '<div class="ln-runby">👷 ' + rows.map(function(r){ return '<b>' + esc(r.employee) + '</b>' + (r.category ? ' <i>' + esc(r.category) + '</i>' : '') + (r.startMs ? ' <i>since ' + esc(new Date(r.startMs).toLocaleTimeString([], { hour:'numeric', minute:'2-digit' })) + '</i>' : ''); }).join(' · ') + '</div>';
     else if(n.assignedTo) h += '<div class="ln-runby" style="opacity:0.8;">🔧 ' + esc(n.assignedTo) + ' <i>(assigned — not clocked in on ProShop)</i></div>';
-    if(n.type === 'blue' && (window._isAdmin || window.currentUser === 'hilladmin' || window._isManager))
-      h += '<div class="ln-sbtns"><button class="ln-sb" onclick="event.stopPropagation();window._lnAlreadyBuilt(\'' + esc(n.id) + '\',\'' + esc(n.hillReqId || '') + '\')">✓ Move to Running</button></div>';
+    var boss = window._isAdmin || window.currentUser === 'hilladmin' || window._isManager;
+    if(boss) h += '<div class="ln-sbtns">'
+      + (n.type === 'blue' ? '<button class="ln-sb" onclick="event.stopPropagation();window._lnAlreadyBuilt(\'' + esc(n.id) + '\',\'' + esc(n.hillReqId || '') + '\')">✓ Move to Running</button>' : '')
+      + (window._ptCloseJob ? '<button class="ln-sb go" onclick="event.stopPropagation();window._ptCloseJob(\'' + esc(n.id) + '\')">✅ Done — clear machine</button>' : '') + '</div>';
+    var w = window._ptWO ? window._ptWO(n.wo, n.op) : null;
+    if(w && w.status && /complete|closed|shipped|finished/i.test(w.status) && !/not ?complete|incomplete/i.test(w.status))
+      h += '<div class="ln-runby" style="background:rgba(100,116,139,0.2);border-color:#64748b;color:#e2e8f0;">🏁 ProShop says <b>' + esc(w.status) + '</b>' + (n.rework || n.broughtBack ? ' — kept because you brought it back' : ' — clearing…') + '</div>';
     return h;
   }
   window._lnWhoRuns = whoRuns;
@@ -21764,6 +21769,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     window.startRequest._wrapped = true;
   })();
 
+  var DUPS = {};
+  function dupKey(n, mid){ return (mid || n.machine) + '|' + String(n.wo || '').replace(/[^0-9A-Za-z]/g,'').toUpperCase() + '|' + String(n.op || '').trim(); }
   function jobHtml(n, kind, pos, total, mid){
     var who = n.assignedTo ? '🔧 <b>' + esc(n.assignedTo) + '</b>' : '';
     var by = n.operator ? 'by <b>' + esc(String(n.operator).split(' ')[0]) + '</b>' : '';
@@ -21789,6 +21796,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + '<div class="ln-pos">' + (kind === 'run' ? 'RUN' : '#' + (pos+1)) + '</div>'
       + '<div class="ln-info"><div class="ln-wo">' + (n.wo ? '<span class="ln-wolink" title="Full job review" onclick="event.stopPropagation();window._jobReview && window._jobReview(\'' + esc(n.wo) + '\')">WO ' + esc(n.wo) + '</span>' : esc(n.part || 'No WO #')) + (kind !== 'run' && pos === 0 ? ' <span style="font-size:10px;color:#93c5fd;letter-spacing:1px;">· NEXT UP</span>' : '') + '</div>'
       + (n.rework ? '<span class="je-rw">♻ REWORK</span>' : n.broughtBack ? '<span class="je-rw" style="background:#0369a1;">↩ BROUGHT BACK</span>' : '')
+      + (n.wo && DUPS[dupKey(n, mid)] > 1 ? '<span class="jf-tag hold">⚠ Duplicate — this WO/OP is on ' + esc(mid || n.machine) + ' ' + DUPS[dupKey(n, mid)] + ' times'
+          + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._jeRemove ? ' <button class="ln-sb" style="padding:2px 8px;font-size:11px;margin-left:4px;" onclick="event.stopPropagation();window._jeRemove(\'' + esc(n.id) + '\', this)">🗑 Remove this copy</button>' : '') + '</span>' : '')
       + (window._jfHtml ? window._jfHtml(n) : '') + (meta ? '<div class="ln-meta">' + meta + '</div>' : '') + dueHtml(n) + (window._ptJobBadge ? window._ptJobBadge(n) : '') + (meta2 ? '<div class="ln-meta">' + meta2 + '</div>' : '')
       + (kind !== 'run' && n.type === 'blue' ? setupCtl(n, pos) : '')
       + (kind === 'run' ? whoRuns(n, mid) + jobClock(n) : '') + '</div>'
@@ -21815,6 +21824,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var grid = document.getElementById('lnGrid'); if(!grid) return;
     var words = SEARCH ? SEARCH.split(/\s+/) : [];
     var ms = machines(), totalPend = 0, busy = 0;
+    DUPS = {}; allNotes().forEach(function(n){ if(n.wo && (n.type === 'blue' || n.type === 'green') && !n.resolved){ var k = dupKey(n); DUPS[k] = (DUPS[k] || 0) + 1; } });
     var cards = ms.map(function(m){
       var sp = splitFor(m.id), run = sp.run, pend = sp.pend;
       totalPend += pend.length; if(run.length || pend.length) busy++;
@@ -22995,6 +23005,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     try{ if(window._lnRender) window._lnRender(); }catch(e){}
     try{ var wb = document.getElementById('woBoard'); if(wb && wb.classList.contains('open')) window._woRender(); }catch(e){}
     try{ etaAlerts(); }catch(e){ console.warn('eta alerts', e); }
+    try{ clearTimeout(window._ptAcT); window._ptAcT = setTimeout(autoClear, 1500); }catch(e){}
     try{ var tv = document.getElementById('lnTv'); if(tv && tv.classList.contains('open') && window._applyMachineEdges) window._lnTvRedraw && window._lnTvRedraw(); }catch(e){}
   }
   var wait = setInterval(function(){
@@ -23120,24 +23131,38 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   // Matches WO + OP (a WO-level "Complete" with no OP closes every card for that WO).
   var LAST_CLOSED = [];
   function tsMs2(t){ return !t ? 0 : t.seconds ? t.seconds * 1000 : typeof t.toMillis === 'function' ? t.toMillis() : (Date.parse(t) || 0); }
-  function autoClose(wos, who){
+  var CLOSING = {};
+  function autoClose(wos, who, opt){
+    opt = opt || {};
     var m = M(); if(!m || !db() || !m.deleteDoc) return Promise.resolve([]);
-    var done = (wos || []).filter(function(w){ return w.status && /complete|closed|shipped|finished|done/i.test(w.status) && !/not ?complete|incomplete/i.test(w.status); });
-    if(!done.length) return Promise.resolve([]);
-    var notes = []; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){ if(n && n.id && n.wo && (n.type === 'green' || n.type === 'blue')) notes.push(n); }); });
-    var hits = notes.filter(function(n){ return done.some(function(w){ return norm(w.wo) === norm(n.wo) && (!w.op || !n.op || norm(w.op) === norm(n.op)); }); });
+    var hits;
+    if(opt.only){ hits = opt.only; }
+    else {
+      var done = (wos || []).filter(function(w){ return w.status && /complete|closed|shipped|finished|done/i.test(w.status) && !/not ?complete|incomplete/i.test(w.status); });
+      if(!done.length) return Promise.resolve([]);
+      var cut = CLOCK.syncedAt || Date.now();
+      var notes = []; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(n){ if(n && n.id && n.wo && (n.type === 'green' || n.type === 'blue')) notes.push(n); }); });
+      hits = notes.filter(function(n){
+        if(CLOSING[n.id]) return false;
+        if(n.rework || n.broughtBack || n.keepOpen) return false;              // you brought it back on purpose — ProShop's old "Complete" doesn't close it
+        if(tsMs2(n.createdAt) > cut + 60000) return false;                      // posted after this ProShop data was pulled
+        return done.some(function(w){ return norm(w.wo) === norm(n.wo) && (!w.op || !n.op || norm(w.op) === norm(n.op)); });
+      });
+    }
     if(!hits.length) return Promise.resolve([]);
+    hits.forEach(function(n){ CLOSING[n.id] = 1; });
+    var reason = opt.reason || 'ProShop sync (' + who + ')';
     var nowMs = Date.now(), jobs = [];
     hits.forEach(function(n){
       var data = {}; Object.keys(n).forEach(function(k){ if(k !== 'id') data[k] = n[k]; });
       var st = tsMs2(n.startedAt) || tsMs2(n.createdAt), mins = st ? Math.max(0, Math.round((nowMs - st) / 60000)) : null;
       var str = mins == null ? '' : mins >= 60 ? Math.floor(mins/60) + 'h ' + (mins%60) + 'm' : mins + 'm';
       var p = m.deleteDoc(m.doc(db(), 'notes', n.id)).then(function(){
-        var upd = { resolved:true, jobStatus:'completed', completedAt:m.serverTimestamp(), completedBy:'ProShop sync (' + who + ')', closedByProshop:true };
+        var upd = { resolved:true, jobStatus:'completed', completedAt:m.serverTimestamp(), completedBy:reason, closedByProshop:!opt.reason };
         if(n.type === 'green' && mins != null){ upd.runMins = mins; upd.runTime = str; }
         if(n.hillReqId) m.updateDoc(m.doc(db(), 'hillRequests', n.hillReqId), upd).catch(function(){});
         if(n.type === 'green' && mins != null) m.addDoc(m.collection(db(), 'hillTimeLog'), { person:n.assignedTo || 'machinist', role:'run', machine:n.machine || '', wo:n.wo || '', op:n.op || '',
-          detail:'Closed by ProShop sync — status Complete', startedAt:n.startedAt || null, finishedAt:m.serverTimestamp(), elapsedMins:mins, elapsedStr:str, loggedAt:m.serverTimestamp(), byProshop:true }).catch(function(){});
+          detail:opt.reason ? reason : 'Closed by ProShop sync — status Complete', startedAt:n.startedAt || null, finishedAt:m.serverTimestamp(), elapsedMins:mins, elapsedStr:str, loggedAt:m.serverTimestamp(), byProshop:true }).catch(function(){});
         return { id:n.id, data:data, label:(n.machine || '') + ' · WO ' + n.wo + (n.op ? ' OP ' + n.op : '') + (n.type === 'blue' ? ' (was in line)' : '') };
       }).catch(function(){ return null; });
       jobs.push(p);
@@ -23147,7 +23172,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       return queueNextOps(hits, wos, who).then(function(nx){ list.next = nx; return list; });
     }).then(function(list){
       if(list.length && window.showToast) window.showToast('green', '✅ ' + list.length + ' job' + (list.length === 1 ? '' : 's') + ' closed — ProShop says complete', list.map(function(x){ return x.label; }).join(' · '));
-      list.forEach(function(x){ if(window._jobAlert) window._jobAlert({ kind:'done', wo:x.data.wo || '', op:x.data.op || '', part:x.data.part || '', machine:x.data.machine || '', text:'ProShop marked it complete' }); });
+      list.forEach(function(x){ if(window._jobAlert) window._jobAlert({ kind:'done', wo:x.data.wo || '', op:x.data.op || '', part:x.data.part || '', machine:x.data.machine || '', text:opt.reason || 'ProShop marked it complete' }); });
       return list;
     });
   }
@@ -23210,6 +23235,23 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     });
     return h;
   }
+  // ✅ Done — clear the machine (you / Corey)
+  window._ptCloseJob = function(noteId){
+    var n = null; Object.keys(window.machineNotes || {}).forEach(function(k){ (window.machineNotes[k] || []).forEach(function(x){ if(x && x.id === noteId) n = x; }); });
+    if(!n) return;
+    if(!confirm('WO ' + (n.wo || '') + (n.op ? ' OP ' + n.op : '') + ' is done?\nIt comes off ' + n.machine + ' (you can bring it back from ♻ Closed jobs).')) return;
+    var who = (window._userDisplayName || window.currentUser || '').replace(/^hilladmin$/i, 'Miguel');
+    autoClose(CLOCK.workOrders || [], who, { only:[n], reason:'Marked done by ' + who }).then(function(list){
+      if(list.length && window.showToast) window.showToast('green', '✅ Cleared ' + n.machine, 'WO ' + (n.wo || '') + (list.next && list.next.length ? ' · next op put in line' : ''));
+    });
+  };
+  // Any admin screen keeps the floor honest: a job ProShop already shows Complete comes off its machine
+  function autoClear(){
+    if(!(window._isAdmin || window.currentUser === 'hilladmin') || !(CLOCK.workOrders || []).length) return;
+    autoClose(CLOCK.workOrders, 'auto', {}).catch(function(){});
+  }
+  window._ptAutoClear = autoClear;
+  setInterval(function(){ try{ autoClear(); }catch(e){} }, 60000);
   function closedHtml(list){
     return nextHtml() + '<div class="pt-note" style="margin-top:6px;color:#bbf7d0;">✅ Took ' + list.length + ' job' + (list.length === 1 ? '' : 's') + ' off the app — ProShop marked ' + (list.length === 1 ? 'it' : 'them') + ' complete: <b>'
       + esc(list.map(function(x){ return x.label; }).join(', ')) + '</b> <button class="pt-btn" style="padding:3px 9px;margin-left:6px;" onclick="window._ptUndoClose()">↩ Undo</button></div>';
@@ -23220,7 +23262,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     LAST_NEXT = [];
     Promise.all(LAST_CLOSED.map(function(x){
       if(x.data.hillReqId) m.updateDoc(m.doc(db(), 'hillRequests', x.data.hillReqId), { resolved:x.data.type !== 'blue', jobStatus:x.data.type === 'green' ? 'completed' : 'pending', closedByProshop:false }).catch(function(){});
-      return m.setDoc(m.doc(db(), 'notes', x.id), x.data);
+      return m.setDoc(m.doc(db(), 'notes', x.id), Object.assign({}, x.data, { keepOpen:true }));   // undo = you want it up, so the auto-clear leaves it alone
     })).then(function(){ if(window.showToast) window.showToast('yellow', '↩ Put back ' + LAST_CLOSED.length + ' job' + (LAST_CLOSED.length === 1 ? '' : 's'), ''); LAST_CLOSED = []; var mm = document.getElementById('ptMsg'); if(mm) mm.innerHTML = '<span style="color:#fbbf24;">↩ Jobs put back.</span>'; });
   };
   window._ptClear = function(){
