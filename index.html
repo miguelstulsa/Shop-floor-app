@@ -6849,7 +6849,11 @@ Every result shows machine, duration, timestamp, resolution, and a RESOLVE butto
     window._toolListViewerKey = key;
     document.getElementById('tlViewerTitle').textContent = '📋 Part ' + tl.part + (tl.op ? ' — OP ' + tl.op : '');
     document.getElementById('tlViewerSubtitle').textContent = 'Last WO: ' + (tl.wo||'—') + ' · ' + (tl.machine||'') + (tl.createdBy ? ' · by ' + tl.createdBy : '');
-    document.getElementById('tlViewerBody').innerHTML = _toolListDetailHtml(tl);
+    var boss = window._isAdmin || window.currentUser === 'hilladmin' || window._isManager;
+    document.getElementById('tlViewerBody').innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'
+      + '<button onclick="window._printToolList(window._toolListCache[window._toolListViewerKey], \'Tool list print\')" style="background:#16a34a;border:none;color:#fff;border-radius:8px;padding:8px 14px;font-weight:800;cursor:pointer;">🖨 Print tool list</button>'
+      + (boss ? '<button onclick="var t=window._toolListCache[window._toolListViewerKey]; window._printQueue({ wo:t.wo||(\'Part \'+t.part), op:t.op||\'\', part:t.part||\'\', machine:t.machine||\'\' }, \'Tool list rebuild\', \'gcode\')" style="background:rgba(255,255,255,0.06);border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;">🔄 Rebuild from newest G-code</button>' : '')
+      + '</div>' + _toolListDetailHtml(tl);
     document.getElementById('toolListViewerOverlay').style.display = 'flex';
   };
   window._minimizeToolListViewer = function(){
@@ -21762,8 +21766,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       return;
     }
     var boss = window._isAdmin || window.currentUser === 'hilladmin' || window._isManager;
-    if(boss && window._printQueue && confirm('No tool list for part ' + n.part + (n.op ? ' OP ' + n.op : '') + ' yet.\n\nBuild it from the newest G-code? (This also prints the blueprint at the front office.)')){
-      window._printQueue(n, 'Tool list + print');
+    if(boss && window._printQueue && confirm('No tool list for part ' + n.part + (n.op ? ' OP ' + n.op : '') + ' yet.\n\nBuild it from the newest G-code? It prints at the front office when it\'s ready.')){
+      window._printQueue(n, 'Tool list requested', 'gcode');
     } else if(!boss && window.showToast) window.showToast('yellow', 'No tool list yet', 'Part ' + n.part + (n.op ? ' OP ' + n.op : '') + ' — ask Miguel');
   };
   var LAST_PRINT = {};
@@ -23499,7 +23503,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       + '<span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;" class="jr-noprint">'
       + (notes[0] && window._lnReprint ? '<button class="pt-btn go" onclick="window._lnReprint(\'' + esc(notes[0].id) + '\')">🖨 Print blueprint</button>'
          : window._printQueue ? '<button class="pt-btn go" onclick="window._printQueue({ wo:\'' + esc(wo) + '\', op:\'' + esc((main && main.op) || '') + '\', part:\'' + esc(part) + '\', machine:\'' + esc(machines[0] || '') + '\' }, \'Print requested from Job Review\')">🖨 Print blueprint</button>' : '')
-      + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._printQueue ? '<button class="pt-btn" title="Prints the blueprint and builds the tool list from the newest G-code" onclick="window._printQueue({ wo:\'' + esc(wo) + '\', op:\'' + esc((main && main.op) || (notes[0] && notes[0].op) || '') + '\', part:\'' + esc(part) + '\', machine:\'' + esc((notes[0] && notes[0].machine) || machines[0] || '') + '\', dueDate:\'' + esc((main && main.dueISO) || (notes[0] && notes[0].dueDate) || '') + '\' }, \'Tool list + print\')">🧰 Tool list + print</button>' : '')
+      + ((window._isAdmin || window.currentUser === 'hilladmin' || window._isManager) && window._printQueue ? '<button class="pt-btn" title="Prints the blueprint and builds the tool list from the newest G-code" onclick="window._printQueue({ wo:\'' + esc(wo) + '\', op:\'' + esc((main && main.op) || (notes[0] && notes[0].op) || '') + '\', part:\'' + esc(part) + '\', machine:\'' + esc((notes[0] && notes[0].machine) || machines[0] || '') + '\', dueDate:\'' + esc((main && main.dueISO) || (notes[0] && notes[0].dueDate) || '') + '\' }, \'Tool list requested\', \'gcode\')">🧰 Build tool list (G-code)</button>' : '')
       + '<button class="pt-btn" onclick="window.print()">📄 Report PDF</button></span></div>'
       + (main && window._ptProgHtml ? window._ptProgHtml(main) : '<div class="jr-note">No ProShop qty / due date synced for this WO yet.</div>');
 
@@ -24245,23 +24249,26 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   var Q = [], LINK = { wo:'', part:'' }, UNSUB = null, DRAW = {};   // DRAW: part # → { url, name } remembered from earlier jobs
 
   // ── Queue a print (Start build does this; 🖨 buttons can too) ──
-  window._printQueue = function(n, why){
+  // kind: 'blueprint' (default) · 'gcode' = build the tool list from the newest program (no blueprint) · 'toollist' = print a tool list
+  window._printQueue = function(n, why, kind, extra){
     var m = M(); if(!m || !db() || !n || !n.wo) return Promise.resolve(null);
-    var item = { wo:String(n.wo), op:String(n.op || ''), part:String(n.part || ''), machine:n.machine || '', dueDate:n.dueDate || '', noteId:n.id || '', why:why || 'Build started',
-      requestedBy:me(), atMs:Date.now(), status:'queued' };
+    kind = kind || 'blueprint';
+    var item = Object.assign({ wo:String(n.wo), op:String(n.op || ''), part:String(n.part || ''), machine:n.machine || '', dueDate:n.dueDate || '', noteId:n.id || '', why:why || 'Build started',
+      requestedBy:me(), atMs:Date.now(), status:'queued', kind:kind }, extra || {});
     // An employee (not you) asked for a print → it also lands as a 🟡 Machinist Request on that machine so you see who/what/why
     var boss = window._isAdmin || window.currentUser === 'hilladmin';
-    if(!boss && why !== 'Build started' && window.submitNoteToFirebase){
+    if(!boss && why !== 'Build started' && kind !== 'gcode' && window.submitNoteToFirebase){
       var mach = window._ln && window._ln.machines ? window._ln.machines().filter(function(x){ return x.id === n.machine; })[0] : null;
       var who = me() || 'An employee';
-      var det = '🖨 Blueprint print — WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · Part ' + item.part : '') + ' sent to the front office printer';
+      var det = (kind === 'toollist' ? '🧰 Tool list print — WO ' : '🖨 Blueprint print — WO ') + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · Part ' + item.part : '') + ' sent to the front office printer';
       window.submitNoteToFirebase({ machine:n.machine || '', cell:(mach && (mach.reqCell || mach.cell)) || n.cell || '', type:'yellow', wo:item.wo, op:item.op, part:item.part, po:'',
         detail:det, operator:who, assignedTo:'', floorSupportType:'', dueDate:'', printRequest:true }).catch(function(e){ console.warn('print request note', e && e.message); });
-      if(window.adminPushover) window.adminPushover('🖨 ' + who + ' printed a blueprint', 'WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · Part ' + item.part : '') + (n.machine ? '\nMachine: ' + n.machine : '') + '\nSent to the front office printer.', 'pushover', 0);
+      if(window.adminPushover) window.adminPushover((kind === 'toollist' ? '🧰 ' : '🖨 ') + who + ' printed a ' + (kind === 'toollist' ? 'tool list' : 'blueprint'), 'WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · Part ' + item.part : '') + (n.machine ? '\nMachine: ' + n.machine : '') + '\nSent to the front office printer.', 'pushover', 0);
     }
     return m.addDoc(m.collection(db(), 'hillPrintQueue'), Object.assign({}, item, { at:m.serverTimestamp() })).then(function(ref){
-      if(n.id) m.updateDoc(m.doc(db(), 'notes', n.id), { printStatus:'queued', printQueuedAtMs:item.atMs }).catch(function(){});
-      if(window.showToast) window.showToast('blue', '🖨 Blueprint sent to the front office', 'WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · ' + item.part : ''));
+      if(n.id && kind === 'blueprint') m.updateDoc(m.doc(db(), 'notes', n.id), { printStatus:'queued', printQueuedAtMs:item.atMs }).catch(function(){});
+      if(window.showToast) window.showToast('blue', kind === 'gcode' ? '🧰 Building the tool list from G-code' : kind === 'toollist' ? '🧰 Tool list sent to the front office printer' : '🖨 Blueprint sent to the front office',
+        'WO ' + item.wo + (item.op ? ' OP ' + item.op : '') + (item.part ? ' · ' + item.part : ''));
       return ref;
     }).catch(function(e){ console.warn('print queue', e && e.message); });
   };
@@ -24308,7 +24315,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var done = it.status === 'printed' || it.status === 'skipped', url = linkFor(it);
     var dl = it.drawingUrl ? { url:it.drawingUrl, name:it.drawingName || '' } : DRAW[norm(it.part)] || null;
     return '<div class="ps-card' + (done ? ' done' : (Date.now() - (it.atMs || 0) < 10 * 60000 ? ' new' : '')) + '">'
-      + '<div><div class="ps-wo">WO ' + esc(it.wo) + (it.op ? ' <span style="font-size:0.6em;color:#94a3b8;">OP ' + esc(it.op) + '</span>' : '') + '</div>'
+      + '<div><div class="ps-wo">' + (it.kind === 'gcode' ? '🧰 ' : it.kind === 'toollist' ? '📋 ' : '') + 'WO ' + esc(it.wo) + (it.op ? ' <span style="font-size:0.6em;color:#94a3b8;">OP ' + esc(it.op) + '</span>' : '')
+      + (it.kind === 'gcode' ? ' <span style="font-size:0.45em;color:#a7f3d0;">BUILD TOOL LIST</span>' : it.kind === 'toollist' ? ' <span style="font-size:0.45em;color:#a7f3d0;">TOOL LIST</span>' : '') + '</div>'
       + '<div class="ps-meta">' + [it.part ? 'Part <b>' + esc(it.part) + '</b>' : '', it.machine ? 'for <b>' + esc(it.machine) + '</b>' : ''].filter(Boolean).join(' · ') + '</div>'
       + '<div class="ps-when">' + esc(it.why || '') + ' by ' + esc(it.requestedBy || '') + ' · ' + esc(fmtT(it.atMs)) + (done ? ' · ' + (it.status === 'printed' ? '✅ printed by ' + esc(it.printedBy || '') + ' ' + esc(fmtT(it.printedAtMs)) : 'skipped') : '') + '</div>'
       + (dl ? '<div class="ps-meta" style="font-size:13px;color:#a7f3d0;">📐 ' + esc(dl.name || 'Approved drawing') + (it.paper ? ' · print on <b>' + esc(it.paper) + '</b>' : ' · print on <b>11×17</b>') + '</div>'
@@ -24339,8 +24347,10 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   // Turned on per computer (only the front-office PC), so a job is never printed twice.
   function autoOn(){ try{ return localStorage.getItem('hillAutoPrint') === '1'; }catch(e){ return false; } }
   function hpUrl(it){
-    return 'hillprint://print?wo=' + encodeURIComponent(it.wo) + '&part=' + encodeURIComponent(it.part || '') + (it.op ? '&op=' + encodeURIComponent(it.op) : '') + '&id=' + encodeURIComponent(it.id || '')
-      + (it.why === 'Build started' || /^Tool list/.test(it.why || '') ? '&gcode=1&machine=' + encodeURIComponent(it.machine || '') + '&due=' + encodeURIComponent(it.dueDate || '') : '');   // gcode=1 → helper also uploads the newest program for the tool list
+    var base = 'wo=' + encodeURIComponent(it.wo) + '&part=' + encodeURIComponent(it.part || '') + (it.op ? '&op=' + encodeURIComponent(it.op) : '') + '&id=' + encodeURIComponent(it.id || '');
+    if(it.kind === 'gcode')    return 'hillprint://print?' + base + '&blueprint=0&gcode=1&machine=' + encodeURIComponent(it.machine || '') + '&due=' + encodeURIComponent(it.dueDate || '');   // only read + upload the newest program
+    if(it.kind === 'toollist') return 'hillprint://toollist?' + base + '&text=' + encodeURIComponent(it.text || '');                                                                         // print this tool list
+    return 'hillprint://print?' + base;                                                                                                                                                      // blueprint only
   }
   var FIRED = {};
   function fireKey(it){ return it.id + '|' + (it.requeuedAtMs || it.atMs || 0); }
@@ -24351,9 +24361,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     launch(it);
     var u = { status:'printed', printedBy:'Auto-print (' + (window._psPcName || 'front office PC') + ')', printedAtMs:Date.now(), autoPrinted:true };
     m.updateDoc(m.doc(db(), 'hillPrintQueue', id), u).then(function(){
-      if(it.noteId) m.updateDoc(m.doc(db(), 'notes', it.noteId), { printStatus:'printed', printedBy:u.printedBy, printedAtMs:u.printedAtMs }).catch(function(){});
+      if(it.noteId && (it.kind || 'blueprint') === 'blueprint') m.updateDoc(m.doc(db(), 'notes', it.noteId), { printStatus:'printed', printedBy:u.printedBy, printedAtMs:u.printedAtMs }).catch(function(){});
     });
-    if(window.showToast) window.showToast('green', '🖨 Sent to the printer', 'WO ' + it.wo + (it.part ? ' · ' + it.part : ''));
+    if(window.showToast) window.showToast('green', it.kind === 'gcode' ? '🧰 Reading the G-code' : '🖨 Sent to the printer', 'WO ' + it.wo + (it.part ? ' · ' + it.part : ''));
   };
   window._psToggleAuto = function(){
     var on = !autoOn();
@@ -24492,6 +24502,31 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   }
   window._parseGcodeTools = parseGcode;
 
+  // Plain-text tool list for the printer (HillPrint prints it on the front-office printer)
+  window._toolListText = function(tl){
+    var tools = (tl && tl.tools) || [], d = new Date(), h = d.getHours();
+    var L = [];
+    L.push('HILL MANUFACTURING — TOOL LIST');
+    L.push('Part ' + (tl.part || '') + (tl.op ? '   OP ' + tl.op : '') + (tl.wo ? '   WO ' + tl.wo : '') + (tl.machine ? '   Machine ' + tl.machine : ''));
+    if(tl.gcodeFile) L.push('Program: ' + tl.gcodeFile + (tl.gcodeModified ? '  (' + tl.gcodeModified + ')' : ''));
+    L.push('Printed ' + (d.getMonth()+1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(2) + ' ' + ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h >= 12 ? ' PM' : ' AM'));
+    L.push('');
+    L.push(' #   T#    DESCRIPTION                                   DIA      H    OOH      EXT');
+    L.push(' --  ----  --------------------------------------------  -------  ---  -------  ------');
+    tools.forEach(function(t, i){
+      var desc = String(t.desc || '').replace(/^T\d+\s*—\s*/, '');
+      var pad = function(v, n){ v = String(v == null ? '' : v); return v.length > n ? v.slice(0, n) : v + new Array(n - v.length + 1).join(' '); };
+      L.push(' ' + pad(i + 1, 3) + ' ' + pad(t.tNum || '', 5) + ' ' + pad(desc, 45) + ' ' + pad(t.dia || '', 8) + ' ' + pad(t.hOffset ? 'H' + t.hOffset : '', 4) + ' ' + pad(t.ooh || '', 8) + ' ' + pad([t.ext, t.extLen].filter(Boolean).join(' '), 8));
+    });
+    L.push('');
+    L.push(tools.length + ' tool' + (tools.length === 1 ? '' : 's') + '   ·   Checked by: ____________');
+    return L.join('\n');
+  };
+  window._printToolList = function(tl, why){
+    if(!tl || !window._printQueue) return;
+    window._printQueue({ wo:tl.wo || ('Part ' + tl.part), op:tl.op || '', part:tl.part || '', machine:tl.machine || '' }, why || 'Tool list print', 'toollist', { text:window._toolListText(tl) });
+  };
+
   // ── Turn a hillGcode upload into a hillToolLists entry ──
   function buildList(g){
     var m = M(); if(!m || !db()) return Promise.resolve(null);
@@ -24506,8 +24541,9 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     var key = window._toolListKey ? window._toolListKey(payload.part, payload.op) : '';
     var existing = key && window._toolListCache ? window._toolListCache[key] : null;
     var save;
+    var merged = null;
     if(existing && !existing.fromGcode){
-      var merged = (existing.tools || []).slice(), used = {};
+      merged = (existing.tools || []).slice(); var used = {};
       tools.forEach(function(t){
         var nm = t.desc.replace(/^T\d+ — /, '').toLowerCase();
         var hit = merged.filter(function(x, i){ return !used[i] && !x.tNum && String(x.desc || '').toLowerCase().indexOf(nm.split(' ').slice(-2).join(' ')) !== -1; })[0];
@@ -24522,6 +24558,8 @@ body.ln-dragging .ln-card.empty { opacity:1; }
     }
     return save.then(function(){
       m.updateDoc(m.doc(db(), 'hillGcode', g.id), { status:'done', tools:tools.length, processedAtMs:Date.now() }).catch(function(){});
+      var printed = (existing && !existing.fromGcode) ? Object.assign({}, existing, { tools:merged, wo:payload.wo || existing.wo, machine:payload.machine || existing.machine, gcodeFile:payload.gcodeFile }) : payload;
+      if(window._printToolList) window._printToolList(printed, 'Tool list built from G-code');
       if(window.showToast) window.showToast('green', '🧰 Tool list built — WO ' + payload.wo, tools.length + ' tools from ' + (payload.gcodeFile || 'the newest program'));
       if(window._jobAlert) window._jobAlert({ kind:'note', wo:payload.wo, op:payload.op, part:payload.part, machine:payload.machine, text:'🧰 Tool list built from ' + (payload.gcodeFile || 'G-code') + ' — ' + tools.length + ' tools' });
       return tools.length;
