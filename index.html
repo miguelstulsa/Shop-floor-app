@@ -24186,7 +24186,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   function me(){ var n = window._userDisplayName || window.currentUser || ''; return /^hilladmin$/i.test(n) ? 'Miguel' : n; }
   function norm(s){ return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
   function fmtT(ms){ if(!ms) return ''; var d = new Date(ms), h = d.getHours(), t = new Date().toDateString() === d.toDateString(); return (t ? '' : (d.getMonth()+1) + '/' + d.getDate() + ' ') + ((h%12)||12) + ':' + ('0'+d.getMinutes()).slice(-2) + (h >= 12 ? ' PM' : ' AM'); }
-  var Q = [], LINK = { wo:'', part:'' }, UNSUB = null;
+  var Q = [], LINK = { wo:'', part:'' }, UNSUB = null, DRAW = {};   // DRAW: part # → { url, name } remembered from earlier jobs
 
   // ── Queue a print (Start build does this; 🖨 buttons can too) ──
   window._printQueue = function(n, why){
@@ -24239,17 +24239,34 @@ body.ln-dragging .ln-card.empty { opacity:1; }
   }
   function card(it){
     var done = it.status === 'printed' || it.status === 'skipped', url = linkFor(it);
+    var dl = it.drawingUrl ? { url:it.drawingUrl, name:it.drawingName || '' } : DRAW[norm(it.part)] || null;
     return '<div class="ps-card' + (done ? ' done' : (Date.now() - (it.atMs || 0) < 10 * 60000 ? ' new' : '')) + '">'
       + '<div><div class="ps-wo">WO ' + esc(it.wo) + (it.op ? ' <span style="font-size:0.6em;color:#94a3b8;">OP ' + esc(it.op) + '</span>' : '') + '</div>'
       + '<div class="ps-meta">' + [it.part ? 'Part <b>' + esc(it.part) + '</b>' : '', it.machine ? 'for <b>' + esc(it.machine) + '</b>' : ''].filter(Boolean).join(' · ') + '</div>'
-      + '<div class="ps-when">' + esc(it.why || '') + ' by ' + esc(it.requestedBy || '') + ' · ' + esc(fmtT(it.atMs)) + (done ? ' · ' + (it.status === 'printed' ? '✅ printed by ' + esc(it.printedBy || '') + ' ' + esc(fmtT(it.printedAtMs)) : 'skipped') : '') + '</div></div>'
+      + '<div class="ps-when">' + esc(it.why || '') + ' by ' + esc(it.requestedBy || '') + ' · ' + esc(fmtT(it.atMs)) + (done ? ' · ' + (it.status === 'printed' ? '✅ printed by ' + esc(it.printedBy || '') + ' ' + esc(fmtT(it.printedAtMs)) : 'skipped') : '') + '</div>'
+      + (dl ? '<div class="ps-meta" style="font-size:13px;color:#a7f3d0;">📐 ' + esc(dl.name || 'Approved drawing') + (it.paper ? ' · print on <b>' + esc(it.paper) + '</b>' : ' · print on <b>11×17</b>') + '</div>'
+            : (!done ? '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;"><input id="psDl_' + esc(it.id) + '" placeholder="Drawing link (paste the PDF address from ProShop)" style="flex:1;min-width:220px;background:#08121f;border:1px solid #1e3a5c;border-radius:8px;color:#e2e8f0;padding:8px 10px;font-size:13px;">'
+              + '<input id="psDn_' + esc(it.id) + '" placeholder="File name (optional)" style="width:180px;background:#08121f;border:1px solid #1e3a5c;border-radius:8px;color:#e2e8f0;padding:8px 10px;font-size:13px;">'
+              + '<button class="ps-btn" style="padding:8px 12px;font-size:13px;" onclick="window._psSaveDrawing(\'' + esc(it.id) + '\')">💾 Save drawing link</button></div>' : ''))
+      + '</div>'
       + '<div class="ps-acts">'
+      + (dl ? '<a class="ps-btn go" href="' + esc(dl.url) + '" target="_blank" rel="noopener" style="text-decoration:none;">📐 Open drawing</a>' : '')
       + (url ? '<a class="ps-btn blue" href="' + esc(url) + '" target="_blank" rel="noopener" style="text-decoration:none;">📄 Open in ProShop</a>'
              : '<button class="ps-btn blue" onclick="window._psCopy(\'' + esc(it.wo) + '\')">📋 Copy WO #</button>')
       + (done ? '<button class="ps-btn" onclick="window._psMark(\'' + esc(it.id) + '\',\'queued\')">↩ Print again</button>'
               : '<button class="ps-btn go" onclick="window._psMark(\'' + esc(it.id) + '\',\'printed\')">✅ Printed</button><button class="ps-btn" onclick="window._psMark(\'' + esc(it.id) + '\',\'skipped\')">Skip</button>')
       + '</div></div>';
   }
+  // Save the approved drawing's link on the job (Claude does this on its hourly run) — remembered by part # for next time
+  window._psSaveDrawing = function(id){
+    var it = Q.filter(function(x){ return x.id === id; })[0], m = M(); if(!it || !m) return;
+    var u = ((document.getElementById('psDl_' + id) || {}).value || '').trim(), nm = ((document.getElementById('psDn_' + id) || {}).value || '').trim();
+    if(!/^https?:\/\//i.test(u)){ alert('Paste the full link to the drawing (starts with https://).'); return; }
+    if(!nm){ try{ nm = decodeURIComponent(u.split('?')[0].split('/').pop()); }catch(e){ nm = ''; } }
+    m.updateDoc(m.doc(db(), 'hillPrintQueue', id), { drawingUrl:u, drawingName:nm, drawingBy:me(), drawingAtMs:Date.now() });
+    if(it.part){ var upd = {}; upd[norm(it.part)] = { url:u, name:nm, part:it.part, savedBy:me(), atMs:Date.now() }; m.setDoc(m.doc(db(), 'hillSettings', 'drawingLinks'), upd, { merge:true }).catch(function(){}); }
+    if(window.showToast) window.showToast('green', '📐 Drawing link saved', 'WO ' + it.wo + (nm ? ' · ' + nm : ''));
+  };
   window._psCopy = function(wo){ try{ navigator.clipboard.writeText(wo); if(window.showToast) window.showToast('green', 'Copied ' + wo, 'Paste it into ProShop search'); }catch(e){} };
   window._psMark = function(id, st){
     var it = Q.filter(function(x){ return x.id === id; })[0], m = M(); if(!it || !m) return;
@@ -24270,6 +24287,7 @@ body.ln-dragging .ln-card.empty { opacity:1; }
       FIRST = false; draw();
     }, function(e){ console.warn('print queue', e && e.message); });
     m.onSnapshot(m.doc(db(), 'hillSettings', 'printStation'), function(s){ var d = s && s.exists && s.exists() ? s.data() : {}; LINK.wo = (d && d.woUrl) || ''; draw(); }, function(){});
+    m.onSnapshot(m.doc(db(), 'hillSettings', 'drawingLinks'), function(s){ DRAW = (s && s.exists && s.exists() ? s.data() : {}) || {}; draw(); }, function(){});
   }
   window._psOpen = function(){
     var o = document.getElementById('psStation');
